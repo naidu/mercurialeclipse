@@ -7,25 +7,23 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
-public class TransplantHandler extends SingleResourceHandler {
+public class TransplantHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();        
-        TransplantWizard transplantWizard = new TransplantWizard(project);                       
-        WizardDialog transplantWizardDialog = new WizardDialog(getShell(),transplantWizard);
-        transplantWizardDialog.open();
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
-    }
+	@Override
+	protected void run(final HgRoot hgRoot) throws CoreException {
+		TransplantWizard transplantWizard = new TransplantWizard(hgRoot);
+		WizardDialog transplantWizardDialog = new WizardDialog(getShell(), transplantWizard);
+		transplantWizardDialog.open();
+	}
 
 }

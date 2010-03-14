@@ -7,9 +7,14 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
@@ -22,30 +27,34 @@ import org.eclipse.team.core.subscribers.SubscriberMergeContext;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
+
 /**
  * @author bastian
  *
  */
 public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
-//    private final MercurialSynchronizeSubscriber subscriber;
+	private final Set<IFile> hidden;
+	private final MercurialSynchronizeSubscriber subscriber;
 
-    public HgSubscriberMergeContext(Subscriber subscriber,
-            ISynchronizationScopeManager manager) {
-        super(subscriber, manager);
-        initialize();
-//        this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
-    }
+	public HgSubscriberMergeContext(Subscriber subscriber,
+			ISynchronizationScopeManager manager) {
+		super(subscriber, manager);
+		initialize();
+		hidden = new HashSet<IFile>();
+		this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
+	}
 
-    /**
-     * Called after "Overwrite" action is executed
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    protected void makeInSync(IDiff diff, IProgressMonitor monitor)
-            throws CoreException {
-    }
+	/**
+	 * Called after "Overwrite" action is executed
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void makeInSync(IDiff diff, IProgressMonitor monitor)
+			throws CoreException {
+	}
 
 //    @Override
 //    public void run(IWorkspaceRunnable runnable, ISchedulingRule rule, int flags,
@@ -58,48 +67,69 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 //        doPullAndMerge(subscriber.getRepo(), subscriber.getProjects(), runnable);
 //    }
 
-    public void markAsMerged(IDiff node, boolean inSyncHint,
-            IProgressMonitor monitor) throws CoreException {
-    }
+	public void markAsMerged(IDiff node, boolean inSyncHint,
+			IProgressMonitor monitor) throws CoreException {
+	}
 
-    public void reject(IDiff diff, IProgressMonitor monitor)
-            throws CoreException {
-    }
+	public void reject(IDiff diff, IProgressMonitor monitor)
+			throws CoreException {
+	}
 
-    /**
-     * "Synchronize", part 2
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
-        super.refresh(traversals, flags, monitor);
-        monitor.done();
-    }
+	/**
+	 * "Synchronize", part 2
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
+		super.refresh(traversals, flags, monitor);
+		monitor.done();
+	}
 
-    /**
-     * "Synchronize", part 1
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
-        super.refresh(mappings, monitor);
-    }
+	/**
+	 * "Synchronize", part 1
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
+		super.refresh(mappings, monitor);
+		HgChangesetsCollector collector = subscriber.getCollector();
+		if(collector != null) {
+			collector.refresh(mappings);
+		}
+	}
 
-    @Override
-    protected SyncInfo getSyncInfo(IResource resource) throws CoreException {
-        return super.getSyncInfo(resource);
-    }
+	@Override
+	protected SyncInfo getSyncInfo(IResource resource) throws CoreException {
+		return super.getSyncInfo(resource);
+	}
 
-    @Override
-    public void dispose() {
-        // avoid silly NPE's in the team API code if they try to dispose compare
-        // editors on shutdown, we don't care
-        if(!PlatformUI.getWorkbench().isClosing()) {
-            super.dispose();
-        }
-    }
+	@Override
+	public void dispose() {
+		// avoid silly NPE's in the team API code if they try to dispose compare
+		// editors on shutdown, we don't care
+		if(!PlatformUI.getWorkbench().isClosing()) {
+			super.dispose();
+		}
+		clearHiddenFiles();
+	}
+
+	public void hide(IFile file) {
+		hidden.add(file);
+//		HgChangesetsCollector collector = subscriber.getCollector();
+//		if(collector != null) {
+//			collector.refresh(null);
+//		}
+	}
+
+	public void clearHiddenFiles(){
+		hidden.clear();
+	}
+
+	public boolean isHidden(IFile file){
+		return hidden.contains(file);
+	}
 
 //    private void doPullAndMerge(HgRepositoryLocation location,
 //            IProject[] projects,

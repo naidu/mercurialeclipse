@@ -7,10 +7,10 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -23,107 +23,112 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
  */
 public class StripWizardPage extends HgWizardPage {
 
-    private ChangesetTable changesetTable;
-    private Button unrelatedCheckBox;
-    protected ChangeSet stripRevision;
-    private IProject project;
-    private Button backupCheckBox;
-    private Button stripHeadsCheckBox;
-    private boolean unrelated;
-    private boolean stripHeads;
-    private boolean backup;
+	private ChangesetTable changesetTable;
+	private Button unrelatedCheckBox;
+	private ChangeSet stripRevision;
+	private final HgRoot hgRoot;
+	private Button backupCheckBox;
+	private Button stripHeadsCheckBox;
+	private boolean unrelated;
+	private boolean stripHeads;
+	private boolean backup;
 
-    /**
-     * @param string
-     * @param string2
-     * @param object
-     * @param project
-     */
-    public StripWizardPage(String pageName, String title,
-            ImageDescriptor image, IProject project) {
-        super(pageName, title, image);
-        this.project = project;
-    }
+	public StripWizardPage(String pageName, String title, ImageDescriptor image, HgRoot hgRoot) {
+		super(pageName, title, image);
+		this.hgRoot = hgRoot;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
-        // list view of changesets
-        Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("StripWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
+		// list view of changesets
+		Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
+				Messages.getString("StripWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-        changesetTable = new ChangesetTable(changeSetGroup, project);
-        GridData gridData = new GridData(GridData.FILL_BOTH);
-        gridData.heightHint = 200;
-        gridData.minimumHeight = 50;
-        changesetTable.setLayoutData(gridData);
+		changesetTable = new ChangesetTable(changeSetGroup, hgRoot);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = 200;
+		gridData.minimumHeight = 50;
+		changesetTable.setLayoutData(gridData);
 
-        SelectionListener listener = new SelectionListener() {
-            public void widgetSelected(SelectionEvent e) {
-                stripRevision = changesetTable.getSelection();
-                setPageComplete(true);
-            }
+		SelectionListener listener = new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				stripRevision = changesetTable.getSelection();
+				setPageComplete(true);
+			}
 
-            public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);
-            }
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
 
-        };
+		};
 
-        changesetTable.addSelectionListener(listener);
-        changesetTable.setEnabled(true);
+		changesetTable.addSelectionListener(listener);
+		changesetTable.setEnabled(true);
 
-        // now the options
-        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
+		// now the options
+		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
 
-        // backup
-        this.unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
-                optionGroup,
-                Messages.getString("StripWizardPage.unrelatedCheckBox.title")); //$NON-NLS-1$
-        this.unrelatedCheckBox.setSelection(true);
-        this.backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
-        this.backupCheckBox.setSelection(true);
-        this.stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
-        
-        setControl(composite);
-    }    
+		// backup
+		unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
+				optionGroup,
+				Messages.getString("StripWizardPage.unrelatedCheckBox.title")); //$NON-NLS-1$
+		unrelatedCheckBox.setSelection(true);
+		backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
+		backupCheckBox.setSelection(true);
+		stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+				Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
 
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        super.finish(monitor);
-        this.stripRevision = changesetTable.getSelection();
-        this.unrelated = unrelatedCheckBox.getSelection();
-        this.stripHeads = stripHeadsCheckBox.getSelection();
-        this.backup = backupCheckBox.getSelection();
-        try {
-            String result = HgStripClient.strip(project, this.unrelated,
-                    this.backup, this.stripHeads, stripRevision);
-            HgClients.getConsole().printMessage(result, null);
-        } catch (HgException e) {
-            MessageDialog.openError(getShell(), Messages.getString("StripWizardPage.errorCallingStrip"), e //$NON-NLS-1$
-                    .getMessage());
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
-        return true;
-    }
+		setControl(composite);
+		setPageComplete(true);
+	}
+
+	@Override
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(hgRoot)){
+					setErrorMessage("Outstanding uncommitted changes! Strip is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
+	}
+
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		super.finish(monitor);
+		stripRevision = changesetTable.getSelection();
+		unrelated = unrelatedCheckBox.getSelection();
+		stripHeads = stripHeadsCheckBox.getSelection();
+		backup = backupCheckBox.getSelection();
+		try {
+			String result = HgStripClient.strip(hgRoot, unrelated, backup, stripHeads, stripRevision);
+			HgClients.getConsole().printMessage(result, null);
+		} catch (HgException e) {
+			MessageDialog.openError(getShell(), Messages.getString("StripWizardPage.errorCallingStrip"), e //$NON-NLS-1$
+					.getMessage());
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
+		return true;
+	}
 
 }

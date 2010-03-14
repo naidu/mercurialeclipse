@@ -24,9 +24,9 @@ public class ConfigurationWizardMainPageTests extends TestCase {
 
 		assertNull(cp.getLocalDirectory(null));
 		assertNull(cp.getLocalDirectory("http://intland.com"));
-        assertNull(cp.getLocalDirectory("https://codebeamer.com/cb/issue/29229?orgDitchnetTabPaneId=task-details-comments"));
-        assertNull(cp.getLocalDirectory("ftp://ftp.codebeamer.com"));
-        assertNull(cp.getLocalDirectory("ssh://www.intland.com"));
+		assertNull(cp.getLocalDirectory("https://codebeamer.com/cb/issue/29229?orgDitchnetTabPaneId=task-details-comments"));
+		assertNull(cp.getLocalDirectory("ftp://ftp.codebeamer.com"));
+		assertNull(cp.getLocalDirectory("ssh://www.intland.com"));
 		assertNull(cp.getLocalDirectory(""));
 		assertNull(cp.getLocalDirectory("  "));
 		assertNull(cp.getLocalDirectory(null));

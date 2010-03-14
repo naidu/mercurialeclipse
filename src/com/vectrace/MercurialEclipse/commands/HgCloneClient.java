@@ -7,53 +7,49 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.net.URI;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgCloneClient {
+public class HgCloneClient extends AbstractClient {
 
-    public static void clone(File parentDirectory, HgRepositoryLocation repo,
-            boolean noUpdate, boolean pull, boolean uncompressed,
-            boolean timeout, String rev, String cloneName) throws HgException {
-        AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$
-                false);
+	public static void clone(File parentDirectory, IHgRepositoryLocation repo,
+			boolean noUpdate, boolean pull, boolean uncompressed,
+			boolean timeout, String rev, String cloneName) throws HgException {
+		AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$
+				false);
 
-        if (noUpdate) {
-            command.addOptions("--noupdate"); //$NON-NLS-1$
-        }
-        if (pull) {
-            command.addOptions("--pull"); //$NON-NLS-1$
-        }
-        if (uncompressed) {
-            command.addOptions("--uncompressed"); //$NON-NLS-1$
-        }
-        if (rev != null && rev.length() > 0) {
-            command.addOptions("--rev", rev); //$NON-NLS-1$
-        }
+		if (noUpdate) {
+			command.addOptions("--noupdate"); //$NON-NLS-1$
+		}
+		if (pull) {
+			command.addOptions("--pull"); //$NON-NLS-1$
+		}
+		if (uncompressed) {
+			command.addOptions("--uncompressed"); //$NON-NLS-1$
+		}
+		if (rev != null && rev.length() > 0) {
+			command.addOptions("--rev", rev); //$NON-NLS-1$
+		}
 
-        URI uri = repo.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repo.getLocation());
-        }
+		addRepoToHgCommand(repo, command);
 
-        if (cloneName != null) {
-            command.addOptions(cloneName);
-        }
-        if (timeout) {
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
-            command.executeToBytes();
-        } else {
-            command.executeToBytes(Integer.MAX_VALUE);
-        }
-    }
+		if (cloneName != null) {
+			command.addOptions(cloneName);
+		}
+		if (timeout) {
+			command
+					.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
+			command.executeToBytes();
+		} else {
+			command.executeToBytes(Integer.MAX_VALUE);
+		}
+	}
 }

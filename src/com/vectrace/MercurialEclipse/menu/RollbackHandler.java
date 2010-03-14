@@ -7,22 +7,22 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
-public class RollbackHandler extends SingleResourceHandler {
+public class RollbackHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        String result = HgRollbackClient.rollback(project);
-        MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
-    }
+	@Override
+	protected void run(HgRoot hgRoot) throws CoreException {
+		String result = HgRollbackClient.rollback(hgRoot);
+		MessageDialog.openInformation(getShell(), Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
+	}
 
 }

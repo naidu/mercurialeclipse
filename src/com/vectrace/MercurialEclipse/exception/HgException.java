@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.exception;
 
@@ -18,50 +19,59 @@ import org.eclipse.team.core.TeamException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class HgException extends TeamException {
-    private static final long serialVersionUID = 1L; // Get rid of warning
+	private static final long serialVersionUID = 1L; // Get rid of warning
 
-    public static final int OPERATION_FAILED = -100;
-    public static final String OPERATION_FAILED_STRING = Messages.getString("HgException.operationFailed"); //$NON-NLS-1$
+	public static final int OPERATION_FAILED = -100;
+	public static final int OPERATION_CANCELLED = -200;
+	public static final String OPERATION_FAILED_STRING = Messages.getString("HgException.operationFailed"); //$NON-NLS-1$
 
-    public HgException(IStatus status) {
-        super(status);
-    }
+	public HgException(IStatus status) {
+		super(status);
+	}
 
-    public HgException(String message) {
-        super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                OPERATION_FAILED, message, null));
-    }
+	public HgException(String message) {
+		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+				OPERATION_FAILED, message, null));
+	}
 
-    public HgException(CoreException e) {
-        super(e);
-    }
+	public HgException(CoreException e) {
+		super(e);
+	}
 
-    public HgException(String message, Throwable e) {
-        super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                OPERATION_FAILED, message, e));
-    }
+	public HgException(String message, Throwable e) {
+		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+				OPERATION_FAILED, message, e));
+	}
 
-    public HgException(int code, String message) {
-        super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, code,
-                message, null));
-    }
+	public HgException(int code, String message, Throwable e) {
+		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, code,
+				message, e));
+	}
 
-    @Override
-    public String getMessage() {
-        IStatus status = getStatus();
-        StringBuilder sb = new StringBuilder(status.getMessage());
-        sb.append(", error code: ").append(status.getCode());
-        return sb.toString();
-    }
+	@Override
+	public String getMessage() {
+		IStatus status = getStatus();
+		StringBuilder sb = new StringBuilder(status.getMessage());
+		switch (status.getCode()) {
+		case OPERATION_CANCELLED:
+			break;
+		case OPERATION_FAILED:
+			break;
+		default:
+			sb.append(", error code: ").append(status.getCode());
+			break;
+		}
+		return sb.toString();
+	}
 
-    @Override
-    public String getLocalizedMessage() {
-        return getMessage();
-    }
+	@Override
+	public String getLocalizedMessage() {
+		return getMessage();
+	}
 
-    @Override
-    public String toString() {
-        // never null
-        return getMessage();
-    }
+	@Override
+	public String toString() {
+		// never null
+		return getMessage();
+	}
 }

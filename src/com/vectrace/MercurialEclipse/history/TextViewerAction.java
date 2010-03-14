@@ -10,14 +10,14 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
- 
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.ui.texteditor.IUpdate;
 
 /**
- * Used by ConsoleView 
+ * Used by ConsoleView
  */
 public class TextViewerAction extends Action implements IUpdate {
 	private int operationCode = -1;
@@ -36,7 +36,7 @@ public class TextViewerAction extends Action implements IUpdate {
 			firePropertyChange(ENABLED, wasEnabled ? Boolean.TRUE : Boolean.FALSE, isEnabled ? Boolean.TRUE : Boolean.FALSE);
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		if (operationCode != -1 && operationTarget != null) {

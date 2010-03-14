@@ -8,23 +8,23 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch				- Adaption to Mercurial
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
-import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -32,14 +32,8 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
  */
 public class PushPullSynchronizeAction extends SynchronizeModelAction {
 
-	private boolean update;
+	private final boolean update;
 	private final boolean isPull;
-
-    public PushPullSynchronizeAction(String text,
-			ISynchronizePageConfiguration configuration) {
-		super(text, configuration);
-		this.isPull = true;
-	}
 
 	public PushPullSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
@@ -47,61 +41,55 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		super(text, configuration, selectionProvider);
 		this.isPull = isPull;
 		this.update = update;
+		if(isPull) {
+			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
+		} else {
+			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
+		}
 	}
 
 	@Override
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
-		List<IResource> selectedResources = new ArrayList<IResource>(
-				elements.length);
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] instanceof ISynchronizeModelElement) {
-				selectedResources.add(((ISynchronizeModelElement) elements[i])
-						.getResource());
-			}
-		}
-		int revision = 0;
-		// XXX currently I have no idea why IDiffElement[] elements is empty...
-        if(selectedResources.size() == 0){
-            IStructuredSelection sel = getStructuredSelection();
-            Object[] objects = sel.toArray();
-            for (Object object : objects) {
-                if (object instanceof IResource) {
-                    selectedResources.add(((IResource) object));
-                } else if (object instanceof IAdaptable){
-                    IAdaptable adaptable = (IAdaptable) object;
-                    IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-                    if(resource != null){
-                        selectedResources.add(resource);
-                    }
-                }
-                if (object instanceof MercurialResourceVariant) {
-                   revision = Math.max(revision, ((MercurialResourceVariant)object).getRev().getRevision());
-                }
-            }
-        }
-		IResource[] resources = new IResource[selectedResources.size()];
-		selectedResources.toArray(resources);
-		return new PushPullSynchronizeOperation(configuration, elements,
-				resources, revision > 0 ? Integer.toString(revision) : null, isPull, update);
+		IStructuredSelection sel = getStructuredSelection();
+		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
+		Object object = sel.getFirstElement();
+		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
 	}
 
-    @Override
-    protected boolean updateSelection(IStructuredSelection selection) {
-        boolean updateSelection = super.updateSelection(selection);
-        if(!updateSelection){
-            if(ISynchronizePageConfiguration.INCOMING_MODE == getConfiguration().getMode()) {
-                return isPull;
-            } else if (ISynchronizePageConfiguration.OUTGOING_MODE == getConfiguration().getMode()) {
-                return !isPull;
-            } else if (ISynchronizePageConfiguration.BOTH_MODE == getConfiguration().getMode()) {
-                return true;
-            }
-        }
-        return updateSelection;
-    }
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection) {
+		boolean updateSelection = super.updateSelection(selection);
+		if(!updateSelection){
+			Object[] array = selection.toArray();
+			if(selection.size() != 1){
+				return false;
+			}
+			return isSupported(array[0]);
+		}
+		return updateSelection;
+	}
 
-    public boolean isPull() {
-        return isPull;
-    }
+	public boolean isPull() {
+		return isPull;
+	}
+
+	private boolean isSupported(Object object) {
+		if(object instanceof IProject){
+			return true;
+		}
+		if(object instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) object;
+			return (isMatching(group.getDirection()) && !group.getChangesets().isEmpty());
+		}
+		if(object instanceof ChangeSet){
+			ChangeSet changeSet = (ChangeSet) object;
+			return !(changeSet instanceof WorkingChangeSet) && isMatching(changeSet.getDirection());
+		}
+		return false;
+	}
+
+	private boolean isMatching(Direction d){
+		return (d == Direction.INCOMING && isPull) || (d == Direction.OUTGOING && !isPull);
+	}
 }

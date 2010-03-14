@@ -7,12 +7,16 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -31,6 +35,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -52,110 +57,111 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractCache extends Observable {
 
+	protected static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 
-    protected final boolean debug;
+	protected final boolean debug;
 
-    public AbstractCache() {
-        super();
-        debug = MercurialEclipsePlugin.getDefault().isDebugging();
-        final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-        configureFromPreferences(store);
-        store.addPropertyChangeListener(new IPropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent event) {
-                configureFromPreferences(store);
-            }
-        });
+	public AbstractCache() {
+		super();
+		debug = MercurialEclipsePlugin.getDefault().isDebugging();
+		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		configureFromPreferences(store);
+		store.addPropertyChangeListener(new IPropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent event) {
+				configureFromPreferences(store);
+			}
+		});
 
-        ResourcesPlugin.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
-            public void resourceChanged(IResourceChangeEvent event) {
-                if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
-                    return;
-                }
-                try {
-                    ProjectDeltaVisitor visitor = new ProjectDeltaVisitor();
-                    event.getDelta().accept(visitor);
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
-        }, IResourceChangeEvent.POST_CHANGE);
-    }
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
+			public void resourceChanged(IResourceChangeEvent event) {
+				if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
+					return;
+				}
+				try {
+					ProjectDeltaVisitor visitor = new ProjectDeltaVisitor();
+					event.getDelta().accept(visitor);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		}, IResourceChangeEvent.POST_CHANGE);
+	}
 
-    private class ProjectDeltaVisitor implements IResourceDeltaVisitor {
+	private class ProjectDeltaVisitor implements IResourceDeltaVisitor {
 
-        public boolean visit(IResourceDelta delta) throws CoreException {
-            IResource res = delta.getResource();
-            if (res.getType() == IResource.ROOT) {
-                return true;
-            }
-            if (res.getType() != IResource.PROJECT) {
-                return false;
-            }
-            IProject project = (IProject) res;
-            if(delta.getKind() == IResourceDelta.REMOVED ||
-                    ((delta.getFlags() & IResourceDelta.OPEN) != 0 && !project.isOpen())){
-                clearProjectCache(project);
-            }
-            return false;
-        }
-    }
-
-
-    /**
-     * Clients has cleanup all caches related to given project.
-     */
-    abstract protected void clearProjectCache(IProject project);
-
-    /**
-     * does nothing, clients has to override and update preferences
-     */
-    abstract protected void configureFromPreferences(IPreferenceStore store);
-
-    /**
-     * Spawns an update job to notify all the clients about given resource changes
-     * @param resource non null
-     */
-    protected void notifyChanged(final IResource resource, boolean expandMembers) {
-        final Set<IResource> resources = new HashSet<IResource>();
-        if(!expandMembers) {
-            resources.add(resource);
-        }
-        notifyChanged(resources, expandMembers);
-    }
-
-    /**
-     * Spawns an update job to notify all the clients about given resource changes
-     * @param resources non null
-     */
-    protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
-        Job job = new Job("hg cache clients update..."){
-            @Override
-            protected IStatus run(IProgressMonitor monitor) {
-                Set<IResource> set;
-                if(!expandMembers){
-                    set = resources;
-                } else {
-                    set = new HashSet<IResource>(resources);
-                    for (IResource r : resources) {
-                        if(monitor.isCanceled()){
-                            return Status.CANCEL_STATUS;
-                        }
-                        set.addAll(ResourceUtils.getMembers(r));
-                    }
-                }
-                setChanged();
-                notifyObservers(set);
-                return Status.OK_STATUS;
-            }
-        };
-        job.setSystem(true);
-        job.schedule();
-    }
+		public boolean visit(IResourceDelta delta) throws CoreException {
+			IResource res = delta.getResource();
+			if (res.getType() == IResource.ROOT) {
+				return true;
+			}
+			if (res.getType() != IResource.PROJECT) {
+				return false;
+			}
+			IProject project = (IProject) res;
+			if(delta.getKind() == IResourceDelta.REMOVED ||
+					((delta.getFlags() & IResourceDelta.OPEN) != 0 && !project.isOpen())){
+				projectDeletedOrClosed(project);
+			}
+			return false;
+		}
+	}
 
 
-    @Override
-    public String toString() {
-        return getClass().getSimpleName();
-    }
+	/**
+	 * Clients has cleanup all caches related to given project.
+	 */
+	abstract protected void projectDeletedOrClosed(IProject project);
+
+	/**
+	 * does nothing, clients has to override and update preferences
+	 */
+	abstract protected void configureFromPreferences(IPreferenceStore store);
+
+	/**
+	 * Spawns an update job to notify all the clients about given resource changes
+	 * @param resource non null
+	 */
+	protected void notifyChanged(final IResource resource, boolean expandMembers) {
+		final Set<IResource> resources = new HashSet<IResource>();
+		if(!expandMembers) {
+			resources.add(resource);
+		}
+		notifyChanged(resources, expandMembers);
+	}
+
+	/**
+	 * Spawns an update job to notify all the clients about given resource changes
+	 * @param resources non null
+	 */
+	protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
+		Job job = new Job("hg cache clients update..."){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				Set<IResource> set;
+				if(!expandMembers){
+					set = resources;
+				} else {
+					set = new HashSet<IResource>(resources);
+					for (IResource r : resources) {
+						if(monitor.isCanceled()){
+							return Status.CANCEL_STATUS;
+						}
+						set.addAll(ResourceUtils.getMembers(r));
+					}
+				}
+				setChanged();
+				notifyObservers(set);
+				return Status.OK_STATUS;
+			}
+		};
+		job.setSystem(true);
+		job.schedule();
+	}
+
+
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 
 }

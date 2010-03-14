@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public class CompareWithAction extends CompareAction {
 

@@ -9,23 +9,18 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
-/*
- * OpenMercurialRevisionAction
- *
+/**
  * Open an "old" revision in an editor from like "History" view.
- *
  */
 package com.vectrace.MercurialEclipse.actions;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.util.Date;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFileState;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -34,6 +29,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -45,275 +41,252 @@ import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IStorageEditorInput;
-import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
+import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
-    public static class MercurialRevisionEditorInput extends PlatformObject implements
-            IWorkbenchAdapter, IStorageEditorInput {
+	public static class MercurialRevisionEditorInput extends PlatformObject implements
+			IWorkbenchAdapter, IStorageEditorInput {
 
-        private final IFileRevision fileRevision;
-        private MercurialRevisionStorage storage;
+		private final IFileRevision fileRevision;
+		private final MercurialRevisionStorage storage;
+		private final IEditorDescriptor descriptor;
+		private final String fileName;
 
-        public MercurialRevisionEditorInput(IFileRevision revision) {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::MercurialRevisionEditorInput()");
+		public MercurialRevisionEditorInput(IFileRevision revision) {
+			this.fileRevision = revision;
+			MercurialRevisionStorage tmpStore = null;
+			try {
+				tmpStore = (MercurialRevisionStorage) revision.getStorage(new NullProgressMonitor());
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			} finally {
+				storage = tmpStore;
+			}
+			if(storage != null){
+				IFile file = storage.getResource();
+				if(file != null){
+					fileName = file.getName();
+				} else {
+					fileName = storage.getName();
+				}
+			} else {
+				fileName = fileRevision.getName();
+			}
+			IEditorDescriptor tmpId = null;
+			try {
+				tmpId = initDescriptor();
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			} finally {
+				descriptor = tmpId;
+			}
+		}
 
-            this.fileRevision = revision;
-            try {
-                this.storage = (MercurialRevisionStorage) revision.getStorage(new NullProgressMonitor());
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
+		public Object[] getChildren(Object o) {
+			return new Object[0];
+		}
 
-        public Object[] getChildren(Object o) {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getChildren()");
-            return new Object[0];
-        }
+		public ImageDescriptor getImageDescriptor(Object object) {
+			return descriptor.getImageDescriptor();
+		}
 
-        public ImageDescriptor getImageDescriptor(Object object) {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()");
-            return null;
-        }
+		public String getLabel(Object o) {
+			if (storage != null) {
+				return storage.getName();
+			}
+			return fileRevision.getName();
+		}
 
-        public String getLabel(Object o) {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getLabel()");
-            if (storage != null) {
-                return storage.getName();
-            }
-            return ""; //$NON-NLS-1$
-        }
+		public Object getParent(Object o) {
+			return null;
+		}
 
-        public Object getParent(Object o) {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getParent()");
-            return null;
-        }
+		public IStorage getStorage() throws CoreException {
+			return storage;
+		}
 
-        public IStorage getStorage() throws CoreException {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getStorage()");
-            return storage;
-        }
+		public boolean exists() {
+			return true;
+		}
 
-        public boolean exists() {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::exists()");
-            return true;
-        }
+		public ImageDescriptor getImageDescriptor() {
+			return descriptor.getImageDescriptor();
+		}
 
-        public ImageDescriptor getImageDescriptor() {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()"); //$NON-NLS-1$
-            return null;
-        }
+		public String getName() {
+			return fileName;
+		}
 
-        public String getName() {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getName()");
-            String ret = "";//$NON-NLS-1$
-            if (fileRevision != null) {
-                ret = fileRevision.getName() + "[" //$NON-NLS-1$
-                        + storage.getChangeSet().toString()+"]"; //$NON-NLS-1$
-            } else if (storage != null) {
-                ret = storage.getName()
-                        + " " //$NON-NLS-1$
-                        + DateFormat.getInstance().format(
-                                new Date(((IFileState) storage)
-                                        .getModificationTime()));
-            }
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getName()
-            // return:" + ret);
-            return ret;
-        }
+		public IPersistableElement getPersistable() {
+			return null; // Can to save editor changes
+		}
 
-        public IPersistableElement getPersistable() {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getPersistable()");
-            return null; // Can to save editor changes
-        }
+		public String getToolTipText() {
+			if (storage != null) {
+				return "" + storage.getFullPath();
+			}
+			return getName();
+		}
 
-        public String getToolTipText() {
-            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getToolTipText()");
-            if (fileRevision != null) {
-                try {
-                    return getStorage().getFullPath().toString();
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
+		@SuppressWarnings("unchecked")
+		@Override
+		public Object getAdapter(Class adapter) {
+			if (adapter == IWorkbenchAdapter.class) {
+				return this;
+			}
+			if (adapter == IFileRevision.class) {
+				return fileRevision;
+			}
+			return super.getAdapter(adapter);
+		}
 
-            if (storage != null) {
-                return storage.getFullPath().toString();
-            }
+		public String getEditorID() {
+			if (descriptor == null || descriptor.isOpenExternal()) {
+				return EditorsUI.DEFAULT_TEXT_EDITOR_ID;
+			}
+			return descriptor.getId();
+		}
 
-            return ""; //$NON-NLS-1$
-        }
+		private IEditorDescriptor initDescriptor() throws CoreException {
+			IContentType type = null;
+			IContentTypeManager typeManager = Platform.getContentTypeManager();
+			if(storage != null){
+				InputStream contents = storage.getContents();
+				if (contents != null) {
+					try {
+						type = typeManager.findContentTypeFor(contents, fileName);
+					} catch (IOException e) {
+						MercurialEclipsePlugin.logError(e);
+					} finally {
+						try {
+							contents.close();
+						} catch (IOException e) {
+							MercurialEclipsePlugin.logError(e);
+						}
+					}
+				}
+			}
+			if (type == null) {
+				type = typeManager.findContentTypeFor(fileName);
+			}
+			IEditorRegistry registry = PlatformUI.getWorkbench().getEditorRegistry();
+			return registry.getDefaultEditor(fileName, type);
+		}
+	}
 
-        @SuppressWarnings("unchecked")
-        @Override
-        public Object getAdapter(Class adapter) {
-            if (adapter == IWorkbenchAdapter.class) {
-                return this;
-            }
-            if (adapter == IFileRevision.class) {
-                return fileRevision;
-            } else if (adapter == IFileState.class) {
-                if (storage != null && storage instanceof IFileState) {
-                    return storage;
-                }
-            }
-            return super.getAdapter(adapter);
-        }
+	private IStructuredSelection selection;
+	private HistoryPage page;
 
-    }
+	public OpenMercurialRevisionAction(String text) {
+		super(text);
+	}
 
-    private IStructuredSelection selection;
-    private HistoryPage page;
+	@Override
+	public void run() {
 
-    public OpenMercurialRevisionAction(String text) {
-        super(text);
-        // System.out.println("OpenMercurialRevisionAction::OpenMercurialRevisionAction("
-        // + text + ")");
-    }
+		IStructuredSelection structSel = selection;
 
-    @Override
-    public void run() {
-        // System.out.println("OpenMercurialRevisionAction::run()");
+		Object[] objArray = structSel.toArray();
 
-        IStructuredSelection structSel = selection;
+		for (int i = 0; i < objArray.length; i++) {
+			Object tempRevision = objArray[i];
 
-        Object[] objArray = structSel.toArray();
+			final IFileRevision revision = (IFileRevision) tempRevision;
+			if (revision == null || !revision.exists()) {
+				MessageDialog.openError(page.getSite().getShell(),
+						Messages.getString("OpenMercurialRevisionAction.error.deletedRevision"), Messages.getString("OpenMercurialRevisionAction.error.cantOpen")); //$NON-NLS-1$ //$NON-NLS-2$
+			} else {
+				SafeUiJob runnable = new SafeUiJob(Messages.getString("OpenMercurialRevisionAction.job.openingEditor")) { //$NON-NLS-1$
 
-        for (int i = 0; i < objArray.length; i++) {
-            Object tempRevision = objArray[i];
+					@Override
+					public IStatus runSafe(IProgressMonitor monitor) {
+						IStorage file;
+						try {
+							file = revision.getStorage(monitor);
 
-            final IFileRevision revision = (IFileRevision) tempRevision;
-            if (revision == null || !revision.exists()) {
-                MessageDialog.openError(page.getSite().getShell(),
-                        Messages.getString("OpenMercurialRevisionAction.error.deletedRevision"), Messages.getString("OpenMercurialRevisionAction.error.cantOpen")); //$NON-NLS-1$ //$NON-NLS-2$
-            } else {
-                SafeUiJob runnable = new SafeUiJob(Messages.getString("OpenMercurialRevisionAction.job.openingEditor")) { //$NON-NLS-1$
+							IWorkbenchPage wPage = page.getSite().getPage();
+							if (file instanceof IFile) {
+								// if this is the current workspace file, open it
+								IDE.openEditor(wPage, (IFile) file);
+							} else {
+								// not current revision
+								MercurialRevisionEditorInput fileRevEditorInput =
+									new MercurialRevisionEditorInput(revision);
+								if (!editorAlreadyOpenOnContents(fileRevEditorInput)) {
+									String id = fileRevEditorInput.getEditorID();
+									wPage.openEditor(fileRevEditorInput, id);
+								}
+							}
+							return super.runSafe(monitor);
+						} catch (CoreException e) {
+							MercurialEclipsePlugin.logError(e);
+							return e.getStatus();
+						}
+					}
+				};
+				runnable.schedule();
+			}
 
-                    @Override
-                    public IStatus runSafe(IProgressMonitor monitor) {
-                        IStorage file;
-                        try {
-                            file = revision.getStorage(monitor);
-                            String id = getEditorID(file.getName(), file.getContents());
+		}
+	}
 
-                            if (file instanceof IFile) {
-                                // if this is the current workspace file, open it
-                                IDE.openEditor(page.getSite().getPage(), (IFile) file);
-                            } else {
-                                // not current revision
-                                MercurialRevisionEditorInput fileRevEditorInput =
-                                    new MercurialRevisionEditorInput(revision);
-                                if (!editorAlreadyOpenOnContents(fileRevEditorInput)) {
-                                    // !editorAlreadyOpenOnContents(fileRevEditorInput)");
-                                    page.getSite().getPage().openEditor(fileRevEditorInput, id);
-                                }
-                            }
-                            return super.runSafe(monitor);
-                        } catch (CoreException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            return e.getStatus();
-                        }
-                    }
-                };
-                runnable.schedule();
-            }
 
-        }
-    }
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection1) {
+		this.selection = selection1;
+		return shouldShow();
+	}
 
-    String getEditorID(String fileName, InputStream contents) {
-        // System.out.println("OpenMercurialRevisionAction::getEditorID()");
-        IWorkbench workbench = PlatformUI.getWorkbench();
-        IEditorRegistry registry = workbench.getEditorRegistry();
-        IContentType type = null;
-        if (contents != null) {
-            try {
-                type = Platform.getContentTypeManager().findContentTypeFor(
-                        contents, fileName);
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-        if (type == null) {
-            type = Platform.getContentTypeManager()
-                    .findContentTypeFor(fileName);
-        }
-        IEditorDescriptor descriptor = registry
-                .getDefaultEditor(fileName, type);
-        String id;
-        if (descriptor == null || descriptor.isOpenExternal()) {
-            id = "org.eclipse.ui.DefaultTextEditor"; //$NON-NLS-1$
-        } else {
-            id = descriptor.getId();
-        }
+	public void setPage(HistoryPage page) {
+		this.page = page;
+	}
 
-        return id;
-    }
+	private boolean shouldShow() {
+		if (selection.isEmpty()) {
+			return false;
+		}
+		Object[] objArray = selection.toArray();
+		for (int i = 0; i < objArray.length; i++) {
+			MercurialRevision revision = (MercurialRevision) objArray[i];
+			// check to see if any of the selected revisions are deleted revisions
+			if (revision != null && (!revision.isFile() || !revision.exists())) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    @Override
-    protected boolean updateSelection(IStructuredSelection selection1) {
-        // System.out.println("OpenMercurialRevisionAction::updateSelection()");
-        this.selection = selection1;
-        return shouldShow();
-    }
+	private boolean editorAlreadyOpenOnContents(
+			MercurialRevisionEditorInput input) {
+		IEditorReference[] editorRefs = page.getSite().getPage().getEditorReferences();
+		IFileRevision inputRevision = (IFileRevision) input.getAdapter(IFileRevision.class);
+		for (IEditorReference editorRef : editorRefs) {
+			IEditorPart part = editorRef.getEditor(false);
+			if (part != null
+					&& part.getEditorInput() instanceof MercurialRevisionEditorInput) {
+				IFileRevision editorRevision = (IFileRevision) part
+						.getEditorInput().getAdapter(IFileRevision.class);
 
-    public void setPage(HistoryPage page) {
-        // System.out.println("OpenMercurialRevisionAction::setPage()");
-        this.page = page;
-    }
-
-    private boolean shouldShow() {
-        // System.out.println("OpenMercurialRevisionAction::shouldShow()");
-        IStructuredSelection structSel = selection;
-        Object[] objArray = structSel.toArray();
-
-        if (objArray.length == 0) {
-            return false;
-        }
-
-        for (int i = 0; i < objArray.length; i++) {
-            IFileRevision revision = (IFileRevision) objArray[i];
-            // check to see if any of the selected revisions are deleted
-            // revisions
-            if (revision != null && !revision.exists()) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private boolean editorAlreadyOpenOnContents(
-            MercurialRevisionEditorInput input) {
-        // System.out.println("OpenMercurialRevisionAction::editorAlreadyOpenOnContents()");
-        IEditorReference[] editorRefs = page.getSite().getPage()
-                .getEditorReferences();
-        for (int i = 0; i < editorRefs.length; i++) {
-            IEditorPart part = editorRefs[i].getEditor(false);
-            if (part != null
-                    && part.getEditorInput() instanceof MercurialRevisionEditorInput) {
-                IFileRevision inputRevision = (IFileRevision) input
-                        .getAdapter(IFileRevision.class);
-                IFileRevision editorRevision = (IFileRevision) part
-                        .getEditorInput().getAdapter(IFileRevision.class);
-
-                if (inputRevision.equals(editorRevision)) {
-                    // make the editor that already contains the revision
-                    // current
-                    page.getSite().getPage().activate(part);
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+				if (inputRevision.equals(editorRevision)) {
+					// make the editor that already contains the revision
+					// current
+					page.getSite().getPage().activate(part);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 }

@@ -7,12 +7,11 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */
@@ -32,7 +31,7 @@ public abstract class SingleResourceAction implements IActionDelegate {
 	}
 
 	protected Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		return MercurialEclipsePlugin.getActiveShell();
 	}
 
 	protected IResource getSelectedResource() {
@@ -43,10 +42,10 @@ public abstract class SingleResourceAction implements IActionDelegate {
 		try {
 			run(getSelectedResource());
 		} catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-		    MessageDialog.openError(getShell(), Messages.getString("SingleResourceAction.hgSays"), e.getMessage()+Messages.getString("SingleResourceAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			MercurialEclipsePlugin.logError(e);
+			MessageDialog.openError(getShell(), Messages.getString("SingleResourceAction.hgSays"), e.getMessage()+Messages.getString("SingleResourceAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
-	
+
 	protected abstract void run(IResource resource) throws Exception ;
 }

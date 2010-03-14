@@ -7,191 +7,199 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
 import java.text.MessageFormat;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.DataLoader;
-import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
-public class MergeHandler extends SingleResourceHandler {
+public class MergeHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        merge(resource.getProject(), getShell(), new NullProgressMonitor(), false, true);
-    }
+	@Override
+	protected void run(HgRoot hgRoot) throws CoreException {
+		determineMergeHeadAndMerge(hgRoot, getShell(), new NullProgressMonitor(), false, true);
+	}
 
-    public static String merge(IProject project, Shell shell, IProgressMonitor monitor,
-            boolean autoPickOtherHead, boolean showCommitDialog) throws HgException, CoreException {
-        DataLoader loader = new ProjectDataLoader(project);
+	public static String determineMergeHeadAndMerge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
-        // can we do the equivalent of plain "hg merge"?
-        ChangeSet cs = getOtherHeadInCurrentBranch(project, loader);
-        if (cs != null) {
-            if (!autoPickOtherHead) {
-                MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-                mb.setText("Merge");
-                String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" +
-                "User: " + cs.getUser() + "\n" +
-                "Date: " + cs.getDate() + "\n" +
-                "Summary: " + cs.getSummary();
+		// can we do the equivalent of plain "hg merge"?
+		ChangeSet cs = getOtherHeadInCurrentBranch(hgRoot);
+		boolean forced = false;
 
-                String branch = cs.getBranch();
-                if (Branch.isDefault(branch)) {
-                    branch = Branch.DEFAULT;
-                }
-                mb.setMessage(MessageFormat.format(Messages.getString("MergeHandler.mergeWithOtherHead"),
-                        branch, csSummary));
-                if (mb.open() == SWT.NO) {
-                    cs = null;
-                }
-            }
-        }
+		String forceMessage = "Forced merge (this will discard all uncommitted changes!)";
+		boolean hasDirtyFiles = HgStatusClient.isDirty(hgRoot);
+		if (cs != null) {
+			if (!autoPickOtherHead) {
 
-        // have to open the dialog until we get a valid changeset
-        while (cs == null) {
-            RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
-                    Messages.getString("MergeHandler.mergeWith"), loader); //$NON-NLS-1$
-            dialog.setDefaultShowingHeads(true);
-            dialog.setDisallowSelectingParents(true);
+				String csSummary = "    Changeset: " + cs.getRevision().toString().substring(0, 20)
+						+ "\n    User: " + cs.getUser() + "\n    Date: "
+						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
-            if (dialog.open() != IDialogConstants.OK_ID) {
-                return "";
-            }
+				String branch = cs.getBranch();
+				if (Branch.isDefault(branch)) {
+					branch = Branch.DEFAULT;
+				}
+				String message = MessageFormat.format(Messages
+						.getString("MergeHandler.mergeWithOtherHead"), branch, csSummary);
 
-            cs = dialog.getChangeSet();
-        }
+				if(hasDirtyFiles){
+					MessageDialogWithToggle dialog = MessageDialogWithToggle.openYesNoQuestion(
+							shell, "Merge", message, forceMessage, false, null, null);
+					if(dialog.getReturnCode() != IDialogConstants.YES_ID) {
+						cs = null;
+					}
+					forced = dialog.getToggleState();
+				} else {
+					MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+					mb.setText("Merge");
+					mb.setMessage(message);
+					if (mb.open() == SWT.NO) {
+						cs = null;
+					}
+				}
+			}
+		}
 
-        boolean useExternalMergeTool = Boolean.valueOf(
-                HgClients.getPreference(
-                        MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                "false")).booleanValue(); //$NON-NLS-1$
-        String result = ""; //$NON-NLS-1$
-        boolean useResolve = isHgResolveAvailable();
-        if (useResolve) {
-            result = HgMergeClient.merge(project, cs.getRevision().getChangeset(),
-                    useExternalMergeTool);
-        } else {
-            result = HgIMergeClient.merge(project, cs.getRevision().getChangeset());
-        }
+		// have to open the dialog until we get a valid changeset
+		while (cs == null) {
+			RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
+					Messages.getString("MergeHandler.mergeWith"), hgRoot); //$NON-NLS-1$
+			dialog.setDefaultShowingHeads(true);
+			dialog.setDisallowSelectingParents(true);
+			dialog.showForceButton(hasDirtyFiles);
+			dialog.setForceChecked(forced);
+			dialog.setForceButtonText(forceMessage);
+			if (dialog.open() != IDialogConstants.OK_ID) {
+				return "";
+			}
 
-        project.setPersistentProperty(ResourceProperties.MERGING, cs.getChangeset());
-        try {
-            result += commitMerge(monitor, project, shell, result, showCommitDialog);
-        } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-        }
+			cs = dialog.getChangeSet();
+			forced = dialog.isForceChecked();
+		}
 
-        // trigger refresh of project decoration
-        project.touch(new NullProgressMonitor());
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        return result;
-    }
+		return mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
+	}
 
-    private static String commitMerge(IProgressMonitor monitor, final IProject project,
-            final Shell shell,  String mergeResult, boolean showCommitDialog) throws CoreException {
-        boolean commit = true;
+	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
+			CoreException {
+		boolean useExternalMergeTool = Boolean.valueOf(
+				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+				"false")).booleanValue(); //$NON-NLS-1$
 
-        String output = "";
-        if (!HgResolveClient.checkAvailable()) {
-            if (!mergeResult.contains("all conflicts resolved")) { //$NON-NLS-1$
-                commit = false;
-            }
-        } else {
-            List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(project);
-            monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
-            for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-                if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
-                    commit = false;
-                    break;
-                }
-            }
-            monitor.worked(1);
-        }
-        if (commit) {
-            monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
-            output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
-            if (!showCommitDialog) {
-                output += CommitMergeHandler.commitMerge(project);
-            } else {
-                output += new CommitMergeHandler().commitMergeWithCommitDialog(project, shell);
-            }
-            monitor.worked(1);
-        } else {
-            MergeView view = (MergeView) PlatformUI.getWorkbench()
-            .getActiveWorkbenchWindow().getActivePage().showView(
-                    MergeView.ID);
-            view.clearView();
-            view.setCurrentProject(project);
-        }
-        return output;
-    }
+		String result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
+				useExternalMergeTool, forced);
 
-    private static ChangeSet getOtherHeadInCurrentBranch(IProject project, DataLoader loader) throws HgException {
-        ChangeSet[] heads = loader.getHeads();
-        // have to be at least two heads total to do easy merge
-        if (heads.length < 2) {
-            return null;
-        }
+		String mergeChangesetId = cs.getChangeset();
+		HgStatusClient.setMergeStatus(hgRoot, mergeChangesetId);
+		try {
+			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+		}
+		new RefreshWorkspaceStatusJob(hgRoot).schedule();
+		return result;
+	}
 
-        ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetByRootId(project);
-        if(currentRevision == null){
-            return null;
-        }
-        String branch = currentRevision.getBranch();
+	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
+			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) throws CoreException {
+		boolean commit = true;
 
-        ChangeSet candidate = null;
-        for (ChangeSet cs : heads) {
-            // must match branch
-            if (!Branch.same(branch, cs.getBranch())) {
-                continue;
-            }
-            // can't be the current
-            if (cs.equals(currentRevision)) {
-                continue;
-            }
-            // if we have more than one candidate, then have to ask user anyway.
-            if (candidate != null) {
-                return null;
-            }
-            candidate = cs;
-        }
+		String output = "";
+		// check if auto-commit is possible
+		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(hgRoot);
+		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
+		for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
+			if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
+				// unresolved files, no auto-commit
+				commit = false;
+				break;
+			}
+		}
+		monitor.worked(1);
 
+		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
+		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
+		view.clearView();
+		view.setCurrentRoot(hgRoot);
 
-        return candidate;
-    }
+		// auto-commit if desired
+		if (commit) {
+			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
+			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
+			if (!showCommitDialog) {
+				output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
+						.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
+			} else {
+				output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
+			}
+			monitor.worked(1);
+		}
+		return output;
+	}
 
-    private static boolean isHgResolveAvailable() throws HgException {
-        return HgResolveClient.checkAvailable();
-    }
+	private static ChangeSet getOtherHeadInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
+		// have to be at least two heads total to do easy merge
+		if (heads.length < 2) {
+			return null;
+		}
+
+		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+		if(currentRevision == null){
+			return null;
+		}
+		String branch = currentRevision.getBranch();
+
+		ChangeSet candidate = null;
+		for (ChangeSet cs : heads) {
+			// must match branch
+			if (!Branch.same(branch, cs.getBranch())) {
+				continue;
+			}
+			// can't be the current
+			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
+				continue;
+			}
+			// if we have more than one candidate, then have to ask user anyway.
+			if (candidate != null) {
+				return null;
+			}
+			candidate = cs;
+		}
+
+		return candidate;
+	}
 
 }

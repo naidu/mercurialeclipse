@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Administrator	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -42,303 +43,307 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * control for choose location: clipboard, file or workspace file
- * 
+ *
  * @author Administrator
- * 
+ *
  */
 public class LocationChooser extends Composite implements Listener {
 
-    public enum LocationType {
-        Clipboard, FileSystem, Workspace
-    }
+	public enum LocationType {
+		Clipboard, FileSystem, Workspace
+	}
 
-    private Button btnClipboard;
+	private Button btnClipboard;
 
-    private Button btnFilesystem;
-    private Text txtSystemFile;
-    private Button btnBrowseFileSystem;
+	private Button btnFilesystem;
+	private Text txtSystemFile;
+	private Button btnBrowseFileSystem;
 
-    private Button btnWorkspace;
-    private Text txtWorkspaceFile;
-    private Button btnBrowseWorkspace;
+	private Button btnWorkspace;
+	private Text txtWorkspaceFile;
+	private Button btnBrowseWorkspace;
 
-    private final boolean save;
+	private final boolean save;
 
-    private ListenerList stateListeners = new ListenerList();
+	private final ListenerList stateListeners = new ListenerList();
 
-    private IDialogSettings settings;
+	private final IDialogSettings settings;
 
-    public LocationChooser(Composite parent, boolean save,
-            IDialogSettings settings) {
-        super(parent, SWT.None);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 3;
-        setLayout(layout);
-        createLocationControl();
-        this.save = save;
-        this.settings = settings;
-        restoreSettings();
-    }
+	public LocationChooser(Composite parent, boolean save,
+			IDialogSettings settings) {
+		super(parent, SWT.None);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 3;
+		setLayout(layout);
+		createLocationControl();
+		this.save = save;
+		this.settings = settings;
+		restoreSettings();
+	}
 
-    protected void createLocationControl() {
-        btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportPatchWizard.Clipboard"), 3); //$NON-NLS-1$
-        btnClipboard.addListener(SWT.Selection, this);
+	protected void createLocationControl() {
+		btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages
+				.getString("ExportPatchWizard.Clipboard"), 3); //$NON-NLS-1$
+		btnClipboard.addListener(SWT.Selection, this);
 
-        btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportPatchWizard.FileSystem"), //$NON-NLS-1$
-                1);
-        btnFilesystem.addListener(SWT.Selection, this);
-        txtSystemFile = SWTWidgetHelper.createTextField(this);
-        txtSystemFile.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
-                fireStateChanged();
-            }
-        });
-        txtSystemFile.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                ((Text) e.getSource()).selectAll();
-            }
-        });
-        btnBrowseFileSystem = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
-        btnBrowseFileSystem.addListener(SWT.Selection, this);
+		btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages
+				.getString("ExportPatchWizard.FileSystem"), //$NON-NLS-1$
+				1);
+		btnFilesystem.addListener(SWT.Selection, this);
+		txtSystemFile = SWTWidgetHelper.createTextField(this);
+		txtSystemFile.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				fireStateChanged();
+			}
+		});
+		txtSystemFile.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				((Text) e.getSource()).selectAll();
+			}
+		});
+		btnBrowseFileSystem = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
+		btnBrowseFileSystem.addListener(SWT.Selection, this);
 
-        btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportPatchWizard.Workspace"), 1); //$NON-NLS-1$
-        btnWorkspace.addListener(SWT.Selection, this);
-        txtWorkspaceFile = SWTWidgetHelper.createTextField(this);
-        txtWorkspaceFile.setEditable(false);
-        btnBrowseWorkspace = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
-        btnBrowseWorkspace.addListener(SWT.Selection, this);
-    }
+		btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages
+				.getString("ExportPatchWizard.Workspace"), 1); //$NON-NLS-1$
+		btnWorkspace.addListener(SWT.Selection, this);
+		txtWorkspaceFile = SWTWidgetHelper.createTextField(this);
+		txtWorkspaceFile.setEditable(false);
+		btnBrowseWorkspace = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
+		btnBrowseWorkspace.addListener(SWT.Selection, this);
+	}
 
-    public void handleEvent(Event event) {
-        if (event.widget == btnBrowseFileSystem) {
-            FileDialog dialog = new FileDialog(getDisplay().getActiveShell(),
-                    SWT.PRIMARY_MODAL | (save ? SWT.SAVE : SWT.OPEN));
-            // dialog.setText("Choose file to save");
-            dialog.setFileName(txtSystemFile.getText());
-            String file = dialog.open();
-            if (file != null)
-                txtSystemFile.setText(new Path(file).toOSString());
-        } else if (event.widget == btnBrowseWorkspace) {
-            if (save) {
-                SaveAsDialog dialog = new SaveAsDialog(getDisplay()
-                        .getActiveShell());
-                dialog.setOriginalFile(getWorkspaceFile());
-                // dialog.setText(txtWorkspaceFile.getText());
-                // dialog.setTitle(getTitle());
-                if (dialog.open() == Window.OK)
-                    txtWorkspaceFile.setText(dialog.getResult().toString());
-            } else {
-                // no folder
-                // OpenResourceDialog dialog = new
-                // OpenResourceDialog(getShell(),ResourcesPlugin.getWorkspace().getRoot(),IResource.FILE);
-                // multi
-                // ResourceSelectionDialog dialog = new
-                // ResourceSelectionDialog(getShell(),
-                // ResourcesPlugin.getWorkspace().getRoot(),null);
+	public void handleEvent(Event event) {
+		if (event.widget == btnBrowseFileSystem) {
+			FileDialog dialog = new FileDialog(getDisplay().getActiveShell(),
+					SWT.PRIMARY_MODAL | (save ? SWT.SAVE : SWT.OPEN));
+			// dialog.setText("Choose file to save");
+			dialog.setFileName(txtSystemFile.getText());
+			String file = dialog.open();
+			if (file != null) {
+				txtSystemFile.setText(new Path(file).toOSString());
+			}
+		} else if (event.widget == btnBrowseWorkspace) {
+			if (save) {
+				SaveAsDialog dialog = new SaveAsDialog(getDisplay()
+						.getActiveShell());
+				dialog.setOriginalFile(getWorkspaceFile());
+				// dialog.setText(txtWorkspaceFile.getText());
+				// dialog.setTitle(getTitle());
+				if (dialog.open() == Window.OK) {
+					txtWorkspaceFile.setText(dialog.getResult().toString());
+				}
+			} else {
+				// no folder
+				// OpenResourceDialog dialog = new
+				// OpenResourceDialog(getShell(),ResourcesPlugin.getWorkspace().getRoot(),IResource.FILE);
+				// multi
+				// ResourceSelectionDialog dialog = new
+				// ResourceSelectionDialog(getShell(),
+				// ResourcesPlugin.getWorkspace().getRoot(),null);
 
-                ResourceListSelectionDialog dialog = new ResourceListSelectionDialog(
-                        getShell(), ResourcesPlugin.getWorkspace().getRoot(),
-                        IResource.FILE);
-                List<String> list = new ArrayList<String>(1);
-                list.add(txtWorkspaceFile.getText());
-                dialog.setInitialElementSelections(list);
-                dialog.open();
-                Object[] result = dialog.getResult();
-                if (result != null && result.length > 0)
-                    txtWorkspaceFile.setText(((IFile) result[0]).getFullPath()
-                            .toPortableString());
-            }
-        } else if (event.widget == btnClipboard
-                || event.widget == btnFilesystem
-                || event.widget == btnWorkspace) {
-            updateBtnStatus();
-        }
-        fireStateChanged();
-    }
+				ResourceListSelectionDialog dialog = new ResourceListSelectionDialog(
+						getShell(), ResourcesPlugin.getWorkspace().getRoot(),
+						IResource.FILE);
+				List<String> list = new ArrayList<String>(1);
+				list.add(txtWorkspaceFile.getText());
+				dialog.setInitialElementSelections(list);
+				dialog.open();
+				Object[] result = dialog.getResult();
+				if (result != null && result.length > 0) {
+					txtWorkspaceFile.setText(((IFile) result[0]).getFullPath()
+							.toPortableString());
+				}
+			}
+		} else if (event.widget == btnClipboard
+				|| event.widget == btnFilesystem
+				|| event.widget == btnWorkspace) {
+			updateBtnStatus();
+		}
+		fireStateChanged();
+	}
 
-    public String validate() {
-        boolean valid = false;
-        LocationType type = getLocationType();
-        if (type == null)
-            return null;
-        switch (type) {
-        case Workspace:
-            // valid = isValidWorkSpaceLocation(getWorkspaceFile());
-            // break;
-        case FileSystem:
-            valid = isValidSystemFile(getPatchFile());
-            break;
-        case Clipboard:
-            return validateClipboard();
-        }
-        if (valid)
-            return null;
-        return Messages.getString("ExportPatchWizard.InvalidFileName"); //$NON-NLS-1$
-    }
+	public String validate() {
+		boolean valid = false;
+		LocationType type = getLocationType();
+		if (type == null) {
+			return null;
+		}
+		switch (type) {
+		case Workspace:
+			// valid = isValidWorkSpaceLocation(getWorkspaceFile());
+			// break;
+		case FileSystem:
+			valid = isValidSystemFile(getPatchFile());
+			break;
+		case Clipboard:
+			return validateClipboard();
+		}
+		if (valid) {
+			return null;
+		}
+		return Messages.getString("ExportPatchWizard.InvalidFileName"); //$NON-NLS-1$
+	}
 
-    private String validateClipboard() {
-        if (save)
-            return null;
-        return ClipboardUtils.isEmpty() ? Messages
-                .getString("LocationChooser.clipboardEmpty") : null; //$NON-NLS-1$
-    }
+	private String validateClipboard() {
+		if (save) {
+			return null;
+		}
+		return ClipboardUtils.isEmpty() ? Messages
+				.getString("LocationChooser.clipboardEmpty") : null; //$NON-NLS-1$
+	}
 
-    private boolean isValidSystemFile(File file) {
-        if (file == null)
-            return false;
-        if (!file.isAbsolute())
-            return false;
-        if (file.isDirectory())
-            return false;
-        if (save) {
-            File parent = file.getParentFile();
-            if (parent == null)
-                return false;
-            if (!parent.exists())
-                return false;
-            if (!parent.isDirectory())
-                return false;
-        } else {
-            if (!file.exists())
-                return false;
-        }
-        return true;
-    }
+	private boolean isValidSystemFile(File file) {
+		if (file == null) {
+			return false;
+		}
+		if (!file.isAbsolute()) {
+			return false;
+		}
+		if (file.isDirectory()) {
+			return false;
+		}
+		if (save) {
+			File parent = file.getParentFile();
+			if (parent == null) {
+				return false;
+			}
+			if (!parent.exists()) {
+				return false;
+			}
+			if (!parent.isDirectory()) {
+				return false;
+			}
+		} else {
+			if (!file.exists()) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    public File getPatchFile() {
-        switch (getLocationType()) {
-        case FileSystem:
-            return btnFilesystem.getSelection() ? new File(txtSystemFile
-                    .getText()) : null;
-        case Clipboard:
-            return null;
-        case Workspace:
-            IFile file = getWorkspaceFile();
-            return file == null ? null : file.getLocation().toFile();
-        default:
-            return null;
-        }
-    }
+	public File getPatchFile() {
+		switch (getLocationType()) {
+		case FileSystem:
+			return btnFilesystem.getSelection() ? new File(txtSystemFile
+					.getText()) : null;
+		case Clipboard:
+			return null;
+		case Workspace:
+			IFile file = getWorkspaceFile();
+			return file == null ? null : file.getLocation().toFile();
+		default:
+			return null;
+		}
+	}
 
-    public IFile getWorkspaceFile() {
-        if (!btnWorkspace.getSelection() || txtWorkspaceFile.getText() == null
-                || txtWorkspaceFile.getText().length() == 0)
-            return null;
-        IPath parentToWorkspace = new Path(txtWorkspaceFile.getText());
-        return ResourcesPlugin.getWorkspace().getRoot().getFile(
-                parentToWorkspace);
-    }
+	public IFile getWorkspaceFile() {
+		if (!btnWorkspace.getSelection() || txtWorkspaceFile.getText() == null
+				|| txtWorkspaceFile.getText().length() == 0) {
+			return null;
+		}
+		IPath parentToWorkspace = new Path(txtWorkspaceFile.getText());
+		return ResourcesPlugin.getWorkspace().getRoot().getFile(
+				parentToWorkspace);
+	}
 
-    // private boolean isValidWorkSpaceLocation(IFile file) {
-    // if (save)
-    // return file != null && file.getParent().exists();
-    // return file != null && file.exists();
-    // }
+	// private boolean isValidWorkSpaceLocation(IFile file) {
+	// if (save)
+	// return file != null && file.getParent().exists();
+	// return file != null && file.exists();
+	// }
 
-    public LocationType getLocationType() {
-        if (btnClipboard.getSelection())
-            return LocationType.Clipboard;
-        else if (btnFilesystem.getSelection())
-            return LocationType.FileSystem;
-        else if (btnWorkspace.getSelection())
-            return LocationType.Workspace;
-        return null;
-    }
+	public LocationType getLocationType() {
+		if (btnClipboard.getSelection()) {
+			return LocationType.Clipboard;
+		} else if (btnFilesystem.getSelection()) {
+			return LocationType.FileSystem;
+		} else if (btnWorkspace.getSelection()) {
+			return LocationType.Workspace;
+		}
+		return null;
+	}
 
-    private void updateBtnStatus() {
-        LocationType type = getLocationType();
-        txtSystemFile.setEnabled(type == LocationType.FileSystem);
-        btnBrowseFileSystem.setEnabled(type == LocationType.FileSystem);
-        btnBrowseWorkspace.setEnabled(type == LocationType.Workspace);
-    }
+	private void updateBtnStatus() {
+		LocationType type = getLocationType();
+		txtSystemFile.setEnabled(type == LocationType.FileSystem);
+		btnBrowseFileSystem.setEnabled(type == LocationType.FileSystem);
+		btnBrowseWorkspace.setEnabled(type == LocationType.Workspace);
+	}
 
-    /**
-     * @param exportPage
-     */
-    public void addStateListener(Listener listener) {
-        stateListeners.add(listener);
-    }
+	public void addStateListener(Listener listener) {
+		stateListeners.add(listener);
+	}
 
-    protected void fireStateChanged() {
-        for (Object obj : stateListeners.getListeners())
-            ((Listener) obj).handleEvent(null);
-    }
+	protected void fireStateChanged() {
+		for (Object obj : stateListeners.getListeners()) {
+			((Listener) obj).handleEvent(null);
+		}
+	}
 
-    /**
-     * @return
-     */
-    public Location getCheckedLocation() {
-        return new Location(getLocationType(), getPatchFile(),
-                getWorkspaceFile());
-    }
+	public Location getCheckedLocation() {
+		return new Location(getLocationType(), getPatchFile(),
+				getWorkspaceFile());
+	}
 
-    public static class Location {
+	public static class Location {
 
-        private final LocationType locationType;
+		private final LocationType locationType;
 
-        /**
-         * @return the locationType
-         */
-        public LocationType getLocationType() {
-            return locationType;
-        }
+		public LocationType getLocationType() {
+			return locationType;
+		}
 
-        /**
-         * @return the file
-         */
-        public File getFile() {
-            return file;
-        }
+		public File getFile() {
+			return file;
+		}
 
-        /**
-         * @return the workspaceFile
-         */
-        public IFile getWorkspaceFile() {
-            return workspaceFile;
-        }
+		public IFile getWorkspaceFile() {
+			return workspaceFile;
+		}
 
-        private final File file;
-        private final IFile workspaceFile;
+		private final File file;
+		private final IFile workspaceFile;
 
-        public Location(LocationType locationType, File file,
-                IFile workspaceFile) {
-            this.locationType = locationType;
-            this.file = file;
-            this.workspaceFile = workspaceFile;
-        }
+		public Location(LocationType locationType, File file,
+				IFile workspaceFile) {
+			this.locationType = locationType;
+			this.file = file;
+			this.workspaceFile = workspaceFile;
+		}
 
-    }
+	}
 
-    protected void restoreSettings() {
-        if (settings == null)
-            return;
-        String val = settings.get("LocationType"); //$NON-NLS-1$
-        if (val != null)
-            setLocationType(LocationType.valueOf(val));
-    }
+	protected void restoreSettings() {
+		if (settings == null) {
+			return;
+		}
+		String val = settings.get("LocationType"); //$NON-NLS-1$
+		if (val != null) {
+			setLocationType(LocationType.valueOf(val));
+		}
+	}
 
-    public void saveSettings() {
-        if (settings == null)
-            return;
-        settings.put("LocationType", getLocationType().name()); //$NON-NLS-1$
-    }
+	public void saveSettings() {
+		if (settings == null) {
+			return;
+		}
+		settings.put("LocationType", getLocationType().name()); //$NON-NLS-1$
+	}
 
-    private void setLocationType(LocationType type) {
-        switch (type) {
-        case Clipboard:
-            btnClipboard.setSelection(true);
-            break;
-        case FileSystem:
-            btnFilesystem.setSelection(true);
-            break;
-        case Workspace:
-            btnWorkspace.setSelection(true);
-            break;
-        }
-        updateBtnStatus();
-    }
+	private void setLocationType(LocationType type) {
+		switch (type) {
+		case Clipboard:
+			btnClipboard.setSelection(true);
+			break;
+		case FileSystem:
+			btnFilesystem.setSelection(true);
+			break;
+		case Workspace:
+			btnWorkspace.setSelection(true);
+			break;
+		}
+		updateBtnStatus();
+	}
 }

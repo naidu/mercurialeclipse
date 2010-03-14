@@ -16,17 +16,17 @@ import junit.framework.TestCase;
  * @author Zsolt Koppany <zsolt.koppany@intland.com>
  */
 public class StringUtilsTests extends TestCase {
-    public void testRemoveLineBreaks() {
-        assertEquals("", StringUtils.removeLineBreaks("\r\n"));
-        assertEquals("", StringUtils.removeLineBreaks("  \r\n  "));
-        assertEquals("", StringUtils.removeLineBreaks("\r\n  "));
-        assertEquals("", StringUtils.removeLineBreaks("  \r\n"));
+	public void testRemoveLineBreaks() {
+		assertEquals("", StringUtils.removeLineBreaks("\r\n"));
+		assertEquals("", StringUtils.removeLineBreaks("  \r\n  "));
+		assertEquals("", StringUtils.removeLineBreaks("\r\n  "));
+		assertEquals("", StringUtils.removeLineBreaks("  \r\n"));
 
-        assertEquals("abc def", StringUtils.removeLineBreaks("abc\r\ndef"));
-        assertEquals("abc def", StringUtils.removeLineBreaks("abc\r\n  def"));
-        assertEquals("abc def", StringUtils.removeLineBreaks("abc \r\n  def"));
-        assertEquals("abc def", StringUtils.removeLineBreaks("abc\t \r\n  def"));
-        assertEquals("hello abcdef", StringUtils.removeLineBreaks("hello\rabcdef"));
-        assertEquals("hello abcdef", StringUtils.removeLineBreaks("hello\nabcdef"));
-    }
+		assertEquals("abc def", StringUtils.removeLineBreaks("abc\r\ndef"));
+		assertEquals("abc def", StringUtils.removeLineBreaks("abc\r\n  def"));
+		assertEquals("abc def", StringUtils.removeLineBreaks("abc \r\n  def"));
+		assertEquals("abc def", StringUtils.removeLineBreaks("abc\t \r\n  def"));
+		assertEquals("hello abcdef", StringUtils.removeLineBreaks("hello\rabcdef"));
+		assertEquals("hello abcdef", StringUtils.removeLineBreaks("hello\nabcdef"));
+	}
 }

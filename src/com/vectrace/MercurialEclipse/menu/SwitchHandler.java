@@ -7,38 +7,36 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
-public class SwitchHandler extends SingleResourceHandler {
+public class SwitchHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        // better safe than sorry => do not trust the FlagManager
-        if (HgStatusClient.isDirty(project)) {
-            if (!MessageDialog
-                    .openQuestion(getShell(),
-                            Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
-                            Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
-                return;
-            }
-        }
-        RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-                Messages.getString("SwitchHandler.switchTo"), project); //$NON-NLS-1$
-        int result = dialog.open();
-        if (result == IDialogConstants.OK_ID) {
-            HgUpdateClient.update(project, dialog.getRevision(), true);
-        }
-    }
+	@Override
+	public void run(HgRoot hgRoot) throws CoreException {
+		if (HgStatusClient.isDirty(hgRoot)) {
+			if (!MessageDialog
+					.openQuestion(getShell(),
+							Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
+							Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
+				return;
+			}
+		}
+		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
+				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
+		int result = dialog.open();
+		if (result == IDialogConstants.OK_ID) {
+			new UpdateJob(dialog.getRevision(), true, hgRoot).schedule();
+		}
+	}
 
 }

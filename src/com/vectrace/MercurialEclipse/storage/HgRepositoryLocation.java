@@ -10,250 +10,262 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - additions for repository view
  *     Subclipse contributors    - fromProperties() initial source
- *     @author adam.berkes <adam.berkes@intland.com>
+ *     Adam Berkes (Intland)     - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.storage;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
 
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
+public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>, IHgRepositoryLocation {
 
-    private static final String PASSWORD_MASK = "***";
+	private static final String PASSWORD_MASK = "***";
 
-    private final String logicalName;
-    private String projectName;
-    private String location;
-    private final String user;
-    private final String password;
-    private final boolean isPush;
-    private Date lastUsage;
+	private String logicalName;
+	protected String location;
+	private String user;
+	private String password;
 
-    HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
-        this.logicalName = logicalName;
-        this.isPush = isPush;
-        this.user = user;
-        this.password = password;
-        URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
-        if(uri != null) {
-            try {
-                this.location = new URI(uri.getScheme(),
-                        null,
-                        uri.getHost(),
-                        uri.getPort(),
-                        uri.getPath(),
-                        null,
-                        uri.getFragment()).toASCIIString();
-            } catch (URISyntaxException ex) {
-                MercurialEclipsePlugin.logError(ex);
-            }
-        } else {
-            this.location = location;
-        }
-    }
+	private boolean isLocal;
 
-    HgRepositoryLocation(String logicalName, boolean isPush, URI uri) throws HgException {
-        if (uri == null) {
-            throw new HgException("Given URI cannot be null");
-        }
-        this.logicalName = logicalName;
-        this.isPush = isPush;
-        this.user = HgRepositoryLocationParser.getUserNameFromURI(uri);
-        this.password = HgRepositoryLocationParser.getPasswordFromURI(uri);
-        try {
-            this.location = new URI(uri.getScheme(),
-                    null,
-                    uri.getHost(),
-                    uri.getPort(),
-                    uri.getPath(),
-                    null,
-                    uri.getFragment()).toASCIIString();
-        } catch (URISyntaxException ex) {
-            MercurialEclipsePlugin.logError(ex);
-        }
-    }
+	/**
+	 * hg repository which is represented by a bundle file (on local disk)
+	 */
+	public static class BundleRepository extends HgRepositoryLocation {
 
-    static public boolean validateLocation(String validate) {
-        try {
-            return HgRepositoryLocationParser.parseLocationToURI(validate, null, null) != null;
-        } catch (HgException ex) {
-            MercurialEclipsePlugin.logError(ex);
-            return false;
-        }
-    }
+		/**
+		 * @param location canonical representation of a bundle file path, never null
+		 */
+		public BundleRepository(File location) {
+			super(null, null, null);
+			this.location = location.getAbsolutePath();
+		}
 
-    public int compareTo(HgRepositoryLocation loc) {
-        if(getLastUsage() == null){
-            return compareToLocation(loc);
-        }
-        if(loc.getLastUsage() == null){
-            return compareToLocation(loc);
-        }
-        int compareTo = getLastUsage().compareTo(loc.getLastUsage());
-        if (compareTo == 0) {
-            return compareToLocation(loc);
-        }
-        return compareTo;
-    }
+		@Override
+		protected URI getUri(boolean isSafe) throws HgException {
+			return null;
+		}
 
-    private int compareToLocation(HgRepositoryLocation loc) {
-        if(getLocation() == null) {
-            return -1;
-        }
-        if(loc.getLocation() == null){
-            return 1;
-        }
-        int compareTo = getLocation().compareTo(loc.getLocation());
-        return compareTo;
-    }
+		@Override
+		public boolean isLocal() {
+			return true;
+		}
+	}
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((location == null) ? 0 : location.hashCode());
-        return result;
-    }
+	private HgRepositoryLocation(String logicalName, String user, String password){
+		super();
+		this.logicalName = logicalName;
+		this.user = user;
+		this.password = password;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof HgRepositoryLocation)) {
-            return false;
-        }
-        final HgRepositoryLocation other = (HgRepositoryLocation) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        return true;
-    }
+	HgRepositoryLocation(String logicalName, String location, String user, String password) throws HgException {
+		this(logicalName, user, password);
+		URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
+		if(uri != null) {
+			isLocal = uri.getScheme() == null || uri.getScheme().equalsIgnoreCase("file");
+			try {
+				this.location = new URI(uri.getScheme(),
+						null,
+						uri.getHost(),
+						uri.getPort(),
+						uri.getPath(),
+						null,
+						uri.getFragment()).toASCIIString();
+			} catch (URISyntaxException ex) {
+				MercurialEclipsePlugin.logError(ex);
+			}
+		} else {
+			this.location = location;
+			isLocal = true;
+		}
+	}
 
-    public String getUser() {
-        return user;
-    }
+	HgRepositoryLocation(String logicalName, URI uri) throws HgException {
+		this(logicalName, HgRepositoryLocationParser.getUserNameFromURI(uri),
+				HgRepositoryLocationParser.getPasswordFromURI(uri));
+		if (uri == null) {
+			throw new HgException("Given URI cannot be null");
+		}
+		isLocal = uri.getScheme() == null || uri.getScheme().equalsIgnoreCase("file");
+		try {
+			this.location = new URI(uri.getScheme(),
+					null,
+					uri.getHost(),
+					uri.getPort(),
+					uri.getPath(),
+					null,
+					uri.getFragment()).toASCIIString();
+		} catch (URISyntaxException ex) {
+			MercurialEclipsePlugin.logError(ex);
+		}
+	}
 
-    public String getPassword() {
-        return password;
-    }
+	static public boolean validateLocation(String validate) {
+		try {
+			IHgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(validate, null, null);
+			if(location2 == null){
+				return false;
+			}
+			return location2.getUri() != null || (location2.getLocation() != null &&
+					new File(location2.getLocation()).exists());
+		} catch (HgException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return false;
+		}
+	}
 
-    /**
-     * Return unsafe (with password) URI for repository location if possible
-     * @return a valid URI of the repository or null
-     * @throws HgException unable to parse to URI or location is invalid.
-     */
-    public URI getUri() throws HgException {
-        return getUri(false);
-    }
+	public int compareTo(File loc) {
+		if(getLocation() == null) {
+			return -1;
+		}
+		if(loc == null){
+			return 1;
+		}
+		return getLocation().compareTo(loc.getAbsolutePath());
+	}
 
-    /**
-     * Return URI for repository location if possible
-     * @param isSafe add password to userinfo if false or add a mask instead
-     * @return a valid URI of the repository or null
-     * @throws HgException unable to parse to URI or location is invalid.
-     */
-    public URI getUri(boolean isSafe) throws HgException {
-        return HgRepositoryLocationParser.parseLocationToURI(getLocation(), getUser(), isSafe ? PASSWORD_MASK : getPassword());
-    }
+	public int compareTo(IHgRepositoryLocation loc) {
+		if(getLocation() == null) {
+			return -1;
+		}
+		if(loc.getLocation() == null){
+			return 1;
+		}
+		return getLocation().compareTo(loc.getLocation());
+	}
 
-    @Override
-    public String toString() {
-        if (logicalName!= null && logicalName.length()>0) {
-            return logicalName + " (" + location + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        return location;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((location == null) ? 0 : location.hashCode());
+		return result;
+	}
 
-    @Deprecated
-    public String getSaveString() {
-        return HgRepositoryLocationParser.createSaveString(this);
-    }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof IHgRepositoryLocation)) {
+			return false;
+		}
+		final IHgRepositoryLocation other = (IHgRepositoryLocation) obj;
+		if (location == null) {
+			if (other.getLocation() != null) {
+				return false;
+			}
+		} else if (!location.equals(other.getLocation())) {
+			return false;
+		}
+		return true;
+	}
 
-    @Override
-    public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
-        return new HgRepositoryLocation[0];
-    }
+	public String getUser() {
+		return user;
+	}
 
-    @Override
-    public ImageDescriptor getImageDescriptor(Object object) {
-        return super.getImageDescriptor(object);
-    }
+	public String getPassword() {
+		return password;
+	}
 
-    public String getLocation() {
-        return location;
-    }
+	/**
+	 * Return unsafe (with password) URI for repository location if possible
+	 * @return a valid URI of the repository or null if repository is local directory
+	 * @throws HgException unable to parse to URI or location is invalid.
+	 */
+	public URI getUri() throws HgException {
+		return getUri(false);
+	}
 
-    /**
-     * @return a location with password removed that is safe to display on screen
-     */
-    public String getDisplayLocation() {
-        try {
-            URI uri = getUri(true);
-            if (uri != null) {
-                return uri.toString();
-            }
-        } catch (HgException ex) {
-            // This shouldn't happen at this point
-            throw new RuntimeException(ex);
-        }
-        return getLocation();
-    }
+	/**
+	 * Return URI for repository location if possible
+	 * @param isSafe add password to userinfo if false or add a mask instead
+	 * @return a valid URI of the repository or null if repository is local directory
+	 * @throws HgException unable to parse to URI or location is invalid.
+	 */
+	protected URI getUri(boolean isSafe) throws HgException {
+		return HgRepositoryLocationParser.parseLocationToURI(getLocation(), getUser(),
+				isSafe ? PASSWORD_MASK : getPassword());
+	}
 
-    public String getLogicalName() {
-        return logicalName;
-    }
+	@Override
+	public String toString() {
+		return location;
+	}
 
-    /**
-     * @return the lastUsage
-     */
-    public Date getLastUsage() {
-        return lastUsage;
-    }
+	public Object[] getChildren(Object o) {
+		if(isLocal()){
+			try {
+				return new Object[]{ new HgRoot(getLocation())};
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		return MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(this).toArray(
+				new IHgRepositoryLocation[0]);
+	}
 
-    /**
-     * @param lastUsage the lastUsage to set
-     */
-    public void setLastUsage(Date lastUsage) {
-        this.lastUsage = lastUsage;
-    }
+	public String getLocation() {
+		return location;
+	}
 
-    /**
-     * @return the projectName
-     */
-    public String getProjectName() {
-        return projectName;
-    }
+	public String getLogicalName() {
+		return logicalName;
+	}
 
-    /**
-     * @param projectName the projectName to set
-     */
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
+	@SuppressWarnings("rawtypes")
+	public Object getAdapter(Class adapter) {
+		if(adapter == IHgRepositoryLocation.class){
+			return this;
+		}
+		if (adapter == IWorkbenchAdapter.class) {
+			return this;
+		}
+		return null;
+	}
 
-    /**
-     * @return the isPush
-     */
-    public boolean isPush() {
-        return isPush;
-    }
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public void setLogicalName(String logicalName) {
+		this.logicalName = logicalName;
+	}
+
+	public String getLabel(Object o) {
+		return o.toString();
+	}
+
+	public Object getParent(Object o) {
+		return null;
+	}
+
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return MercurialEclipsePlugin.getImageDescriptor("cview16/repository_rep.gif");
+	}
+
+	public boolean isLocal() {
+		return isLocal;
+	}
 }

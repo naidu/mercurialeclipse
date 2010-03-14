@@ -28,7 +28,7 @@
          class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
          typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
          id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-          metaFilePaths=".hg/">
+          metaFilePaths=".hg">
        </repository>
    </extension>
 
@@ -80,6 +80,24 @@
                <objectClass name="org.eclipse.core.resources.IResource"/>
              </enablement>
         </decorator>
+        <decorator
+              adaptable="false"
+              class="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
+              icon="icons/history.gif"
+              id="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
+              label="%history.decorator.label"
+              lightweight="true"
+              location="BOTTOM_RIGHT"
+              state="true">
+           <description>
+              %history.decoratorDescription
+           </description>
+           <enablement>
+              <objectClass
+                    name="com.vectrace.MercurialEclipse.model.FileStatus">
+              </objectClass>
+           </enablement>
+        </decorator>
     </extension>
 
     <!-- propertyTesters -->
@@ -89,7 +107,7 @@
              class="com.vectrace.MercurialEclipse.menu.FlagPropertyTester"
              id="com.vectrace.MercurialEclipse.propertyTester"
              namespace="com.vectrace.MercurialEclipse.propertyTester"
-             properties="status"
+             properties="status, root"
              type="org.eclipse.core.resources.IResource">
           </propertyTester>
     </extension>
@@ -138,6 +156,20 @@
                 </adapt>
             </iterate>
         </definition>
+        
+        <!-- project is NOT hg root -->
+        <definition id="com.vectrace.MercurialEclipse.def.notRoot">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <adapt type="org.eclipse.core.resources.IProject">
+                           <test
+                              property="com.vectrace.MercurialEclipse.propertyTester.root"
+                              args="false">
+                        </test>                    
+                    </adapt>
+                </adapt>
+            </iterate>
+        </definition>
 
         <!-- hgUnknown -->
         <definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
@@ -145,10 +177,6 @@
                 <adapt type="org.eclipse.core.resources.IResource">
                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
                               args="unknown"/>
-                        <not>
-                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
-                              args="added,clean,modified"/>
-                        </not>
                 </adapt>
             </iterate>
         </definition>
@@ -203,6 +231,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%update"/>
+        <command id="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%rootHistory"/>
         <command id="com.vectrace.MercurialEclipse.menu.TagHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%tags"/>
@@ -271,6 +302,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.SyncHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%synchronize"/>
+        <command id="com.vectrace.MercurialEclipse.menu.SyncHandler2"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%synchronizeWith"/>
         <command id="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%refreshStatus"/>
@@ -370,6 +404,18 @@
                 </and>
             </enabledWhen>
         </handler>
+        
+        <!-- RootHistoryHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                 class="com.vectrace.MercurialEclipse.menu.RootHistoryHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.notRoot"/>
+                </and>
+            </enabledWhen>
+        </handler>
 
         <!-- SwitchHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
@@ -413,7 +459,15 @@
                  class="com.vectrace.MercurialEclipse.menu.SyncHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>
+                    <count value="+"/>
+                </and>
+            </enabledWhen>
+        </handler>
+        <handler commandId="com.vectrace.MercurialEclipse.menu.SyncHandler2"
+                 class="com.vectrace.MercurialEclipse.menu.SyncHandler">
+            <enabledWhen>
+                <and>
+                    <count value="+"/>
                 </and>
             </enabledWhen>
         </handler>
@@ -600,6 +654,7 @@
                 </visibleWhen>
                 -->
 
+
                 <separator name="group1" visible="false"/>
 
                 <command
@@ -644,10 +699,12 @@
                     <visibleWhen>
                         <and>
                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
                         </and>
                     </visibleWhen>
                 </command>
+                
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
                       icon="icons/actions/synch.gif">
@@ -662,10 +719,35 @@
                       </and>
                    </visibleWhen>
                 </command>
-                <separator
-                      name="group4"
-                      visible="true">
-                </separator>
+                
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.SyncHandler2"
+                      icon="icons/actions/synch.gif">
+                   <visibleWhen>
+                      <and>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                         </reference>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.project">
+                         </reference>
+                      </and>
+                   </visibleWhen>
+                </command>
+                
+                <separator name="group4" visible="true"/>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                  icon="icons/history.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notRoot" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                       </and>
+                    </visibleWhen>
+                </command>
+                
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                       icon="icons/clcl16/refresh.gif">
@@ -676,11 +758,8 @@
                    </visibleWhen>
                 </command>
 
-
-
-
-
                 <separator name="group3" visible="true"/>
+                
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
                       icon="icons/actions/switch.gif">
@@ -746,7 +825,10 @@
                    <visibleWhen>
                         <and>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging" />
+                            <!-- allow rebase be shown if merge status is there, as we can't distinguish
+                                between merge and aborted rebase. In last case, we must be able to continue                            
+                             <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging" /> 
+                            -->
                             <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
                         </and>
                    </visibleWhen>
@@ -842,7 +924,10 @@
                       commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
                       icon="icons/branches_rep.gif">
                         <visibleWhen>
+                            <and>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                            </and>
                         </visibleWhen>
                     </command>
                 </menu>
@@ -878,18 +963,6 @@
                 <separator name="group7" visible="true"/>
                 <separator name="group8" visible="true"/>
                 <separator name="group9" visible="true"/>
-                <separator name="group10" visible="true"/>
-
-                <command
-                  commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
-                  icon="icons/add.gif">
-                    <visibleWhen>
-                        <and>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
-                        </and>
-                    </visibleWhen>
-                </command>
 
                 <command
                   commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
@@ -897,6 +970,7 @@
                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
                     </visibleWhen>
                 </command>
+                <separator name="group10" visible="true"/>
 
                 <command
                   commandId="com.vectrace.MercurialEclipse.menu.ServeHandler"
@@ -981,6 +1055,15 @@
                enablesFor="1"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 definitionId="com.vectrace.MercurialEclipse.menu.AddHandler"
+                 enablesFor="+"
+                 icon="icons/add.gif"
+                 id="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 label="%add"
+                 menubarPath="team.main/group5">
+           </action>
 
            <action
                label="%actionLabel.revert"
@@ -1038,6 +1121,31 @@
                  enablesFor="1">
            </action>
       </objectContribution>
+      <objectContribution
+            adaptable="true"
+            id="com.vectrace.MercurialEclipse.IFileContributions2"
+            objectClass="org.eclipse.core.resources.IFile">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+         </filter>
+         <action
+               class="com.vectrace.MercurialEclipse.team.ActionRevert"
+               enablesFor="1"
+               icon="icons/compare_view.gif"
+               id="com.vectrace.MercurialEclipse.team.ReplaceWithAction"
+               label="%actionLabel.compare.anotherChangeset"
+               menubarPath="replaceWithMenu/replaceWithGroup">
+         </action>
+         <action
+               class="com.vectrace.MercurialEclipse.team.ActionRevert"
+               enablesFor="1"
+               icon="icons/compare_view.gif"
+               id="com.vectrace.MercurialEclipse.team.ReplaceWithParentAction"
+               label="%actionLabel.compare.parentChangeset"
+               menubarPath="replaceWithMenu/replaceWithGroup">
+         </action>
+      </objectContribution>
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
@@ -1049,6 +1157,10 @@
             id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
             category="com.vectrace.MercurialEclipse.prefspage"
             name="%timeouts"/>
+      <page class="com.vectrace.MercurialEclipse.preferences.HistoryPreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.History"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="%history"/>
       <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Performance"
             category="com.vectrace.MercurialEclipse.prefspage"
@@ -1071,11 +1183,21 @@
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.import"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            icon="icons/mercury_Hg.png"
+            icon="icons/clone_repo.gif"
             id="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            name="%cloneRepository">
+            name="%cloneRepository2">
          <description>
-            %importFile
+            Clone existing local or remote Mercurial repository
+         </description>
+      </wizard>
+      <wizard
+            category="com.vectrace.MercurialEclipse.wizards.import"
+            class="com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard"
+            icon="icons/import_project.gif"
+            id="com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard"
+            name="%importFromRepository">
+         <description>
+            Import one or more projects from local Mercurial repository
          </description>
       </wizard>
    </extension>
@@ -1089,10 +1211,27 @@
             canFinishEarly="false"
             category="com.vectrace.MercurialEclipse.wizards.new"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            icon="icons/mercury_Hg.png"
+            hasPages="true"
+            icon="icons/clone_repo.gif"
             id="com.vectrace.MercurialEclipse.wizards.NewHgProjectWizard"
             name="%cloneRepository2"
-            project="true"/>
+            project="true">
+         <description>
+            Clone existing local or remote Mercurial repository
+         </description>
+      </wizard>
+      <wizard
+            canFinishEarly="false"
+            category="com.vectrace.MercurialEclipse.wizards.new"
+            class="com.vectrace.MercurialEclipse.wizards.NewLocationWizard"
+            hasPages="true"
+            icon="icons/wizards/newlocation_wiz.gif"
+            id="com.vectrace.MercurialEclipse.wizards.NewLocationWizard"
+            name="%createRepository">
+         <description>
+            Create new local Mercurial repository or new remote repository location
+         </description>
+      </wizard>
    </extension>
 
    <extension
@@ -1110,6 +1249,13 @@
        adaptableType="org.eclipse.team.core.history.provider.FileHistoryProvider"
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
+     </factory>
+     <factory
+           adaptableType="com.vectrace.MercurialEclipse.model.HgRoot"
+           class="com.vectrace.MercurialEclipse.AdapterFactory">
+        <adapter
+              type="org.eclipse.team.ui.history.IHistoryPageSource">
+        </adapter>
      </factory>
    <!-- Adapt IResource to itself does not make sense at all and can only generates troubles
    <factory
@@ -1344,13 +1490,21 @@
         %fontDefinition.description.ignored
         </description>
       </fontDefinition>
+      <fontDefinition
+            categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
+            id="com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"
+            label="%fontDefinition.label.console"
+            defaultsTo="org.eclipse.jface.textfont">
+         <description>
+            %fontDefinition.description.console
+         </description>
+      </fontDefinition>
 </extension>
    <extension
          point="org.eclipse.team.core.ignore">
-      <ignore
-            enabled="true"
-            pattern=".hg">
-      </ignore>
+      <ignore enabled="true" pattern=".hg" />
+      <ignore enabled="true" pattern="*.orig" />
+      <ignore enabled="true" pattern="*.rej" />
    </extension>
    <extension
          point="org.eclipse.ui.propertyPages">
@@ -1361,5 +1515,135 @@
             name="%mercurial"
             objectClass="org.eclipse.core.resources.IProject">
       </page>
+      <page
+            adaptable="true"
+            class="com.vectrace.MercurialEclipse.repository.RepoPropertiesPage"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.repositoryProperties"
+            name="%repositoryPage.name"
+            objectClass="com.vectrace.MercurialEclipse.model.IHgRepositoryLocation">
+      </page>
    </extension>
+   
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider"
+            icon="icons/elcl16/changeset_obj.gif"
+            id="com.vectrace.MercurialEclipse.changeSetContent"
+            labelProvider="com.vectrace.MercurialEclipse.synchronize.cs.SyncViewLabelProvider"
+            name="%navigatorContent.name"
+            priority="normal"> 
+         <enablement>
+           <or>         
+            <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"/>
+            <instanceof value="com.vectrace.MercurialEclipse.model.ChangeSet"/>
+            <instanceof value="com.vectrace.MercurialEclipse.model.FileFromChangeSet"/>
+            <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup"/>
+            <instanceof value="org.eclipse.core.resources.IResource"/>
+           </or>
+         </enablement>
+         <commonSorter
+               class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetSorter"
+               id="com.vectrace.MercurialEclipse.changeSetSorter"/>
+         <actionProvider
+               class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider"
+               id="com.vectrace.MercurialEclipse.changeSetActions"/>
+       </navigatorContent>
+   </extension>   
+   
+   <extension
+         point="org.eclipse.team.ui.teamContentProviders">
+      <teamContentProvider
+            contentExtensionId="com.vectrace.MercurialEclipse.changeSetContent"
+            icon="icons/elcl16/changeset_obj.gif"
+            modelProviderId="com.vectrace.MercurialEclipse.changeSetModel"
+            supportsFlatLayout="true">
+      </teamContentProvider>
+   </extension>
+   
+   <extension
+         id="changeSetModel"
+         name="%extension.name"
+         point="org.eclipse.core.resources.modelProviders">
+      <modelProvider
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider">
+      </modelProvider>
+      <extends-model id="org.eclipse.core.resources.modelProvider"/>
+   </extension>
+   
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+   
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
+         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
+         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
+         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
+      </factory>   
+   </extension>
+   <extension
+         point="org.eclipse.ui.exportWizards">
+      <category
+            id="com.vectrace.MercurialEclipse.wizards.export"
+            name="%mercurial">
+      </category>
+      <wizard
+            category="com.vectrace.MercurialEclipse.wizards.export"
+            class="com.vectrace.MercurialEclipse.wizards.BundleRepoWizard"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.mercurialeclipse.BundleWizard"
+            name="%bundleRepoWizard.name">
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.search.textSearchEngine">
+      <textSearchEngine
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchEngine"
+            id="com.vectrace.MercurialEclipse.mercurialTextSearch"
+            label="Mercurial Search">
+      </textSearchEngine>
+   </extension>
+   <extension
+         point="org.eclipse.search.searchPages">
+      <page
+            canSearchEnclosingProjects="true"
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage"
+            enabled="true"
+            icon="icons/mercury_Hg.png"
+            id="MercurialEclipse.page1"
+            label="Mercurial Search"
+            showScopeSection="true">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.search.searchResultViewPages">
+      <viewPage
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
+            label="Mercurial Search"
+            searchResultClass="com.vectrace.MercurialEclipse.search.MercurialTextSearchResult">
+      </viewPage>
+   </extension>
+   <extension
+         point="org.eclipse.search.textSearchQueryProvider">
+      <textSearchQueryProvider
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
+            id="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
+            label="Mercurial Search Query Provider">
+      </textSearchQueryProvider>
+   </extension>   
 </plugin>

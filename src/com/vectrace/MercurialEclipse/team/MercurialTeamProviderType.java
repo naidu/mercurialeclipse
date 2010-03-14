@@ -14,15 +14,15 @@ import org.eclipse.team.core.ProjectSetCapability;
 import org.eclipse.team.core.RepositoryProviderType;
 
 public class MercurialTeamProviderType extends RepositoryProviderType {
-	
+
 	public MercurialTeamProviderType() {
 	}
-	
+
 	@Override
-	public ProjectSetCapability getProjectSetCapability() {		
+	public ProjectSetCapability getProjectSetCapability() {
 		return MercurialProjectSetCapability.getInstance();
 	}
-	
-	
+
+
 
 }

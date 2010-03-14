@@ -8,6 +8,7 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -27,119 +28,144 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.actions.AddToWorkspaceAction;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * Defines ProjectSetCapabilities for MercurialEclipse
- * 
+ *
  * @author Bastian Doetsch
  */
 public class MercurialProjectSetCapability extends ProjectSetCapability {
-    private static MercurialProjectSetCapability instance;
 
-    @Override
-    public String[] asReference(IProject[] providerProjects,
-            ProjectSetSerializationContext context, IProgressMonitor monitor)
-            throws TeamException {
+	public static final String SEPARATOR = "|";
 
-        try {
-            String[] references = new String[providerProjects.length];
+	private static MercurialProjectSetCapability instance;
 
-            monitor
-                    .beginTask(
-                            Messages
-                                    .getString("MercurialProjectSetCapability.determiningProjectReferences"), //$NON-NLS-1$
-                            providerProjects.length);
+	@Override
+	public String[] asReference(IProject[] providerProjects,
+			ProjectSetSerializationContext context, IProgressMonitor monitor)
+			throws TeamException {
 
-            for (int i = 0; i < providerProjects.length; i++) {
-                String reference = asReference(null, providerProjects[i]
-                        .getName());
-                if (!(monitor.isCanceled() || reference == null)) {
-                    references[i] = reference;
-                } else {
-                    String msg;
-                    if (monitor.isCanceled()) {
-                        msg = Messages
-                                .getString("MercurialProjectSetCapability.cancelled"); //$NON-NLS-1$
-                    } else {
-                        msg = Messages
-                                .getString("MercurialProjectSetCapability.notDeterminable") //$NON-NLS-1$
-                                + providerProjects[i];
-                    }
-                    throw new TeamException(msg);
-                }
-            }
-            return references;
-        } finally {
-            monitor.done();
-        }
-    }
+		try {
+			String[] references = new String[providerProjects.length];
 
-    @Override
-    public IProject[] addToWorkspace(String[] referenceStrings,
-            ProjectSetSerializationContext context, IProgressMonitor monitor)
-            throws TeamException {
+			monitor
+					.beginTask(
+							Messages
+									.getString("MercurialProjectSetCapability.determiningProjectReferences"), //$NON-NLS-1$
+							providerProjects.length);
 
-        // use AddToWorkspaceAction to decouple adding from other workspace
-        // tasks.
-        AddToWorkspaceAction action = new AddToWorkspaceAction();
+			for (int i = 0; i < providerProjects.length; i++) {
+				String reference = asReference(null, providerProjects[i]
+						.getName());
+				if (!(monitor.isCanceled() || reference == null)) {
+					references[i] = reference;
+				} else {
+					String msg;
+					if (monitor.isCanceled()) {
+						msg = Messages
+								.getString("MercurialProjectSetCapability.cancelled"); //$NON-NLS-1$
+					} else {
+						msg = Messages
+								.getString("MercurialProjectSetCapability.notDeterminable") //$NON-NLS-1$
+								+ providerProjects[i];
+					}
+					throw new TeamException(msg);
+				}
+			}
+			return references;
+		} finally {
+			monitor.done();
+		}
+	}
 
-        // our beloved projects from the import file
-        action.setReferenceStrings(referenceStrings);
-        try {
-            action.run(monitor);
-        } catch (Exception e) {
-            MessageDialog
-                    .openError(
-                            Display.getCurrent().getActiveShell(),
-                            Messages
-                                    .getString("MercurialProjectSetCapability.errorWhileImporting"), e.getMessage()); //$NON-NLS-1$
-        }
-        return action.getProjectsCreated();
-    }
+	@Override
+	public IProject[] addToWorkspace(String[] referenceStrings,
+			ProjectSetSerializationContext context, IProgressMonitor monitor)
+			throws TeamException {
 
-    @Override
-    public String asReference(URI uri, String projectName) {
-        String reference = null;
-        try {
-            IWorkspace workspace = ResourcesPlugin.getWorkspace();
-            IProject project = workspace.getRoot().getProject(projectName);
+		// use AddToWorkspaceAction to decouple adding from other workspace
+		// tasks.
+		AddToWorkspaceAction action = new AddToWorkspaceAction();
 
-            String srcRepository = ""; //$NON-NLS-1$
-            Map<String, String> locs = HgPathsClient.getPaths(project);
-            if (locs.containsKey(HgPathsClient.DEFAULT_PULL)) {
-                srcRepository = locs.get(HgPathsClient.DEFAULT_PULL);
-            } else if (locs.containsKey(HgPathsClient.DEFAULT)) {
-                srcRepository = locs.get(HgPathsClient.DEFAULT);
-            } else {
-                srcRepository = project.getLocation().toFile()
-                        .getAbsolutePath();
-            }
+		// our beloved projects from the import file
+		action.setReferenceStrings(referenceStrings);
+		try {
+			action.run(monitor);
+		} catch (Exception e) {
+			MessageDialog
+					.openError(
+							Display.getCurrent().getActiveShell(),
+							Messages
+									.getString("MercurialProjectSetCapability.errorWhileImporting"), e.getMessage()); //$NON-NLS-1$
+		}
+		return action.getProjectsCreated();
+	}
 
-            if (srcRepository != null && srcRepository.length() > 0) {
-                reference = "MercurialEclipseProjectSet_" + project.getName() //$NON-NLS-1$
-                        + "_" + srcRepository; //$NON-NLS-1$
-            }
-        } catch (CoreException e) {
-            // reference is null -> error condition
-        }
-        return reference;
-    }
+	@Override
+	public String asReference(URI uri, String projectName) {
+		String reference = null;
+		try {
+			IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			IProject project = workspace.getRoot().getProject(projectName);
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 
-    @Override
-    public String getProject(String referenceString) {
-        return referenceString.split("_")[1]; //$NON-NLS-1$
-    }
+			String srcRepository = ""; //$NON-NLS-1$
+			Map<String, String> locs = HgPathsClient.getPaths(hgRoot);
+			if (locs.containsKey(HgPathsClient.DEFAULT_PULL)) {
+				srcRepository = locs.get(HgPathsClient.DEFAULT_PULL);
+			} else if (locs.containsKey(HgPathsClient.DEFAULT)) {
+				srcRepository = locs.get(HgPathsClient.DEFAULT);
+			} else {
+				srcRepository = hgRoot.getAbsolutePath();
+			}
 
-    /**
-     * Singleton accessor method.
-     * 
-     * @return
-     */
-    public static ProjectSetCapability getInstance() {
-        if (instance == null) {
-            instance = new MercurialProjectSetCapability();
-        }
-        return instance;
-    }
+			if (srcRepository != null && srcRepository.length() > 0) {
+				reference = "MercurialEclipseProjectSet" + SEPARATOR + project.getName()
+						+ SEPARATOR + srcRepository;
+				if(!hgRoot.getIPath().equals(project.getLocation())){
+					reference += SEPARATOR + hgRoot.toRelative(project.getLocation().toFile());
+				}
+			}
+		} catch (CoreException e) {
+			// reference is null -> error condition
+		}
+		return reference;
+	}
+
+	@Override
+	public String getProject(String referenceString) {
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 1){
+			return split[1];
+		}
+		return null;
+	}
+
+	public String getPullRepo(String referenceString) {
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 2){
+			return split[2];
+		}
+		return null;
+	}
+
+	public String getRootRelativePath(String referenceString) {
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 3){
+			return split[3];
+		}
+		return null;
+	}
+
+	/**
+	 * Singleton accessor method.
+	 */
+	public static MercurialProjectSetCapability getInstance() {
+		if (instance == null) {
+			instance = new MercurialProjectSetCapability();
+		}
+		return instance;
+	}
 
 }

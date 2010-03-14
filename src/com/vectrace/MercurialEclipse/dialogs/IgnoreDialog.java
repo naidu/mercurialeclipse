@@ -17,18 +17,18 @@ import org.eclipse.swt.widgets.Text;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public class IgnoreDialog extends Dialog {
 
 	public enum ResultType {
 		FILE, FOLDER, EXTENSION, GLOB, REGEXP
 	}
-	
+
 	private ResultType resultType;
 	private IFile file;
 	private IFolder folder;
-	
+
 	Text patternText;
 	private String pattern;
 
@@ -81,7 +81,7 @@ public class IgnoreDialog extends Dialog {
 
 		return composite;
 	}
-	
+
 	private void addButton(Composite parent, String text, final boolean isPattern, final ResultType type) {
 		Button button = new Button(parent, SWT.RADIO);
 		button.setText(text);

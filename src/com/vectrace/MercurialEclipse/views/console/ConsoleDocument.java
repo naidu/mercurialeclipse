@@ -22,12 +22,12 @@ public class ConsoleDocument {
 
 	private int[] lineTypes;
 	private String[] lines;
-	
+
 	private int writeIndex = 0;
 	private int readIndex = 0;
 
 	private static final int BUFFER_SIZE = 200;
-	
+
 	protected static class ConsoleLine {
 		public String line;
 		public int type;
@@ -36,13 +36,13 @@ public class ConsoleDocument {
 			this.type = type;
 		}
 	}
-	
+
 	/**
 	 * Creates an empty console document.
 	 */
 	public ConsoleDocument() {
 	}
-	
+
 	/**
 	 * Clears the console document.
 	 */
@@ -52,7 +52,7 @@ public class ConsoleDocument {
 		writeIndex = 0;
 		readIndex = 0;
 	}
-	
+
 	/**
 	 * Appends a line of the specified type to the end of the console.
 	 */
@@ -61,9 +61,9 @@ public class ConsoleDocument {
 			lines = new String[BUFFER_SIZE];
 			lineTypes = new int[BUFFER_SIZE];
 		}
-		lines[writeIndex] = line; 
-		lineTypes[writeIndex] = type;	
-		
+		lines[writeIndex] = line;
+		lineTypes[writeIndex] = type;
+
 		if(++writeIndex >= BUFFER_SIZE) {
 			writeIndex = 0;
 		}
@@ -72,8 +72,8 @@ public class ConsoleDocument {
 				readIndex = 0;
 			}
 		}
-	}	
-	
+	}
+
 	public ConsoleLine[] getLines() {
 		if(isEmpty()) return new ConsoleLine[0];
 		ConsoleLine[] docLines = new ConsoleLine[readIndex > writeIndex ? BUFFER_SIZE : writeIndex];
@@ -86,7 +86,7 @@ public class ConsoleDocument {
 		}
 		return docLines;
 	}
-	
+
 	public boolean isEmpty() {
 		return writeIndex == readIndex;
 	}

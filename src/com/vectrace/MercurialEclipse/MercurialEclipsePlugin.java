@@ -10,294 +10,511 @@
  *     Stefan Groschupf          - logError
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
+ *     Adam Berkes (Intland)     - default encoding
+ *     Philip Graf               - proxy support
+ *     Bastian Doetsch           - bug fixes and implementation
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.IJobManager;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Version;
+import org.osgi.util.tracker.ServiceTracker;
 
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
+import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
  * The main plugin class to be used in the desktop.
  */
 public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
-    public static final String ID = "com.vectrace.MercurialEclipse"; //$NON-NLS-1$
+	public static final String ID = "com.vectrace.MercurialEclipse"; //$NON-NLS-1$
 
-    public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView"; //$NON-NLS-1$
+	public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView"; //$NON-NLS-1$
 
-    public static final String BUNDLE_FILE_PREFIX = "bundlefile"; //$NON-NLS-1$
+	public static final String BUNDLE_FILE_PREFIX = "bundlefile"; //$NON-NLS-1$
 
-    // The shared instance.
-    private static MercurialEclipsePlugin plugin;
+	// The shared instance.
+	private static MercurialEclipsePlugin plugin;
 
-    // the repository manager
-    private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
+	private static final Charset HGENCODING;
+	static {
+		// next in line is HGENCODING in environment
+		String enc = System.getProperty("HGENCODING");
 
-    // the commit message manager
-    private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
+		// next is platform encoding as available in JDK
+		if (!StringUtils.isEmpty(enc) && Charset.isSupported(enc)) {
+			HGENCODING = Charset.forName(enc);
+		} else {
+			if(Charset.isSupported("UTF-8")){
+				HGENCODING = Charset.forName("UTF-8");
+			} else {
+				HGENCODING = Charset.defaultCharset();
+			}
+		}
+	}
 
+	// the repository manager
+	private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
-    private boolean hgUsable = true;
+	// the commit message manager
+	private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
 
-    /**
-     * The constructor.
-     */
-    public MercurialEclipsePlugin() {
-        // should NOT do anything until started by OSGI
-    }
+	private boolean hgUsable = true;
 
-    @Override
-    public void start(BundleContext context) throws Exception {
-        super.start(context);
-        plugin = this;
-        DefaultConfiguration cfg = new DefaultConfiguration();
-        HgClients.initialize(cfg, cfg, cfg);
+	private ServiceTracker proxyServiceTracker;
 
-        new Job("Starting MercurialEclipse.") {
-            @Override
-            protected IStatus run(IProgressMonitor monitor) {
-                try {
-                    monitor.beginTask("Starting MercurialEclipse", 3);
-                    monitor.subTask("Checking Mercurial installation.");
-                    checkHgInstallation();
-                    monitor.done();
-                    // read known repositories
-                    monitor.subTask("Loading known Mercurial repositories.");
-                    repoManager.start();
-                    monitor.worked(1);
-                    // read in commit messages from disk
-                    monitor.subTask("Starting Commit Message manager.");
-                    commitMessageManager.start();
-                    monitor.worked(1);
-                    monitor.done();
-                    return new Status(IStatus.OK, ID, "MercurialEclipse started successfully.");
-                } catch (Exception e) {
-                    hgUsable = false;
-                    logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
-                    return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);
-                }
-            }
-        }.schedule();
+	private static final Version LOWEST_WORKING_VERSION = new Version(1, 3, 1);
 
-    }
+	private static final Pattern VERSION_PATTERN = Pattern.compile(
+			".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
 
-    /**
-     * Checks if Mercurial is configured properly by issuing the hg debuginstall
-     * command.
-     */
-    public void checkHgInstallation() {
-        try {
-            hgUsable = true;
-            MercurialUtilities.getHGExecutable(true);
-            String result = HgDebugInstallClient.debugInstall();
-            if (result.endsWith("No problems detected")) { //$NON-NLS-1$
-                hgUsable = true;
-                return;
-            }
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-            hgUsable = false;
-        }
-    }
+	public MercurialEclipsePlugin() {
+		// should NOT do anything until started by OSGI
+	}
 
-    /**
-     * Gets the repository manager
-     */
-    static public HgRepositoryLocationManager getRepoManager() {
-        return repoManager;
-    }
+	@Override
+	public void start(BundleContext context) throws Exception {
+		super.start(context);
+		plugin = this;
+		DefaultConfiguration cfg = new DefaultConfiguration();
+		HgClients.initialize(cfg, cfg, cfg);
+		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
+		proxyServiceTracker.open();
+		Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					monitor.beginTask(Messages
+							.getString("MercurialEclipsePlugin.startingMercurialEclipse"), 3); //$NON-NLS-1$
+					monitor.subTask(Messages
+							.getString("MercurialEclipsePlugin.checkingMercurialInstallation")); //$NON-NLS-1$
+					checkHgInstallation();
+					monitor.worked(1);
+					// read known repositories
+					monitor.subTask(Messages
+							.getString("MercurialEclipsePlugin.loadingKnownMercurialRepositories")); //$NON-NLS-1$
+					repoManager.start();
+					monitor.worked(1);
+					// read in commit messages from disk
+					monitor.subTask(Messages
+							.getString("MercurialEclipsePlugin.startingCommitMessageManager")); //$NON-NLS-1$
+					commitMessageManager.start();
+					monitor.worked(1);
+					monitor.done();
+					return new Status(IStatus.OK, ID, Messages
+							.getString("MercurialEclipsePlugin.startedSuccessfully")); //$NON-NLS-1$
+				} catch (HgException e) {
+					hgUsable = false;
+					logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
+					return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);
+				}
+			}
+		};
 
-    public static HgCommitMessageManager getCommitMessageManager() {
-        return commitMessageManager;
-    }
+		// show console on startup if configured
+		if (getPreferenceStore().getBoolean(
+				MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP)) {
+			job.addJobChangeListener(new JobChangeAdapter() {
+				@Override
+				public void done(IJobChangeEvent event) {
+					// open console in SWT GUI Thread
+					new SafeUiJob(Messages
+							.getString("MercurialEclipsePlugin.openingMercurialConsole")) { //$NON-NLS-1$
+						@Override
+						protected IStatus runSafe(IProgressMonitor monitor) {
+							HgConsoleHolder.getInstance().showConsole(true);
+							return super.runSafe(monitor);
+						}
+					}.schedule();
+					super.done(event);
+				}
+			});
+		}
 
-    public static void setCommitMessageManager(
-            HgCommitMessageManager commitMessageManager) {
-        MercurialEclipsePlugin.commitMessageManager = commitMessageManager;
-    }
+		// start plugin
+		job.schedule();
+	}
 
-    @Override
-    public void stop(BundleContext context) throws Exception {
-        try {
-            repoManager.stop();
-            // save commit messages to disk
-            commitMessageManager.stop();
-        } finally {
-            super.stop(context);
-        }
-    }
+	/**
+	 * Checks if Mercurial is configured properly by issuing the hg debuginstall command.
+	 */
+	public void checkHgInstallation() {
+		try {
+			hgUsable = true;
+			MercurialUtilities.getHGExecutable(true);
+			String result = HgDebugInstallClient.debugInstall();
+			if (result.endsWith("No problems detected")) { //$NON-NLS-1$
+				checkHgVersion();
+				hgUsable = true;
+				return;
+			}
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+			hgUsable = false;
+		}
+	}
 
-    /**
-     * Returns the shared instance.
-     */
-    public static MercurialEclipsePlugin getDefault() {
-        return plugin;
-    }
+	private void checkHgVersion() throws HgException {
+		AbstractShellCommand command = new HgCommand("version", (File) null, true); //$NON-NLS-1$
+		command.setShowOnConsole(false);
+		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
+		String[] split = version.split("\\n"); //$NON-NLS-1$
+		version = split.length > 0 ? split[0] : ""; //$NON-NLS-1$
+		Matcher matcher = VERSION_PATTERN.matcher(version);
+		if (matcher.matches()) {
+			version = matcher.group(1);
+			if (version != null && LOWEST_WORKING_VERSION.compareTo(new Version(version)) <= 0) {
+				return;
+			}
+			throw new HgException(
+					Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") + version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$ //$NON-NLS-2$
+							+ LOWEST_WORKING_VERSION + "."); //$NON-NLS-1$
+		}
+	}
 
-    /**
-     * Returns an image descriptor for the image file at the given plug-in
-     * relative path.
-     *
-     * @param path
-     *            the path
-     * @return the image descriptor
-     */
-    public static ImageDescriptor getImageDescriptor(String path) {
-        return AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
-    }
+	/**
+	 * Gets the repository manager
+	 */
+	static public HgRepositoryLocationManager getRepoManager() {
+		return repoManager;
+	}
 
-    public static final void logError(String message, Throwable error) {
-        getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
-    }
+	public static HgCommitMessageManager getCommitMessageManager() {
+		return commitMessageManager;
+	}
 
-    public static void showError(final Throwable error) {
-        new SafeUiJob(Messages.getString("MercurialEclipsePlugin.showError")) { //$NON-NLS-1$
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                IStatus status;
-                if(error instanceof CoreException){
-                    status = ((CoreException) error).getStatus();
-                } else {
-                    status = createStatus(error.getMessage(), 0, IStatus.ERROR, error);
-                }
-                ErrorDialog.openError(null, Messages.getString("MercurialEclipsePlugin.unexpectedError"), error.getMessage(), //$NON-NLS-1$
-                        status);
-                return super.runSafe(monitor);
-            }
-        }.schedule();
-    }
+	public static void setCommitMessageManager(HgCommitMessageManager commitMessageManager) {
+		MercurialEclipsePlugin.commitMessageManager = commitMessageManager;
+	}
 
-    public static final void logWarning(String message, Throwable error) {
-        getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
-    }
+	@Override
+	public void stop(BundleContext context) throws Exception {
+		try {
+			repoManager.stop();
+			// save commit messages to disk
+			commitMessageManager.stop();
+			proxyServiceTracker.close();
+			MercurialUtilities.disposeColorsAndFonts();
+		} finally {
+			super.stop(context);
+		}
+	}
 
-    public static final void logInfo(String message, Throwable error) {
-        getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
-    }
+	/**
+	 * Returns the shared instance.
+	 */
+	public static MercurialEclipsePlugin getDefault() {
+		return plugin;
+	}
 
-    public static IStatus createStatus(String msg, int code, int severity,
-            Throwable ex) {
-        return new Status(severity, ID, code, msg, ex);
-    }
+	/**
+	 * Returns an image descriptor for the image file at the given plug-in relative path.
+	 *
+	 * @param path
+	 *            the path
+	 * @return the image descriptor
+	 */
+	public static ImageDescriptor getImageDescriptor(String path) {
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
+		if (descriptor == null) {
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
+			getDefault().getImageRegistry().put(path, descriptor);
+		}
+		return descriptor;
+	}
 
-    public final static void logError(Throwable ex) {
-        logError(ex.getMessage(), ex);
-    }
+	/**
+	 * Returns an image at the given plug-in relative path.
+	 *
+	 * @param path
+	 *            the path
+	 * @return the image
+	 */
+	public static Image getImage(String path) {
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
+		if (descriptor == null) {
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
+			getDefault().getImageRegistry().put(path, descriptor);
+		}
+		return getDefault().getImageRegistry().get(path);
+	}
 
-    /**
-     * Creates a busy cursor and runs the specified runnable. May be called from
-     * a non-UI thread.
-     *
-     * @param parent
-     *            the parent Shell for the dialog
-     * @param cancelable
-     *            if true, the dialog will support cancelation
-     * @param runnable
-     *            the runnable
-     *
-     * @exception InvocationTargetException
-     *                when an exception is thrown from the runnable
-     * @exception InterruptedException
-     *                when the progress monitor is cancelled
-     */
-    public static void runWithProgress(Shell parent, boolean cancelable,
-            final IRunnableWithProgress runnable)
-    throws InvocationTargetException, InterruptedException {
+	public static final void logError(String message, Throwable error) {
+		getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
+	}
 
-        boolean createdShell = false;
-        Shell myParent = parent;
-        try {
-            if (myParent == null || myParent.isDisposed()) {
-                Display display = Display.getCurrent();
-                if (display == null) {
-                    // cannot provide progress (not in UI thread)
-                    runnable.run(new NullProgressMonitor());
-                    return;
-                }
-                // get the active shell or a suitable top-level shell
-                myParent = display.getActiveShell();
-                if (myParent == null) {
-                    myParent = new Shell(display);
-                    createdShell = true;
-                }
-            }
-            // pop up progress dialog after a short delay
-            final Exception[] holder = new Exception[1];
-            BusyIndicator.showWhile(myParent.getDisplay(), new Runnable() {
-                public void run() {
-                    try {
-                        runnable.run(new NullProgressMonitor());
-                    } catch (InvocationTargetException e) {
-                        holder[0] = e;
-                    } catch (InterruptedException e) {
-                        holder[0] = e;
-                    }
-                }
-            });
-            if (holder[0] != null) {
-                if (holder[0] instanceof InvocationTargetException) {
-                    throw (InvocationTargetException) holder[0];
-                }
-                throw (InterruptedException) holder[0];
+	public static void showError(final Throwable error) {
+		new ErrorJob(error).schedule(100);
+	}
 
-            }
-            // new TimeoutProgressMonitorDialog(parent, TIMEOUT).run(true
-            // /*fork*/, cancelable, runnable);
-        } finally {
-            if (createdShell) {
-                parent.dispose();
-            }
-        }
-    }
+	public static final void logWarning(String message, Throwable error) {
+		getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
+	}
 
-    /**
-     * Convenience method to get the currently active workbench page. Note that
-     * the active page may not be the one that the usr perceives as active in
-     * some situations so this method of obtaining the activae page should only
-     * be used if no other method is available.
-     *
-     * @return the active workbench page
-     */
-    public static IWorkbenchPage getActivePage() {
-        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-        if (window == null) {
-            return null;
-        }
-        return window.getActivePage();
-    }
+	public static final void logInfo(String message, Throwable error) {
+		getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
+	}
 
-    public boolean isHgUsable() {
-        return hgUsable;
-    }
+	public static IStatus createStatus(String msg, int code, int severity, Throwable ex) {
+		return new Status(severity, ID, code, msg, ex);
+	}
 
-    public static Display getStandardDisplay() {
-        return PlatformUI.getWorkbench().getDisplay();
-    }
+	public final static void logError(Throwable ex) {
+		logError(ex.getMessage(), ex);
+	}
+
+	/**
+	 * Creates a busy cursor and runs the specified runnable. May be called from a non-UI thread.
+	 *
+	 * @param parent
+	 *            the parent Shell for the dialog
+	 * @param cancelable
+	 *            if true, the dialog will support cancelation
+	 * @param runnable
+	 *            the runnable
+	 *
+	 * @exception InvocationTargetException
+	 *                when an exception is thrown from the runnable
+	 * @exception InterruptedException
+	 *                when the progress monitor is cancelled
+	 */
+	public static void runWithProgress(Shell parent, boolean cancelable,
+			final IRunnableWithProgress runnable) throws InvocationTargetException,
+			InterruptedException {
+
+		boolean createdShell = false;
+		Shell myParent = parent;
+		try {
+			if (myParent == null || myParent.isDisposed()) {
+				Display display = Display.getCurrent();
+				if (display == null) {
+					// cannot provide progress (not in UI thread)
+					runnable.run(new NullProgressMonitor());
+					return;
+				}
+				// get the active shell or a suitable top-level shell
+				myParent = display.getActiveShell();
+				if (myParent == null) {
+					myParent = new Shell(display);
+					createdShell = true;
+				}
+			}
+			// pop up progress dialog after a short delay
+			final Exception[] holder = new Exception[1];
+			BusyIndicator.showWhile(myParent.getDisplay(), new Runnable() {
+				public void run() {
+					try {
+						runnable.run(new NullProgressMonitor());
+					} catch (InvocationTargetException e) {
+						holder[0] = e;
+					} catch (InterruptedException e) {
+						holder[0] = e;
+					}
+				}
+			});
+			if (holder[0] != null) {
+				if (holder[0] instanceof InvocationTargetException) {
+					throw (InvocationTargetException) holder[0];
+				}
+				throw (InterruptedException) holder[0];
+
+			}
+			// new TimeoutProgressMonitorDialog(parent, TIMEOUT).run(true
+			// /*fork*/, cancelable, runnable);
+		} finally {
+			if (createdShell) {
+				parent.dispose();
+			}
+		}
+	}
+
+	/**
+	 * Convenience method to get the currently active workbench page. Note that the active page may
+	 * not be the one that the usr perceives as active in some situations so this method of
+	 * obtaining the activae page should only be used if no other method is available.
+	 *
+	 * @return the active workbench page
+	 */
+	public static IWorkbenchPage getActivePage() {
+		return getActiveWindow().getActivePage();
+	}
+
+	/**
+	 * Convenience method to get the currently active shell.
+	 *
+	 * @return the active workbench shell. Never null, if there is at least one window open.
+	 */
+	public static Shell getActiveShell() {
+		return getActiveWindow().getShell();
+	}
+
+	/**
+	 * Convenience method to get the currently active workbench window.
+	 *
+	 * @return the active workbench window. Never null, if there is at least one window open.
+	 */
+	public static IWorkbenchWindow getActiveWindow() {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		if (window != null) {
+			return window;
+		}
+		return PlatformUI.getWorkbench().getWorkbenchWindows()[0];
+	}
+
+	public boolean isHgUsable() {
+		return hgUsable;
+	}
+
+	public static Display getStandardDisplay() {
+		return PlatformUI.getWorkbench().getDisplay();
+	}
+
+	public IProxyService getProxyService() {
+		return (IProxyService) proxyServiceTracker.getService();
+	}
+
+	/**
+	 * The default encoding which is used by the current environment.
+	 * <p>
+	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each
+	 * repository may use it's own encoding
+	 * @return a valid {@link Charset} encoding, never null.
+	 */
+	public static Charset getDefaultEncoding() {
+		return HGENCODING;
+	}
+
+	/**
+	 * Job to show error dialogs. Avoids to show hunderts of dialogs by ussing an exclusive rule.
+	 *
+	 * @author Andrei
+	 */
+	private static final class ErrorJob extends SafeUiJob {
+
+		static class ExclusiveRule implements ISchedulingRule {
+			public boolean isConflicting(ISchedulingRule rule) {
+				return contains(rule);
+			}
+
+			public boolean contains(ISchedulingRule rule) {
+				return rule instanceof ExclusiveRule;
+			}
+		}
+
+		final IStatus status;
+
+		private ErrorJob(Throwable error) {
+			super(Messages.getString("MercurialEclipsePlugin.showError")); //$NON-NLS-1$
+			if (error instanceof CoreException) {
+				status = ((CoreException) error).getStatus();
+			} else {
+				status = createStatus(error.getMessage(), 0, IStatus.ERROR, error);
+			}
+			setRule(new ExclusiveRule());
+		}
+
+		@Override
+		protected IStatus runSafe(IProgressMonitor monitor) {
+
+			IJobManager jobManager = Job.getJobManager();
+			String title;
+			IStatus errStatus;
+			if (jobManager.find(plugin).length == 1) {
+				// it's me alone there
+				errStatus = status;
+			} else {
+				// o-ho, we have multiple errors waiting to be displayed...
+				title = Messages.getString("MercurialEclipsePlugin.unexpectedErrors"); //$NON-NLS-1$
+				String message = Messages
+						.getString("MercurialEclipsePlugin.unexpectedErrorsOccured"); //$NON-NLS-1$
+				// get the latest state
+				Job[] jobs = jobManager.find(plugin);
+				// discard all waiting now (we are not affected)
+				jobManager.cancel(plugin);
+				List<IStatus> stati = new ArrayList<IStatus>();
+				for (Job job : jobs) {
+					if (job instanceof ErrorJob) {
+						ErrorJob errorJob = (ErrorJob) job;
+						stati.add(errorJob.status);
+					}
+				}
+				IStatus[] array = stati.toArray(new IStatus[stati.size()]);
+				errStatus = new MultiStatus(title, 0, array, message, null);
+			}
+			StatusManager.getManager().handle(errStatus, StatusManager.SHOW);
+			return super.runSafe(monitor);
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return plugin == family;
+		}
+	}
+
+	/**
+	 * Find the object associated with the given object that is adapted to
+	 * the provided class.
+	 *
+	 * @param anyObject might be null
+	 * @param clazz class to get the adapter for
+	 * @return adapted object or null if no adapter provided or the given object is null
+	 */
+	public static <V> V getAdapter(Object anyObject, Class<V> clazz) {
+		if (clazz.isInstance(anyObject)) {
+			return clazz.cast(anyObject);
+		}
+		if (anyObject instanceof IAdaptable) {
+			IAdaptable a = (IAdaptable) anyObject;
+			return clazz.cast(a.getAdapter(clazz));
+		}
+		return null;
+	}
 
 }

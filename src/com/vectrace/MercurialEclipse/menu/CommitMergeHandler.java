@@ -1,86 +1,77 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Andrei Loskutov (Intland) - bug fixes
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
-public class CommitMergeHandler extends SingleResourceHandler {
+public class CommitMergeHandler extends RootHandler {
 
-    /**
-     * run the commit merge handler
-     */
-    @Override
-    protected void run(IResource resource) throws HgException {
-        Assert.isNotNull(resource);
-        commitMergeWithCommitDialog(resource.getProject(), getShell());
-    }
+	/**
+	 * run the commit merge handler
+	 */
+	@Override
+	protected void run(HgRoot hgRoot) throws HgException {
+		commitMergeWithCommitDialog(hgRoot, getShell());
+	}
 
-    /**
-     * Opens the Commit dialog and commits the merge if ok is pressed.
-     * @param resource
-     *            the resource
-     * @return the hg command output
-     * @throws HgException
-     */
-    public String commitMergeWithCommitDialog(IProject resource, Shell shell) throws HgException {
-        Assert.isNotNull(resource);
-        String result = ""; //$NON-NLS-1$
-        try {
-            CommitDialog commitDialog = new MergeDialog(shell,  resource,
-                    Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
-                            + resource.getProject().getPersistentProperty(ResourceProperties.MERGING));
+	/**
+	 * Opens the Commit dialog and commits the merge if ok is pressed.
+	 * @param hgRoot
+	 *            the root to commit
+	 * @return the hg command output
+	 * @throws HgException
+	 */
+	public String commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
+		Assert.isNotNull(hgRoot);
+		String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
+		String mergeChangesetId = HgStatusClient.getMergeChangesetId(hgRoot);
+		if(mergeChangesetId != null) {
+			changesetMessage += " " + mergeChangesetId;
+		} else {
+			// TODO get the changeset id from mercurial via command call
+			changesetMessage = "Merging...";
+		}
 
-            // open dialog and wait for ok
-            commitDialog.open();
-        } catch (CoreException e) {
-            throw new HgException(Messages.getString("CommitMergeHandler.failedToSetMergeStatus"), e); //$NON-NLS-1$
-        }
-        return result;
-    }
+		CommitDialog commitDialog = new MergeDialog(shell,  hgRoot,	changesetMessage);
 
-    /**
-     * Commits a merge with a default merge message. The commit dialog is not shown.
-     * @param project a project to be committed.
-     * @return the output of hg commit
-     * @throws HgException
-     * @throws CoreException
-     */
-    public static String commitMerge(IProject project) throws HgException,
-            CoreException {
-        Assert.isNotNull(project);
-        return commitMerge(project, Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
-                + project.getPersistentProperty(ResourceProperties.MERGING));
-    }
+		// open dialog and wait for ok
+		commitDialog.open();
+		return commitDialog.getCommitResult();
+	}
 
-    /**
-     * Commits a merge with the given message. The commit dialog is not shown.
-     * @param project a project to be committed, not null
-     * @return the output of hg commit
-     * @throws HgException
-     * @throws CoreException
-     */
-    public static String commitMerge(IProject project, String message)
-            throws HgException, CoreException {
-        Assert.isNotNull(project);
-        Assert.isNotNull(message);
+	/**
+	 * Commits a merge with the given message. The commit dialog is not shown.
+	 * @param hgRoot the root to be committed, not null
+	 * @return the output of hg commit
+	 * @throws HgException
+	 * @throws CoreException
+	 */
+	public static String commitMerge(HgRoot hgRoot, String commitName, String message)
+			throws HgException, CoreException {
+		Assert.isNotNull(hgRoot);
+		Assert.isNotNull(message);
 
-        // do hg call
-        String result = HgCommitClient.commitProject(project, null, message);
-
-        // clear merge status in Eclipse
-        project.setPersistentProperty(ResourceProperties.MERGING, null);
-        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-
-        project.touch(null);
-        return result;
-    }
+		// do hg call
+		String result = HgCommitClient.commit(hgRoot, commitName, message);
+		HgStatusClient.clearMergeStatus(hgRoot);
+		return result;
+	}
 
 }

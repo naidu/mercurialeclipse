@@ -23,56 +23,56 @@ import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgQSeriesClient extends AbstractClient {
-    public static List<Patch> getPatchesInSeries(IResource resource)
-            throws HgException {
-        AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
-        
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        command.addOptions("-v"); //$NON-NLS-1$
-        command.addOptions("--summary"); //$NON-NLS-1$
-        return parse(command.executeToString());
-    }
+	public static List<Patch> getPatchesInSeries(IResource resource)
+			throws HgException {
+		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
 
-    /**
-     * @param executeToString
-     * @return
-     */
-    public static List<Patch> parse(String executeToString) {
-        List<Patch> list = new ArrayList<Patch>();
-        if (executeToString != null && executeToString.indexOf("\n") >= 0) { //$NON-NLS-1$
-            String[] patches = executeToString.split("\n"); //$NON-NLS-1$
-            for (String string : patches) {
-                String[] components = string.split(":"); //$NON-NLS-1$
-                String[] patchData = components[0].trim().split(" "); //$NON-NLS-1$
-                
-                Patch p = new Patch();
-                p.setIndex(patchData[0]);
-                p.setApplied(patchData[1].equals("A") ? true : false); //$NON-NLS-1$
-                p.setName(patchData[2].trim());
-                
-                if (components.length>1) {
-                    String summary = components[1].trim();
-                    p.setSummary(summary);
-                }
-                
-                list.add(p);
-            }
-        }
-        return list;
-    }
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
-    public static List<Patch> getPatchesNotInSeries(IResource resource)
-            throws HgException {
-        AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        command.addOptions("--summary", "--missing"); //$NON-NLS-1$ //$NON-NLS-2$
-        return parse(command.executeToString());
-    }
+		command.addOptions("-v"); //$NON-NLS-1$
+		command.addOptions("--summary"); //$NON-NLS-1$
+		return parse(command.executeToString());
+	}
+
+	/**
+	 * @param executeToString
+	 * @return
+	 */
+	public static List<Patch> parse(String executeToString) {
+		List<Patch> list = new ArrayList<Patch>();
+		if (executeToString != null && executeToString.indexOf("\n") >= 0) { //$NON-NLS-1$
+			String[] patches = executeToString.split("\n"); //$NON-NLS-1$
+			for (String string : patches) {
+                String[] components = string.split(":", 2); //$NON-NLS-1$
+                String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
+
+				Patch p = new Patch();
+				p.setIndex(patchData[0]);
+				p.setApplied(patchData[1].equals("A") ? true : false); //$NON-NLS-1$
+				p.setName(patchData[2].trim());
+
+				if (components.length>1) {
+					String summary = components[1].trim();
+					p.setSummary(summary);
+				}
+
+				list.add(p);
+			}
+		}
+		return list;
+	}
+
+	public static List<Patch> getPatchesNotInSeries(IResource resource)
+			throws HgException {
+		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+
+		command.addOptions("--summary", "--missing"); //$NON-NLS-1$ //$NON-NLS-2$
+		return parse(command.executeToString());
+	}
 }

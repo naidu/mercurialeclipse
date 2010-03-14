@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     StefanC - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -18,27 +19,27 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class UntrackedFilesFilter extends ViewerFilter
 {
-    private final boolean allowMissing;
+	private final boolean allowMissing;
 
-    public UntrackedFilesFilter(boolean allowMissing){
-        super();
-        this.allowMissing = allowMissing;
-    }
+	public UntrackedFilesFilter(boolean allowMissing){
+		super();
+		this.allowMissing = allowMissing;
+	}
 
-    /**
-     * Filter out untracked files.
-     */
-    @Override
-    public boolean select(Viewer viewer, Object parentElement,Object element){
-        if (element instanceof CommitResource){
-            char status = ((CommitResource) element).getStatus();
-            if (status == MercurialStatusCache.CHAR_UNKNOWN) {
-                return false;
-            }
-            if (!allowMissing && status == MercurialStatusCache.CHAR_MISSING) {
-                return false;
-            }
-        }
-        return true;
-    }
+	/**
+	 * Filter out untracked files.
+	 */
+	@Override
+	public boolean select(Viewer viewer, Object parentElement,Object element){
+		if (element instanceof CommitResource){
+			char status = ((CommitResource) element).getStatus();
+			if (status == MercurialStatusCache.CHAR_UNKNOWN) {
+				return false;
+			}
+			if (!allowMissing && status == MercurialStatusCache.CHAR_MISSING) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

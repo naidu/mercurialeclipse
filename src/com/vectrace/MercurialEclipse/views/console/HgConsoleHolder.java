@@ -7,6 +7,7 @@
  *
  * Contributors:
  * ijuma	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
@@ -19,6 +20,7 @@ import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleListener;
 import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -28,126 +30,137 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * This class should only be called from the UI thread as it is not thread-safe.
  */
 public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
+	private static final String CONSOLE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"; //$NON-NLS-1$
 
-    private static final HgConsoleHolder instance = new HgConsoleHolder();
+	private static final HgConsoleHolder instance = new HgConsoleHolder();
 
-    private volatile HgConsole console;
+	private volatile HgConsole console;
 
-    private boolean showOnMessage;
-    private boolean registered;
+	private boolean showOnMessage;
+	private boolean registered;
 
-    private HgConsoleHolder() {
-    }
+	private HgConsoleHolder() {
+	}
 
-    public static HgConsoleHolder getInstance() {
-        return instance;
-    }
+	public static HgConsoleHolder getInstance() {
+		return instance;
+	}
 
-    private void init() {
-        if (isInitialized()) {
-            return;
-        }
-        synchronized(this){
-            if (isInitialized()) {
-                return;
-            }
-            console = new HgConsole();
-            // install font
-            Font f = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getFontRegistry().get(
-                    MercurialPreferenceConstants.PREF_CONSOLE_FONT);
-            console.setFont(f);
-            showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
-                    MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
-            JFaceResources.getFontRegistry().addListener(this);
-            MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(this);
-        }
-    }
+	private void init() {
+		if (isInitialized()) {
+			return;
+		}
+		synchronized(this){
+			if (isInitialized()) {
+				return;
+			}
+			console = new HgConsole();
 
-    private boolean isInitialized() {
-        return console != null;
-    }
+			// install font
+			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+			theme.addPropertyChangeListener(this);
+			setConsoleFont();
 
-    public HgConsole showConsole(boolean force) {
-        init();
+			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
+					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
+			JFaceResources.getFontRegistry().addListener(this);
+			MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(this);
+		}
+	}
 
-        if (force || showOnMessage) {
-            // register console
-            registerConsole();
-            getConsoleManager().showConsoleView(console);
-        }
+	private boolean isInitialized() {
+		return console != null;
+	}
 
-        return console;
-    }
+	public HgConsole showConsole(boolean force) {
+		init();
 
-    public void registerConsole() {
-        boolean exists = isConsoleRegistered();
-        if (!exists) {
-            getConsoleManager().addConsoles(new IConsole[] { console });
-        }
-    }
+		if (force || showOnMessage) {
+			// register console
+			registerConsole();
+			getConsoleManager().showConsoleView(console);
+		}
 
-    public boolean isConsoleRegistered() {
-        if(registered){
-            return true;
-        }
-        IConsole[] existing = getConsoleManager().getConsoles();
-        for (int i = 0; i < existing.length; i++) {
-            if (console == existing[i]) {
-                registered = true;
-            }
-        }
-        return registered;
-    }
+		return console;
+	}
 
-    public void closeConsole() {
-        IConsoleManager manager = ConsolePlugin.getDefault()
-                .getConsoleManager();
-        if (console != null) {
-            manager.removeConsoles(new IConsole[] { console });
-        }
-    }
+	public void registerConsole() {
+		boolean exists = isConsoleRegistered();
+		if (!exists) {
+			getConsoleManager().addConsoles(new IConsole[] { console });
+		}
+	}
 
-    public HgConsole getConsole() {
-        init();
-        return console;
-    }
+	public boolean isConsoleRegistered() {
+		if(registered){
+			return true;
+		}
+		IConsole[] existing = getConsoleManager().getConsoles();
+		for (int i = 0; i < existing.length; i++) {
+			if (console == existing[i]) {
+				registered = true;
+			}
+		}
+		return registered;
+	}
 
-    public void consolesAdded(IConsole[] consoles) {
-        for (int i = 0; i < consoles.length; i++) {
-            IConsole c = consoles[i];
-            if (console == c) {
-                console.init();
-                showConsole(true);
-                break;
-            }
-        }
-    }
+	public void closeConsole() {
+		IConsoleManager manager = ConsolePlugin.getDefault()
+				.getConsoleManager();
+		if (console != null) {
+			manager.removeConsoles(new IConsole[] { console });
+		}
+	}
 
-    public void consolesRemoved(IConsole[] consoles) {
-        for (int i = 0; i < consoles.length; i++) {
-            IConsole c = consoles[i];
-            if (c == console) {
-                console.dispose();
-                console = null;
-                JFaceResources.getFontRegistry().removeListener(this);
-                MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                        .removePropertyChangeListener(this);
-                break;
-            }
-        }
+	public HgConsole getConsole() {
+		init();
+		return console;
+	}
 
-    }
+	public void consolesAdded(IConsole[] consoles) {
+		for (int i = 0; i < consoles.length; i++) {
+			IConsole c = consoles[i];
+			if (console == c) {
+				console.init();
+				showConsole(true);
+				break;
+			}
+		}
+	}
 
-    public void propertyChange(PropertyChangeEvent event) {
-        if(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
-            showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
-                    MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
-        } else {
-            console.propertyChange(event);
-        }
-    }
+	public void consolesRemoved(IConsole[] consoles) {
+		for (int i = 0; i < consoles.length; i++) {
+			IConsole c = consoles[i];
+			if (c == console) {
+				console.dispose();
+				console = null;
+				JFaceResources.getFontRegistry().removeListener(this);
+				MercurialEclipsePlugin.getDefault().getPreferenceStore()
+						.removePropertyChangeListener(this);
+				break;
+			}
+		}
 
-    private IConsoleManager getConsoleManager() {
-        return ConsolePlugin.getDefault().getConsoleManager();
-    }
+	}
+
+	public void propertyChange(PropertyChangeEvent event) {
+		if(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
+			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
+					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
+		} else if (CONSOLE_FONT.equals(event.getProperty())) {
+			setConsoleFont();
+		} else {
+			console.propertyChange(event);
+		}
+	}
+
+	private IConsoleManager getConsoleManager() {
+		return ConsolePlugin.getDefault().getConsoleManager();
+	}
+
+	private void setConsoleFont() {
+		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+		Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+		console.setFont(font);
+	}
 }

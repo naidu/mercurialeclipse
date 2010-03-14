@@ -8,6 +8,7 @@
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
  *     Stefan C          - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 
@@ -35,8 +36,8 @@ final class CommitterColors {
 	 */
 	public static CommitterColors getDefault() {
 		if (fInstance == null) {
-            fInstance= new CommitterColors();
-        }
+			fInstance= new CommitterColors();
+		}
 		return fInstance;
 	}
 

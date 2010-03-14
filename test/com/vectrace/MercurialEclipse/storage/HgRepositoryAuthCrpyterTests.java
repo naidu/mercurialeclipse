@@ -23,37 +23,37 @@ import junit.framework.TestCase;
  */
 public class HgRepositoryAuthCrpyterTests extends TestCase {
 
-    private File keyFile = null;
+	private File keyFile = null;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        keyFile = File.createTempFile(".key", "");
-    }
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		keyFile = File.createTempFile(".key", "");
+	}
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        if(keyFile != null && !keyFile.delete()) {
-            keyFile.deleteOnExit();
-        }
-    }
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		if(keyFile != null && !keyFile.delete()) {
+			keyFile.deleteOnExit();
+		}
+	}
 
-    public void testCrypt() throws Exception {
-        SecretKey key = HgRepositoryAuthCrypter.generateKey();
-        HgRepositoryAuthCrypterFactory.writeBytesToFile(key.getEncoded(), keyFile);
-        HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create(keyFile);
-        String data = "test";
-        assertEquals(data, crypter.decrypt(crypter.encrypt(data)));
-    }
+	public void testCrypt() throws Exception {
+		SecretKey key = HgRepositoryAuthCrypter.generateKey();
+		HgRepositoryAuthCrypterFactory.writeBytesToFile(key.getEncoded(), keyFile);
+		HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create(keyFile);
+		String data = "test";
+		assertEquals(data, crypter.decrypt(crypter.encrypt(data)));
+	}
 
-    public void testWrongCrypt() throws Exception {
-        try {
-            SecretKey key = HgRepositoryAuthCrypter.generateKey();
-            HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create(keyFile);
-        } catch (InvalidKeyException ex) {
-            return;
-        }
-        assertTrue("Crypter cannot created from empty key data", false);
-    }
+	public void testWrongCrypt() throws Exception {
+		try {
+			HgRepositoryAuthCrypter.generateKey();
+			HgRepositoryAuthCrypterFactory.create(keyFile);
+		} catch (InvalidKeyException ex) {
+			return;
+		}
+		assertTrue("Crypter cannot created from empty key data", false);
+	}
 }

@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei  implementation
+ *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -16,11 +16,11 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
  * A rule which disallows parallel execution of jobs using it
  */
 public final class ExclusiveHistoryRule implements ISchedulingRule {
-    public boolean isConflicting(ISchedulingRule rule) {
-        return contains(rule);
-    }
+	public boolean isConflicting(ISchedulingRule rule) {
+		return contains(rule);
+	}
 
-    public boolean contains(ISchedulingRule rule) {
-        return rule instanceof ExclusiveHistoryRule;
-    }
+	public boolean contains(ISchedulingRule rule) {
+		return rule instanceof ExclusiveHistoryRule;
+	}
 }

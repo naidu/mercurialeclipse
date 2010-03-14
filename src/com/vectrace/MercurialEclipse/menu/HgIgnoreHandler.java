@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -24,6 +25,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -65,41 +68,41 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 		}
 	}
 
-    private void refreshStatus(final IResource resource) {
-        Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
-            @Override
-            protected IStatus run(IProgressMonitor monitor) {
-                try {
+	private void refreshStatus(final IResource resource) {
+		Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
 
-                    // if there is a .hgignore at project level, update it via a refresh.
-                    IProject project = resource.getProject();
-                    IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
+					// if there is a .hgignore at project level, update it via a refresh.
+					IProject project = resource.getProject();
+					IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
 
-                    hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
-                    if(!hgIgnoreFile.exists()){
-                        // refresh status of newly ignored resource, but only if .hgignore
-                        // is not in the project, because if .hgignore is inside the project,
-                        // the status would be updated automatically
-                        MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
-                    } else {
-                        MercurialStatusCache.getInstance().clearStatusCache(resource, true);
-                    }
+					hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
+					if(!hgIgnoreFile.exists()){
+						// If .hgignore is NOT inside the project, we have a multi-project setup in the same root
+						// Refresh status of newly ignored resource for ALL projects in the same hg root.
+						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+						MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
+					} else {
+						MercurialStatusCache.getInstance().clearStatusCache(resource, true);
+					}
 
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
-                            e);
-                    return e.getStatus();
-                }
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
+							e);
+					return e.getStatus();
+				}
 
-                // fix for issue #10152:
-                // trigger decorator update for resources being ignored
-                // For some reasons, resource.touch() and refreshLocal() isn't enough
-                // to get updated status into the Navigator/Explorer views
-                ResourceDecorator.updateClientDecorations();
-                return Status.OK_STATUS;
-            }
-        };
-        job.schedule();
-    }
+				// fix for issue #10152:
+				// trigger decorator update for resources being ignored
+				// For some reasons, resource.touch() and refreshLocal() isn't enough
+				// to get updated status into the Navigator/Explorer views
+				ResourceDecorator.updateClientDecorations();
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
+	}
 
 }

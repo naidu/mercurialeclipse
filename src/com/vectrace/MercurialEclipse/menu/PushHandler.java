@@ -7,22 +7,23 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.PushRepoWizard;
 
-public class PushHandler extends SingleResourceHandler {
+public class PushHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        PushRepoWizard pushRepoWizard = new PushRepoWizard(resource);        
-        WizardDialog pushWizardDialog = new WizardDialog(getShell(),
-                pushRepoWizard);
-        pushWizardDialog.open();
-    }
+	@Override
+	public void run(final HgRoot hgRoot) {
+		PushRepoWizard pushRepoWizard = new PushRepoWizard(hgRoot);
+		WizardDialog pushWizardDialog = new WizardDialog(getShell(),
+				pushRepoWizard);
+		pushWizardDialog.open();
+	}
 
 }

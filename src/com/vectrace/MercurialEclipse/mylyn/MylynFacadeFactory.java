@@ -7,10 +7,12 @@
  *
  * Contributors:
  * zluspai	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.mylyn;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -24,24 +26,27 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public class MylynFacadeFactory {
 
-    /**
-     * Get the IMylynFacade instance.
-     * @return The mylyn facade
-     */
-    public static IMylynFacade getMylynFacade() {
-        Object facade = Proxy.newProxyInstance(MylynFacadeFactory.class.getClassLoader(), new Class[] {IMylynFacade.class}, new InvocationHandler() {
+	/**
+	 * Get the IMylynFacade instance.
+	 * @return The mylyn facade
+	 */
+	public static IMylynFacade getMylynFacade() {
+		Object facade = Proxy.newProxyInstance(MylynFacadeFactory.class.getClassLoader(), new Class[] {IMylynFacade.class}, new InvocationHandler() {
 
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                try {
-                    MylynFacadeImpl impl = new MylynFacadeImpl();
-                    return method.invoke(impl, args);
-                } catch (Throwable th) {
-                    MercurialEclipsePlugin.logError(th);
-                }
-                return null;
-            }
-        });
-        return (IMylynFacade) facade;
-    }
+			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+				try {
+					MylynFacadeImpl impl = new MylynFacadeImpl();
+					return method.invoke(impl, args);
+				} catch (InvocationTargetException th) {
+					// expected if Mylin is not installed => so NO logs here.
+				} catch (Throwable t){
+					// unexpected => log
+					MercurialEclipsePlugin.logError(t);
+				}
+				return null;
+			}
+		});
+		return (IMylynFacade) facade;
+	}
 
 }

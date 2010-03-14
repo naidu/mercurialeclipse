@@ -10,6 +10,7 @@
  *     VecTrace (Zingo Andersen) - updateing it
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -35,84 +36,84 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
  */
 
 public class TimeoutPreferencePage extends FieldEditorPreferencePage
-        implements IWorkbenchPreferencePage {
+		implements IWorkbenchPreferencePage {
 
 
-    private static class TimeoutFieldEditor extends IntegerFieldEditor {
-        private TimeoutFieldEditor(String name, String labelText,
-                Composite parent) {
-            super(name, labelText, parent);
-        }
+	private static class TimeoutFieldEditor extends IntegerFieldEditor {
+		private TimeoutFieldEditor(String name, String labelText,
+				Composite parent) {
+			super(name, labelText, parent);
+		}
 
-        @Override
-        public void load() {
-            super.load();
-            if (getIntValue() <= 0) {
-                super.setPresentsDefaultValue(true);
-                super.setStringValue(String
-                        .valueOf(AbstractShellCommand.DEFAULT_TIMEOUT));
-            }
-        }
-    }
+		@Override
+		public void load() {
+			super.load();
+			if (getIntValue() <= 0) {
+				super.setPresentsDefaultValue(true);
+				super.setStringValue(String
+						.valueOf(AbstractShellCommand.DEFAULT_TIMEOUT));
+			}
+		}
+	}
 
-    public TimeoutPreferencePage() {
-        super(GRID);
-        setPreferenceStore(MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore());
-        setDescription(Messages.getString("TimeoutPreferencePage.description")); //$NON-NLS-1$
-    }
+	public TimeoutPreferencePage() {
+		super(GRID);
+		setPreferenceStore(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore());
+		setDescription(Messages.getString("TimeoutPreferencePage.description")); //$NON-NLS-1$
+	}
 
-    /**
-     * Creates the field editors. Field editors are abstractions of the common
-     * GUI blocks needed to manipulate various types of preferences. Each field
-     * editor knows how to save and restore itself.
-     */
-    @Override
-    public void createFieldEditors() {
+	/**
+	 * Creates the field editors. Field editors are abstractions of the common
+	 * GUI blocks needed to manipulate various types of preferences. Each field
+	 * editor knows how to save and restore itself.
+	 */
+	@Override
+	public void createFieldEditors() {
 
-        // timeout preferences
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.CLONE_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.clone"), getFieldEditorParent())); //$NON-NLS-1$
+		// timeout preferences
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.CLONE_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.clone"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.PUSH_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.push"), //$NON-NLS-1$
-                getFieldEditorParent()));
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.PUSH_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.push"), //$NON-NLS-1$
+				getFieldEditorParent()));
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.PULL_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.pull"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.PULL_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.pull"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.UPDATE_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.update"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.UPDATE_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.update"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.COMMIT_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.commit"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.COMMIT_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.commit"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.IMERGE_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.imerge"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.IMERGE_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.imerge"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.LOG_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.log"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.LOG_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.log"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.STATUS_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.status"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.STATUS_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.status"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.ADD_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.add"), //$NON-NLS-1$
-                getFieldEditorParent()));
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.ADD_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.add"), //$NON-NLS-1$
+				getFieldEditorParent()));
 
-        addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.REMOVE_TIMEOUT,
-                Messages.getString("TimeoutPreferencePage.field.remove"), getFieldEditorParent())); //$NON-NLS-1$
-    }
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.REMOVE_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.remove"), getFieldEditorParent())); //$NON-NLS-1$
+	}
 
-    public void init(IWorkbench workbench) {
-    }
+	public void init(IWorkbench workbench) {
+	}
 
 }

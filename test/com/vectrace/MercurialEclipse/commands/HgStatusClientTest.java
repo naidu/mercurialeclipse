@@ -10,9 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
-
 import junit.framework.TestCase;
+
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan
@@ -20,16 +20,12 @@ import junit.framework.TestCase;
  */
 public class HgStatusClientTest extends TestCase {
 
-    /* (non-Javadoc)
-     * @see junit.framework.TestCase#setUp()
-     */
-    @Override
-    protected void setUp() throws Exception {
-        TestConfiguration cfg = new TestConfiguration();
-        HgClients.initialize(cfg, cfg, cfg);
-    }
-    public void testGetStatus() throws Exception {
-        HgStatusClient.getStatus(new File("."));
-      //   System.out.println(status);
-    }
+	@Override
+	protected void setUp() throws Exception {
+		TestConfiguration cfg = new TestConfiguration();
+		HgClients.initialize(cfg, cfg, cfg);
+	}
+	public void testGetStatus() throws Exception {
+		HgStatusClient.getStatus(new HgRoot("."));
+	}
 }

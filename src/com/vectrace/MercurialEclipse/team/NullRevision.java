@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IFile;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
@@ -20,23 +20,23 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
  */
 public class NullRevision extends MercurialRevisionStorage {
 
-    /**
-     * @param res
-     */
-    public NullRevision(IResource res, ChangeSet cs) {
-        super(res, 0, null, null);
-        content = new ContentHolder((byte[])null);
-        changeSet = cs;
-    }
+	/**
+	 * @param res
+	 */
+	public NullRevision(IFile res, ChangeSet cs) {
+		super(res, 0, null, null);
+		content = new ContentHolder((byte[])null);
+		changeSet = cs;
+	}
 
-    @Override
-    public String getName() {
-        return super.getName() + ": no content";
-    }
+	@Override
+	public String getName() {
+		return super.getName() + ": no content";
+	}
 
-    @Override
-    public boolean isReadOnly() {
-        return true;
-    }
+	@Override
+	public boolean isReadOnly() {
+		return true;
+	}
 
 }

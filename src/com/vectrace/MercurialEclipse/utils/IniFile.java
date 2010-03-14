@@ -7,6 +7,8 @@
  *
  * Contributors:
  * wleggette	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 /* ====================================================================
  *
@@ -57,300 +59,282 @@
  */
 package com.vectrace.MercurialEclipse.utils;
 
-import java.io.*;
-import java.util.*;
-import java.net.URL;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author $Author: l2fprod $
  * @created 27 avril 2002
- * @version $Revision: 1.5 $, $Date: 2002/04/27 11:27:42 $
+ * $Id$
  */
 public class IniFile {
 
-    private final Map<String,Map<String,String>> sections;
+	private final Map<String,Map<String,String>> sections;
 
-    /**
-     * Constructor for the IniFile object
-     */
-    public IniFile() {
-        sections = new HashMap<String,Map<String,String>>();
-    }
+	/**
+	 * Constructor for the IniFile object
+	 */
+	public IniFile() {
+		sections = new HashMap<String,Map<String,String>>();
+	}
 
-    /**
-     * Constructor for the IniFile object
-     * 
-     * @param filename
-     *            Description of Parameter
-     * @exception FileNotFoundException
-     *                Description of Exception
-     */
-    public IniFile(String filename) throws FileNotFoundException {
-        this();
-        load(filename);
-    }
+	/**
+	 * Constructor for the IniFile object
+	 *
+	 * @param filename
+	 *            Description of Parameter
+	 * @exception FileNotFoundException
+	 *                Description of Exception
+	 */
+	public IniFile(String filename) throws FileNotFoundException {
+		this();
+		load(filename);
+	}
 
-    /**
-     * Constructor for the IniFile object
-     * 
-     * @param url
-     *            Description of Parameter
-     * @exception IOException
-     *                Description of Exception
-     */
-    public IniFile(URL url) throws IOException {
-        this();
-        InputStream in = url.openStream();
-        try {
-            load(in);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-    }
+	/**
+	 * Sets the KeyValue attribute of the IniFile object
+	 *
+	 * @param section
+	 *            The new KeyValue value
+	 * @param key
+	 *            The new KeyValue value
+	 * @param value
+	 *            The new KeyValue value
+	 */
+	public void setKeyValue(String section, String key, String value) {
+		Map<String, String> section2 = getSection(section);
+		if(section2 != null) {
+			section2.put(key.toLowerCase(), value);
+		}
+	}
 
-    /**
-     * Sets the KeyValue attribute of the IniFile object
-     * 
-     * @param section
-     *            The new KeyValue value
-     * @param key
-     *            The new KeyValue value
-     * @param value
-     *            The new KeyValue value
-     */
-    public void setKeyValue(String section, String key, String value) {
-        Map<String, String> section2 = getSection(section);
-        if(section2 != null) {
-            section2.put(key.toLowerCase(), value);
-        }
-    }
+	/**
+	 * Gets the Sections attribute of the IniFile object
+	 *
+	 * @return The Sections value
+	 */
+	public Map<String,Map<String,String>> getSections() {
+		return sections;
+	}
 
-    /**
-     * Gets the Sections attribute of the IniFile object
-     * 
-     * @return The Sections value
-     */
-    public Map<String,Map<String,String>> getSections() {
-        return sections;
-    }
+	/**
+	 * Gets the Section attribute of the IniFile object
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 * @return The Section value
+	 */
+	public Map<String,String> getSection(String section) {
+		return sections.get(section.toLowerCase());
+	}
 
-    /**
-     * Gets the Section attribute of the IniFile object
-     * 
-     * @param section
-     *            Description of Parameter
-     * @return The Section value
-     */
-    public Map<String,String> getSection(String section) {
-        return sections.get(section.toLowerCase());
-    }
+	/**
+	 * Gets the NullOrEmpty attribute of the IniFile object
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 * @param key
+	 *            Description of Parameter
+	 * @return The NullOrEmpty value
+	 */
+	public boolean isNullOrEmpty(String section, String key) {
+		String value = getKeyValue(section, key);
+		return (value == null || value.length() == 0);
+	}
 
-    /**
-     * Gets the NullOrEmpty attribute of the IniFile object
-     * 
-     * @param section
-     *            Description of Parameter
-     * @param key
-     *            Description of Parameter
-     * @return The NullOrEmpty value
-     */
-    public boolean isNullOrEmpty(String section, String key) {
-        String value = getKeyValue(section, key);
-        return (value == null || value.length() == 0);
-    }
+	/**
+	 * Gets the KeyValue attribute of the IniFile object
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 * @param key
+	 *            Description of Parameter
+	 * @return The KeyValue value
+	 */
+	public String getKeyValue(String section, String key) {
+		Map<String, String> section2 = getSection(section);
+		if(section2 != null) {
+			return section2.get(key.toLowerCase());
+		}
+		return null;
+	}
 
-    /**
-     * Gets the KeyValue attribute of the IniFile object
-     * 
-     * @param section
-     *            Description of Parameter
-     * @param key
-     *            Description of Parameter
-     * @return The KeyValue value
-     */
-    public String getKeyValue(String section, String key) {
-        Map<String, String> section2 = getSection(section);
-        if(section2 != null) {
-            return section2.get(key.toLowerCase());
-        }
-        return null;
-    }
+	/**
+	 * Gets the KeyIntValue attribute of the IniFile object
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 * @param key
+	 *            Description of Parameter
+	 * @return The KeyIntValue value
+	 */
+	public int getKeyIntValue(String section, String key) {
+		return getKeyIntValue(section, key, 0);
+	}
 
-    /**
-     * Gets the KeyIntValue attribute of the IniFile object
-     * 
-     * @param section
-     *            Description of Parameter
-     * @param key
-     *            Description of Parameter
-     * @return The KeyIntValue value
-     */
-    public int getKeyIntValue(String section, String key) {
-        return getKeyIntValue(section, key, 0);
-    }
+	/**
+	 * Gets the KeyIntValue attribute of the IniFile object
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 * @param key
+	 *            Description of Parameter
+	 * @param defaultValue
+	 *            Description of Parameter
+	 * @return The KeyIntValue value
+	 */
+	public int getKeyIntValue(String section, String key, int defaultValue) {
+		String value = getKeyValue(section, key.toLowerCase());
+		if (value == null) {
+			return defaultValue;
+		}
 
-    /**
-     * Gets the KeyIntValue attribute of the IniFile object
-     * 
-     * @param section
-     *            Description of Parameter
-     * @param key
-     *            Description of Parameter
-     * @param defaultValue
-     *            Description of Parameter
-     * @return The KeyIntValue value
-     */
-    public int getKeyIntValue(String section, String key, int defaultValue) {
-        String value = getKeyValue(section, key.toLowerCase());
-        if (value == null) {
-            return defaultValue;
-        }
-
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
 
 
-    /**
-     * Description of the Method
-     * 
-     * @param filename
-     *            Description of Parameter
-     * @exception FileNotFoundException
-     *                Description of Exception
-     */
-    public void load(String filename) throws FileNotFoundException {
-        FileInputStream in = new FileInputStream(filename);
-        try {
-            load(in);
-        } finally {
-            try {
-                in.close();
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-    }
+	/**
+	 * Description of the Method
+	 *
+	 * @param filename
+	 *            Description of Parameter
+	 * @exception FileNotFoundException
+	 *                Description of Exception
+	 */
+	public void load(String filename) throws FileNotFoundException {
+		load(new FileInputStream(filename));
+	}
 
-    /**
-     * Description of the Method
-     * 
-     * @param filename
-     *            Description of Parameter
-     * @exception IOException
-     *                Description of Exception
-     */
-    public void save(String filename) throws IOException {
-        FileOutputStream out = new FileOutputStream(filename);
-        try {
-            save(out);
-        } finally {
-            try {
-                out.close();
-            } catch (IOException e) {
-                // ignore
-            }
-        }
-    }
+	/**
+	 * Description of the Method
+	 *
+	 * @param filename
+	 *            Description of Parameter
+	 * @exception IOException
+	 *                Description of Exception
+	 */
+	public void save(String filename) throws IOException {
+		FileOutputStream out = new FileOutputStream(filename);
+		try {
+			save(out);
+		} finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
 
-    /**
-     * Description of the Method
-     * 
-     * @param in
-     *            Description of Parameter
-     */
-    private void load(InputStream in) {
-        try {
-            BufferedReader input = new BufferedReader(new InputStreamReader(in));
-            String read;
-            Map<String,String> section = null;
-            String section_name;
-            while ((read = input.readLine()) != null) {
-                if (read.startsWith(";") || read.startsWith("#")) {
-                    continue;
-                } else if (read.startsWith("[")) {
-                    // new section
-                    section_name = read.substring(1, read.indexOf("]"))
-                    .toLowerCase();
-                    section = sections.get(section_name);
-                    if (section == null) {
-                        section = new HashMap<String,String>();
-                        sections.put(section_name, section);
-                    }
-                } else if (read.indexOf("=") != -1 && section != null) {
-                    // new key
-                    String key = read.substring(0, read.indexOf("=")).trim()
-                    .toLowerCase();
-                    String value = read.substring(read.indexOf("=") + 1).trim();
-                    section.put(key, value);
-                }
-            }
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+	/**
+	 * Description of the Method
+	 *
+	 * @param in
+	 *            Description of Parameter
+	 */
+	private void load(InputStream in) {
+		try {
+			BufferedReader input = new BufferedReader(new InputStreamReader(in));
+			try {
+				Map<String,String> section = null;
+				String section_name;
+				for (String read = null; (read = input.readLine()) != null; ) {
+					if (read.startsWith(";") || read.startsWith("#")) {
+						continue;
+					} else if (read.startsWith("[")) {
+						// new section
+						section_name = read.substring(1, read.indexOf("]")).toLowerCase();
+						section = sections.get(section_name);
+						if (section == null) {
+							section = new HashMap<String,String>();
+							sections.put(section_name, section);
+						}
+					} else if (read.indexOf("=") != -1 && section != null) {
+						// new key
+						String key = read.substring(0, read.indexOf("=")).trim().toLowerCase();
+						String value = read.substring(read.indexOf("=") + 1).trim();
+						section.put(key, value);
+					}
+				}
+			} finally {
+				input.close();
+			}
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
 
-    /**
-     * Description of the Method
-     * 
-     * @param out
-     *            Description of Parameter
-     */
-    private void save(OutputStream out) {
-        try {
-            PrintWriter output = new PrintWriter(out);
-            for (String section : sections.keySet()) {
-                output.println("[" + section + "]");
-                for (Map.Entry<String, String> entry : getSection(section).entrySet()) {
-                    output.println(entry.getKey() + "=" + entry.getValue());
-                }
-            }
-            output.flush();
-            output.close();
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+	/**
+	 * Description of the Method
+	 *
+	 * @param out
+	 *            Description of Parameter
+	 */
+	private void save(OutputStream out) {
+		try {
+			PrintWriter output = new PrintWriter(out);
 
-    /**
-     * Adds a feature to the Section attribute of the IniFile object
-     * 
-     * @param section
-     *            The feature to be added to the Section attribute
-     */
-    public void addSection(String section) {
-        sections.put(section.toLowerCase(), new HashMap<String,String>());
-    }
+			try {
+				for (String section : sections.keySet()) {
+					output.println("[" + section + "]");
+					for (Map.Entry<String, String> entry : getSection(section).entrySet()) {
+						output.println(entry.getKey() + "=" + entry.getValue());
+					}
+				}
+			} finally {
+				output.close();
+			}
+		} finally {
+			try {
+				out.close();
+			} catch (IOException ex) {
+			}
+		}
+	}
 
-    /**
-     * Description of the Method
-     * 
-     * @param section
-     *            Description of Parameter
-     */
-    public void removeSection(String section) {
-    }
+	/**
+	 * Adds a feature to the Section attribute of the IniFile object
+	 *
+	 * @param section
+	 *            The feature to be added to the Section attribute
+	 */
+	public void addSection(String section) {
+		sections.put(section.toLowerCase(), new HashMap<String,String>());
+	}
 
-    /**
-     * Simple test function
-     * 
-     * @param args
-     *            The command line arguments
-     * @exception Exception
-     *                Description of Exception
-     */
-    public static void main(String[] args) throws Exception {
-        (new IniFile()).load(new FileInputStream(args[0]));
-    }
+	/**
+	 * Description of the Method
+	 *
+	 * @param section
+	 *            Description of Parameter
+	 */
+	public void removeSection(String section) {
+	}
+
+	/**
+	 * Simple test function
+	 *
+	 * @param args
+	 *            The command line arguments
+	 * @exception Exception
+	 *                Description of Exception
+	 */
+	public static void main(String[] args) throws Exception {
+		(new IniFile()).load(new FileInputStream(args[0]));
+	}
 }

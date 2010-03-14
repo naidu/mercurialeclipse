@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * 		bastian	implementation
+ * 		Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
@@ -20,36 +21,37 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author bastian
- * 
  */
 public class HgQPopClient extends AbstractClient {
-    public static String popAll(IResource resource, boolean force)
-            throws HgException {
-        Assert.isNotNull(resource);
-        AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
+	public static String popAll(IResource resource, boolean force)
+			throws HgException {
+		Assert.isNotNull(resource);
+		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
 
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        command.addOptions("-a"); //$NON-NLS-1$
-        if (force) {
-            command.addOptions("--force"); //$NON-NLS-1$
-        }
-        return command.executeToString();
-    }
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
-    public static String pop(IResource resource, boolean force, String patchName)
-            throws HgException {
-        AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
+		command.addOptions("-a"); //$NON-NLS-1$
+		if (force) {
+			command.addOptions("--force"); //$NON-NLS-1$
+		}
+		return command.executeToString();
+	}
 
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        if (force) {
-            command.addOptions("--force"); //$NON-NLS-1$
-        }
-        
-        command.addOptions(patchName);
-        return command.executeToString();
-    }
+	public static String pop(IResource resource, boolean force, String patchName)
+			throws HgException {
+		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
+
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+
+		if (force) {
+			command.addOptions("--force"); //$NON-NLS-1$
+		}
+
+		if (!"".equals(patchName)) { //$NON-NLS-1$
+			command.addOptions(patchName);
+		}
+		return command.executeToString();
+	}
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch  implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -17,17 +18,17 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
  */
 public class OutgoingChangesetCache extends AbstractRemoteCache {
 
-    private static OutgoingChangesetCache instance;
+	private static OutgoingChangesetCache instance;
 
-    private OutgoingChangesetCache() {
-        super(Direction.OUTGOING);
-    }
+	private OutgoingChangesetCache() {
+		super(Direction.OUTGOING);
+	}
 
-    public synchronized static OutgoingChangesetCache getInstance() {
-        if (instance == null) {
-            instance = new OutgoingChangesetCache();
-        }
-        return instance;
-    }
+	public synchronized static OutgoingChangesetCache getInstance() {
+		if (instance == null) {
+			instance = new OutgoingChangesetCache();
+		}
+		return instance;
+	}
 
 }

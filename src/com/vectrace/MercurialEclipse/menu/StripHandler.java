@@ -7,27 +7,23 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
-public class StripHandler extends SingleResourceHandler {
+public class StripHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        StripWizard stripWizard = new StripWizard(project);
-        WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
-        dialog.setBlockOnOpen(true);
-        dialog.open();
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(resource.getProject(), true);
-    }
+	@Override
+	protected void run(HgRoot hgRoot) {
+		StripWizard stripWizard = new StripWizard(hgRoot);
+		WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
+		dialog.setBlockOnOpen(true);
+		dialog.open();
+	}
 
 }

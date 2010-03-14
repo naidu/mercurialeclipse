@@ -7,28 +7,28 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.SignWizard;
 
-public class SignHandler extends SingleResourceHandler {
+public class SignHandler extends RootHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        SignWizard signWizard = new SignWizard(project);
-        WizardDialog dialog = new WizardDialog(getShell(), signWizard);
-        int result = dialog.open();
-        if(result == Window.OK) {
-            new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
-        }
-    }
+	@Override
+	protected void run(HgRoot hgRoot) {
+		SignWizard signWizard = new SignWizard(hgRoot);
+		WizardDialog dialog = new WizardDialog(getShell(), signWizard);
+		dialog.open();
+//		if(result == Window.OK) {
+			// Andrei: I do not see any reason to update anything after the sign operation.
+			// the only change is the changeset info, which is not shown anywhere in Eclipse except
+			// the history view, and the history view has a "refresh" button
+			// new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
+//		}
+	}
 
 }

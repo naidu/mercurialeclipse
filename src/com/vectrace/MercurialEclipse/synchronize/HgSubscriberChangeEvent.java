@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -17,46 +17,46 @@ import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 
 public class HgSubscriberChangeEvent extends SubscriberChangeEvent {
 
-    public HgSubscriberChangeEvent(Subscriber subscriber, int flags, IResource resource) {
-        super(subscriber, flags, resource);
-    }
+	public HgSubscriberChangeEvent(Subscriber subscriber, int flags, IResource resource) {
+		super(subscriber, flags, resource);
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        if(this == obj){
-            return true;
-        }
-        if(!(obj instanceof HgSubscriberChangeEvent)){
-            return false;
-        }
-        HgSubscriberChangeEvent event = (HgSubscriberChangeEvent) obj;
+	@Override
+	public boolean equals(Object obj) {
+		if(this == obj){
+			return true;
+		}
+		if(!(obj instanceof HgSubscriberChangeEvent)){
+			return false;
+		}
+		HgSubscriberChangeEvent event = (HgSubscriberChangeEvent) obj;
 
-        return getResource().equals(event.getResource());
-    }
+		return getResource().equals(event.getResource());
+	}
 
-    @Override
-    public int hashCode() {
-        return getResource().hashCode();
-    }
+	@Override
+	public int hashCode() {
+		return getResource().hashCode();
+	}
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        switch (getFlags()) {
-        case ISubscriberChangeEvent.ROOT_ADDED:
-            sb.append("+");
-            break;
-        case ISubscriberChangeEvent.ROOT_REMOVED:
-            sb.append("-");
-            break;
-        case ISubscriberChangeEvent.NO_CHANGE:
-            sb.append("");
-            break;
-        case ISubscriberChangeEvent.SYNC_CHANGED:
-            sb.append("~");
-            break;
-        }
-        sb.append(getResource().getName());
-        return sb.toString();
-    }
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		switch (getFlags()) {
+		case ISubscriberChangeEvent.ROOT_ADDED:
+			sb.append("+");
+			break;
+		case ISubscriberChangeEvent.ROOT_REMOVED:
+			sb.append("-");
+			break;
+		case ISubscriberChangeEvent.NO_CHANGE:
+			sb.append("");
+			break;
+		case ISubscriberChangeEvent.SYNC_CHANGED:
+			sb.append("~");
+			break;
+		}
+		sb.append(getResource().getName());
+		return sb.toString();
+	}
 }

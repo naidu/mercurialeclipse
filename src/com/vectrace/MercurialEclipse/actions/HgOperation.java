@@ -10,6 +10,7 @@
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -27,58 +28,58 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public abstract class HgOperation extends TeamOperation {
 
-    protected String result;
+	protected String result;
 
-    public HgOperation(IWorkbenchPart part) {
-        super(part);
-    }
+	public HgOperation(IWorkbenchPart part) {
+		super(part);
+	}
 
-    public HgOperation(IRunnableContext context) {
-        super(context);
-    }
+	public HgOperation(IRunnableContext context) {
+		super(context);
+	}
 
-    public HgOperation(IWorkbenchPart part, IRunnableContext context) {
-        super(part, context);
-    }
+	public HgOperation(IWorkbenchPart part, IRunnableContext context) {
+		super(part, context);
+	}
 
-    public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {
-        // TODO: Would be nice to have something that indicates progress
-        // but that would require that functionality from the utilities.
-        monitor.beginTask(getActionDescription(), 1);
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,
+			InterruptedException {
+		// TODO: Would be nice to have something that indicates progress
+		// but that would require that functionality from the utilities.
+		monitor.beginTask(getActionDescription(), 1);
 
-        try {
-            result = MercurialUtilities.executeCommand(getHgCommand(), getHgWorkingDir(), true);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(
-                    getActionDescription() + Messages.getString("HgOperation.failed"), e); //$NON-NLS-1$
-        } finally {
-            monitor.done();
-        }
-    }
+		try {
+			result = MercurialUtilities.executeCommand(getHgCommand(), getHgWorkingDir(), true);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(
+					getActionDescription() + Messages.getString("HgOperation.failed"), e); //$NON-NLS-1$
+		} finally {
+			monitor.done();
+		}
+	}
 
-    protected String[] getHgCommand() {
-        return null;
-    }
+	protected String[] getHgCommand() {
+		return null;
+	}
 
-    protected File getHgWorkingDir() throws HgException {
-        return null;
-    }
+	protected File getHgWorkingDir() throws HgException {
+		return null;
+	}
 
-    public String getResult() {
-        return result;
-    }
+	public String getResult() {
+		return result;
+	}
 
-    // TODO: No background for now.
-    @Override
-    protected boolean canRunAsJob() {
-        return false;
-    }
+	// TODO: No background for now.
+	@Override
+	protected boolean canRunAsJob() {
+		return false;
+	}
 
-    @Override
-    protected String getJobName() {
-        return getActionDescription();
-    }
+	@Override
+	protected String getJobName() {
+		return getActionDescription();
+	}
 
-    abstract protected String getActionDescription();
+	abstract protected String getActionDescription();
 }

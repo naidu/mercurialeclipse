@@ -7,62 +7,55 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
- * 
  */
 public class StripWizard extends HgWizard {
-    private IProject project;
+	private HgRoot hgRoot;
 
-    private StripWizard() {
-        super(Messages.getString("StripWizard.title"));  //$NON-NLS-1$
-        setNeedsProgressMonitor(true);
-    }
+	private StripWizard() {
+		super(Messages.getString("StripWizard.title"));  //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+	}
 
-    public StripWizard(IResource resource) {
-        this();
-        this.project = resource.getProject();
-    }
+	public StripWizard(HgRoot hgRoot) {
+		this();
+		this.hgRoot = hgRoot;
+	}
 
-    @Override
-    public void addPages() {
-        super.addPages();
-        page = createPage(
-                Messages.getString("StripWizard.page.name"), //$NON-NLS-1$
-                Messages.getString("StripWizard.pageTitle"), //$NON-NLS-1$
-                null,
-                Messages.getString("StripWizard.page.description.1") //$NON-NLS-1$
-                        + Messages.getString("StripWizard.page.description.2")); //$NON-NLS-1$
-        addPage(page);
-    }
+	@Override
+	public void addPages() {
+		super.addPages();
+		page = createPage(
+				Messages.getString("StripWizard.page.name"), //$NON-NLS-1$
+				Messages.getString("StripWizard.pageTitle"), //$NON-NLS-1$
+				null,
+				Messages.getString("StripWizard.page.description.1") //$NON-NLS-1$
+						+ Messages.getString("StripWizard.page.description.2")); //$NON-NLS-1$
+		addPage(page);
+	}
 
-    /**
-     * Creates a ConfigurationWizardPage.
-     */
-    protected HgWizardPage createPage(String pageName, String pageTitle,
-            String iconPath, String description) {
-        this.page = new StripWizardPage(pageName, pageTitle,
-                MercurialEclipsePlugin.getImageDescriptor(iconPath), project);
-        initPage(description, page);
-        return page;
-    }
+	/**
+	 * Creates a ConfigurationWizardPage.
+	 */
+	protected HgWizardPage createPage(String pageName, String pageTitle,
+			String iconPath, String description) {
+		this.page = new StripWizardPage(pageName, pageTitle,
+				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot);
+		initPage(description, page);
+		return page;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {
-        return super.performFinish();
-    }
+	@Override
+	public boolean performFinish() {
+		return super.performFinish();
+	}
 
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.forest;
 
@@ -17,55 +18,55 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
  *
  */
 public class HgFcloneClient extends AbstractClient {
-    public static void fclone(File parentDirectory, HgRepositoryLocation repo,
-            boolean noUpdate, boolean pull, boolean uncompressed,
-            boolean timeout, String rev, String cloneName)
-            throws HgException {
-        AbstractShellCommand command = new HgCommand("fclone", parentDirectory, //$NON-NLS-1$
-                false);
+	public static void fclone(File parentDirectory, IHgRepositoryLocation repo,
+			boolean noUpdate, boolean pull, boolean uncompressed,
+			boolean timeout, String rev, String cloneName)
+			throws HgException {
+		AbstractShellCommand command = new HgCommand("fclone", parentDirectory, //$NON-NLS-1$
+				false);
 
-        //        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
+		//        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
 
-        if (noUpdate) {
-            command.addOptions("--noupdate"); //$NON-NLS-1$
-        }
-        if (pull) {
-            command.addOptions("--pull"); //$NON-NLS-1$
-        }
-        if (uncompressed) {
-            command.addOptions("--uncompressed"); //$NON-NLS-1$
-        }
-        if (rev != null && rev.length() > 0) {
-            command.addOptions("--rev", rev); //$NON-NLS-1$
-        }
+		if (noUpdate) {
+			command.addOptions("--noupdate"); //$NON-NLS-1$
+		}
+		if (pull) {
+			command.addOptions("--pull"); //$NON-NLS-1$
+		}
+		if (uncompressed) {
+			command.addOptions("--uncompressed"); //$NON-NLS-1$
+		}
+		if (rev != null && rev.length() > 0) {
+			command.addOptions("--rev", rev); //$NON-NLS-1$
+		}
 
-        URI uri = repo.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repo.getLocation());
-        }
+		URI uri = repo.getUri();
+		if (uri != null) {
+			command.addOptions(uri.toASCIIString());
+		} else {
+			command.addOptions(repo.getLocation());
+		}
 
-        if (cloneName != null) {
-            command.addOptions(cloneName);
-        }
+		if (cloneName != null) {
+			command.addOptions(cloneName);
+		}
 
-        if (timeout) {
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
-            command.executeToBytes();
-        } else {
-            command.executeToBytes(Integer.MAX_VALUE);
-        }
-    }
+		if (timeout) {
+			command
+					.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
+			command.executeToBytes();
+		} else {
+			command.executeToBytes(Integer.MAX_VALUE);
+		}
+	}
 
 
 }

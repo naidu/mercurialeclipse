@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
@@ -44,199 +45,199 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 public class QImportWizardPage extends HgWizardPage {
 
-    private Button revCheckBox;
-    private ChangesetTable changesetTable;
-    private ChangeSet[] revisions;
-    private IResource resource;
-    private Text patchFile;
-    private Button browseButton;
-    private Button forceCheckBox;
-    private Button gitCheckBox;
-    private Label patchFileLabel;
-    private Group patchNameGroup;
-    private boolean existing;
+	private Button revCheckBox;
+	private ChangesetTable changesetTable;
+	private ChangeSet[] revisions;
+	private IResource resource;
+	private Text patchFile;
+	private Button browseButton;
+	private Button forceCheckBox;
+	private Button gitCheckBox;
+	private Label patchFileLabel;
+	private Group patchNameGroup;
+	private boolean existing;
 
-    public QImportWizardPage(String pageName, String title, String description,
-            IResource resource, ImageDescriptor titleImage) {
-        super(pageName, title, titleImage, description);
-        this.resource = resource;
-    }
+	public QImportWizardPage(String pageName, String title, String description,
+			IResource resource, ImageDescriptor titleImage) {
+		super(pageName, title, titleImage, description);
+		this.resource = resource;
+	}
 
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 3);
-        createPatchNameGroup(composite);
-        createOptionGroup(composite);
-        createRevisionTable(composite);
-        setPageComplete(true);
-        setControl(composite);
-    }
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 3);
+		createPatchNameGroup(composite);
+		createOptionGroup(composite);
+		createRevisionTable(composite);
+		setPageComplete(true);
+		setControl(composite);
+	}
 
-    private void createOptionGroup(Composite composite) {
-        Group g = SWTWidgetHelper.createGroup(composite, Messages
-                .getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
-        this.forceCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
-                .getString("QImportWizardPage.forceCheckBox.title")); //$NON-NLS-1$
-        this.gitCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
-                .getString("QImportWizardPage.gitCheckBox.title")); //$NON-NLS-1$
-        this.gitCheckBox.setSelection(true);
-    }
+	private void createOptionGroup(Composite composite) {
+		Group g = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
+		this.forceCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+				.getString("QImportWizardPage.forceCheckBox.title")); //$NON-NLS-1$
+		this.gitCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+				.getString("QImportWizardPage.gitCheckBox.title")); //$NON-NLS-1$
+		this.gitCheckBox.setSelection(true);
+	}
 
-    private void createPatchNameGroup(Composite composite) {
-        this.patchNameGroup = SWTWidgetHelper
-                .createGroup(
-                        composite,
-                        Messages
-                                .getString("QImportWizardPage.patchNameGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
-        this.patchFileLabel = SWTWidgetHelper.createLabel(patchNameGroup,
-                Messages.getString("QImportWizardPage.patchFileLabel.title")); //$NON-NLS-1$
-        this.patchFile = SWTWidgetHelper.createTextField(patchNameGroup);
+	private void createPatchNameGroup(Composite composite) {
+		this.patchNameGroup = SWTWidgetHelper
+				.createGroup(
+						composite,
+						Messages
+								.getString("QImportWizardPage.patchNameGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+		this.patchFileLabel = SWTWidgetHelper.createLabel(patchNameGroup,
+				Messages.getString("QImportWizardPage.patchFileLabel.title")); //$NON-NLS-1$
+		this.patchFile = SWTWidgetHelper.createTextField(patchNameGroup);
 
-        this.patchFile.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
-                if (patchFile.getText().length() > 0) {
-                    try {
-                        File file = new File(patchFile.getText());
-                        checkExisting(file);
-                    } catch (Exception e1) {
-                        setErrorMessage(e1.getCause().getLocalizedMessage());
-                    }
-                }
-            }
-        });
+		this.patchFile.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				if (patchFile.getText().length() > 0) {
+					try {
+						File file = new File(patchFile.getText());
+						checkExisting(file);
+					} catch (Exception e1) {
+						setErrorMessage(e1.getCause().getLocalizedMessage());
+					}
+				}
+			}
+		});
 
-        this.browseButton = SWTWidgetHelper.createPushButton(patchNameGroup,
-                Messages.getString("QImportWizardPage.browseButton.title"), 1); //$NON-NLS-1$
-        browseButton.addSelectionListener(new SelectionAdapter() {
+		this.browseButton = SWTWidgetHelper.createPushButton(patchNameGroup,
+				Messages.getString("QImportWizardPage.browseButton.title"), 1); //$NON-NLS-1$
+		browseButton.addSelectionListener(new SelectionAdapter() {
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                try {
-                    FileDialog dialog = new FileDialog(getShell());
-                    dialog
-                            .setText(Messages
-                                    .getString("QImportWizardPage.browseFileDialog.title")); //$NON-NLS-1$
-                    String fileName = dialog.open();
-                    if (fileName != null) {
-                        File file = new File(fileName);
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				try {
+					FileDialog dialog = new FileDialog(getShell());
+					dialog
+							.setText(Messages
+									.getString("QImportWizardPage.browseFileDialog.title")); //$NON-NLS-1$
+					String fileName = dialog.open();
+					if (fileName != null) {
+						File file = new File(fileName);
 
-                        checkExisting(file);
+						checkExisting(file);
 
-                        patchFile.setText(file.getCanonicalPath());
-                    }
-                } catch (Exception e1) {
-                    String msg = e1.getLocalizedMessage();
-                    if (e1.getCause() != null) {
-                        msg = e1.getCause().getLocalizedMessage();
-                        setErrorMessage(msg);
-                        MercurialEclipsePlugin.logError(e1);
-                    }
-                }
+						patchFile.setText(file.getCanonicalPath());
+					}
+				} catch (Exception e1) {
+					String msg = e1.getLocalizedMessage();
+					if (e1.getCause() != null) {
+						msg = e1.getCause().getLocalizedMessage();
+						setErrorMessage(msg);
+						MercurialEclipsePlugin.logError(e1);
+					}
+				}
 
-            }
-        });
-    }
+			}
+		});
+	}
 
-    private void checkExisting(File file) throws IOException, HgException {
-        setMessage(null);
-        HgRoot hgRoot = AbstractClient.getHgRoot(resource);
-        File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
-        File[] patches = patchDir.listFiles();
-        if (patches != null) {
-            for (File patch : patches) {
-                if (patch.getName().equals(file.getName())
-                        || patch.getCanonicalPath().equals(file.getCanonicalPath())) {
-                    setMessage(Messages
-                            .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
-                    existing = true;
-                }
-            }
-        }
-    }
+	private void checkExisting(File file) throws IOException, HgException {
+		setMessage(null);
+		HgRoot hgRoot = AbstractClient.getHgRoot(resource);
+		File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
+		File[] patches = patchDir.listFiles();
+		if (patches != null) {
+			for (File patch : patches) {
+				if (patch.getName().equals(file.getName())
+						|| patch.getCanonicalPath().equals(file.getCanonicalPath())) {
+					setMessage(Messages
+							.getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
+					existing = true;
+				}
+			}
+		}
+	}
 
-    private void createRevisionTable(Composite composite) {
-        Group revGroup = SWTWidgetHelper.createGroup(composite, Messages
-                .getString("QImportWizardPage.revGroup.title"), //$NON-NLS-1$
-                GridData.FILL_BOTH);
-        this.revCheckBox = SWTWidgetHelper.createCheckBox(revGroup, Messages
-                .getString("QImportWizardPage.revCheckBox.title")); //$NON-NLS-1$
+	private void createRevisionTable(Composite composite) {
+		Group revGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("QImportWizardPage.revGroup.title"), //$NON-NLS-1$
+				GridData.FILL_BOTH);
+		this.revCheckBox = SWTWidgetHelper.createCheckBox(revGroup, Messages
+				.getString("QImportWizardPage.revCheckBox.title")); //$NON-NLS-1$
 
-        Listener revCheckBoxListener = new Listener() {
-            public void handleEvent(Event event) {
-                if (revCheckBox.getSelection()) {
-                    if (changesetTable.getChangesets() == null
-                            || changesetTable.getChangesets().length == 0) {
-                        setErrorMessage(null);
-                    }
-                }
-                // en-/disable patch file text field
-                changesetTable.setEnabled(revCheckBox.getSelection());
-                patchFile.setEnabled(!revCheckBox.getSelection());
-                browseButton.setEnabled(!revCheckBox.getSelection());
-                patchFileLabel.setEnabled(!revCheckBox.getSelection());
-                patchNameGroup.setEnabled(!revCheckBox.getSelection());
-            }
-        };
+		Listener revCheckBoxListener = new Listener() {
+			public void handleEvent(Event event) {
+				if (revCheckBox.getSelection()) {
+					if (changesetTable.getChangesets() == null
+							|| changesetTable.getChangesets().length == 0) {
+						setErrorMessage(null);
+					}
+				}
+				// en-/disable patch file text field
+				changesetTable.setEnabled(revCheckBox.getSelection());
+				patchFile.setEnabled(!revCheckBox.getSelection());
+				browseButton.setEnabled(!revCheckBox.getSelection());
+				patchFileLabel.setEnabled(!revCheckBox.getSelection());
+				patchNameGroup.setEnabled(!revCheckBox.getSelection());
+			}
+		};
 
-        this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
+		this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
-        GridData gridData = new GridData(GridData.FILL_BOTH);
-        gridData.heightHint = 150;
-        gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(revGroup,
-                SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-                        | SWT.H_SCROLL, resource);
-        this.changesetTable.setLayoutData(gridData);
-        this.changesetTable.setEnabled(false);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = 150;
+		gridData.minimumHeight = 50;
+		this.changesetTable = new ChangesetTable(revGroup,
+				SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+						| SWT.H_SCROLL, resource, true);
+		this.changesetTable.setLayoutData(gridData);
+		this.changesetTable.setEnabled(false);
 
-        SelectionListener listener = new SelectionListener() {
-            public void widgetSelected(SelectionEvent e) {
-                setPageComplete(true);
-                revisions = changesetTable.getSelections();
-            }
+		SelectionListener listener = new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				setPageComplete(true);
+				revisions = changesetTable.getSelections();
+			}
 
-            public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);
-            }
-        };
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
+		};
 
-        this.changesetTable.addSelectionListener(listener);
-    }
+		this.changesetTable.addSelectionListener(listener);
+	}
 
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        return super.finish(monitor);
-    }
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		return super.finish(monitor);
+	}
 
-    public ChangeSet[] getRevisions() {
-        return revisions;
-    }
+	public ChangeSet[] getRevisions() {
+		return revisions;
+	}
 
-    public IResource getResource() {
-        return resource;
-    }
+	public IResource getResource() {
+		return resource;
+	}
 
-    public void setResource(IResource resource) {
-        this.resource = resource;
-    }
+	public void setResource(IResource resource) {
+		this.resource = resource;
+	}
 
-    public Button getRevCheckBox() {
-        return revCheckBox;
-    }
+	public Button getRevCheckBox() {
+		return revCheckBox;
+	}
 
-    public Text getPatchFile() {
-        return patchFile;
-    }
+	public Text getPatchFile() {
+		return patchFile;
+	}
 
-    public Button getForceCheckBox() {
-        return forceCheckBox;
-    }
+	public Button getForceCheckBox() {
+		return forceCheckBox;
+	}
 
-    public Button getGitCheckBox() {
-        return gitCheckBox;
-    }
+	public Button getGitCheckBox() {
+		return gitCheckBox;
+	}
 
-    public boolean isExisting() {
-        return existing;
-    }
+	public boolean isExisting() {
+		return existing;
+	}
 
 }

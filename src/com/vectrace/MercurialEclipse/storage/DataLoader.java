@@ -9,10 +9,11 @@
  *     Jérôme Nègre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - extracted class since I need it for sync
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
-import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -21,27 +22,28 @@ import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 public abstract class DataLoader {
 
-	public abstract IProject getProject();
+	public abstract HgRoot getHgRoot();
+	public abstract IResource getResource();
 
 	public Tag[] getTags() throws HgException {
-		return HgTagClient.getTags(getProject());
+		return HgTagClient.getTags(getHgRoot());
 	}
 
-    public Branch[] getBranches() throws HgException {
-        return HgBranchClient.getBranches(getProject());
-    }
+	public Branch[] getBranches() throws HgException {
+		return HgBranchClient.getBranches(getHgRoot());
+	}
 
 	public ChangeSet[] getHeads() throws HgException {
-		return HgLogClient.getHeads(getProject());
+		return HgLogClient.getHeads(getHgRoot());
 	}
 
 	public int[] getParents() throws HgException {
-		return HgParentClient.getParents(getProject());
+		return HgParentClient.getParents(getHgRoot());
 	}
-
 
 }

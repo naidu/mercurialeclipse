@@ -11,8 +11,14 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - Code reformatting to code style and refreshes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -26,7 +32,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgRenameClient;
+import com.vectrace.MercurialEclipse.commands.HgRevertClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 
@@ -38,212 +46,238 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class HgMoveDeleteHook implements IMoveDeleteHook {
 
-    private static final MercurialStatusCache CACHE = MercurialStatusCache.getInstance();
+	private static final MercurialStatusCache CACHE = MercurialStatusCache.getInstance();
 
-    /**
-     * @returns <code>true</code> if this file under this under Mercurial
-     *          control.
-     */
-    private boolean isInMercurialRepo(IResource file, IProgressMonitor monitor) {
-        return CACHE.isSupervised(file);
-    }
+	/**
+	 * @returns <code>true</code> if this file under this under Mercurial
+	 *          control.
+	 */
+	private boolean isInMercurialRepo(IResource file, IProgressMonitor monitor) {
+		return CACHE.isSupervised(file);
+	}
 
-    /**
-     * Determines if a folder has supervised files
-     *
-     * @returns <code>true</code> if there are files under this folder that are
-     *          under Mercurial control.
-     */
-    private boolean folderHasMercurialFiles(IFolder folder,
-            IProgressMonitor monitor) {
-        if (!isInMercurialRepo(folder, monitor)) {
-            // Resource could be inside a link or something do nothing
-            // in the future this could check is this is another repository
-            return false;
-        }
+	/**
+	 * Determines if a folder has supervised files
+	 *
+	 * @returns <code>true</code> if there are files under this folder that are
+	 *          under Mercurial control.
+	 */
+	private boolean folderHasMercurialFiles(IFolder folder,
+			IProgressMonitor monitor) {
+		if (!isInMercurialRepo(folder, monitor)) {
+			// Resource could be inside a link or something do nothing
+			// in the future this could check is this is another repository
+			return false;
+		}
 
-        try {
-            IResource[] children = folder.members();
-            for (IResource resource : children) {
-                if (resource.getType() == IResource.FILE) {
-                    if (resource.exists() && isInMercurialRepo(resource, monitor)) {
-                        return true;
-                    }
-                } else {
-                    if(folderHasMercurialFiles((IFolder) resource, monitor)){
-                        return true;
-                    }
-                }
-            }
-        } catch (CoreException e) {
-            /*
-             * Let's assume that this means there are no resources under this
-             * one as it probably doesn't properly exist. Let eclipse do
-             * everything.
-             */
-            return false;
-        }
+		try {
+			IResource[] children = folder.members();
+			for (IResource resource : children) {
+				if (resource.getType() == IResource.FILE) {
+					if (resource.exists() && isInMercurialRepo(resource, monitor)) {
+						return true;
+					}
+				} else {
+					if(folderHasMercurialFiles((IFolder) resource, monitor)){
+						return true;
+					}
+				}
+			}
+		} catch (CoreException e) {
+			/*
+			 * Let's assume that this means there are no resources under this
+			 * one as it probably doesn't properly exist. Let eclipse do
+			 * everything.
+			 */
+			return false;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    public boolean deleteFile(IResourceTree tree, IFile file, int updateFlags,
-            IProgressMonitor monitor) {
-        /*
-         * Returning false indicates that the caller should invoke
-         * tree.standardDeleteFile to actually remove the resource from the file
-         * system and eclipse.
-         */
+	public boolean deleteFile(IResourceTree tree, IFile file, int updateFlags,
+			IProgressMonitor monitor) {
+		/*
+		 * Returning false indicates that the caller should invoke
+		 * tree.standardDeleteFile to actually remove the resource from the file
+		 * system and eclipse.
+		 */
 
-        if (!isInMercurialRepo(file, monitor) || file.isDerived()) {
-            return false;
-        }
+		if (!isInMercurialRepo(file, monitor) || file.isDerived()) {
+			return false;
+		}
 
-        return deleteHgFiles(tree, file, monitor);
-    }
+		return deleteHgFiles(tree, file, monitor);
+	}
 
-    public boolean deleteFolder(IResourceTree tree, IFolder folder,
-            int updateFlags, IProgressMonitor monitor) {
-        /*
-         * Mercurial doesn't control directories. However, as a short cut
-         * performing an operation on a folder will affect all subtending files.
-         * Check that there is at least 1 file and if so there is Mercurial work
-         * to do, otherwise there is no Mercurial work to be done.
-         */
-        if (!folderHasMercurialFiles(folder, monitor)) {
-            return false;
-        }
+	public boolean deleteFolder(IResourceTree tree, IFolder folder,
+			int updateFlags, IProgressMonitor monitor) {
+		/*
+		 * Mercurial doesn't control directories. However, as a short cut
+		 * performing an operation on a folder will affect all subtending files.
+		 * Check that there is at least 1 file and if so there is Mercurial work
+		 * to do, otherwise there is no Mercurial work to be done.
+		 */
+		if (!folderHasMercurialFiles(folder, monitor)) {
+			return false;
+		}
 
-        /*
-         * NOTE: There are bugs with Mercurial 0.9.1 on Windows and folder
-         * delete/rename operation. See:
-         * http://www.selenic.com/mercurial/bts/issue343,
-         * http://www.selenic.com/mercurial/bts/issue303, etc. Returning false
-         * indicates that the caller should invoke tree.standardDeleteFile to
-         * actually remove the resource from the file system and eclipse.
-         */
-        return deleteHgFiles(tree, folder, monitor);
-    }
+		/*
+		 * NOTE: There are bugs with Mercurial 0.9.1 on Windows and folder
+		 * delete/rename operation. See:
+		 * http://www.selenic.com/mercurial/bts/issue343,
+		 * http://www.selenic.com/mercurial/bts/issue303, etc. Returning false
+		 * indicates that the caller should invoke tree.standardDeleteFile to
+		 * actually remove the resource from the file system and eclipse.
+		 */
+		return deleteHgFiles(tree, folder, monitor);
+	}
 
-    /**
-     * Perform the file or folder (ie multiple file) delete.
-     *
-     * @returns <code>false</code> if the action succeeds, <code>true</code>
-     *          otherwise. This syntax is to match the desired return code for
-     *          <code>deleteFile</code> and <code>deleteFolder</code>.
-     */
-    private boolean deleteHgFiles(IResourceTree tree, IResource resource, IProgressMonitor monitor) {
-        // TODO: Decide if we should have different Hg behaviour based on the
-        // force flag provided in updateFlags.
-        try {
-            // Delete the file from the Mercurial repository.
-            HgRemoveClient.removeResource(resource, monitor);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
+	/**
+	 * Perform the file or folder (ie multiple file) delete.
+	 *
+	 * @returns <code>false</code> if the action succeeds, <code>true</code>
+	 *          otherwise. This syntax is to match the desired return code for
+	 *          <code>deleteFile</code> and <code>deleteFolder</code>.
+	 */
+	private boolean deleteHgFiles(IResourceTree tree, IResource resource, IProgressMonitor monitor) {
+		// TODO: Decide if we should have different Hg behaviour based on the
+		// force flag provided in updateFlags.
+		try {
+			// Delete the file from the Mercurial repository.
+			HgRemoveClient.removeResource(resource, monitor);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
 
-        // We removed the file ourselves, need to tell.
-        if(resource.getType() == IResource.FOLDER) {
-            tree.deletedFolder((IFolder) resource);
-        } else {
-            tree.deletedFile((IFile) resource);
-        }
+		// We removed the file ourselves, need to tell.
+		if(resource.getType() == IResource.FOLDER) {
+			tree.deletedFolder((IFolder) resource);
+		} else {
+			// hg deletes the parent folder too if the deleted file was the only one in the folder
+			// we have to tell Eclipse that the folder (and probably all subsequent parents)
+			// are deleted too...
+			File dir = resource.getLocation().toFile().getParentFile();
+			IContainer parent = resource.getParent();
+			tree.deletedFile((IFile) resource);
+			while(parent instanceof IFolder && !dir.exists()){
+				IContainer backup = parent.getParent();
+				tree.deletedFolder((IFolder) parent);
+				parent = backup;
+				dir = dir.getParentFile();
+			}
+		}
 
-        // Returning true indicates that this method has removed resource in both
-        // the file system and eclipse.
-        return true;
-    }
+		// Returning true indicates that this method has removed resource in both
+		// the file system and eclipse.
+		return true;
+	}
 
-    public boolean deleteProject(IResourceTree tree, IProject project,
-            int updateFlags, IProgressMonitor monitor) {
-        if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
-            IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
-            try {
-                folder.delete(updateFlags, monitor);
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
-                return true;
-            }
-        }
+	public boolean deleteProject(IResourceTree tree, IProject project,
+			int updateFlags, IProgressMonitor monitor) {
+		if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
+			IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
+			try {
+				folder.delete(updateFlags, monitor);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+				return true;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    public boolean moveFile(IResourceTree tree, IFile source,
-            IFile destination, int updateFlags, IProgressMonitor monitor) {
+	public boolean moveFile(IResourceTree tree, IFile source,
+			IFile destination, int updateFlags, IProgressMonitor monitor) {
 
-        if (!isInMercurialRepo(source, monitor)) {
-            return false;
-        }
+		if (!isInMercurialRepo(source, monitor)) {
+			return false;
+		}
 
-        // Move the file in the Mercurial repository.
-        if (!moveHgFiles(source, destination, monitor)) {
-            return true;
-        }
+		// Move the file in the Mercurial repository.
+		if (!moveHgFiles(source, destination, monitor)) {
+			return true;
+		}
 
-        // We moved the file ourselves, need to tell.
-        tree.movedFile(source, destination);
+		// We moved the file ourselves, need to tell.
+		tree.movedFile(source, destination);
 
-        // Returning true indicates that this method has moved resource in both
-        // the file system and eclipse.
-        return true;
-    }
+		// Returning true indicates that this method has moved resource in both
+		// the file system and eclipse.
+		return true;
+	}
 
-    public boolean moveFolder(IResourceTree tree, IFolder source,
-            IFolder destination, int updateFlags, IProgressMonitor monitor) {
-        /*
-         * Mercurial doesn't control directories. However, as a short cut
-         * performing an operation on a folder will affect all subtending files.
-         * Check that there is at least 1 file and if so there is Mercurial work
-         * to do, otherwise there is no Mercurial work to be done.
-         */
-        if (!folderHasMercurialFiles(source, monitor)) {
-            return false;
-        }
+	public boolean moveFolder(IResourceTree tree, IFolder source,
+			IFolder destination, int updateFlags, IProgressMonitor monitor) {
+		/*
+		 * Mercurial doesn't control directories. However, as a short cut
+		 * performing an operation on a folder will affect all subtending files.
+		 * Check that there is at least 1 file and if so there is Mercurial work
+		 * to do, otherwise there is no Mercurial work to be done.
+		 */
+		if (!folderHasMercurialFiles(source, monitor)) {
+			return false;
+		}
 
-        // Move the folder (ie all subtending files) in the Mercurial
-        // repository.
-        if (!moveHgFiles(source, destination, monitor)) {
-            return true;
-        }
+		// Move the folder (ie all subtending files) in the Mercurial
+		// repository.
+		if (!moveHgFiles(source, destination, monitor)) {
+			return true;
+		}
 
-        // We moved the file ourselves, need to tell.
-        tree.movedFolderSubtree(source, destination);
+		// We moved the file ourselves, need to tell.
+		tree.movedFolderSubtree(source, destination);
 
-        // Returning true indicates that this method has moved resource in both
-        // the file system and eclipse.
-        return true;
-    }
+		// Returning true indicates that this method has moved resource in both
+		// the file system and eclipse.
+		return true;
+	}
 
-    /**
-     * Move the file or folder (ie multiple file).
-     *
-     * @returns <code>true</code> if the action succeeds, <code>false</code>
-     *          otherwise.
-     */
-    private boolean moveHgFiles(IResource source, IResource destination,
-            IProgressMonitor monitor) {
-        // Rename the file in the Mercurial repository.
+	/**
+	 * Move the file or folder (ie multiple file).
+	 *
+	 * @returns <code>true</code> if the action succeeds, <code>false</code>
+	 *          otherwise.
+	 */
+	private boolean moveHgFiles(IResource source, IResource destination,
+			IProgressMonitor monitor) {
+		// Rename the file in the Mercurial repository.
 
-        // TODO: Decide if we should have different Hg behaviour based on the
-        // force flag provided in
-        // updateFlags.
-        try {
-            HgRenameClient.renameResource(source, destination, monitor);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(Messages.getString("HgMoveDeleteHook.moveFailed"), e);
-            return false;
-        }
-        return true;
-    }
+		// TODO: Decide if we should have different Hg behaviour based on the
+		// force flag provided in
+		// updateFlags.
+		try {
+			HgRenameClient.renameResource(source, destination, monitor);
+		} catch (final HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			if (MercurialUtilities.isWindows()
+					&& source.getName().equalsIgnoreCase(destination.getName())) {
+				try {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(source);
+					List<IResource> res = new ArrayList<IResource>();
+					res.add(source);
+					HgRevertClient.performRevert(monitor, hgRoot, res, null);
+				} catch (HgException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+				HgException ex = new HgException(
+						"Mercurial does not support renaming of files on Windows,"
+								+ " if file names differs only by the lower/upper case letters!", e);
+				MercurialEclipsePlugin.showError(ex);
+			}
+			return false;
+		}
+		return true;
+	}
 
-    public boolean moveProject(IResourceTree tree, IProject source,
-            IProjectDescription description, int updateFlags,
-            IProgressMonitor monitor) {
-        // Punting to eclipse is fine as presumably all resources in the .hg
-        // folder are relative to the root and will remain intact.
-        return false;
-    }
+	public boolean moveProject(IResourceTree tree, IProject source,
+			IProjectDescription description, int updateFlags,
+			IProgressMonitor monitor) {
+		// Punting to eclipse is fine as presumably all resources in the .hg
+		// folder are relative to the root and will remain intact.
+		return false;
+	}
 
 }
