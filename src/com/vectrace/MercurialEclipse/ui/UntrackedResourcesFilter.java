@@ -20,45 +20,58 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+
 public class UntrackedResourcesFilter extends ViewerFilter {
 
-	private final Map<IProject, Set<IPath>> untrackedFiles;
-	private final Map<IProject, Set<IPath>> untrackedFolders;
+	private final Map<HgRoot, Set<IPath>> untrackedFiles;
+	private final Map<HgRoot, Set<IPath>> untrackedFolders;
 
-	public UntrackedResourcesFilter(Map<IProject, Set<IPath>> untrackedFiles,
-			Map<IProject, Set<IPath>> untrackedFolders) {
+	public UntrackedResourcesFilter(Map<HgRoot, Set<IPath>> untrackedFiles,
+			Map<HgRoot, Set<IPath>> untrackedFolders) {
 		super();
 		this.untrackedFiles = untrackedFiles;
 		this.untrackedFolders = untrackedFolders;
 	}
 
 	@Override
-	public boolean select(Viewer viewer, Object parentElement,
-			Object element) {
+	public boolean select(Viewer viewer, Object parentElement, Object element) {
 
 		IResource resource = (IResource) element;
 		IProject project = resource.getProject();
-		String path = resource.getProjectRelativePath().toOSString();
+		if(project == null){
+			// paranoia
+			return false;
+		}
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		if(hgRoot == null){
+			// paranoia
+			return false;
+		}
+		String path = hgRoot.toRelative(ResourceUtils.getFileHandle(resource));
 
 		if(resource.getType() == IResource.FILE) {
-			Set<IPath> set = untrackedFiles.get(project);
-			return isSubPath(path, set);
+			Set<IPath> set = untrackedFiles.get(hgRoot);
+			return set != null && matchesPath(path, set);
 		} else if(resource.getType() == IResource.FOLDER){
-			Set<IPath> set = untrackedFolders.get(project);
-			return isSubPath(path, set);
+			Set<IPath> set = untrackedFolders.get(hgRoot);
+			return set != null && matchesPath(path, set);
 		} else {
-			return true;
+			// project
+			return untrackedFolders.containsKey(hgRoot);
 		}
 	}
 
-	private boolean isSubPath(String pathStr, Set<IPath> set) {
-		IPath path = new Path(pathStr);
-		for (IPath setPath : set) {
-			if (setPath.isPrefixOf(path)) {
-				return true;
-			}
-		}
-		return false;
+	/**
+	 * @param pathStrToTest
+	 * @param untrackedPaths known untracked files
+	 * @return true if the path to test matches one of known untracked paths
+	 */
+	private boolean matchesPath(String pathStrToTest, Set<IPath> untrackedPaths) {
+		IPath pathToTest = new Path(pathStrToTest);
+		return untrackedPaths.contains(pathToTest);
 	}
 
 }

@@ -12,17 +12,14 @@
 package com.vectrace.MercurialEclipse.menu;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -35,10 +32,12 @@ import org.eclipse.ui.views.navigator.ResourceComparator;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.ui.ResourcesTreeContentProvider;
 import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class AddHandler extends MultipleResourcesHandler {
 
@@ -57,13 +56,13 @@ public class AddHandler extends MultipleResourcesHandler {
 			return;
 		}
 
-		Set<IProject> roots = getRoots(resources);
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
 
-		Map<IProject, Set<IPath>> untrackedFiles = new HashMap<IProject, Set<IPath>>();
-		Map<IProject, Set<IPath>> untrackedFolders = new HashMap<IProject, Set<IPath>>();
+		Map<HgRoot, Set<IPath>> untrackedFiles = new HashMap<HgRoot, Set<IPath>>();
+		Map<HgRoot, Set<IPath>> untrackedFolders = new HashMap<HgRoot, Set<IPath>>();
 
-		for (IProject project : roots) {
-			String[] rawFiles = HgStatusClient.getUntrackedFiles(project);
+		for (HgRoot hgRoot : byRoot.keySet()) {
+			String[] rawFiles = HgStatusClient.getUntrackedFiles(hgRoot);
 			Set<IPath> files = new HashSet<IPath>();
 			Set<IPath> folders = new HashSet<IPath>();
 
@@ -76,8 +75,8 @@ public class AddHandler extends MultipleResourcesHandler {
 				}
 			}
 
-			untrackedFiles.put(project, files);
-			untrackedFolders.put(project, folders);
+			untrackedFiles.put(hgRoot, files);
+			untrackedFolders.put(hgRoot, folders);
 		}
 
 		ViewerFilter untrackedFilter = new UntrackedResourcesFilter(untrackedFiles,
@@ -85,7 +84,7 @@ public class AddHandler extends MultipleResourcesHandler {
 
 		CheckedTreeSelectionDialog dialog = new CheckedTreeSelectionDialog(getShell(),
 				WorkbenchLabelProvider.getDecoratingWorkbenchLabelProvider(),
-				new ResourcesTreeContentProvider(roots));
+				new ResourcesTreeContentProvider(ResourceUtils.groupByProject(resources).keySet()));
 
 		dialog.setInput(ResourcesTreeContentProvider.ROOT);
 		dialog.setTitle(Messages.getString("AddHandler.addToVersionControl")); //$NON-NLS-1$
@@ -108,8 +107,8 @@ public class AddHandler extends MultipleResourcesHandler {
 		dialog.setExpandedElements(expanded.toArray(new IContainer[0]));
 		if (dialog.open() == IDialogConstants.OK_ID) {
 			HgAddClient.addResources(keepFiles(dialog.getResult()), null);
-			for (IProject proj : roots) {
-				new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), proj).schedule();     //$NON-NLS-1$
+			for (HgRoot root : byRoot.keySet()) {
+				new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), root).schedule();     //$NON-NLS-1$
 			}
 		}
 	}
@@ -127,16 +126,5 @@ public class AddHandler extends MultipleResourcesHandler {
 		return files;
 	}
 
-	private Set<IProject> getRoots(List<IResource> resources) {
-		Set<IProject> roots = new TreeSet<IProject>(new Comparator<IProject>() {
-			public int compare(IProject p1, IProject p2) {
-				return p1.getName().compareTo(p2.getName());
-			}
-		});
-		for (IResource resource : resources) {
-			roots.add(resource.getProject());
-		}
-		return roots;
-	}
 
 }
