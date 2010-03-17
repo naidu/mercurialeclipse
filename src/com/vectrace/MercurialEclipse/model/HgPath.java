@@ -142,7 +142,8 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 	 * @param child
 	 *            a possible child path
 	 * @return a hg root relative path of a given file, if the given file is located under this
-	 *         root, otherwise the path of a given file
+	 *         root, otherwise the path of a given file. If the given path matches the root,
+	 *         returns an empty string
 	 */
 	public String toRelative(File child) {
 		// first try with the unresolved path. In most cases it's enough
@@ -158,6 +159,9 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 				MercurialEclipsePlugin.logError(e);
 				return child.getPath();
 			}
+		}
+		if(fullPath.equals(getPath())){
+			return Path.EMPTY.toOSString();
 		}
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(getPath().length() + 1);
