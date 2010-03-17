@@ -32,7 +32,7 @@ public class HgAddClient extends AbstractClient {
 				monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + hgRoot.getName()); //$NON-NLS-1$
 			}
 			// if there are too many resources, do several calls
-			int size = resources.size();
+			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
 				AbstractShellCommand command = new HgCommand("add", hgRoot, //$NON-NLS-1$
