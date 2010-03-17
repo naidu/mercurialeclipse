@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -81,8 +80,13 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString();
 	}
 
-	public static String[] getUntrackedFiles(IContainer root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+	/**
+	 * @param hgRoot non null
+	 * @return non null, but probably empty array with root relative file paths with all
+	 * files under the given root, which are untracked by hg
+	 */
+	public static String[] getUntrackedFiles(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("status", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-u", "-n"); //$NON-NLS-1$ //$NON-NLS-2$
 		return command.executeToString().split("\n"); //$NON-NLS-1$
