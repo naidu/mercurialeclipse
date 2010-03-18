@@ -26,19 +26,21 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * @author Andrei
  */
 public class MergeDialog extends CommitDialog {
-	private final HgRoot hgRoot;
 
 	public MergeDialog(Shell shell, HgRoot hgRoot, String defaultCommitMessage) {
 		super(shell, hgRoot, null);
 		Assert.isNotNull(hgRoot);
-		this.hgRoot = hgRoot;
-		setDefaultCommitMessage(defaultCommitMessage);
+		options.defaultCommitMessage = defaultCommitMessage;
+		// not available when merging
+		options.showAmend = false;
+		// don't create it as we don't want it in merge dialog
+		options.showCloseBranch = false;
+		options.showRevert = false;
 	}
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Control control = super.createDialogArea(parent);
-
 		getShell().setText(Messages.getString("MergeDialog.window.title")); //$NON-NLS-1$
 		setTitle(Messages.getString("MergeDialog.title")); //$NON-NLS-1$";
 		setMessage(Messages.getString("MergeDialog.message")); //$NON-NLS-1$";
@@ -48,27 +50,12 @@ public class MergeDialog extends CommitDialog {
 	@Override
 	protected CommitFilesChooser createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		return new CommitFilesChooser(hgRoot, container, false, true, true, false);
-	}
-
-	@Override
-	protected void createRevertCheckBox(Composite container) {
-		// does nothing
-	}
-
-	@Override
-	protected void createCloseBranchCheckBox(Composite container) {
-		// don't create it as we don't want it in merge dialog
-	}
-
-	@Override
-	protected void createAmendCheckBox(Composite container) {
-		// not available when merging
+		return new CommitFilesChooser(root, container, false, true, true, false);
 	}
 
 	@Override
 	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
-		return CommitMergeHandler.commitMerge(hgRoot, getUser(), messageToCommit);
+		return CommitMergeHandler.commitMerge(root, getUser(), messageToCommit);
 	}
 
 	@Override

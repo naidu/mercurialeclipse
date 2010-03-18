@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -84,8 +85,13 @@ public class AddBranchWizard extends HgWizard {
 				if(commitEnabled){
 					List<IResource> projectList = new ArrayList<IResource>(projects);
 					CommitHandler commitHandler = new CommitHandler();
-					commitHandler.setCommitMessage("Starting '" + branch + "' branch");
-					commitHandler.setFilesSelectable(false);
+					Options options = new Options();
+					options.defaultCommitMessage = "Starting '" + branch + "' branch";
+					options.filesSelectable = false;
+					options.showAmend = false;
+					options.showCloseBranch = false;
+					options.showRevert = false;
+					commitHandler.setOptions(options);
 					commitHandler.run(projectList);
 					monitor.worked(1);
 				}

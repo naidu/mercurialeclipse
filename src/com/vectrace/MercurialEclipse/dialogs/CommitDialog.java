@@ -105,7 +105,6 @@ public class CommitDialog extends TitleAreaDialog {
 	private static final String DEFAULT_COMMIT_MESSAGE = Messages
 			.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
-	protected String defaultCommitMessage;
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
 	private CommitFilesChooser commitFilesList;
@@ -119,8 +118,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private Text userTextField;
 	private String user;
 	private Button revertCheckBox;
-	private boolean filesSelectable;
-	private final HgRoot root;
+	protected final HgRoot root;
 	private String commitResult;
 	private Button closeBranchCheckBox;
 	private Button amendCheckbox;
@@ -131,6 +129,25 @@ public class CommitDialog extends TitleAreaDialog {
 	private Label leftSeparator;
 	private Label rightSeparator;
 	private Control trayControl;
+	protected Options options;
+
+	public static class Options {
+		public boolean showDiff;
+		public boolean showAmend;
+		public boolean showCloseBranch;
+		public boolean showRevert;
+		public boolean filesSelectable;
+		public String defaultCommitMessage;
+
+		public Options() {
+			defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
+			filesSelectable = true;
+			showCloseBranch = true;
+			showDiff = true;
+			showAmend = true;
+			showRevert = true;
+		}
+	}
 
 	/**
 	 * @param hgRoot
@@ -142,11 +159,10 @@ public class CommitDialog extends TitleAreaDialog {
 		super(shell);
 		this.root = hgRoot;
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
-		defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
+		options = new Options();
 		setBlockOnOpen(false);
 		inResources = resources;
 		commitTextDocument = new Document();
-		filesSelectable = true;
 	}
 
 	public String getCommitMessage() {
@@ -221,50 +237,59 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 	}
 
-	protected void createRevertCheckBox(Composite container) {
+	private void createRevertCheckBox(Composite container) {
+		if(!options.showRevert){
+			return;
+		}
 		revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
 				.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
 	}
 
-	protected void createCloseBranchCheckBox(Composite container) {
+	private void createCloseBranchCheckBox(Composite container) {
+		if(!options.showCloseBranch){
+			return;
+		}
 		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
 				.getString("CommitDialog.closeBranch"));
 	}
 
-	protected void createAmendCheckBox(Composite container) {
+	private void createAmendCheckBox(Composite container) {
+		if(!options.showAmend){
+			return;
+		}
 		try {
 			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
-			if (currentChangeset != null) {
-				String branch = MercurialTeamProvider.getCurrentBranch(root);
-				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
-						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
-				amendCheckbox.addSelectionListener(new SelectionListener() {
-
-					public void widgetSelected(SelectionEvent e) {
-						if (amendCheckbox.getSelection() && currentChangeset != null) {
-							try {
-								openSash();
-							} catch (HgException e1) {
-								setErrorMessage("Cannot amend.");
-								closeSash();
-								amendCheckbox.setSelection(false);
-								amendCheckbox.setEnabled(false);
-							}
-						} else {
-							closeSash();
-						}
-					}
-
-					public void widgetDefaultSelected(SelectionEvent e) {
-						widgetSelected(e);
-					}
-				});
-			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			setErrorMessage(e.getLocalizedMessage());
 		}
+		if (currentChangeset == null){
+			return;
+		}
+		String branch = MercurialTeamProvider.getCurrentBranch(root);
+		String label = Messages.getString("CommitDialog.amendCurrentChangeset1")
+			+ currentChangeset.getChangesetIndex()
+			+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
+		amendCheckbox.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				if (amendCheckbox.getSelection() && currentChangeset != null) {
+					try {
+						openSash();
+					} catch (HgException e1) {
+						setErrorMessage("Cannot amend.");
+						closeSash();
+						amendCheckbox.setSelection(false);
+						amendCheckbox.setEnabled(false);
+					}
+				} else {
+					closeSash();
+				}
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
+		});
 	}
 
 	protected CommitFilesChooser createFilesList(Composite container) {
@@ -281,11 +306,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private boolean areFilesSelectable() {
-		return filesSelectable;
-	}
-
-	public void setFilesSelectable(boolean on) {
-		filesSelectable = on;
+		return options.filesSelectable;
 	}
 
 	private void createUserCommitCombo(Composite container) {
@@ -441,7 +462,7 @@ public class CommitDialog extends TitleAreaDialog {
 			pm.worked(1);
 
 			/* Store commit message in the database if not the default message */
-			if (!commitMessage.equals(defaultCommitMessage)) {
+			if (!commitMessage.equals(options.defaultCommitMessage)) {
 				pm.subTask("Storing the commit message for later use.");
 				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
 			}
@@ -522,7 +543,7 @@ public class CommitDialog extends TitleAreaDialog {
 			return result;
 		}
 
-		if (resourcesToCommit.isEmpty() && (!filesSelectable || closeBranch)) {
+		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch)) {
 			// enforce commit anyway
 			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, pm);
 		}
@@ -556,7 +577,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private void setCommitMessage(String msg) {
 		if (msg == null) {
-			msg = defaultCommitMessage;
+			msg = options.defaultCommitMessage;
 		}
 		commitTextDocument.set(msg);
 		commitTextBox.setSelectedRange(0, msg.length());
@@ -564,10 +585,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public String getUser() {
 		return user;
-	}
-
-	public void setDefaultCommitMessage(String defaultCommitMessage) {
-		this.defaultCommitMessage = defaultCommitMessage;
 	}
 
 	private void openSash() throws HgException {
@@ -670,6 +687,13 @@ public class CommitDialog extends TitleAreaDialog {
 		shell.setBounds(bounds.x
 				+ ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0),
 				bounds.y, bounds.width - trayWidth, bounds.height);
+	}
+
+	/**
+	 * @param options non null
+	 */
+	public void setOptions(Options options) {
+		this.options = options;
 	}
 
 }

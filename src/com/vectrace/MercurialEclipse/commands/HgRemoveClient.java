@@ -47,7 +47,7 @@ public class HgRemoveClient extends AbstractClient {
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
 			HgRoot hgRoot = mapEntry.getKey();
 			// if there are too many resources, do several calls
-			int size = resources.size();
+			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
 				AbstractShellCommand command = new HgCommand("remove", hgRoot, true); //$NON-NLS-1$
@@ -57,6 +57,22 @@ public class HgRemoveClient extends AbstractClient {
 				command.executeToBytes();
 			}
 		}
+	}
 
+	public static void removeResourcesLater(Map<HgRoot, List<IResource>> resourcesByRoot) throws HgException {
+		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+			HgRoot hgRoot = mapEntry.getKey();
+			// if there are too many resources, do several calls
+			int size = mapEntry.getValue().size();
+			int delta = AbstractShellCommand.MAX_PARAMS - 1;
+			for (int i = 0; i < size; i += delta) {
+				AbstractShellCommand command = new HgCommand("remove", hgRoot, true); //$NON-NLS-1$
+				command.addOptions("-Af");
+				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
+				command.executeToBytes();
+			}
+		}
 	}
 }

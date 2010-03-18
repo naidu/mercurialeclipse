@@ -13,31 +13,27 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
- *
  */
 public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
@@ -55,7 +51,8 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#dispose
 	 */
 	public void dispose() {
-
+		selection = null;
+		window = null;
 	}
 
 	/**
@@ -74,74 +71,30 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
-	@SuppressWarnings("unchecked")
 	public void run(IAction action) {
 		Shell shell = window != null ? window.getShell() : MercurialEclipsePlugin.getActiveShell();
-
-		// the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),
-				"remove", "-Af", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		Iterator itr = selection.iterator();
-		Set<IProject> projects = new HashSet<IProject>();
-		while (itr.hasNext()) {
-			Object obj = itr.next();
-			if (!(obj instanceof IResource) || obj instanceof IProject) {
-				continue;
-			}
-			IResource resource = (IResource) obj;
-			if (!MercurialUtilities.hgIsTeamProviderFor(resource, true)) {
-				continue;
-			}
-
-			// Resource could be inside a link or something do nothing
-			// in the future this could check is this is another repository
-
-			// Setup and run command
-			try {
-				HgRoot root = AbstractClient.getHgRoot(resource);
-				launchCmd[4] = root.toRelative(resource.getLocation().toFile());
-				if (!confirmRemove(shell, launchCmd[4])) {
-					continue;
-				}
-				projects.add(resource.getProject());
-				String output = MercurialUtilities.executeCommand(
-						launchCmd, root, false);
-				if (output != null) {
-					// output output in a window
-					if (output.length() != 0) {
-						MessageDialog
-						.openInformation(
-								shell,
-								Messages
-								.getString("ActionRemove.removeOutput"), output); //$NON-NLS-1$
-					}
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-
-			// MercurialEclipsePlugin.refreshProjectFlags(proj);
+		if (!confirmRemove(shell)) {
+			return;
 		}
-
-		for (IProject proj : projects) {
-			try {
-				MercurialStatusCache.getInstance().refreshStatus(proj, new NullProgressMonitor());
-			} catch (TeamException e) {
-				MercurialEclipsePlugin
-				.logError(
-						Messages
-						.getString("ActionRemove.unableToRefresh"), e); //$NON-NLS-1$
+		List<IResource> resources = ResourceUtils.getResources(selection);
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
+		try {
+			HgRemoveClient.removeResourcesLater(byRoot);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+		} finally {
+			for (Map.Entry<HgRoot, List<IResource>> mapEntry : byRoot.entrySet()) {
+				HgRoot hgRoot = mapEntry.getKey();
+				new RefreshStatusJob("Refreshing " + hgRoot.getName(), hgRoot).schedule();
 			}
 		}
 	}
 
-	private boolean confirmRemove(Shell shell, String fileName) {
+	private boolean confirmRemove(Shell shell) {
 		return MessageDialog.openConfirm(shell,
-				Messages.getString("ActionRemove.removeFileQuestion"),
-				Messages.getString("ActionRemove.removeFileConfirmation")
-				+ fileName
-				+ Messages.getString("ActionRemove.removeFileConfirmation.2"));
+				Messages.getString("ActionRemove.removeFileTitle"),
+				Messages.getString("ActionRemove.removeFileConfirmation"));
 	}
 
 	/**
@@ -151,10 +104,11 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
-	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection != null
-				&& in_selection instanceof IStructuredSelection) {
-			selection = (IStructuredSelection) in_selection;
+	public void selectionChanged(IAction action, ISelection newSelection) {
+		if (newSelection instanceof IStructuredSelection) {
+			selection = (IStructuredSelection) newSelection;
+		} else {
+			selection = null;
 		}
 	}
 

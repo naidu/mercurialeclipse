@@ -63,9 +63,10 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		final IProject project = res.getProject();
 
 		// handle projects that contain a mercurial repository
-		boolean projectOpenOrClosed = delta.getFlags() == IResourceDelta.OPEN;
+		boolean openOrClosedOrDeleted = delta.getFlags() == IResourceDelta.OPEN
+			|| delta.getKind() == IResourceDelta.REMOVED;
 
-		if (autoShare && projectOpenOrClosed && project.isAccessible()
+		if (autoShare && openOrClosedOrDeleted && project.isAccessible()
 				&& RepositoryProvider.getProvider(project) == null) {
 			autoshareProject(project);
 			// stop tracking changes: after auto-share is completed, we will do a full refresh anyway
@@ -75,7 +76,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		if (!MercurialUtilities.isPossiblySupervised(res)) {
 			return false;
 		}
-		if((res == project && projectOpenOrClosed) || isCompleteStatusRequested()){
+		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){
 			addResource(changed, project, project);
 			return false;
 		}

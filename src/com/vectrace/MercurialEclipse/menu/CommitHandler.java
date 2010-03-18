@@ -12,21 +12,23 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.window.Window;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class CommitHandler extends MultipleResourcesHandler {
 
-	private String message;
-	private boolean filesSelectable = true;
+	private int result;
+	private Options options;
 
 	@Override
 	public void run(List<IResource> resources) throws HgException {
@@ -39,21 +41,28 @@ public class CommitHandler extends MultipleResourcesHandler {
 				new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
 				return;
 			}
-			CommitDialog commitDialog = new CommitDialog(getShell(), hgRoot, entry.getValue());
-			if(message != null){
-				commitDialog.setDefaultCommitMessage(message);
+			if(options == null){
+				options = new Options();
 			}
-			commitDialog.setFilesSelectable(filesSelectable);
+			CommitDialog commitDialog = new CommitDialog(getShell(), hgRoot, entry.getValue());
+			commitDialog.setOptions(options);
 			commitDialog.setBlockOnOpen(true);
-			commitDialog.open();
+			result = commitDialog.open();
 		}
 	}
 
-	public void setCommitMessage(String message){
-		this.message = message;
+	/**
+	 * @param options commit dialog options
+	 */
+	public void setOptions(Options options) {
+		this.options = options;
 	}
-	public void setFilesSelectable(boolean on){
-		this.filesSelectable = on;
+
+	/**
+	 * @return {@link Window#OK} if the commit dialog was finished with the OK button
+	 */
+	public int getResult() {
+		return result;
 	}
 
 }

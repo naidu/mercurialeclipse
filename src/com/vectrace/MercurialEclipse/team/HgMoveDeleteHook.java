@@ -17,6 +17,7 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -28,14 +29,20 @@ import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.resources.team.IResourceTree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgRenameClient;
 import com.vectrace.MercurialEclipse.commands.HgRevertClient;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.CommitHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 
 /**
@@ -144,7 +151,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		// TODO: Decide if we should have different Hg behaviour based on the
 		// force flag provided in updateFlags.
 		try {
-			// Delete the file from the Mercurial repository.
+			// Delete the file(s) from the Mercurial repository.
 			HgRemoveClient.removeResource(resource, monitor);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -154,7 +161,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		// We removed the file ourselves, need to tell.
 		if(resource.getType() == IResource.FOLDER) {
 			tree.deletedFolder((IFolder) resource);
-		} else {
+		} else if(resource.getType() == IResource.PROJECT){
+			tree.deletedProject((IProject) resource);
+		} else{
 			// hg deletes the parent folder too if the deleted file was the only one in the folder
 			// we have to tell Eclipse that the folder (and probably all subsequent parents)
 			// are deleted too...
@@ -174,9 +183,56 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		return true;
 	}
 
-	public boolean deleteProject(IResourceTree tree, IProject project,
+	public boolean deleteProject(IResourceTree tree, final IProject project,
 			int updateFlags, IProgressMonitor monitor) {
 		if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			if(hgRoot == null){
+				return false;
+			}
+			if(!hgRoot.getIPath().equals(project.getLocation())){
+				final Set<IResource> allFiles = ResourceUtils.getMembers(project);
+
+				try {
+					HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
+					MercurialStatusCache.getInstance().refreshStatus(project, monitor);
+				} catch (HgException e1) {
+					MercurialEclipsePlugin.logError(e1);
+					MercurialEclipsePlugin.showError(e1);
+					return true;
+				}
+
+				final boolean [] continueDelete = new boolean[]{ false };
+				Display.getDefault().syncExec(new Runnable(){
+					public void run() {
+						MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(), "Project removed",
+								"All project files are now removed from Mercurial repository.\n" +
+								"A commit is highly recommended.");
+						CommitHandler ch = new CommitHandler();
+						Options options = new Options();
+						options.defaultCommitMessage = "Removed project '" + project.getName() + "' from repository.";
+						options.filesSelectable = false;
+						options.showAmend = false;
+						options.showCloseBranch = false;
+						options.showDiff = false;
+						options.showRevert = false;
+						ch.setOptions(options);
+						try {
+							ch.run(new ArrayList<IResource>(allFiles));
+						} catch (HgException e) {
+							MercurialEclipsePlugin.logError(e);
+						}
+						continueDelete[0] = ch.getResult() == Window.OK;
+					}
+				});
+				if(continueDelete[0]){
+					// if user committed deleted files, mercurial part is done
+					// now we must say Eclipse please delete the project
+					tree.deletedProject(project);
+				}
+				// delete was NOT done by hg. Anyway, let the files and project there.
+				return true;
+			}
 			IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
 			try {
 				folder.delete(updateFlags, monitor);
@@ -185,8 +241,8 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 				return true;
 			}
 		}
-
-		return false;
+		tree.deletedProject(project);
+		return true;
 	}
 
 	public boolean moveFile(IResourceTree tree, IFile source,

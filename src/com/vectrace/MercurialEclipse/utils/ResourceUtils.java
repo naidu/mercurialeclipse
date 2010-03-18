@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.ide.ResourceUtil;
@@ -398,5 +399,21 @@ public class ResourceUtils {
 			}
 		};
 		job.schedule();
+	}
+
+	/**
+	 * @param selection may be null
+	 * @return never null , may be ampty list containing all resources from given selection
+	 */
+	public static List<IResource> getResources(IStructuredSelection selection) {
+		List<IResource> resources = new ArrayList<IResource>();
+		List<?> list = selection.toList();
+		for (Object object : list) {
+			IResource resource = getResource(object);
+			if(resource != null && !resources.contains(resource)){
+				resources.add(resource);
+			}
+		}
+		return resources;
 	}
 }
