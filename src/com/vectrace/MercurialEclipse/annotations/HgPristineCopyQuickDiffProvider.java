@@ -9,6 +9,7 @@
  *     Charles O'Farrell - implementation (based on subclipse)
  *     StefanC           - jobs framework code cleenup
  *     Bastian Doetsch   - refactoring
+ *     Andrei Loskutov (Intland)  - made it finally working
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -30,15 +31,18 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.IStorageDocumentProvider;
+import org.eclipse.ui.ide.ResourceUtil;
 import org.eclipse.ui.texteditor.IDocumentProvider;
 import org.eclipse.ui.texteditor.IElementStateListener;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.quickdiff.IQuickDiffReferenceProvider;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  *
@@ -63,29 +67,24 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  *
  * @since 3.0
  */
-public class HgPristineCopyQuickDiffProvider implements
-		IQuickDiffReferenceProvider {
+public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvider {
 
 	public static final String HG_REFERENCE_PROVIDER = "com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider"; //$NON-NLS-1$
 
 	// The editor showing this quickdiff and provides access to the editor input
-	// and
-	// ultimatly the IFile.
-	private ITextEditor editor = null;
+	// and ultimatly the IFile.
+	private ITextEditor editor;
 
 	// The document containing the remote file. Can be null if the assigned
-	// editor
-	// doesn't have
-	// a Hg remote resource associated with it.
-	private IDocument referenceDocument = null;
+	// editor doesn't have a Hg remote resource associated with it.
+	private IDocument referenceDocument;
 
 	// Will be true when the document has been read and initialized.
-	private boolean isReferenceInitialized = false;
+	private boolean isReferenceInitialized;
 
 	// Document provider allows us to register/deregister the element state
-	// change
-	// listener.
-	private IDocumentProvider documentProvider = null;
+	// change listener.
+	private IDocumentProvider documentProvider;
 
 	// Unique id for this reference provider as set via setId().
 	private String id;
@@ -116,10 +115,6 @@ public class HgPristineCopyQuickDiffProvider implements
 		}
 	};
 
-	/*
-	 * @seeorg.eclipse.test.quickdiff.DocumentLineDiffer.
-	 * IQuickDifreferenceDocumentProvider#getReference()
-	 */
 	public IDocument getReference(IProgressMonitor monitor)
 			throws CoreException {
 		if (!isReferenceInitialized) {
@@ -131,15 +126,9 @@ public class HgPristineCopyQuickDiffProvider implements
 		return referenceDocument;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation#
-	 * setActiveEditor(org.eclipse.ui.texteditor.ITextEditor)
-	 */
 	public void setActiveEditor(ITextEditor targetEditor) {
-		if (!(targetEditor.getEditorInput() instanceof IFileEditorInput)) {
+		IEditorInput editorInput = targetEditor.getEditorInput();
+		if (editorInput == null || ResourceUtil.getFile(editorInput) == null) {
 			return;
 		}
 		editor = targetEditor;
@@ -151,13 +140,6 @@ public class HgPristineCopyQuickDiffProvider implements
 		isReferenceInitialized = true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * org.eclipse.ui.texteditor.quickdiff.IQuickDiffProviderImplementation#
-	 * isEnabled()
-	 */
 	public boolean isEnabled() {
 		if (!isReferenceInitialized) {
 			return false;
@@ -165,10 +147,6 @@ public class HgPristineCopyQuickDiffProvider implements
 		return getManagedHgFile() != null;
 	}
 
-	/*
-	 * @seeorg.eclipse.jface.text.source.diff.DocumentLineDiffer.
-	 * IQuickDifreferenceDocumentProvider#dispose()
-	 */
 	public void dispose() {
 		isReferenceInitialized = false;
 		// stop update job
@@ -182,19 +160,10 @@ public class HgPristineCopyQuickDiffProvider implements
 		}
 	}
 
-	/*
-	 * @see
-	 * org.eclipse.quickdiff.QuickDiffTestPlugin.IQuickDiffProviderImplementation
-	 * #setId(java.lang.String)
-	 */
 	public void setId(String id) {
 		this.id = id;
 	}
 
-	/*
-	 * @seeorg.eclipse.jface.text.source.diff.DocumentLineDiffer.
-	 * IQuickDifreferenceDocumentProvider#getId()
-	 */
 	public String getId() {
 		return id;
 	}
@@ -230,8 +199,7 @@ public class HgPristineCopyQuickDiffProvider implements
 		}
 		if (computeChange(monitor)) {
 			IFile remoteFile = getFileFromEditor();
-			if (remoteFile != null
-					&& documentProvider instanceof IStorageDocumentProvider) {
+			if (remoteFile != null && documentProvider instanceof IStorageDocumentProvider) {
 				IStorageDocumentProvider provider = (IStorageDocumentProvider) documentProvider;
 				String encoding = provider.getEncoding(editor.getEditorInput());
 				if (encoding == null) {
@@ -240,9 +208,16 @@ public class HgPristineCopyQuickDiffProvider implements
 				if (monitor.isCanceled()) {
 					return;
 				}
-				InputStream stream = remoteFile.getContents();
-				if (stream == null || monitor.isCanceled()
-						|| !isReferenceInitialized) {
+				InputStream stream;
+				// if file is unchanged, simply read the content from current version on the disk
+				if(MercurialStatusCache.getInstance().isClean(remoteFile)){
+					stream = remoteFile.getContents();
+				} else {
+					// fetch the file version matching to the current hg root changeset
+					MercurialRevisionStorage revision = new MercurialRevisionStorage(remoteFile);
+					stream = revision.getContents();
+				}
+				if (stream == null || monitor.isCanceled() || !isReferenceInitialized) {
 					return;
 				}
 				setDocumentContent(referenceDocument, stream, encoding);
@@ -286,15 +261,13 @@ public class HgPristineCopyQuickDiffProvider implements
 			}
 			document.set(caw.toString());
 		} catch (IOException x) {
-			throw new HgException(
-					"RemoteRevisionQuickDiffProvider.readingFile", x); //$NON-NLS-1$
+			throw new HgException("Failed to read file content", x); //$NON-NLS-1$
 		} finally {
 			if (in != null) {
 				try {
 					in.close();
 				} catch (IOException x) {
-					throw new HgException(
-							"RemoteRevisionQuickDiffProvider.closingFile", x); //$NON-NLS-1$
+					throw new HgException("Failed to close stream", x); //$NON-NLS-1$
 				}
 			}
 		}
@@ -305,15 +278,12 @@ public class HgPristineCopyQuickDiffProvider implements
 	 * if the provider doesn't not have access to a Hg managed file.
 	 *
 	 * @return the handle to a Hg file
-	 * @throws CoreException
-	 * @throws IOException
 	 */
 	private File getManagedHgFile() {
 		if (editor != null) {
 			IFile file = getFileFromEditor();
-			if (file != null
-					&& MercurialUtilities.hgIsTeamProviderFor(file, false)) {
-				File hgFile = file.getLocation().toFile();
+			if (file != null && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
+				File hgFile = ResourceUtils.getFileHandle(file);
 				if (hgFile.exists()) {
 					return hgFile;
 				}
@@ -326,8 +296,8 @@ public class HgPristineCopyQuickDiffProvider implements
 	private IFile getFileFromEditor() {
 		if (editor != null) {
 			IEditorInput input = editor.getEditorInput();
-			if (input instanceof IFileEditorInput) {
-				return ((IFileEditorInput) input).getFile();
+			if (input != null) {
+				return ResourceUtil.getFile(input);
 			}
 		}
 		return null;
@@ -344,16 +314,14 @@ public class HgPristineCopyQuickDiffProvider implements
 		if (fUpdateJob != null && fUpdateJob.getState() != Job.NONE) {
 			fUpdateJob.cancel();
 		}
-		fUpdateJob = new Job("RemoteRevisionQuickDiffProvider.fetchingFile") { //$NON-NLS-1$
+		fUpdateJob = new Job("Fetching last versioned file state") { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 					readDocument(monitor);
 				} catch (CoreException e) {
-					// continue and return ok for now. The error will be
-					// reported
+					// continue and return ok for now. The error will be reported
 					// when the quick diff supports calls getReference() again.
-					// continue
 				}
 				return Status.OK_STATUS;
 			}
