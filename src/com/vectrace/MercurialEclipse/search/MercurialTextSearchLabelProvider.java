@@ -1,16 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2009 IBM Corporation and others.
+ * Copyright (c) 2000, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     IBM Corporation - initial API and implementation
+ *     IBM Corporation                 - initial API and implementation
  *     Juerg Billeter, juergbi@ethz.ch - 47136 Search view should show match objects
- *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
- *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Ulrich Etter, etteru@ethz.ch    - 47136 Search view should show match objects
+ *     Roman Fuchs, fuchsro@ethz.ch    - 47136 Search view should show match objects
+ *     Andrei Loskutov (Intland)       - bug fixes
+ *     Philip Graf                     - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -90,7 +91,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		}
 
 		String countInfo = Messages.format(SearchMessages.FileLabelProvider_count_format,
-				new Integer(matchCount));
+				Integer.valueOf(matchCount));
 		coloredName.append(' ').append(countInfo, StyledString.COUNTER_STYLER);
 		return coloredName;
 	}

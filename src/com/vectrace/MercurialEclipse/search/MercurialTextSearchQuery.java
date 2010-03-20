@@ -11,6 +11,7 @@
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
  *     Bastian Doetsch - MercurialEclipse adaptation
+ *     Philip Graf - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -171,7 +172,7 @@ public class MercurialTextSearchQuery implements ISearchQuery {
 					return Messages.format(
 							SearchMessages.FileSearchQuery_singularLabel, args);
 				}
-				Object[] args = { searchString, new Integer(nMatches),
+				Object[] args = { searchString, Integer.valueOf(nMatches),
 						fScope.getDescription() };
 				return Messages.format(
 						SearchMessages.FileSearchQuery_pluralPattern, args);
@@ -185,7 +186,7 @@ public class MercurialTextSearchQuery implements ISearchQuery {
 								SearchMessages.FileSearchQuery_singularPatternWithFileExt,
 								args);
 			}
-			Object[] args = { searchString, new Integer(nMatches),
+			Object[] args = { searchString, Integer.valueOf(nMatches),
 					fScope.getDescription(), fScope.getFilterDescription() };
 			return Messages.format(
 					SearchMessages.FileSearchQuery_pluralPatternWithFileExt,
@@ -200,7 +201,7 @@ public class MercurialTextSearchQuery implements ISearchQuery {
 							SearchMessages.FileSearchQuery_singularLabel_fileNameSearch,
 							args);
 		}
-		Object[] args = { fScope.getFilterDescription(), new Integer(nMatches),
+		Object[] args = { fScope.getFilterDescription(), Integer.valueOf(nMatches),
 				fScope.getDescription() };
 		return Messages.format(
 				SearchMessages.FileSearchQuery_pluralPattern_fileNameSearch,

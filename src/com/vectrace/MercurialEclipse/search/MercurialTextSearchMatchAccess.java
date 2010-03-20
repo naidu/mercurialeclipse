@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian	implementation
+ * Bastian	   - implementation
+ * Philip Graf - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -185,15 +186,15 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	private String getFileContent() {
 		if (fileContent == null) {
 			getMercurialRevisionStorage();
-			InputStream is = null;
+			BufferedReader reader = null;
 			try {
-				is = mercurialRevisionStorage.getContents();
+				InputStream is = mercurialRevisionStorage.getContents();
 
 				if (is != null) {
 					StringBuilder sb = new StringBuilder();
 					String line;
 
-					BufferedReader reader = new BufferedReader(
+					reader = new BufferedReader(
 							new InputStreamReader(is, root.getEncoding()));
 					while ((line = reader.readLine()) != null) {
 						sb.append(line).append("\n");
@@ -206,8 +207,8 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 				MercurialEclipsePlugin.logError(e);
 			} finally {
 				try {
-					if (is != null) {
-						is.close();
+					if (reader != null) {
+						reader.close();
 					}
 				} catch (IOException e) {
 				}

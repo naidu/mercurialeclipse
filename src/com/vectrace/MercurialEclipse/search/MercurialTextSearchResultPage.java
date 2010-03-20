@@ -11,6 +11,7 @@
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
  *     Bastian Doetsch - adaptation for MercurialEclipse
+ *     Philip Graf - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -212,7 +213,7 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 				elementLimit = value.intValue();
 			}
 		}
-		setElementLimit(new Integer(elementLimit));
+		setElementLimit(Integer.valueOf(elementLimit));
 	}
 
 	@Override
@@ -241,15 +242,15 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 					int matchCount = getInput().getMatchCount();
 					if (itemCount < matchCount) {
 						return Messages.format(
-								SearchMessages.FileSearchPage_limited_format_matches, new Object[] {
-										label, new Integer(itemCount), new Integer(matchCount) });
+								SearchMessages.FileSearchPage_limited_format_matches,
+								new Object[] {label, Integer.valueOf(itemCount), Integer.valueOf(matchCount)});
 					}
 				} else {
 					int fileCount = getInput().getElements().length;
 					if (itemCount < fileCount) {
-						return Messages.format(SearchMessages.FileSearchPage_limited_format_files,
-								new Object[] { label, new Integer(itemCount),
-										new Integer(fileCount) });
+						return Messages.format(
+								SearchMessages.FileSearchPage_limited_format_files,
+								new Object[] {label, Integer.valueOf(itemCount), Integer.valueOf(fileCount)});
 					}
 				}
 			}
