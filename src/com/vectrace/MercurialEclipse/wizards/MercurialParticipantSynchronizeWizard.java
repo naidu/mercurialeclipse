@@ -254,10 +254,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 		try {
 			repoManager.addRepoLocation(hgRoot, repo);
-			IHgRepositoryLocation repoLocation = repoManager.getDefaultRepoLocation(hgRoot);
-			if(repoLocation == null){
-				repoManager.setDefaultRepository(hgRoot, repo);
-			}
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}

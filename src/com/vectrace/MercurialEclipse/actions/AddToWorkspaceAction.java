@@ -114,8 +114,7 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(proj);
 				if (hgRoot != null) {
-					// store repo as default repo
-					repoManager.setDefaultRepository(hgRoot, location);
+					// store repo (will be set as default automatically)
 					repoManager.addRepoLocation(hgRoot, location);
 				}
 
