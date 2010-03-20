@@ -16,9 +16,8 @@ import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
@@ -67,21 +66,12 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 
 	private static AbstractShellCommand getCommand(RemoteKey key) {
 		HgRoot hgRoot = key.getRoot();
-		String branch = key.getBranch();
-		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, //$NON-NLS-1$
-				false);
+		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-		if (branch != null) {
-			if (!Branch.isDefault(branch)) {
-				if(HgBranchClient.isKnownRemote(key)) {
-					command.addOptions("-r", branch);
-				}
-			} else {
-				// see issue 10495: there can be many "default" heads, so show all of them
-				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
-			}
-		}
+		// see issue 10495, 11093: there can be many branch heads, so show all of them
+		// otherwise if "-r branch" is used, only branch head at "tip" is shown
+		// command.addOptions("-r", branch);
 		return command;
 	}
 

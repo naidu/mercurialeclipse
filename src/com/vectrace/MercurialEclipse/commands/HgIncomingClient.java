@@ -18,8 +18,8 @@ import java.io.IOException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
@@ -39,24 +39,19 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 */
 	public static RemoteData getHgIncoming(RemoteKey key) throws HgException {
 		HgRoot hgRoot = key.getRoot();
-		HgCommand command = new HgCommand("incoming", hgRoot, //$NON-NLS-1$
-				false);
+		HgCommand command = new HgCommand("incoming", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		String branch = key.getBranch();
-		if (branch != null) {
-			if (!Branch.isDefault(branch)) {
-				if(HgBranchClient.isKnownRemote(key)) {
-					command.addOptions("-r", branch);
-				} else {
-					// this branch is not known remote, so there can be NO incoming changes
-					return new RemoteData(key, Direction.INCOMING);
-				}
-			} else {
-				// see issue 10495: there can be many "default" heads, so show all of them
-				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
-			}
+		if (!Branch.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
+			// this branch is not known remote, so there can be NO incoming changes
+			return new RemoteData(key, Direction.INCOMING);
 		}
+
+		// see issue 10495, 11093: there can be many branch heads, so show all of them
+		// otherwise if "-r branch" is used, only branch head at "tip" is shown
+		// command.addOptions("-r", branch);
+
 		File bundleFile = null;
 		try {
 			try {
