@@ -10,4 +10,10 @@
 			<Bug pattern="NM_SAME_SIMPLE_NAME_AS_SUPERCLASS" />
 		</Or>
 	</Match>
+	<Match>
+		<!-- This is a false positive: readLine() never returns null in this case -->
+		<Class name="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage" />
+		<Method name="insertEscapeChars" params="java.lang.String" returns="java.lang.String"/>
+		<Bug pattern="NP_IMMEDIATE_DEREFERENCE_OF_READLINE" />
+	</Match>
 </FindBugsFilter>

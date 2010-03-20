@@ -12,6 +12,7 @@
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
  *     Bastian Doetsch - adaptation for MercurialEclipse
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -76,6 +77,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	private static final int HISTORY_SIZE = 12;
 	public static final String EXTENSION_POINT_ID = "org.eclipse.search.internal.ui.text.TextSearchPage"; //$NON-NLS-1$
 
+	private static final boolean IS_REGEX_SEARCH = true;
+
 	// Dialog store id constants
 	private static final String PAGE_NAME = "TextSearchPage"; //$NON-NLS-1$
 	private static final String STORE_HISTORY = "HISTORY"; //$NON-NLS-1$
@@ -85,7 +88,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			20);
 
 	private boolean fFirstTime = true;
-	private final boolean fIsRegExSearch = true;
 	private Combo fPattern;
 	private Combo fExtensions;
 	private CLabel fStatusLabel;
@@ -295,7 +297,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		if (match != null) {
 			fPreviousSearchPatterns.remove(match);
 		}
-		match = new SearchPatternData(getPattern(), false, fIsRegExSearch, getExtensions(),
+		match = new SearchPatternData(getPattern(), false, IS_REGEX_SEARCH, getExtensions(),
 				getContainer().getSelectedScope(), getContainer().getSelectedWorkingSets());
 		fPreviousSearchPatterns.add(0, match);
 		return match;
@@ -398,7 +400,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	}
 
 	private boolean validateRegex() {
-		if (fIsRegExSearch) {
+		if (IS_REGEX_SEARCH) {
 			try {
 				PatternConstructor.createPattern(fPattern.getText(), false, true);
 			} catch (PatternSyntaxException e) {
@@ -461,7 +463,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		fPatterFieldContentAssist = new ContentAssistCommandAdapter(fPattern, contentAdapter,
 				findProposer, ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS, new char[] {
 						'\\', '[', '(' }, true);
-		fPatterFieldContentAssist.setEnabled(fIsRegExSearch);
+		fPatterFieldContentAssist.setEnabled(IS_REGEX_SEARCH);
 	}
 
 	private void handleWidgetSelected() {
@@ -489,7 +491,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		if (selection instanceof ITextSelection && !selection.isEmpty()) {
 			String text = ((ITextSelection) selection).getText();
 			if (text != null) {
-				if (fIsRegExSearch) {
+				if (IS_REGEX_SEARCH) {
 					fPattern.setText(escapeForRegExPattern(text));
 				} else {
 					fPattern.setText(insertEscapeChars(text));
@@ -553,7 +555,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 				if (i + 1 < length && string.charAt(i + 1) == '\n') {
 					i++;
 				}
-				//$FALL-THROUGH$
+				pattern.append("\\R"); //$NON-NLS-1$
+				break;
 			case '\n':
 				pattern.append("\\R"); //$NON-NLS-1$
 				break;

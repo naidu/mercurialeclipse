@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  * wleggette	implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)
+ *     Philip Graf               - Fixed bugs which FindBugs found
  *******************************************************************************/
 /* ====================================================================
  *
@@ -217,7 +218,16 @@ public class IniFile {
 	 *                Description of Exception
 	 */
 	public void load(String filename) throws FileNotFoundException {
-		load(new FileInputStream(filename));
+		FileInputStream in = new FileInputStream(filename);
+		try {
+			load(in);
+		} finally {
+			try {
+				in.close();
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 
 	/**

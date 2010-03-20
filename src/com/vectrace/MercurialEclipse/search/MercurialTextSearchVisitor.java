@@ -6,14 +6,15 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian	implementation
+ * Bastian	   - implementation
+ * Philip Graf - Fixed bugs which FindBugs found
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
@@ -69,12 +70,12 @@ public class MercurialTextSearchVisitor {
 		String searchString = pattern.pattern();
 		monitor.beginTask("Searching for " + searchString + " with Mercurial",
 				scopeRoots.length * 5);
-		for (Iterator<HgRoot> i = resourcesByRoot.keySet().iterator(); i.hasNext();) {
-			HgRoot root = i.next();
+		for (Entry<HgRoot, List<IResource>> entry : resourcesByRoot.entrySet()) {
+			HgRoot root = entry.getKey();
 			monitor.subTask("Searching in respository " + root.getName());
 			monitor.worked(1);
 			try {
-				return search(root, resourcesByRoot.get(root), monitor, all);
+				return search(root, entry.getValue(), monitor, all);
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
