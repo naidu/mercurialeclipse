@@ -87,7 +87,7 @@ public class HgCommitClient extends AbstractClient {
 		if (closeBranch) {
 			command.addOptions("--close-branch");
 		}
-		File messageFile = saveMessage(message);
+		File messageFile = saveMessage(message, command);
 		try {
 			addMessage(command, messageFile, message);
 			command.addFiles(AbstractClient.toPaths(files));
@@ -124,7 +124,7 @@ public class HgCommitClient extends AbstractClient {
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(user);
-		File messageFile = saveMessage(message);
+		File messageFile = saveMessage(message, command);
 		try {
 			addMessage(command, messageFile, message);
 			String result = command.executeToString();
@@ -147,11 +147,12 @@ public class HgCommitClient extends AbstractClient {
 		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private static File saveMessage(String message) {
+	private static File saveMessage(String message, HgCommand command) throws HgException {
 		Writer writer = null;
 		try {
 			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
-			writer = new OutputStreamWriter(new FileOutputStream(messageFile), MercurialEclipsePlugin.getDefaultEncoding());
+			writer = new OutputStreamWriter(new FileOutputStream(messageFile),
+					command.getHgRoot().getEncoding());
 			writer.write(message.trim());
 			return messageFile;
 		} catch (IOException ex) {

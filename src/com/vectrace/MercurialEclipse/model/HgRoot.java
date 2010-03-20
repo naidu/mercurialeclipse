@@ -51,6 +51,9 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		this.encoding = charset;
 	}
 
+	/**
+	 * @return never null, root specific encoding (may differ from the OS default encoding)
+	 */
 	public Charset getEncoding() {
 		if(encoding == null){
 			setEncoding(MercurialEclipsePlugin.getDefaultEncoding());
