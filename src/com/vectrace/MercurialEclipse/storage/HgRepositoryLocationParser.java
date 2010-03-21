@@ -242,7 +242,8 @@ public class HgRepositoryLocationParser {
 			if (userInfo.indexOf(PASSWORD_TOKEN) > 0) {
 				return userInfo.substring(userInfo.indexOf(PASSWORD_TOKEN) + 1);
 			}
-			return userInfo;
+			// NEVER return the username as password
+			return "";
 		}
 		return null;
 	}
