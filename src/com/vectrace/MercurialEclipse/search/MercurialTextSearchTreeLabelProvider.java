@@ -36,7 +36,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
-public class MercurialTextSearchLabelProvider extends LabelProvider implements IStyledLabelProvider {
+public class MercurialTextSearchTreeLabelProvider extends LabelProvider implements IStyledLabelProvider {
 
 	public static final int SHOW_LABEL = 1;
 	public static final int SHOW_LABEL_PATH = 2;
@@ -54,7 +54,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 
 	private int fOrder;
 
-	public MercurialTextSearchLabelProvider(AbstractTextSearchViewPage page, int orderFlag) {
+	public MercurialTextSearchTreeLabelProvider(AbstractTextSearchViewPage page, int orderFlag) {
 		fLabelProvider = new WorkbenchLabelProvider();
 		fOrder = orderFlag;
 		fPage = page;
@@ -218,6 +218,14 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 			return null;
 		}
 
+		return getResourceImage(element);
+	}
+
+	/**
+	 * @param element
+	 * @return
+	 */
+	protected Image getResourceImage(Object element) {
 		IResource resource = (IResource) element;
 		Image image = fLabelProvider.getImage(resource);
 		return image;
@@ -244,6 +252,17 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	public void addListener(ILabelProviderListener listener) {
 		super.addListener(listener);
 		fLabelProvider.addListener(listener);
+	}
+
+	/**
+	 * @param mrs
+	 * @return
+	 */
+	protected String getCsInfoString(MercurialRevisionStorage mrs) {
+		ChangeSet cs = mrs.getChangeSet();
+		String csInfo = cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ("
+				+ cs.getAgeDate() + ") ";
+		return csInfo;
 	}
 
 }

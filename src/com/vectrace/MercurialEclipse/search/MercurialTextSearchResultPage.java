@@ -82,9 +82,9 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 		viewer.setUseHashlookup(true);
 		contentProvider = new MercurialTextSearchTableContentProvider(this);
 		viewer.setContentProvider(contentProvider);
-		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
-				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
-		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(innerLabelProvider));
+		MercurialTextSearchTableLabelProvider innerLabelProvider = new MercurialTextSearchTableLabelProvider(
+				this, MercurialTextSearchTreeLabelProvider.SHOW_LABEL);
+		viewer.setLabelProvider(new DecoratingMercurialTextSearchLabelProvider(innerLabelProvider));
 	}
 
 	@Override
@@ -92,9 +92,9 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 		viewer.setUseHashlookup(true);
 		contentProvider = new MercurialTextSearchTreeContentProvider(this, viewer);
 		viewer.setContentProvider(contentProvider);
-		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
-				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
-		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(innerLabelProvider));
+		MercurialTextSearchTreeLabelProvider innerLabelProvider = new MercurialTextSearchTreeLabelProvider(
+				this, MercurialTextSearchTreeLabelProvider.SHOW_LABEL);
+		viewer.setLabelProvider(new DecoratingMercurialTextSearchLabelProvider(innerLabelProvider));
 		viewer.setComparator(new ViewerComparator() {
 			@Override
 			public int compare(Viewer viewer, Object e1, Object e2) {
@@ -123,7 +123,6 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 
 	@Override
 	protected void handleOpen(OpenEvent event) {
-		if (showLineMatches()) {
 			Object firstElement = ((IStructuredSelection) event.getSelection()).getFirstElement();
 			if (firstElement instanceof MercurialMatch) {
 				if (getDisplayedMatchCount(firstElement) == 0) {
@@ -156,7 +155,6 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 					}
 					return;
 				}
-			}
 		}
 	}
 
