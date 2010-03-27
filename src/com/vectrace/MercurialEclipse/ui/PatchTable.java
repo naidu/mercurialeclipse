@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,24 +9,33 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - adaptation to patches
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - refactoring: replaced Table with TableViewer
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.layout.TableColumnLayout;
 import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CellLabelProvider;
+import org.eclipse.jface.viewers.ColumnLayoutData;
+import org.eclipse.jface.viewers.ColumnPixelData;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
+import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.model.Patch;
 
@@ -37,10 +46,10 @@ import com.vectrace.MercurialEclipse.model.Patch;
 public class PatchTable extends Composite {
 	private static Color APPLIED_COLOR;
 
-	private final static Font APPLIED_FONT = JFaceResources.getFontRegistry()
-			.getBold(JFaceResources.DIALOG_FONT);
+	private final static Font APPLIED_FONT = JFaceResources.getFontRegistry().getBold(
+			JFaceResources.DIALOG_FONT);
 
-	private final Table table;
+	private final TableViewer viewer;
 
 	public PatchTable(Composite parent) {
 		super(parent, SWT.NONE);
@@ -49,79 +58,105 @@ public class PatchTable extends Composite {
 			APPLIED_COLOR = new Color(getDisplay(), new RGB(225, 255, 172));
 		}
 
-		this.setLayout(new GridLayout(1, false));
-		this.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		TableColumnLayout tableColumnLayout = new TableColumnLayout();
+		setLayout(tableColumnLayout);
 
-		table = new Table(this, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION
-				| SWT.V_SCROLL | SWT.H_SCROLL);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		// data.minimumHeight = 100;
-		table.setLayoutData(data);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
 
-		String[] titles = { Messages.getString("PatchTable.0"), Messages.getString("PatchTable.applied"), Messages.getString("PatchTable.name"), Messages.getString("PatchTable.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		int[] widths = { 20, 100, 150, 150 };
+		viewer = new TableViewer(this, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+				| SWT.H_SCROLL);
+
+		viewer.setContentProvider(ArrayContentProvider.getInstance());
+		viewer.setLabelProvider(new PatchTableLabelProvider());
+
+		String[] titles = {
+				Messages.getString("PatchTable.index"), //$NON-NLS-1$
+				Messages.getString("PatchTable.applied"), //$NON-NLS-1$
+				Messages.getString("PatchTable.name"), //$NON-NLS-1$
+				Messages.getString("PatchTable.summary") }; //$NON-NLS-1$
+		ColumnLayoutData[] columnWidths = {
+				new ColumnPixelData(20, false, true),
+				new ColumnPixelData(75, false, true),
+				new ColumnWeightData(25, 200, true),
+				new ColumnWeightData(75, 200, true) };
 		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
+			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
+			column.setLabelProvider(new CellLabelProvider() {
+				@Override
+				public void update(ViewerCell cell) {
+					Patch patch = (Patch) cell.getElement();
+					ITableLabelProvider labelProvider = (ITableLabelProvider) viewer
+							.getLabelProvider();
+					cell.setText(labelProvider.getColumnText(patch, cell.getColumnIndex()));
+					cell.setImage(labelProvider.getColumnImage(patch, cell.getColumnIndex()));
+					if (patch.isApplied()) {
+						cell.setFont(APPLIED_FONT);
+					} else {
+						cell.setFont(null);
+					}
+				}
+			});
+			column.getColumn().setText(titles[i]);
+			tableColumnLayout.setColumnData(column.getColumn(), columnWidths[i]);
+
 		}
+
+		Table table = viewer.getTable();
+		table.setLinesVisible(true);
+		table.setHeaderVisible(true);
 	}
 
-	public void setPatches(Patch[] patches) {
-
-		table.removeAll();
-		for (Patch patch : patches) {
-			TableItem row = new TableItem(table, SWT.NONE);
-			if (patch.isApplied()) {
-				row.setFont(APPLIED_FONT);
-				row.setBackground(1, APPLIED_COLOR);
-			}
-			row.setText(0, patch.getIndex());
-			row.setText(1, patch.isApplied() ? Messages.getString("PatchTable.statusApplied") : Messages.getString("PatchTable.statusUnapplied")); //$NON-NLS-1$ //$NON-NLS-2$
-			row.setText(2, patch.getName());
-			row.setText(3, patch.getSummary());
-			row.setData(patch);
-		}
+	public void setPatches(List<Patch> patches) {
+		viewer.setInput(patches);
 	}
 
-	public Patch getSelection() {
-		List<Patch>list = getSelections();
-		if (list == null || list.size()==0) {
-			return null;
-		}
-		return list.get(0);
-	}
-
-	public List<Patch> getSelections() {
-		TableItem[] selection = table.getSelection();
-		if (selection.length == 0) {
-			return null;
-		}
-		List<Patch> list = new ArrayList<Patch>();
-		for (TableItem tableItem : selection) {
-			Patch p = (Patch) tableItem.getData();
-			list.add(p);
-		}
-		return list;
-	}
-
-	public void addSelectionListener(SelectionListener listener) {
-		table.addSelectionListener(listener);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.swt.widgets.Widget#dispose()
+	/**
+	 * @return The first selected patch, or {@code null} if the selection is empty.
 	 */
+	public Patch getSelection() {
+		return (Patch) ((IStructuredSelection) viewer.getSelection()).getFirstElement();
+	}
+
+	/**
+	 * @return A list of the selected patches. If the selection is empty an empty list is returned,
+	 *         never {@code null}.
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Patch> getSelections() {
+		return ((IStructuredSelection) viewer.getSelection()).toList();
+	}
+
 	@Override
 	public void dispose() {
 		super.dispose();
 		APPLIED_COLOR.dispose();
+	}
+
+	public TableViewer getTableViewer() {
+		return viewer;
+	}
+
+	private static class PatchTableLabelProvider extends LabelProvider implements ITableLabelProvider {
+
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+
+		public String getColumnText(Object element, int columnIndex) {
+			Patch patch = (Patch) element;
+			switch (columnIndex) {
+				case 0:
+					return patch.getIndex();
+				case 1:
+					return patch.isApplied() ? Messages.getString("PatchTable.statusApplied") : Messages.getString("PatchTable.statusUnapplied"); //$NON-NLS-1$ //$NON-NLS-2$
+				case 2:
+					return patch.getName();
+				case 3:
+					return patch.getSummary();
+			}
+			return null;
+		}
+
 	}
 
 }
