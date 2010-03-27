@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
+ *     Bastian Doetsch           - implementation (with lots of stuff pulled up from HgCommand)
  *     Andrei Loskutov (Intland) - bug fixes
- *     Adam Berkes (Intland) - bug fixes/restructure
- *     Zsolt Koppany (Intland) - enhancements
+ *     Adam Berkes (Intland)     - bug fixes/restructure
+ *     Zsolt Koppany (Intland)   - enhancements
+ *     Philip Graf               - use default timeout from preferences
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -45,13 +46,12 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
  */
 public abstract class AbstractShellCommand extends AbstractClient {
-
-	public static final int DEFAULT_TIMEOUT = 360000;
 
 	private static final int BUFFER_SIZE = 32768;
 
@@ -227,12 +227,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private DefaultExecutionRule executionRule;
 
 	protected AbstractShellCommand() {
-		super();
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
 		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
+		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
 	}
 
 	protected AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
@@ -264,10 +264,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public byte[] executeToBytes() throws HgException {
-		int timeout = DEFAULT_TIMEOUT;
-		if (timeoutConstant != null) {
-			timeout = HgClients.getTimeOut(timeoutConstant);
+		int timeout;
+		if (timeoutConstant == null) {
+			timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
 		}
+		timeout = HgClients.getTimeOut(timeoutConstant);
 		return executeToBytes(timeout);
 	}
 
@@ -492,7 +493,20 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return ""; //$NON-NLS-1$
 	}
 
-	public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
+	/**
+	 * Executes a command and writes its output to a file.
+	 *
+	 * @param file
+	 *            The file to which the output is written.
+	 * @param expectPositiveReturnValue
+	 *            If set to {@code true}, an {@code HgException} will be thrown if the command's
+	 *            exit code is not zero.
+	 * @return Returns {@code true} iff the command was executed successfully.
+	 * @throws HgException
+	 *             Thrown when the command could not be executed successfully.
+	 */
+	public boolean executeToFile(File file, boolean expectPositiveReturnValue) throws HgException {
+		int timeout = HgClients.getTimeOut(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file, false);
