@@ -33,8 +33,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
+import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -48,9 +48,9 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -180,10 +180,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 		if(isEnabled()){
 			if(!((HgChangeSetModelProvider)getViewer().getInput()).isParticipantCreated()){
+				initCollector();
 				// on startup, do not start to show anything for the first time:
 				// show "reminder" page which allows user to choose synchronize or not
-				initCollector();
-				return new Object[0];
+				// TODO currently comented out due the strange issues with pinned views:
+				// not sure if this is somehow related to the missing updates (issue 11043 and 10957)...
+				//	return new Object[0];
 			}
 		}
 		if (parent == getModelProvider()) {
@@ -237,7 +239,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return new Object[]{uncommittedSet, outgoing, incoming};
 	}
 
-	private void initCollector() {
+	private synchronized void initCollector() {
 		if (!collectorInitialized) {
 			initializeChangeSets(getChangeSetCapability());
 			collectorInitialized = true;
