@@ -52,7 +52,7 @@ public class HgQSeriesClient extends AbstractClient {
 
 				Patch p = new Patch();
 				p.setIndex(patchData[0]);
-				p.setApplied(patchData[1].equals("A") ? true : false); //$NON-NLS-1$
+				p.setApplied("A".equals(patchData[1])); //$NON-NLS-1$
 				p.setName(patchData[2].trim());
 
 				if (components.length>1) {

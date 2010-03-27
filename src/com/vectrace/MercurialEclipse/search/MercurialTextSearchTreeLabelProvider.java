@@ -42,9 +42,9 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 	public static final int SHOW_LABEL_PATH = 2;
 	public static final int SHOW_PATH_LABEL = 3;
 
-	private static final String fgSeparatorFormat = "{0} - {1}"; //$NON-NLS-1$
+	private static final String FG_SEPARATOR_FORMAT = "{0} - {1}"; //$NON-NLS-1$
 
-	private static final String fgEllipses = " ... "; //$NON-NLS-1$
+	private static final String FG_ELLIPSES = " ... "; //$NON-NLS-1$
 
 	private final WorkbenchLabelProvider fLabelProvider;
 	private final AbstractTextSearchViewPage fPage;
@@ -127,14 +127,14 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 				false);
 		if (fOrder == SHOW_LABEL_PATH) {
 			StyledString str = new StyledString(name);
-			String decorated = Messages.format(fgSeparatorFormat, new String[] { str.getString(),
+			String decorated = Messages.format(FG_SEPARATOR_FORMAT, new String[] { str.getString(),
 					pathString });
 
 			styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER, str);
 			return getColoredLabelWithCounts(resource, str);
 		}
 
-		StyledString str = new StyledString(Messages.format(fgSeparatorFormat, new String[] {
+		StyledString str = new StyledString(Messages.format(FG_SEPARATOR_FORMAT, new String[] {
 				pathString, name }));
 		return getColoredLabelWithCounts(resource, str);
 	}

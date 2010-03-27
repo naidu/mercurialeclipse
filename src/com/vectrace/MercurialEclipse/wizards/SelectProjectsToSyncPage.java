@@ -80,7 +80,7 @@ public class SelectProjectsToSyncPage extends WizardPage {
 			if(!(element instanceof IProject)){
 				return null;
 			}
-			Set<Entry<HgRoot,List<IResource>>> entrySet = byRoot.entrySet();
+			Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
 			for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 				if(entry.getValue().contains(element)){
 					return entry.getKey();
@@ -153,8 +153,8 @@ public class SelectProjectsToSyncPage extends WizardPage {
 				setPageComplete(areAnyElementsChecked());
 			}
 		});
-		setMessage("Select the projects or entire hg roots to be synchronized.\n" +
-				"You can synchronize only one hg root at time.");
+		setMessage("Select the projects or entire hg roots to be synchronized.\n"
+				+ "You can synchronize only one hg root at time.");
 	}
 
 	private ContainerCheckedTreeViewer createViewer(Composite parent) {

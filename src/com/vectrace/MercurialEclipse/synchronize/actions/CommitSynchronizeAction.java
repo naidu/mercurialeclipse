@@ -57,7 +57,7 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 		Object[] objects = sel.toArray();
 		for (Object object : objects) {
 			if (object instanceof IResource) {
-				selectedResources.add(((IResource) object));
+				selectedResources.add((IResource) object);
 			} else if (object instanceof IAdaptable){
 				IAdaptable adaptable = (IAdaptable) object;
 				IResource resource = (IResource) adaptable.getAdapter(IResource.class);
@@ -65,7 +65,7 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 					selectedResources.add(resource);
 				}
 			} else if (object instanceof WorkingChangeSet){
-				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
+				selectedResources.addAll(((WorkingChangeSet) object).getFiles());
 			}
 		}
 		IResource[] resources = new IResource[selectedResources.size()];

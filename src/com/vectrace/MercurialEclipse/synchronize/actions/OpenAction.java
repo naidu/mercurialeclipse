@@ -117,7 +117,7 @@ public class OpenAction extends Action {
 				if(cs.getDirection() == Direction.OUTGOING){
 					String[] parents = cs.getParents();
 					MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
-					MercurialRevisionStorage parentRev ;
+					MercurialRevisionStorage parentRev;
 					if(parents.length == 0){
 						// TODO for some reason, we do not always have right parent info in the changesets
 						// if we are on the different branch then the changeset. So simply enforce the parents resolving
@@ -137,7 +137,7 @@ public class OpenAction extends Action {
 					// incoming
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
 							file, cs.getChangesetIndex(), cs.getChangeset(), cs);
-					MercurialRevisionStorage parentRev ;
+					MercurialRevisionStorage parentRev;
 					String[] parents = cs.getParents();
 					if(cs.getRevision().getRevision() == 0 || parents.length == 0){
 						parentRev = new NullRevision(file, cs);

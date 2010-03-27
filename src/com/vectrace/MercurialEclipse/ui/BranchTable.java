@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
  * @version $Id$
  */
 public class BranchTable extends Composite {
-	private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+	private static final Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
 	private int[] parents;
@@ -82,7 +82,9 @@ public class BranchTable extends Composite {
 				row.setText(0, Integer.toString(branch.getRevision()));
 				row.setText(1, branch.getGlobalId());
 				row.setText(2, branch.getName());
-				row.setText(3, (branch.isActive()?Messages.getString("BranchTable.stateActive"):Messages.getString("BranchTable.stateInactive"))); //$NON-NLS-1$ //$NON-NLS-2$
+				row.setText(3, branch.isActive()
+						? Messages.getString("BranchTable.stateActive") //$NON-NLS-1$
+						: Messages.getString("BranchTable.stateInactive")); //$NON-NLS-1$
 				row.setData(branch);
 			}
 		}

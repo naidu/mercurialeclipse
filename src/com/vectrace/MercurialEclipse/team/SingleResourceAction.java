@@ -26,7 +26,7 @@ public abstract class SingleResourceAction implements IActionDelegate {
 	public void selectionChanged(IAction action, ISelection sel) {
 		if (sel instanceof IStructuredSelection) {
 			//the xml enables this action only for a selection of a single resource
-			this.selection = (IResource)((IStructuredSelection) sel).getFirstElement();
+			this.selection = (IResource) ((IStructuredSelection) sel).getFirstElement();
 		}
 	}
 
@@ -47,5 +47,5 @@ public abstract class SingleResourceAction implements IActionDelegate {
 		}
 	}
 
-	protected abstract void run(IResource resource) throws Exception ;
+	protected abstract void run(IResource resource) throws Exception;
 }

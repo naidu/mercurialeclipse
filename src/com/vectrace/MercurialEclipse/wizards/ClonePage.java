@@ -54,8 +54,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class ClonePage extends PushPullPage {
 
 	private static final String DEFAULT_NAME = "with given name";
-	private static final String TOOLTIP = "A folder %s will be created,\n" +
-					"and this will be the root folder for the clone content.";
+	private static final String TOOLTIP = "A folder %s will be created,\n"
+			+ "and this will be the root folder for the clone content.";
 
 	private Button pullCheckBox;
 	private Button uncompressedCheckBox;
@@ -66,7 +66,7 @@ public class ClonePage extends PushPullPage {
 	private Button directoryButton;
 	private Button useWorkspace;
 	private Text cloneNameTextField;
-	static private File lastUsedDir;
+	private static File lastUsedDir;
 
 	public ClonePage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
@@ -335,8 +335,8 @@ public class ClonePage extends PushPullPage {
 		File destinationDirectory = getDestinationDirectory();
 		boolean dataFetched = destinationDirectory.equals(destDirectories.get(repository));
 		if(destinationDirectory.exists() && !dataFetched){
-			setErrorMessage("Directory '" + destinationDirectory + "' already exists. Please " +
-			"choose a new, not existing directory!");
+			setErrorMessage("Directory '" + destinationDirectory + "' already exists. Please "
+					+ "choose a new, not existing directory!");
 			setPageComplete(false);
 			return false;
 		} else if (!destinationDirectory.getParentFile().canWrite()) {

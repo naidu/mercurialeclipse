@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC "-//Puppy Crawl//DTD Check Configuration 1.3//EN" "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!--
+    This configuration file was written by the eclipse-cs plugin configuration editor
+-->
+<!--
+    Checkstyle-Configuration: MercurialEclipse Checkstyle Configuration
+    Description: none
+-->
+<module name="Checker">
+  <property name="severity" value="warning"/>
+  <module name="TreeWalker">
+    <module name="AvoidStarImport"/>
+    <module name="IllegalImport"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports"/>
+    <module name="ModifierOrder"/>
+    <module name="RedundantModifier"/>
+    <module name="ConstantName"/>
+    <module name="TypeName"/>
+    <module name="ClassTypeParameterName"/>
+    <module name="MemberName"/>
+    <module name="LocalFinalVariableName"/>
+    <module name="LocalVariableName"/>
+    <module name="MethodName"/>
+    <module name="MethodTypeParameterName"/>
+    <module name="ParameterName"/>
+    <module name="StaticVariableName"/>
+    <module name="PackageName">
+      <property name="format" value="^\Qcom.vectrace.MercurialEclipse\E(\.[a-z][a-z0-9]*)*$"/>
+    </module>
+    <module name="LeftCurly"/>
+    <module name="RightCurly"/>
+    <module name="NeedBraces"/>
+    <module name="AvoidNestedBlocks"/>
+    <module name="GenericWhitespace"/>
+    <module name="EmptyForInitializerPad"/>
+    <module name="EmptyForIteratorPad"/>
+    <module name="NoWhitespaceAfter">
+      <property name="tokens" value="BNOT,DEC,DOT,INC,LNOT,UNARY_MINUS,UNARY_PLUS"/>
+    </module>
+    <module name="NoWhitespaceBefore"/>
+    <module name="OperatorWrap"/>
+    <module name="MethodParamPad"/>
+    <module name="ParenPad"/>
+    <module name="TypecastParenPad">
+      <property name="tokens" value="RPAREN,TYPECAST"/>
+    </module>
+    <module name="WhitespaceAfter"/>
+    <module name="NoFinalizer"/>
+    <module name="PackageDeclaration"/>
+    <module name="NoClone"/>
+    <module name="UnnecessaryParentheses"/>
+    <module name="RedundantThrows">
+      <property name="allowUnchecked" value="true"/>
+      <property name="allowSubclasses" value="true"/>
+      <property name="logLoadErrors" value="true"/>
+      <property name="suppressLoadErrors" value="true"/>
+    </module>
+    <module name="StringLiteralEquality"/>
+    <module name="DefaultComesLast"/>
+    <module name="EqualsAvoidNull"/>
+    <module name="EqualsHashCode"/>
+    <module name="ExplicitInitialization"/>
+    <module name="FallThrough"/>
+    <module name="MultipleVariableDeclarations"/>
+    <module name="SimplifyBooleanExpression"/>
+    <module name="SimplifyBooleanReturn"/>
+    <module name="CovariantEquals"/>
+    <module name="FinalClass"/>
+    <module name="HideUtilityClassConstructor"/>
+    <module name="InterfaceIsType"/>
+    <module name="MutableException"/>
+    <module name="ArrayTypeStyle"/>
+    <module name="UpperEll"/>
+    <module name="UncommentedMain"/>
+    <module name="RegexpSinglelineJava">
+      <metadata name="net.sf.eclipsecs.core.comment" value="Do not use System.out or System.err."/>
+      <property name="id" value="SystemOutErr"/>
+      <property name="format" value="System\.(out|err)"/>
+      <property name="message" value="Do not use System.out or System.err. Use MercurialEclipsePlugin.logXXX() instead."/>
+      <property name="ignoreComments" value="true"/>
+    </module>
+  </module>
+  <module name="SuppressionFilter">
+    <property name="file" value="${config_loc}/checkstyle_suppressions.xml"/>
+  </module>
+</module>

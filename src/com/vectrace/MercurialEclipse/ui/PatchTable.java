@@ -44,18 +44,18 @@ import com.vectrace.MercurialEclipse.model.Patch;
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class PatchTable extends Composite {
-	private static Color APPLIED_COLOR;
 
-	private final static Font APPLIED_FONT = JFaceResources.getFontRegistry().getBold(
+	private static final Font APPLIED_FONT = JFaceResources.getFontRegistry().getBold(
 			JFaceResources.DIALOG_FONT);
 
+	private static Color appliedColor;
 	private final TableViewer viewer;
 
 	public PatchTable(Composite parent) {
 		super(parent, SWT.NONE);
 
-		if (APPLIED_COLOR == null) {
-			APPLIED_COLOR = new Color(getDisplay(), new RGB(225, 255, 172));
+		if (appliedColor == null) {
+			appliedColor = new Color(getDisplay(), new RGB(225, 255, 172));
 		}
 
 		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -129,7 +129,7 @@ public class PatchTable extends Composite {
 	@Override
 	public void dispose() {
 		super.dispose();
-		APPLIED_COLOR.dispose();
+		appliedColor.dispose();
 	}
 
 	public TableViewer getTableViewer() {

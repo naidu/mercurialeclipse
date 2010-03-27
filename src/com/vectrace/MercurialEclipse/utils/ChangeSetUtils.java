@@ -16,7 +16,11 @@ import com.vectrace.MercurialEclipse.model.Tag;
 /**
  * @author Philip Graf
  */
-public class ChangeSetUtils {
+public final class ChangeSetUtils {
+
+	private ChangeSetUtils() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * Returns a printable String listing of all tags of a changeset. If the changeset does not have

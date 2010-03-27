@@ -95,9 +95,9 @@ public class HgIgnoreClient extends AbstractClient {
 		try {
 			File hgignore = new File(hgRoot, ".hgignore");
 			// append to file if it exists, else create a new one
-			buffer = new BufferedOutputStream(new FileOutputStream(hgignore,true));
+			buffer = new BufferedOutputStream(new FileOutputStream(hgignore, true));
 			// write contents
-			buffer.write(new byte[]{'\n','s','y','n','t','a','x',':',' '});
+			buffer.write(new byte[] { '\n', 's', 'y', 'n', 't', 'a', 'x', ':', ' ' });
 			buffer.write(syntax.getBytes());
 			buffer.write('\n');
 			buffer.write(pattern.getBytes());
@@ -110,7 +110,8 @@ public class HgIgnoreClient extends AbstractClient {
 				try {
 					buffer.close();
 				} catch (IOException e) {
-				throw new HgException(Messages.getString("HgIgnoreClient.failedToCloseHgIgnore"),e); //$NON-NLS-1$
+					throw new HgException(Messages
+							.getString("HgIgnoreClient.failedToCloseHgIgnore"), e); //$NON-NLS-1$
 				}
 			}
 		}

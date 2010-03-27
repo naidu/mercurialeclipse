@@ -113,11 +113,10 @@ public abstract class BisectAbstractAction extends Action {
 
 	protected boolean checkDirty(final HgRoot root) throws HgException {
 		if (HgStatusClient.isDirty(root)) {
-			MessageDialog
-					.openWarning(mercurialHistoryPage.getControl().getShell(),
-							"Uncommitted Changes", //$NON-NLS-1$
-					"Your hg root has uncommited changes." +
-					"\nPlease commit or revert to start Bisection."); //$NON-NLS-1$
+			MessageDialog.openWarning(mercurialHistoryPage.getControl().getShell(),
+					"Uncommitted Changes", //$NON-NLS-1$
+					"Your hg root has uncommited changes."
+					+ "\nPlease commit or revert to start Bisection."); //$NON-NLS-1$
 			return true;
 		}
 		return false;

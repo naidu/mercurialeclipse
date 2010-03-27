@@ -107,7 +107,7 @@ public class OutgoingPage extends IncomingPage {
 				// This doesn't work here (seems to work only for incoming? or should be fixed there too?)
 				// CompareUtils.openEditor(file, cs, true, true);
 				MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
-				MercurialRevisionStorage parentRev ;
+				MercurialRevisionStorage parentRev;
 				String[] parents = cs.getParents();
 				if(parents.length == 0){
 					// TODO for some reason, we do not always have right parent info in the changesets

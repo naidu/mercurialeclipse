@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
  */
 public class HgChangeSetModelProvider extends ModelProvider {
 
-	public final static String ID = "com.vectrace.MercurialEclipse.changeSetModel";
+	public static final String ID = "com.vectrace.MercurialEclipse.changeSetModel";
 	private boolean participantCreated;
 	private MercurialSynchronizeSubscriber subscriber;
 
@@ -50,7 +50,7 @@ public class HgChangeSetModelProvider extends ModelProvider {
 
 		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1,
 				ISynchronizationScope scope) {
-			HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider)provider1;
+			HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider) provider1;
 			RepositorySynchronizationScope rscope = (RepositorySynchronizationScope) scope;
 			MercurialSynchronizeSubscriber subscriber = rscope.getSubscriber();
 			modelProvider.participantCreated = true;

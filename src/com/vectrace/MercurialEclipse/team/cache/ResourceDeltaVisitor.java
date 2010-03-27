@@ -149,7 +149,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			map.put(project, set);
 		}
 		set.add(res);
-		resourcesCount ++;
+		resourcesCount++;
 	}
 
 	private boolean hasChangedBits(IResourceDelta delta){

@@ -205,9 +205,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 				final boolean [] continueDelete = new boolean[]{ false };
 				Display.getDefault().syncExec(new Runnable(){
 					public void run() {
-						MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(), "Project removed",
-								"All project files are now removed from Mercurial repository.\n" +
-								"A commit is highly recommended.");
+						MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(),
+								"Project removed",
+								"All project files are now removed from Mercurial repository.\n"
+								+ "A commit is highly recommended.");
 						CommitHandler ch = new CommitHandler();
 						Options options = new Options();
 						options.defaultCommitMessage = "Removed project '" + project.getName() + "' from repository.";

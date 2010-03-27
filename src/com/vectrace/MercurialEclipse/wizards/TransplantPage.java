@@ -136,8 +136,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 					valid &= selectedChangesets.size() == 1
 							&& Branch.same(branchName, selectedChangesets.first().getBranch());
 					if(!valid){
-						setErrorMessage("Please select exact one changeset if transplanting " +
-							"not all changesets from branch!");
+						setErrorMessage("Please select exact one changeset if transplanting "
+								+ "not all changesets from branch!");
 						return;
 					}
 				}
@@ -404,7 +404,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 				t.cancel();
 			}
 		}
-		abstract protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException;
+		protected abstract Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException;
 	}
 
 }

@@ -93,8 +93,9 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		}
 		assertNotNull(saveString);
 		assertTrue(saveString.length() > 0);
-		assertEquals(uri + HgRepositoryLocationParser.SPLIT_TOKEN + user +
-				HgRepositoryLocationParser.PASSWORD_TOKEN + password + HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
+		assertEquals(uri + HgRepositoryLocationParser.SPLIT_TOKEN + user
+				+ HgRepositoryLocationParser.PASSWORD_TOKEN + password
+				+ HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
 	}
 
 	public void testParseCreateLineLocalLinOld() throws Exception {

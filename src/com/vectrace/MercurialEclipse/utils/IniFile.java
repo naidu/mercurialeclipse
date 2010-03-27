@@ -81,13 +81,13 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public class IniFile {
 
-	private final Map<String,Map<String,String>> sections;
+	private final Map<String, Map<String, String>> sections;
 
 	/**
 	 * Constructor for the IniFile object
 	 */
 	public IniFile() {
-		sections = new HashMap<String,Map<String,String>>();
+		sections = new HashMap<String, Map<String, String>>();
 	}
 
 	/**
@@ -125,7 +125,7 @@ public class IniFile {
 	 *
 	 * @return The Sections value
 	 */
-	public Map<String,Map<String,String>> getSections() {
+	public Map<String, Map<String, String>> getSections() {
 		return sections;
 	}
 
@@ -136,7 +136,7 @@ public class IniFile {
 	 *            Description of Parameter
 	 * @return The Section value
 	 */
-	public Map<String,String> getSection(String section) {
+	public Map<String, String> getSection(String section) {
 		return sections.get(section.toLowerCase());
 	}
 
@@ -151,7 +151,7 @@ public class IniFile {
 	 */
 	public boolean isNullOrEmpty(String section, String key) {
 		String value = getKeyValue(section, key);
-		return (value == null || value.length() == 0);
+		return value == null || value.length() == 0;
 	}
 
 	/**
@@ -261,18 +261,18 @@ public class IniFile {
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(in));
 			try {
-				Map<String,String> section = null;
-				String section_name;
-				for (String read = null; (read = input.readLine()) != null; ) {
+				Map<String, String> section = null;
+				String sectionName;
+				for (String read = null; (read = input.readLine()) != null;) {
 					if (read.startsWith(";") || read.startsWith("#")) {
 						continue;
 					} else if (read.startsWith("[")) {
 						// new section
-						section_name = read.substring(1, read.indexOf("]")).toLowerCase();
-						section = sections.get(section_name);
+						sectionName = read.substring(1, read.indexOf("]")).toLowerCase();
+						section = sections.get(sectionName);
 						if (section == null) {
-							section = new HashMap<String,String>();
-							sections.put(section_name, section);
+							section = new HashMap<String, String>();
+							sections.put(sectionName, section);
 						}
 					} else if (read.indexOf("=") != -1 && section != null) {
 						// new key
@@ -324,7 +324,7 @@ public class IniFile {
 	 *            The feature to be added to the Section attribute
 	 */
 	public void addSection(String section) {
-		sections.put(section.toLowerCase(), new HashMap<String,String>());
+		sections.put(section.toLowerCase(), new HashMap<String, String>());
 	}
 
 	/**
@@ -336,15 +336,4 @@ public class IniFile {
 	public void removeSection(String section) {
 	}
 
-	/**
-	 * Simple test function
-	 *
-	 * @param args
-	 *            The command line arguments
-	 * @exception Exception
-	 *                Description of Exception
-	 */
-	public static void main(String[] args) throws Exception {
-		(new IniFile()).load(new FileInputStream(args[0]));
-	}
 }

@@ -42,10 +42,10 @@ final class CommitterColors {
 	}
 
 	/** The color map. */
-	private final Map<String,RGB> fColors= new HashMap<String,RGB>();
+	private final Map<String, RGB> fColors = new HashMap<String, RGB>();
 
 	/** The number of colors that have been issued. */
-	private int fCount= 0;
+	private int fCount;
 
 	private CommitterColors() {
 	}
@@ -74,7 +74,9 @@ final class CommitterColors {
 
 	private float computeHue(int ordinal) {
 		int base= 3;
-		int l= ordinal < base ? 0 : (int) Math.floor(Math.log(ordinal / (double)base) / Math.log(2));
+		int l = ordinal < base
+		        ? 0
+		        : (int) Math.floor(Math.log(ordinal / (double) base) / Math.log(2));
 		int m= ((int) Math.pow(2, l)) * base;
 		int j= ordinal < base ? ordinal : ordinal - m;
 		float offset= ordinal < base ? 0.0f : (float) (180.0f / base / Math.pow(2, l));

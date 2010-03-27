@@ -57,7 +57,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
 				MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
-				subscriber1.branchChanged((HgRoot)source);
+				subscriber1.branchChanged((HgRoot) source);
 			}
 		};
 		MercurialTeamProvider.addBranchListener(branchListener);
@@ -92,7 +92,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			if(!(res instanceof IResource)) {
 				continue;
 			}
-			IResource resource = (IResource)res;
+			IResource resource = (IResource) res;
 			for (IResource root : roots) {
 				if(root.contains(resource)) {
 					if(!projectRefresh && resource.contains(root)){
@@ -116,13 +116,13 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			// we must sync the data for the project
 
 			if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-				System.out.println("! Update data from: " + o + " : " + resources.size());
+				MercurialEclipsePlugin.logInfo("! Update data from: " + o + " : " + resources.size(), null);
 			}
 
 			int flag = 0;
 			if (o instanceof IncomingChangesetCache) {
 				flag = INCOMING;
-			} else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache ) {
+			} else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache) {
 				flag = OUTGOING;
 			} else if (o instanceof MercurialStatusCache) {
 				flag = LOCAL;
@@ -132,7 +132,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			// we must update our sync UI with new data we already got
 
 			if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-				System.out.println("Update UI from: " + o + " : " + resources.size());
+				MercurialEclipsePlugin.logInfo("Update UI from: " + o + " : " + resources.size(), null);
 			}
 
 			updateUI(changeEvents);
@@ -168,7 +168,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			if(updateJob.equals(job)){
 				job.cancel();
 				if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-					System.out.println("Cancelled refresh UI: " + ((UpdateUIJob)job).events.size());
+					MercurialEclipsePlugin.logInfo("Cancelled refresh UI: " + ((UpdateUIJob) job).events.size(), null);
 				}
 			}
 		}
@@ -182,7 +182,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			if(updateJob.equals(job)){
 				job.cancel();
 				if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-					System.out.println("Cancelled refresh data: " + flag);
+					MercurialEclipsePlugin.logInfo("Cancelled refresh data: " + flag, null);
 				}
 			}
 		}

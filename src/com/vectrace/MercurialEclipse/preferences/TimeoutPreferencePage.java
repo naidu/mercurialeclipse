@@ -41,7 +41,7 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
 	// Default is 6 minutes. Don't ask why 6... because it is 7 times smaller than 42?
 	public static final int DEFAULT_TIMEOUT = 6 * 60 * 1000;
 
-	private static class TimeoutFieldEditor extends IntegerFieldEditor {
+	private static final class TimeoutFieldEditor extends IntegerFieldEditor {
 		private TimeoutFieldEditor(String name, String labelText,
 				Composite parent) {
 			super(name, labelText, parent);

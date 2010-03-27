@@ -30,7 +30,6 @@ import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
@@ -45,7 +44,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 	public MercurialSynchronizePageActionGroup() {
 		super();
-		expandAction = new Action("Expand All", MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif") ) {
+		expandAction = new Action("Expand All", MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif")) {
 			@Override
 			public void run() {
 				Viewer viewer = getConfiguration().getPage().getViewer();
@@ -136,7 +135,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		if(openAction == null){
 			return;
 		}
-		Object[] elements = ((IStructuredSelection)getContext().getSelection()).toArray();
+		Object[] elements = ((IStructuredSelection) getContext().getSelection()).toArray();
 		if (elements.length == 0) {
 			return;
 		}

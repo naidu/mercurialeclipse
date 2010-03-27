@@ -18,9 +18,9 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
  * Listener for repositories. events fired when repository added, removed or changed
  */
 public interface IRepositoryListener {
-	public void repositoryAdded(IHgRepositoryLocation root);
-	public void repositoryModified(IHgRepositoryLocation root);
-	public void repositoryRemoved(IHgRepositoryLocation root);
-	public void repositoriesChanged(IHgRepositoryLocation[] roots);
+	void repositoryAdded(IHgRepositoryLocation root);
+	void repositoryModified(IHgRepositoryLocation root);
+	void repositoryRemoved(IHgRepositoryLocation root);
+	void repositoriesChanged(IHgRepositoryLocation[] roots);
 }
 

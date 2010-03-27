@@ -124,7 +124,7 @@ IWorkbenchPreferencePage {
 						Object newValue) {
 					super.fireValueChanged(property, oldValue, newValue);
 					if(newValue instanceof Boolean) {
-						enablePathEditor(!((Boolean)newValue).booleanValue());
+						enablePathEditor(!((Boolean) newValue).booleanValue());
 					}
 				}
 				@Override

@@ -73,7 +73,7 @@ import com.vectrace.MercurialEclipse.ui.PatchTable;
  */
 public class PatchQueueView extends ViewPart implements ISelectionListener {
 
-	public final static String ID = PatchQueueView.class.getName();
+	public static final String ID = PatchQueueView.class.getName();
 
 	private IResource resource;
 	private PatchTable table;
@@ -288,8 +288,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	public void populateTable() {
 		Job job = new SafeUiJob(Messages.getString("PatchQueueView.jobName.populateTable")) { //$NON-NLS-1$
 			@Override
-			protected IStatus runSafe(IProgressMonitor monitor)
-			{
+			protected IStatus runSafe(IProgressMonitor monitor)	{
 				IStatus status = Status.OK_STATUS;
 				if (resource != null && resource.isAccessible() && !resource.isDerived()
 						&& !resource.isLinked() && !Team.isIgnoredHint(resource)) {

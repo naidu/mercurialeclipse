@@ -89,7 +89,7 @@ public class ExportAsBundleAction extends Action {
 	private final MercurialHistoryPage mhp;
 	private String file;
 	private String base;
-	private final static ImageDescriptor imageDesc = MercurialEclipsePlugin
+	private static final ImageDescriptor IMAGE_DESC = MercurialEclipsePlugin
 			.getImageDescriptor("export.gif"); //$NON-NLS-1$
 
 	private void determineFileAndBase() {
@@ -125,7 +125,7 @@ public class ExportAsBundleAction extends Action {
 	}
 
 	public ExportAsBundleAction(MercurialHistoryPage mhp) {
-		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"), imageDesc);
+		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"), IMAGE_DESC);
 		this.mhp = mhp;
 	}
 

@@ -12,13 +12,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.QualifiedName;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
-import com.vectrace.MercurialEclipse.menu.MergeHandler;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
@@ -28,7 +24,11 @@ import com.vectrace.MercurialEclipse.views.MergeView;
  * @see IResource#setSessionProperty(QualifiedName, Object)
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
-public interface ResourceProperties {
+public final class ResourceProperties {
+
+	private ResourceProperties() {
+		// hide constructor of utility class
+	}
 
 	/**
 	 * Qualified name for a persistent property that signifies that a project is
@@ -39,7 +39,7 @@ public interface ResourceProperties {
 	 * @see CommitMergeHandler
 	 * @see ResourceDecorator
 	 */
-	public final static QualifiedName MERGING = new QualifiedName(
+	public static final QualifiedName MERGING = new QualifiedName(
 			MercurialEclipsePlugin.ID, "merging"); //$NON-NLS-1$
 
 	/**

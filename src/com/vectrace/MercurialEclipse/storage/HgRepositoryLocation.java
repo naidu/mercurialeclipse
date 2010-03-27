@@ -116,14 +116,14 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 		}
 	}
 
-	static public boolean validateLocation(String validate) {
+	public static boolean validateLocation(String validate) {
 		try {
 			IHgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(validate, null, null);
 			if(location2 == null){
 				return false;
 			}
-			return location2.getUri() != null || (location2.getLocation() != null &&
-					new File(location2.getLocation()).exists());
+			return location2.getUri() != null
+					|| (location2.getLocation() != null && new File(location2.getLocation()).exists());
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;

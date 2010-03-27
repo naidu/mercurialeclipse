@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
-public class Bits {
+public final class Bits {
 	private Bits(){
 
 	}

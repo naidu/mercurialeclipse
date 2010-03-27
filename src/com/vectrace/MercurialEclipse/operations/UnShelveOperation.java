@@ -52,7 +52,7 @@ public class UnShelveOperation extends HgOperation {
 			monitor.beginTask(Messages.getString("UnShelveOperation.Unshelving"), 4); //$NON-NLS-1$
 
 			// check if hgattic is available
-			if (MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
+			if (MercurialUtilities.isCommandAvailable("attic-shelve", // $NON-NLS-1$
 							ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
 				String output = HgAtticClient.unshelve(hgRoot, false, true, hgRoot.getName());
 				monitor.worked(1);

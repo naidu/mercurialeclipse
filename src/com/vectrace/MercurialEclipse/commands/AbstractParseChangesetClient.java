@@ -84,12 +84,12 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 			style = DEFAULT;
 			break;
 		}
-		String style_tmpl = style + TEMP_EXTN;
+		String styleTemplate = style + TEMP_EXTN;
 
 		IPath sl = MercurialEclipsePlugin.getDefault().getStateLocation();
 
 		File stylefile = sl.append(style).toFile();
-		File tmplfile = sl.append(style_tmpl).toFile();
+		File tmplfile = sl.append(styleTemplate).toFile();
 
 		if (stylefile.canRead() && tmplfile.canRead()) {
 			// Already have copies, return the file reference to the style file
@@ -103,7 +103,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		// set delete on exit so a new copy is made each time eclipse is started
 		// so we don't use stale copies on plugin updates.
 		InputStream styleistr = cl.getResourceAsStream(STYLES + style);
-		InputStream tmplistr = cl.getResourceAsStream(STYLES + style_tmpl);
+		InputStream tmplistr = cl.getResourceAsStream(STYLES + styleTemplate);
 		OutputStream styleostr = null;
 		OutputStream tmplostr = null;
 		try {
@@ -111,7 +111,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 			tmplostr = new FileOutputStream(tmplfile);
 			tmplfile.deleteOnExit();
 
-			byte buffer[] = new byte[1024];
+			byte[] buffer = new byte[1024];
 			int n;
 			while ((n = styleistr.read(buffer)) != -1) {
 				styleostr.write(buffer, 0, n);

@@ -189,7 +189,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 		int idx = -1;
 		int defIndex = idx;
 		for (final IHgRepositoryLocation repo : allRepos) {
-			idx ++;
+			idx++;
 			allReposCombo.add(repo.getLocation());
 			if(defLoc != null && defLoc.equals(repo)){
 				defIndex = idx;

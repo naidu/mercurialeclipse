@@ -27,16 +27,16 @@ public class HgAtticClient extends AbstractClient {
 		HgCommand cmd = new HgCommand("attic-shelve", hgRoot, false);
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			cmd.addOptions("-m", commitMessage);// $NON-NLS-1$
+			cmd.addOptions("-m", commitMessage); // $NON-NLS-1$
 		}
 
 		if (git) {
-			cmd.addOptions("--git");// $NON-NLS-1$
+			cmd.addOptions("--git"); // $NON-NLS-1$
 		}
 
 		cmd.addUserName(user);
 
-		cmd.addOptions("--currentdate", name);// $NON-NLS-1$
+		cmd.addOptions("--currentdate", name); // $NON-NLS-1$
 		String result = cmd.executeToString();
 		cmd.rememberUserName();
 		return result;
@@ -47,7 +47,7 @@ public class HgAtticClient extends AbstractClient {
 		AbstractShellCommand cmd = new HgCommand("attic-unshelve", hgRoot, false);
 
 		if (guessRenamedFiles) {
-			cmd.addOptions("--similarity");// $NON-NLS-1$
+			cmd.addOptions("--similarity"); // $NON-NLS-1$
 		}
 
 		if (delete) {

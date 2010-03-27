@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.HgRevision;
  * @version $Id$
  */
 public class Tag implements ITag, Comparable<Tag> {
-	private final static String TIP = HgRevision.TIP.getChangeset();
+	private static final String TIP = HgRevision.TIP.getChangeset();
 
 	/** name of the tag, unique in the repository */
 	private final String name;

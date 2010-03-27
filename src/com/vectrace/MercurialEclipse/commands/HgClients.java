@@ -27,6 +27,9 @@ public final class HgClients {
 	private static IConfiguration config;
 	private static IErrorHandler error;
 
+	private HgClients() {
+		// hide constructor of utility class.
+	}
 	public static void initialize(IConsole c, IErrorHandler errorHandler,
 			IConfiguration configuration) {
 		HgClients.config = configuration;

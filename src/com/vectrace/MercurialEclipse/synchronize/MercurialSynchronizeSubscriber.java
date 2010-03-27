@@ -73,14 +73,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
-	private final static boolean debug = MercurialEclipsePlugin.getDefault().isDebugging();
-	private final static IResourceVariantComparator comparator = new MercurialResourceVariantComparator();
-	private final static Semaphore cacheSema = new Semaphore(1, true);
+	private static final boolean DEBUG = MercurialEclipsePlugin.getDefault().isDebugging();
+	private static final IResourceVariantComparator COMPARATOR = new MercurialResourceVariantComparator();
+	private static final Semaphore CACHE_SEMA = new Semaphore(1, true);
 
 	private final RepositorySynchronizationScope scope;
 
 	/** key is hg root, value is the *current* changeset of this root */
-	private static final Map<HgRoot, String> currentCsMap = new ConcurrentHashMap<HgRoot, String>();
+	private static final Map<HgRoot, String> CURRENT_CS_MAP = new ConcurrentHashMap<HgRoot, String>();
 
 	private ISubscriberChangeEvent[] lastEvents;
 
@@ -111,7 +111,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	@Override
 	public IResourceVariantComparator getResourceComparator() {
-		return comparator;
+		return COMPARATOR;
 	}
 
 	@Override
@@ -199,8 +199,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			if(!hasOutgoingChanges && Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
 				return null;
 			}
-			if(debug) {
-				System.out.println("Visiting: " + file);
+			if(DEBUG) {
+				MercurialEclipsePlugin.logInfo("Visiting: " + file, null);
 			}
 			// if no incoming revision, incoming = base/outgoing
 
@@ -216,7 +216,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 				// case where we have one outgoung changeset AND one not committed change
 				if(size == 1 && !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
-					size ++;
+					size++;
 				}
 				if(size > 1){
 					ChangeSet first = sets.first();
@@ -256,7 +256,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// now create the sync info object. everything may be null,
 		// but resource and comparator
-		SyncInfo info = new MercurialSyncInfo(file, outgoing, incoming, comparator, syncMode);
+		SyncInfo info = new MercurialSyncInfo(file, outgoing, incoming, COMPARATOR, syncMode);
 
 		try {
 			info.init();
@@ -268,7 +268,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	public static void executeLockedCacheTask(Runnable run) throws InterruptedException {
-		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
+		if(!CACHE_SEMA.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
 			throw new InterruptedException("Timeout elapsed");
 		}
@@ -278,7 +278,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			MercurialEclipsePlugin.logError(e);
 			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
 		} finally {
-			cacheSema.release();
+			CACHE_SEMA.release();
 		}
 	}
 
@@ -339,7 +339,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			flags |= changedLocal ? SyncInfo.OUTGOING : SyncInfo.INCOMING;
 		}
 
-		return new DelayedSyncInfo(file, root, currentBranch, repo, comparator, flags);
+		return new DelayedSyncInfo(file, root, currentBranch, repo, COMPARATOR, flags);
 	}
 
 	@Override
@@ -367,10 +367,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	static String getCurrentChangesetId(HgRoot root) throws HgException {
-		String nodeId = currentCsMap.get(root);
+		String nodeId = CURRENT_CS_MAP.get(root);
 		if(nodeId == null){
 			nodeId = HgIdentClient.getCurrentChangesetId(root);
-			currentCsMap.put(root, nodeId);
+			CURRENT_CS_MAP.put(root, nodeId);
 		}
 		return nodeId;
 	}
@@ -445,24 +445,24 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		Set<HgRoot> roots = byRoot.keySet();
 		try {
-			cacheSema.acquire();
+			CACHE_SEMA.acquire();
 			for (HgRoot hgRoot : roots) {
-				currentCsMap.remove(hgRoot);
+				CURRENT_CS_MAP.remove(hgRoot);
 				if (flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
-					if (debug) {
-						System.out.println("\nclear incoming: " + hgRoot + ", depth: " + flag);
+					if (DEBUG) {
+						MercurialEclipsePlugin.logInfo("clear incoming: " + hgRoot + ", depth: " + flag, null);
 					}
 					INCOMING_CACHE.clear(hgRoot, false);
 				}
 				if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
-					if(debug) {
-						System.out.println("\nclear outgoing: " + hgRoot + ", depth: " + flag);
+					if(DEBUG) {
+						MercurialEclipsePlugin.logInfo("clear outgoing: " + hgRoot + ", depth: " + flag, null);
 					}
 					OUTGOING_CACHE.clear(hgRoot, false);
 				}
 				if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
-					if(debug) {
-						System.out.println("\nclear and refresh local: " + hgRoot + ", depth: " + flag);
+					if(DEBUG) {
+						MercurialEclipsePlugin.logInfo("clear and refresh local: " + hgRoot + ", depth: " + flag, null);
 					}
 					STATUS_CACHE.clear(hgRoot, false);
 					STATUS_CACHE.refreshStatus(hgRoot, monitor);
@@ -471,7 +471,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		} catch (InterruptedException e) {
 			MercurialEclipsePlugin.logError(e);
 		} finally {
-			cacheSema.release();
+			CACHE_SEMA.release();
 		}
 
 		for (IProject project : projects) {
@@ -485,9 +485,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
 
 			try {
-				cacheSema.acquire();
-				if(debug) {
-					System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
+				CACHE_SEMA.acquire();
+				if(DEBUG) {
+					MercurialEclipsePlugin.logInfo("going to refresh local/in/out: " + project + ", depth: " + flag, null);
 				}
 				if (monitor.isCanceled()) {
 					return;
@@ -507,7 +507,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} catch (InterruptedException e) {
 				MercurialEclipsePlugin.logError(e);
 			} finally {
-				cacheSema.release();
+				CACHE_SEMA.release();
 			}
 		}
 
@@ -542,8 +542,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		for (IResource res : resourcesToRefresh) {
 			changeEvents.add(new SubscriberChangeEvent(this, ISubscriberChangeEvent.SYNC_CHANGED, res));
 		}
-		if(debug) {
-			System.out.println("created: " + changeEvents.size() + " change events");
+		if(DEBUG) {
+			MercurialEclipsePlugin.logInfo("created: " + changeEvents.size() + " change events", null);
 		}
 		return changeEvents;
 	}
@@ -552,8 +552,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			IHgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
 
 		if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
-			if(debug) {
-				System.out.println("\nget incoming: " + project + ", depth: " + flag);
+			if(DEBUG) {
+				MercurialEclipsePlugin.logInfo("\nget incoming: " + project + ", depth: " + flag, null);
 			}
 
 			// this can trigger a refresh and a call to the remote server...
@@ -570,8 +570,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			IHgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
 
 		if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
-			if(debug) {
-				System.out.println("\nget outgoing: " + project + ", depth: " + flag);
+			if(DEBUG) {
+				MercurialEclipsePlugin.logInfo("get outgoing: " + project + ", depth: " + flag, null);
 			}
 			// this can trigger a refresh and a call to the remote server...
 			if(resourcesToRefresh != null){
@@ -615,7 +615,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Job job = new Job("Updating branch info for " + hgRoot.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				currentCsMap.remove(hgRoot);
+				CURRENT_CS_MAP.remove(hgRoot);
 				if(lastEvents != null) {
 					fireTeamResourceChange(lastEvents);
 				}

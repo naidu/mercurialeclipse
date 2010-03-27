@@ -23,8 +23,8 @@ public class ConsoleDocument {
 	private int[] lineTypes;
 	private String[] lines;
 
-	private int writeIndex = 0;
-	private int readIndex = 0;
+	private int writeIndex;
+	private int readIndex;
 
 	private static final int BUFFER_SIZE = 200;
 
@@ -75,7 +75,9 @@ public class ConsoleDocument {
 	}
 
 	public ConsoleLine[] getLines() {
-		if(isEmpty()) return new ConsoleLine[0];
+		if(isEmpty()) {
+			return new ConsoleLine[0];
+		}
 		ConsoleLine[] docLines = new ConsoleLine[readIndex > writeIndex ? BUFFER_SIZE : writeIndex];
 		int index = readIndex;
 		for (int i = 0; i < docLines.length; i++) {

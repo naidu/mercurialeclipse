@@ -29,7 +29,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class HgRootClient extends AbstractClient {
 
-	private final static Map<File, HgRoot> roots = new HashMap<File, HgRoot>();
+	private static final Map<File, HgRoot> ROOTS = new HashMap<File, HgRoot>();
 
 	/**
 	 * @param file
@@ -42,7 +42,7 @@ public class HgRootClient extends AbstractClient {
 
 		File dir = ResourceUtils.getFirstExistingDirectory(file);
 		// test if we have the path "as is" already
-		HgRoot hgRoot = roots.get(dir);
+		HgRoot hgRoot = ROOTS.get(dir);
 		if(hgRoot != null){
 			return hgRoot;
 		}
@@ -53,10 +53,10 @@ public class HgRootClient extends AbstractClient {
 			throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
 		}
 		// test with canonical version of the same file
-		hgRoot = roots.get(testRoot);
+		hgRoot = ROOTS.get(testRoot);
 		if(hgRoot != null){
 			// remember NON canonical version too
-			roots.put(dir, hgRoot);
+			ROOTS.put(dir, hgRoot);
 			return hgRoot;
 		}
 		// search up the parents recursive if we see .hg directory there
@@ -70,7 +70,7 @@ public class HgRootClient extends AbstractClient {
 		} catch (IOException e) {
 			throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
 		}
-		roots.put(root, hgRoot);
+		ROOTS.put(root, hgRoot);
 		return hgRoot;
 	}
 
@@ -82,7 +82,7 @@ public class HgRootClient extends AbstractClient {
 	public static HgRoot hasHgRoot(File file) {
 		File dir = ResourceUtils.getFirstExistingDirectory(file);
 		// test if we have the path "as is" already
-		HgRoot hgRoot = roots.get(dir);
+		HgRoot hgRoot = ROOTS.get(dir);
 		if(hgRoot != null){
 			return hgRoot;
 		}
@@ -93,10 +93,10 @@ public class HgRootClient extends AbstractClient {
 			return null;
 		}
 		// test with canonical version of the same file
-		hgRoot = roots.get(testRoot);
+		hgRoot = ROOTS.get(testRoot);
 		if(hgRoot != null){
 			// remember NON canonical version too
-			roots.put(dir, hgRoot);
+			ROOTS.put(dir, hgRoot);
 			return hgRoot;
 		}
 		// search up the parents recursive if we see .hg directory there
@@ -110,7 +110,7 @@ public class HgRootClient extends AbstractClient {
 		} catch (IOException e) {
 			return null;
 		}
-		roots.put(root, hgRoot);
+		ROOTS.put(root, hgRoot);
 		return hgRoot;
 	}
 

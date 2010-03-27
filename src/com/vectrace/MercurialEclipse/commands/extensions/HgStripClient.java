@@ -24,7 +24,11 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
  *
  * @author bastian
  */
-public class HgStripClient {
+public final class HgStripClient {
+
+	private HgStripClient() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * strip a revision and all later revs on the same branch

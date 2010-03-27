@@ -23,7 +23,12 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
-public class ClipboardUtils {
+public final class ClipboardUtils {
+
+	private ClipboardUtils() {
+		// hide constructor of utility class.
+	}
+
 	/**
 	 * copy string to clipboard
 	 *

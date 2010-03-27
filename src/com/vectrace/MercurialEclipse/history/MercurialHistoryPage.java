@@ -256,7 +256,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		if(object instanceof HgRoot){
 			actionShowParentHistory.setEnabled(false);
 			HgRoot old = hgRoot;
-			this.hgRoot = (HgRoot)object;
+			this.hgRoot = (HgRoot) object;
 			super.setInput(object);
 			if(hgRoot == null || (hgRoot != null && !hgRoot.equals(old))){
 				if(hgRoot != null) {
@@ -761,8 +761,8 @@ public class MercurialHistoryPage extends HistoryPage {
 					ActionRevert revert = new ActionRevert();
 					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
 					IResource selectedElement = revision.getResource();
-					if (!MercurialStatusCache.getInstance().isClean(selectedElement) &&
-							!MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
+					if (!MercurialStatusCache.getInstance().isClean(selectedElement)
+							&& !MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
 							Messages.getString("MercurialHistoryPage.file") + selectedElement.getName() //$NON-NLS-1$
 									+ Messages.getString("MercurialHistoryPage.hasUncommittedChanges"))) { //$NON-NLS-1$
 						return;
@@ -775,7 +775,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 				@Override
 				protected boolean updateSelection(IStructuredSelection sSelection) {
-					if(sSelection.size() != 1 ){
+					if(sSelection.size() != 1){
 						return false;
 					}
 					if(sSelection.size() == 1){

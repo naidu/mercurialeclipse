@@ -17,7 +17,12 @@ package com.vectrace.MercurialEclipse.preferences;
 /**
  * Constant definitions for plug-in preferences
  */
-public class MercurialPreferenceConstants {
+public final class MercurialPreferenceConstants {
+
+	private MercurialPreferenceConstants() {
+		// hide constructor of utility class.
+	}
+
 	// executables
 	public static final String MERCURIAL_EXECUTABLE = "hg"; //$NON-NLS-1$
 	public static final String USE_BUILT_IN_HG_EXECUTABLE = "hg.useBuiltInHgExecutable"; //$NON-NLS-1$

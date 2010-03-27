@@ -14,7 +14,11 @@ package com.vectrace.MercurialEclipse.preferences;
  * @author bastian
  *
  */
-public class HgDecoratorConstants {
+public final class HgDecoratorConstants {
+
+	private HgDecoratorConstants() {
+		// hide constructor of utility class.
+	}
 
 	public static final String CHANGE_BACKGROUND_COLOR = "com.vectrace.mercurialeclipse.ui.colorsandfonts.changedBackgroundColor"; //$NON-NLS-1$
 	public static final String CHANGE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.changedFont"; //$NON-NLS-1$

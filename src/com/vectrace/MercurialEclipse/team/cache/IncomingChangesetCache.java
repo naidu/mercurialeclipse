@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * Cache for all changesets existing locally, but not present on the server
  */
-public class IncomingChangesetCache extends AbstractRemoteCache {
+public final class IncomingChangesetCache extends AbstractRemoteCache {
 
 	private static IncomingChangesetCache instance;
 
@@ -36,7 +36,7 @@ public class IncomingChangesetCache extends AbstractRemoteCache {
 		super(Direction.INCOMING);
 	}
 
-	public synchronized static IncomingChangesetCache getInstance() {
+	public static synchronized IncomingChangesetCache getInstance() {
 		if (instance == null) {
 			instance = new IncomingChangesetCache();
 		}

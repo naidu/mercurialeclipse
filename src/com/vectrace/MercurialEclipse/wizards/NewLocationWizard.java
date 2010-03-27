@@ -16,7 +16,6 @@ import java.util.Properties;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -54,7 +53,7 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
-		CreateRepoPage createRepoPage = (CreateRepoPage)page;
+		CreateRepoPage createRepoPage = (CreateRepoPage) page;
 		File localRepo = createRepoPage.getLocalRepo();
 		if(localRepo != null && !HgPath.isHgRoot(localRepo) && createRepoPage.shouldInitRepo()){
 			try {

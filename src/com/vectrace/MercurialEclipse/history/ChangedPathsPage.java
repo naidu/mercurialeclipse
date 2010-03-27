@@ -52,8 +52,8 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangedPathsPage {
 
-	private final static String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
-	private final static String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
+	private static final String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
+	private static final String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
 
 	private SashForm mainSashForm;
 	private SashForm innerSashForm;
@@ -108,12 +108,12 @@ public class ChangedPathsPage {
 					private Object currentLogEntry;
 
 					public void selectionChanged(SelectionChangedEvent event) {
-						ISelection _selection = event.getSelection();
-						Object logEntry = ((IStructuredSelection) _selection)
+						ISelection selection = event.getSelection();
+						Object logEntry = ((IStructuredSelection) selection)
 								.getFirstElement();
 						if (logEntry != currentLogEntry) {
 							this.currentLogEntry = logEntry;
-							updatePanels(_selection);
+							updatePanels(selection);
 						}
 					}
 				});
@@ -217,20 +217,18 @@ public class ChangedPathsPage {
 		actionBars.updateActionBars();
 
 		// Contribute actions to popup menu for the comments area
-		{
-			MenuManager menuMgr = new MenuManager();
-			menuMgr.setRemoveAllWhenShown(true);
-			menuMgr.addMenuListener(new IMenuListener() {
-				public void menuAboutToShow(IMenuManager menuMgr1) {
-					menuMgr1.add(copyAction);
-					menuMgr1.add(selectAllAction);
-				}
-			});
+		MenuManager menuMgr = new MenuManager();
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				menuMgr1.add(copyAction);
+				menuMgr1.add(selectAllAction);
+			}
+		});
 
-			StyledText text = this.textViewer.getTextWidget();
-			Menu menu = menuMgr.createContextMenu(text);
-			text.setMenu(menu);
-		}
+		StyledText text = this.textViewer.getTextWidget();
+		Menu menu = menuMgr.createContextMenu(text);
+		text.setMenu(menu);
 	}
 
 	private void contributeActions() {
