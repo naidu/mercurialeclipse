@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -134,6 +135,14 @@ public abstract class AbstractCache extends Observable {
 	 * @param resources non null
 	 */
 	protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
+		class ExclusiveRule implements ISchedulingRule {
+			public boolean contains(ISchedulingRule rule) {
+				return isConflicting(rule);
+			}
+			public boolean isConflicting(ISchedulingRule rule) {
+				return rule instanceof ExclusiveRule;
+			}
+		}
 		Job job = new Job("hg cache clients update..."){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -154,6 +163,7 @@ public abstract class AbstractCache extends Observable {
 				return Status.OK_STATUS;
 			}
 		};
+		job.setRule(new ExclusiveRule());
 		job.setSystem(true);
 		job.schedule();
 	}

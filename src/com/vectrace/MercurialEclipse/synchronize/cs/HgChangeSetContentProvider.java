@@ -183,9 +183,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				initCollector();
 				// on startup, do not start to show anything for the first time:
 				// show "reminder" page which allows user to choose synchronize or not
-				// TODO currently comented out due the strange issues with pinned views:
-				// not sure if this is somehow related to the missing updates (issue 11043 and 10957)...
-				//	return new Object[0];
+				return new Object[0];
 			}
 		}
 		if (parent == getModelProvider()) {
