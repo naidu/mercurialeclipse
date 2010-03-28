@@ -10,7 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
+import java.util.Set;
+
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * The group containing both "dirty" files as also not yet committed changesets
@@ -21,6 +25,15 @@ public class UncommittedChangesetGroup extends ChangesetGroup {
 
 	public UncommittedChangesetGroup() {
 		super("Uncommitted", Direction.LOCAL);
+	}
+
+	/**
+	 * @param sets non null
+	 */
+	public void setChangesets(Set<WorkingChangeSet> sets) {
+		Set<ChangeSet> changesets = getChangesets();
+		changesets.clear();
+		changesets.addAll(sets);
 	}
 
 }

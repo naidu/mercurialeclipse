@@ -51,15 +51,18 @@ public class EditChangesetDialog extends CommitDialog {
 
 	@Override
 	protected Control createDialogArea(Composite parent) {
-		Control control = super.createDialogArea(parent);
+		Composite control = (Composite) super.createDialogArea(parent);
 		getShell().setText(Messages.getString("EditChangesetDialog.title")); //$NON-NLS-1$
 		setTitle(Messages.getString("EditChangesetDialog.title")); //$NON-NLS-1$";
 		setMessage(Messages.getString("EditChangesetDialog.message")); //$NON-NLS-1$";
+		createChangesetNameContainer(control);
 		return control;
 	}
 
 	private void createChangesetNameContainer(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
+		comp.moveAbove(container.getChildren()[0]);
+
 		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text"));
 		changesetNameText = SWTWidgetHelper.createTextField(comp);
 		changesetNameText.setText(changeset.getName());

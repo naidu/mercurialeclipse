@@ -56,7 +56,7 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 @SuppressWarnings("restriction")
-public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
+public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */ {
 
 	public static final String ID = "com.vectrace.MercurialEclipse.changeSetContent";
 
@@ -138,6 +138,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final ChangesetGroup outgoing;
 	private WorkbenchContentProvider provider;
 
+	private final UncommittedChangesetManager uncommittedCsManager;
+
 	public HgChangeSetContentProvider() {
 		super();
 		uncommittedSet = new WorkingChangeSet("Uncommitted");
@@ -145,6 +147,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		outgoing = new ChangesetGroup("Outgoing", Direction.OUTGOING);
 		collectorListener = new CollectorListener();
 		uncommittedSetListener = new UcommittedSetListener();
+		uncommittedCsManager = new UncommittedChangesetManager(this);
 	}
 
 	@Override
@@ -199,6 +202,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				return group.getChangesets().toArray();
 			}
 			if(isIncomingVisible() && direction == Direction.INCOMING){
+				return group.getChangesets().toArray();
+			}
+			if(direction == Direction.LOCAL){
 				return group.getChangesets().toArray();
 			}
 		}
@@ -405,7 +411,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector = ((HgChangeSetCapability)csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			csCollector.addListener(collectorListener);
 			IProject[] projects = csCollector.getSubscriber().getProjects();
-			uncommittedSet.setRoots(projects);
+			uncommittedCsManager.setProjects(projects);
+			uncommittedSet.setRoots(uncommittedCsManager);
 			uncommittedSet.addListener(uncommittedSetListener);
 			STATUS_CACHE.addObserver(uncommittedSet);
 		}

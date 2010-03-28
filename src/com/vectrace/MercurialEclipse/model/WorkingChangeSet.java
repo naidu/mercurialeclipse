@@ -56,8 +56,8 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	private HgSubscriberMergeContext context;
 	private final PropertyChangeEvent event;
 	private final MercurialStatusCache cache = MercurialStatusCache.getInstance();
+	private IUncommittedChangesetManager csManager;
 
-	@SuppressWarnings("restriction")
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		setName(name);
@@ -250,11 +250,13 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	/**
-	 * @param projects non null project list the changeset is responsible for
+	 * @param csManager
 	 */
-	public void setRoots(IProject[] projects) {
+	public void setRoots(IUncommittedChangesetManager csManager) {
+		this.csManager = csManager;
 		this.projects.clear();
-		for (IProject project : projects) {
+		IProject[] projects2 = csManager.getProjects();
+		for (IProject project : projects2) {
 			this.projects.add(project);
 		}
 	}
