@@ -148,7 +148,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 
 		public Builder description(String description) {
-			cs.setDescription(description);
+			cs.setComment(description);
 			return this;
 		}
 
@@ -206,7 +206,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		this.user = user;
 		this.date = date;
 		this.hgRoot = root;
-		setDescription(description);
+		setComment(description);
 		setParents(parents);
 		// remember index:fullchangesetid
 		setName(toString());
@@ -466,7 +466,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 	}
 
-	private void setDescription(String description) {
+	protected void setComment(String description) {
 		if (description != null) {
 			this.description = description;
 		} else {

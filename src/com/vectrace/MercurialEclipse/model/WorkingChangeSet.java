@@ -57,8 +57,10 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	private final PropertyChangeEvent event;
 	private final MercurialStatusCache cache = MercurialStatusCache.getInstance();
 
+	@SuppressWarnings("restriction")
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
+		setName(name);
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		projects = new HashSet<IProject>();
@@ -125,7 +127,11 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		// simply not supported, as it may be called not only from our code
 	}
 
-	public void hide(IPath[] paths){
+	/**
+	 * TODO currently unused but initially implemented for the issue 10732
+	 * @param paths
+	 */
+	protected void hide(IPath[] paths){
 		if(context == null){
 			return;
 		}
@@ -195,11 +201,11 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		}
 	}
 
-	public void beginInput() {
+	private void beginInput() {
 		cachingOn = true;
 	}
 
-	public void endInput(IProgressMonitor monitor) {
+	private void endInput(IProgressMonitor monitor) {
 		cachingOn = false;
 		if(!updateRequired){
 			return;
@@ -261,6 +267,16 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	public void setContext(HgSubscriberMergeContext context) {
 		this.context = context;
+	}
+
+	@Override
+	public void setComment(String description) {
+		super.setComment(description);
+	}
+
+	@Override
+	public void setName(String name) {
+		super.setName(name);
 	}
 
 	@Override
