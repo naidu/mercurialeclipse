@@ -81,5 +81,5 @@ public abstract class HgOperation extends TeamOperation {
 		return getActionDescription();
 	}
 
-	abstract protected String getActionDescription();
+	protected abstract String getActionDescription();
 }

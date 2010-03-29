@@ -56,7 +56,7 @@ public class HgIdentClient extends AbstractClient {
 	private static int getNextInt(byte[] b, int idx) {
 		int result = 0;
 		for(int i = 0; i < 4 && i + idx < b.length; i++) {
-			result = ((result << 8) + (b[i + idx] & 0xff));
+			result = (result << 8) + (b[i + idx] & 0xff);
 		}
 		return result;
 	}
@@ -76,7 +76,7 @@ public class HgIdentClient extends AbstractClient {
 			int size = s.length();
 			while(size < 8) {
 				id.append('0');
-				size ++;
+				size++;
 			}
 			id.append(s);
 		}

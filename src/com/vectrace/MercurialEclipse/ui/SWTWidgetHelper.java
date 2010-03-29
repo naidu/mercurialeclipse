@@ -50,11 +50,15 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
  * @author bastian
  *
  */
-public class SWTWidgetHelper {
+public final class SWTWidgetHelper {
 	public static final int LABEL_WIDTH_HINT = 400;
 	public static final int LABEL_INDENT_WIDTH = 32;
 	public static final int LIST_HEIGHT_HINT = 100;
 	public static final int SPACER_HEIGHT = 8;
+
+	private SWTWidgetHelper() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * Creates a new checkbox instance and sets the default layout data.
@@ -370,8 +374,7 @@ public class SWTWidgetHelper {
 			@Override
 			public String getText(Object element) {
 				ChangeSet cs = (ChangeSet) element;
-				return (cs.toString().concat("\t").concat(cs.getDateString()).concat( //$NON-NLS-1$
-						"\t").concat(cs.getUser())); //$NON-NLS-1$
+				return cs + "\t" + cs.getDateString() + "\t" + cs.getUser(); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		});
 

@@ -99,8 +99,8 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
-	private static final String DESCRIPTION = "Select projects to import into the workspace. " +
-			"Checked projects will be imported. Double click on project to change project name.";
+	private static final String DESCRIPTION = "Select projects to import into the workspace. "
+			+ "Checked projects will be imported. Double click on project to change project name.";
 
 	/**
 	 * The name of the folder containing metadata information for the workspace.
@@ -496,7 +496,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				ClonePage page = (ClonePage) previousPage;
 				File directory = page.getDestinationDirectory();
 				setInitialSelection(directory);
-			} if(previousPage instanceof SelectRevisionPage){
+			}
+			if(previousPage instanceof SelectRevisionPage) {
 				SelectRevisionPage page = (SelectRevisionPage) previousPage;
 				File directory = page.getHgRoot();
 				setInitialSelection(directory);
@@ -611,7 +612,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	private boolean collectProjectFilesFromDirectory(Collection<File> files,
 			File directory, Set<String> directoriesVisited, IProgressMonitor monitor) {
 
-		if (monitor.isCanceled() || directory.getName().equals(".hg")) {
+		if (monitor.isCanceled() || ".hg".equals(directory.getName())) {
 			return false;
 		}
 		monitor.subTask("Checking: " + directory.getPath());
@@ -984,9 +985,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 			setDescription(DESCRIPTION);
 		} else {
 			setMessage(
-					"Some projects cannot be imported because they already exist in the workspace. " +
-					"Double click on project to change project name.",
-					WARNING);
+					"Some projects cannot be imported because they already exist in the workspace. "
+					+ "Double click on project to change project name.", WARNING);
 		}
 		if(selectedProjects.length == 0) {
 			setMessage("No projects are selected to import", WARNING);

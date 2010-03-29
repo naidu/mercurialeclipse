@@ -356,7 +356,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void createOldCommitCombo(Composite container) {
-		final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager()
+		final String[] oldCommits = MercurialEclipsePlugin.getCommitMessageManager()
 				.getCommitMessages();
 		if (oldCommits.length > 0) {
 			oldCommitComboBox = SWTWidgetHelper.createCombo(container);
@@ -607,7 +607,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 		// set old commit message
 		IDocument msg = commitTextBox.getDocument();
-		if (msg.get().equals("") || msg.get().equals(DEFAULT_COMMIT_MESSAGE)) {
+		if ("".equals(msg.get()) || msg.get().equals(DEFAULT_COMMIT_MESSAGE)) {
 			msg.set(currentChangeset.getComment());
 		}
 

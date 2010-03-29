@@ -438,8 +438,8 @@ public class RevisionChooserPanel extends Composite {
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
 					Branch[] branches = dataLoader.getBranches();
-					if(data.highlightDefaultBranch &&  branches.length == 0 &&
-							Branch.DEFAULT.equals(text.getText())){
+					if (data.highlightDefaultBranch && branches.length == 0
+							&& Branch.DEFAULT.equals(text.getText())) {
 						text.setText("");
 					}
 					table.setBranches(branches);
@@ -580,7 +580,7 @@ public class RevisionChooserPanel extends Composite {
 	/**
 	 * Proposal provider for the revision text field.
 	 */
-	private static class RevisionContentProposalProvider implements IContentProposalProvider {
+	private static final class RevisionContentProposalProvider implements IContentProposalProvider {
 
 		private final Future<SortedSet<ChangeSet>> changeSets;
 		private final Future<List<Bookmark>> bookmarks;
@@ -691,7 +691,7 @@ public class RevisionChooserPanel extends Composite {
 
 		private static enum ContentType {REVISION, TAG, BRANCH}
 
-		private static class ChangeSetContentProposal implements IContentProposal {
+		private static final class ChangeSetContentProposal implements IContentProposal {
 
 			private static final Pattern LABEL_SPLITTER = Pattern.compile("\\.\\s|[\\n\\r]"); //$NON-NLS-1$
 
@@ -805,7 +805,7 @@ public class RevisionChooserPanel extends Composite {
 
 		}
 
-		private static class BookmarkContentProposal implements IContentProposal {
+		private static final class BookmarkContentProposal implements IContentProposal {
 
 			private final Bookmark bookmark;
 

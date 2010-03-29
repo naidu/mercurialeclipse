@@ -34,9 +34,13 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * Create a new crypter using stored secret key
  * @author adam.berkes <adam.berkes@intland.com>
  */
-public class HgRepositoryAuthCrypterFactory {
+public final class HgRepositoryAuthCrypterFactory {
 
-	public final static String DEFAULT_KEY_FILENAME = ".key";
+	public static final String DEFAULT_KEY_FILENAME = ".key";
+
+	private HgRepositoryAuthCrypterFactory() {
+		// hide constructor of utility class.
+	}
 
 	public static HgRepositoryAuthCrypter create(File keyFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
 		KeySpec keySpec = new DESedeKeySpec(getBytesFromFile(keyFile));
@@ -63,7 +67,7 @@ public class HgRepositoryAuthCrypterFactory {
 		BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
 		try {
 			long length = file.length();
-			byte[] bytes = new byte[(int)length];
+			byte[] bytes = new byte[(int) length];
 			int offset = 0;
 			int numRead = 0;
 			while (offset < bytes.length
@@ -74,8 +78,7 @@ public class HgRepositoryAuthCrypterFactory {
 				throw new IOException("Could not completely read file " + file.getName());
 			}
 			return bytes;
-		}
-		finally {
+		} finally {
 			is.close();
 		}
 	}

@@ -122,7 +122,7 @@ public class IncomingPage extends HgWizardPage {
 				if (file != null) {
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
 							file, cs.getChangesetIndex(), cs.getChangeset(), cs);
-					MercurialRevisionStorage parentRev ;
+					MercurialRevisionStorage parentRev;
 					String[] parents = cs.getParents();
 					if(cs.getRevision().getRevision() == 0 || parents.length == 0){
 						parentRev = new NullRevision(file, cs);
@@ -221,8 +221,8 @@ public class IncomingPage extends HgWizardPage {
 				Messages.getString("IncomingPage.columnHeader.branch"), //$NON-NLS-1$
 				"Tags", //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.summary") };  //$NON-NLS-1$
-		final int WIDTH = 11;
-		int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 5 * WIDTH, 5 * WIDTH, 30 * WIDTH};
+		final int width = 11;
+		int[] widths = {6 * width, 7 * width, 15 * width, 14 * width, 5 * width, 5 * width, 30 * width};
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);

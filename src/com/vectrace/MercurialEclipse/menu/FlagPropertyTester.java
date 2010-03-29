@@ -31,11 +31,11 @@ import com.vectrace.MercurialEclipse.utils.Bits;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
-	public final static String PROPERTY_STATUS = "status"; //$NON-NLS-1$
-	public final static String PROPERTY_ROOT = "root"; //$NON-NLS-1$
+	public static final String PROPERTY_STATUS = "status"; //$NON-NLS-1$
+	public static final String PROPERTY_ROOT = "root"; //$NON-NLS-1$
 
 	@SuppressWarnings({ "serial", "boxing" })
-	private final static Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
+	private static final Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
 		{
 			put("added", BIT_ADDED); //$NON-NLS-1$
 			put("clean", BIT_CLEAN); //$NON-NLS-1$
@@ -50,7 +50,7 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 	public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 		if(PROPERTY_STATUS.equals(property)) {
 			try {
-				IResource res = (IResource)receiver;
+				IResource res = (IResource) receiver;
 				int test = 0;
 				for(Object arg: args) {
 					Integer statusBit = BIT_MAP.get(arg);
@@ -77,9 +77,9 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 				return false;
 			}
 		} else if(PROPERTY_ROOT.equals(property) && args[0] != null) {
-			IResource res = (IResource)receiver;
+			IResource res = (IResource) receiver;
 			IPath location = res.getLocation();
-			if(location == null ){
+			if(location == null) {
 				return false;
 			}
 			try {

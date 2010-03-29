@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  *
  */
 public class QImportWizard extends HgWizard {
-	private QImportWizardPage page = null;
+	private final QImportWizardPage page;
 
 	private IResource resource;
 

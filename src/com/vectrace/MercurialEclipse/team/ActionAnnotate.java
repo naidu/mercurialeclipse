@@ -60,7 +60,7 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	public void run(IAction action) {
 		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
 		if (selection.getFirstElement() instanceof IResource) {
-			IResource firstElement = (IResource)selection.getFirstElement();
+			IResource firstElement = (IResource) selection.getFirstElement();
 			File file = firstElement.getLocation().toFile();
 			try {
 				new ShowAnnotationOperation(part, file).run();
@@ -78,9 +78,9 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
-	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection instanceof IStructuredSelection) {
-			selection = (IStructuredSelection) in_selection;
+	public void selectionChanged(IAction action, ISelection inSelection) {
+		if (inSelection instanceof IStructuredSelection) {
+			selection = (IStructuredSelection) inSelection;
 		}
 	}
 

@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
  * @version $Id$
  */
 public class TagComparator implements Comparator<Tag> {
-	private final static String TIP = HgRevision.TIP.getChangeset();
+	private static final String TIP = HgRevision.TIP.getChangeset();
 
 	public int compare(Tag tag1, Tag tag2) {
 		/* "tip" must be always the first in the collection */

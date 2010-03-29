@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  * @author bastian
  */
 public class QRefreshWizard extends HgWizard {
-	private QNewWizardPage page = null;
+	private final QNewWizardPage page;
 
 	private class RefreshOperation extends HgOperation {
 

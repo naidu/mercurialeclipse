@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  *
  */
 public class QInitWizard extends HgWizard {
-	private QInitWizardPage page = null;
+	private final QInitWizardPage page;
 
 	private class InitOperation extends HgOperation {
 
@@ -62,13 +62,13 @@ public class QInitWizard extends HgWizard {
 				monitor.worked(1);
 				monitor.done();
 			} catch (HgException e) {
-				throw new InvocationTargetException(e,e.getLocalizedMessage());
+				throw new InvocationTargetException(e, e.getLocalizedMessage());
 			}
 		}
 
 	}
 
-	private IResource resource;
+	private final IResource resource;
 
 	/**
 	 * @param windowTitle
@@ -77,7 +77,12 @@ public class QInitWizard extends HgWizard {
 		super(Messages.getString("QInitWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
 		setNeedsProgressMonitor(true);
-		page = new QInitWizardPage(Messages.getString("QInitWizard.pageName"),Messages.getString("QInitWizard.pageTitle"),null,null,resource);  //$NON-NLS-1$ //$NON-NLS-2$
+		page = new QInitWizardPage(
+				Messages.getString("QInitWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("QInitWizard.pageTitle"), //$NON-NLS-1$
+				null,
+				null,
+				resource);
 		initPage(Messages.getString("QInitWizard.pageDescription"), page); //$NON-NLS-1$
 		addPage(page);
 	}

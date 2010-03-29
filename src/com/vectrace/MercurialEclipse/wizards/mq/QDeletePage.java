@@ -118,7 +118,7 @@ public class QDeletePage extends HgWizardPage {
 	 */
 	private void populatePatchViewer() {
 		try {
-			List<Patch>patches = HgQAppliedClient.getUnappliedPatches(resource);
+			List<Patch> patches = HgQAppliedClient.getUnappliedPatches(resource);
 			for (Patch patch : patches) {
 				patchViewer.add(patch);
 			}

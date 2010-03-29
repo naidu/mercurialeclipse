@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  * Repository location line format:
  * [u|d]<dateAsLong> <len> uri <len> [e] username <len> [e] password <len> alias/id
  */
-public class HgRepositoryLocationParser {
+public final class HgRepositoryLocationParser {
 
 	protected static final String PART_SEPARATOR = " ";
 	protected static final String SPLIT_TOKEN = "@@@";
@@ -36,6 +36,10 @@ public class HgRepositoryLocationParser {
 	protected static final String PULL_PREFIX = "d";
 	protected static final String ENCRYPTED_PREFIX = "e";
 
+	private HgRepositoryLocationParser() {
+		// hide constructor of utility class.
+	}
+
 	public static String trimLocation(String url){
 		if(url == null){
 			return null;
@@ -43,7 +47,7 @@ public class HgRepositoryLocationParser {
 		url = url.trim();
 		// this is NOT File.separator: we simply disallow to have different locations
 		// which just ends with slash/backslash
-		while(url.endsWith("/") || url.endsWith("\\") || url.endsWith(" ") ){
+		while(url.endsWith("/") || url.endsWith("\\") || url.endsWith(" ")){
 			url = url.substring(0, url.length() - 1);
 		}
 		return url;
@@ -264,7 +268,7 @@ public class HgRepositoryLocationParser {
 	@Deprecated
 	public static String createSaveString(IHgRepositoryLocation location) {
 		StringBuilder line = new StringBuilder(location.getLocation());
-		if (location.getUser() != null ) {
+		if (location.getUser() != null) {
 			line.append(SPLIT_TOKEN);
 			line.append(location.getUser());
 			if (location.getPassword() != null) {

@@ -190,7 +190,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return getRootElements();
 		}
 		if (parent instanceof ChangeSet) {
-			return ((ChangeSet)parent).getChangesetFiles();
+			return ((ChangeSet) parent).getChangesetFiles();
 		}
 		if (parent instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) parent;

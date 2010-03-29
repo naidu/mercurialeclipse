@@ -287,7 +287,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		}
 
 		public boolean contains(ISchedulingRule rule) {
-			return rule instanceof ExclusiveRule && cs.equals(((ExclusiveRule)rule).cs);
+			return rule instanceof ExclusiveRule && cs.equals(((ExclusiveRule) rule).cs);
 		}
 	}
 }

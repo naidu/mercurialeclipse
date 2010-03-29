@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class RefreshStatusJob extends Job {
 
-	private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
+	private static final MercurialStatusCache MERCURIAL_STATUS_CACHE = MercurialStatusCache
 			.getInstance();
 	private final IProject project;
 	private final HgRoot hgRoot;
@@ -57,9 +57,9 @@ public class RefreshStatusJob extends Job {
 		try {
 			monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
 			if(project != null) {
-				mercurialStatusCache.refreshStatus(project, monitor);
+				MERCURIAL_STATUS_CACHE.refreshStatus(project, monitor);
 			} else {
-				mercurialStatusCache.refreshStatus(hgRoot, monitor);
+				MERCURIAL_STATUS_CACHE.refreshStatus(hgRoot, monitor);
 			}
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);

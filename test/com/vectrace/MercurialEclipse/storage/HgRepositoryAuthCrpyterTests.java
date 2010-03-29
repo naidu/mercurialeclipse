@@ -23,7 +23,7 @@ import junit.framework.TestCase;
  */
 public class HgRepositoryAuthCrpyterTests extends TestCase {
 
-	private File keyFile = null;
+	private File keyFile;
 
 	@Override
 	protected void setUp() throws Exception {

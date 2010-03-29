@@ -55,9 +55,9 @@ public class SelectRevisionPage extends WizardPage {
 	public SelectRevisionPage(String pageName) {
 		super(pageName);
 		setTitle("Select working directory revision");
-		setDescription("Select the revision to which the working directory will be updated after clone.\n" +
-				"In case nothing is selected, the working directory will be updated to the latest " +
-				"available changeset.");
+		setDescription("Select the revision to which the working directory will be updated after clone.\n"
+				+ "In case nothing is selected, the working directory will be updated to the latest "
+				+ "available changeset.");
 	}
 
 	public void createControl(Composite parent) {
@@ -140,7 +140,7 @@ public class SelectRevisionPage extends WizardPage {
 		dialog.addPageChangingListener(new IPageChangingListener() {
 
 			public void handlePageChanging(PageChangingEvent event) {
-				if(event.doit == false){
+				if(!event.doit){
 					return;
 				}
 				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage

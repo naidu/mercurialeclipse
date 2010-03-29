@@ -124,7 +124,7 @@ public class RefreshRootJob extends Job {
 	 */
 	protected void trace(String step) {
 		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-			System.out.println("Refresh " + step + " for: " + hgRoot.getName());
+			MercurialEclipsePlugin.logInfo("Refresh " + step + " for: " + hgRoot.getName(), null);
 		}
 	}
 

@@ -75,9 +75,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	/** key is hg root, value is the *current* branch */
 	private static final Map<HgRoot, String> BRANCH_MAP = new ConcurrentHashMap<HgRoot, String>();
 
-	private MercurialHistoryProvider FileHistoryProvider;
+	private MercurialHistoryProvider fileHistoryProvider;
 
-	private static final ListenerList branchListeners = new ListenerList(ListenerList.IDENTITY);
+	private static final ListenerList BRANCH_LISTENERS = new ListenerList(ListenerList.IDENTITY);
 
 	/** @see #getRuleFactory() */
 	private IResourceRuleFactory resourceRuleFactory;
@@ -194,11 +194,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
-		branchListeners.add(listener);
+		BRANCH_LISTENERS.add(listener);
 	}
 
 	public static void removeBranchListener(IPropertyListener listener){
-		branchListeners.remove(listener);
+		BRANCH_LISTENERS.remove(listener);
 	}
 
 	/**
@@ -275,7 +275,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 				return contains(rule);
 			}
 			public boolean contains(ISchedulingRule rule) {
-				return rule instanceof CharsetRule && cs.equals(((CharsetRule)rule).cs);
+				return rule instanceof CharsetRule && cs.equals(((CharsetRule) rule).cs);
 			}
 		}
 		job.setRule(new CharsetRule(defaultCharset));
@@ -423,7 +423,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			BRANCH_MAP.remove(hgRoot);
 		}
 		if(branch != null && !Branch.same(branch, oldBranch)){
-			Object[] listeners = branchListeners.getListeners();
+			Object[] listeners = BRANCH_LISTENERS.getListeners();
 			for (int i = 0; i < listeners.length; i++) {
 				IPropertyListener listener = (IPropertyListener) listeners[i];
 				listener.propertyChanged(hgRoot, 0);
@@ -443,10 +443,10 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
 	@Override
 	public IFileHistoryProvider getFileHistoryProvider() {
-		if (FileHistoryProvider == null) {
-			FileHistoryProvider = new MercurialHistoryProvider();
+		if (fileHistoryProvider == null) {
+			fileHistoryProvider = new MercurialHistoryProvider();
 		}
-		return FileHistoryProvider;
+		return fileHistoryProvider;
 	}
 
 	@Override

@@ -124,7 +124,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	private void notifyChanged(HgRoot root, boolean expandMembers) {
 		Set<?> projects = ResourceUtils.getProjects(root);
-		notifyChanged((Set<IResource>)projects, expandMembers);
+		notifyChanged((Set<IResource>) projects, expandMembers);
 	}
 
 	/**
@@ -154,7 +154,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	protected void notifyChanged(IHgRepositoryLocation repo, boolean expandMembers){
 		Set<?> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-		notifyChanged((Set<IResource>)projects, expandMembers);
+		notifyChanged((Set<IResource>) projects, expandMembers);
 	}
 
 	@Override
@@ -286,7 +286,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	private void addResourcesToCache(RemoteKey key) throws HgException {
 		if(debug) {
-			System.out.println("\n!fetch " + direction + " for " + key);
+			MercurialEclipsePlugin.logInfo("!fetch " + direction + " for " + key, null);
 		}
 
 		fastRepoMap.remove(key);
@@ -300,7 +300,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 
 		if(debug) {
-			System.out.println("\n!got " + data.getChangeSets().size() + " " + direction + " changesets");
+			MercurialEclipsePlugin.logInfo("!got " + data.getChangeSets().size() + " " + direction + " changesets", null);
 		}
 		fastRepoMap.put(key, data);
 

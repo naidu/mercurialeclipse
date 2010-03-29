@@ -36,7 +36,7 @@ import org.eclipse.ui.IWorkingSet;
  *
  */
 @SuppressWarnings("restriction")
-public class MercurialTextSearchScope extends TextSearchScope {
+public final class MercurialTextSearchScope extends TextSearchScope {
 
 	private final Matcher fNegativeFileNameMatcher;
 	private final Matcher fPositiveFileNameMatcher;

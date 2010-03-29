@@ -137,7 +137,7 @@ public class ChangePathsTableProvider extends TableViewer {
 				return EMPTY_CHANGE_PATHS;
 			}
 
-			MercurialRevision rev = ((MercurialRevision) inputElement);
+			MercurialRevision rev = (MercurialRevision) inputElement;
 			FileStatus[] fileStatus;
 			synchronized(revToFiles){
 				fileStatus = revToFiles.get(rev);

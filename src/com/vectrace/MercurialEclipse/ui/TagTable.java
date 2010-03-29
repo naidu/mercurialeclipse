@@ -45,7 +45,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
  */
 public class TagTable extends Composite {
-	private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+	private static final Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
 	private int[] parents;

@@ -77,8 +77,8 @@ public class MercurialHistory extends FileHistory {
 		}
 	}
 
-	private static final ChangeSetComparator csComparator = new ChangeSetComparator();
-	private static final RevisionComparator revComparator = new RevisionComparator();
+	private static final ChangeSetComparator CS_COMPARATOR = new ChangeSetComparator();
+	private static final RevisionComparator REV_COMPARATOR = new RevisionComparator();
 
 	private final IResource resource;
 	private final HgRoot hgRoot;
@@ -244,7 +244,7 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// We need these to be in order for the GChangeSets to display properly
-		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(csComparator);
+		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(CS_COMPARATOR);
 		changeSets.addAll(localChangeSets);
 
 		if (revisions.size() < changeSets.size()
@@ -276,7 +276,7 @@ public class MercurialHistory extends FileHistory {
 			GChangeSet set = gChangeSets.get(Integer.valueOf(cs.getChangesetIndex()));
 			revisions.add(new MercurialRevision(cs, set, revisionResource, sig, bisectStatus));
 		}
-		Collections.sort(revisions, revComparator);
+		Collections.sort(revisions, REV_COMPARATOR);
 		lastReqRevision = from;
 
 		if(showTags){
@@ -291,11 +291,11 @@ public class MercurialHistory extends FileHistory {
 		// get signatures
 		Map<String, Signature> sigMap = new HashMap<String, Signature>();
 
-		boolean sigcheck = HgClients.getPreference(
-				PREF_SIGCHECK_IN_HISTORY, "false").equals("true"); //$NON-NLS-1$ //$NON-NLS-2$
+		boolean sigcheck = "true".equals(HgClients.getPreference(
+				PREF_SIGCHECK_IN_HISTORY, "false")); //$NON-NLS-1$
 
 		if (sigcheck) {
-			if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
+			if (!"false".equals(MercurialUtilities.getGpgExecutable())) { //$NON-NLS-1$
 				List<Signature> sigs = HgSigsClient.getSigs(hgRoot);
 				for (Signature signature : sigs) {
 					sigMap.put(signature.getNodeId(), signature);
@@ -344,7 +344,7 @@ public class MercurialHistory extends FileHistory {
 		int tagRev = tag.getRevision();
 		// revisions are sorted descending by cs revision
 		int lastRev = revisions.size() - 1;
-		for (int i = start; i <= lastRev ; i++) {
+		for (int i = start; i <= lastRev; i++) {
 			int revision = revisions.get(i).getRevision();
 			// perfect match
 			if(revision == tagRev){

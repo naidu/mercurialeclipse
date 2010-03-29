@@ -67,7 +67,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
 
-	public final static String ID = MergeView.class.getName();
+	public static final String ID = MergeView.class.getName();
 
 	private Label statusLabel;
 	private Table table;
@@ -242,7 +242,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		for (FlaggedAdaptable flagged : status) {
 			TableItem row = new TableItem(table, SWT.NONE);
 			row.setText(0, flagged.getStatus());
-			IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
+			IFile iFile = (IFile) flagged.getAdapter(IFile.class);
 			row.setText(1, iFile.getProjectRelativePath().toString());
 			row.setData(flagged);
 			if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
@@ -351,7 +351,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		TableItem[] selection = table.getSelection();
 		if (selection != null && selection.length > 0) {
 			FlaggedAdaptable fa = (FlaggedAdaptable) selection[0].getData();
-			IFile iFile = ((IFile) fa.getAdapter(IFile.class));
+			IFile iFile = (IFile) fa.getAdapter(IFile.class);
 			return iFile;
 		}
 		return null;

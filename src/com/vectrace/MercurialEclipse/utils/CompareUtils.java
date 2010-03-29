@@ -42,7 +42,12 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
  * This class helps to invoke the compare facilities of Eclipse.
  * @author bastian
  */
-public class CompareUtils {
+public final class CompareUtils {
+
+	private CompareUtils() {
+		// hide constructor of utility class.
+	}
+
 	public static void openEditor(IFile file, ChangeSet changeset, boolean dialog, boolean localEditable) {
 		int changesetIndex = changeset == null ? 0 : changeset.getChangesetIndex();
 		String changesetId = changeset == null ? null : changeset.getChangeset();
@@ -66,7 +71,8 @@ public class CompareUtils {
 	}
 
 	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right, boolean dialog, boolean localEditable) {
-		ResourceNode leftNode, rightNode;
+		ResourceNode leftNode;
+		ResourceNode rightNode;
 		if (right == null) {
 			// comparing with file-system
 			rightNode = getNode(left);

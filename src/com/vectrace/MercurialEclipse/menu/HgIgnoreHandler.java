@@ -37,10 +37,10 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 		IgnoreDialog dialog;
 		switch(resource.getType()) {
 			case IResource.FILE:
-				dialog = new IgnoreDialog(getShell(), (IFile)resource);
+				dialog = new IgnoreDialog(getShell(), (IFile) resource);
 				break;
 			case IResource.FOLDER:
-				dialog = new IgnoreDialog(getShell(), (IFolder)resource);
+				dialog = new IgnoreDialog(getShell(), (IFolder) resource);
 				break;
 			default:
 				dialog = new IgnoreDialog(getShell());

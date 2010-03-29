@@ -55,7 +55,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author bastian
  * @author Andrei Loskutov
  */
-public class LocalChangesetCache extends AbstractCache {
+public final class LocalChangesetCache extends AbstractCache {
 
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 

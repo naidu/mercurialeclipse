@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class BookmarkTable extends Composite {
 
-	private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
+	private static final Font PARENT_FONT = JFaceResources.getFontRegistry()
 			.getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;

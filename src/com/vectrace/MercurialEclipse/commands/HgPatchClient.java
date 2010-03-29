@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2008-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -57,7 +57,7 @@ public class HgPatchClient extends AbstractClient {
 			command.addFiles(resources);
 		}
 		command.addOptions(options.toArray(new String[options.size()]));
-		return command.executeToFile(patchFile, AbstractShellCommand.DEFAULT_TIMEOUT, false);
+		return command.executeToFile(patchFile, false);
 	}
 
 	/**

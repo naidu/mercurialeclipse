@@ -62,7 +62,7 @@ public class ShelveOperation extends HgOperation {
 			// get modified files
 			monitor.beginTask(Messages.getString("ShelveOperation.shelving"), 5); //$NON-NLS-1$
 			// check if hgattic is available
-			if (MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
+			if (MercurialUtilities.isCommandAvailable("attic-shelve", // $NON-NLS-1$
 							ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
 				String output = HgAtticClient.shelve(hgRoot,
 						"MercurialEclipse shelve operation", // $NON-NLS-1$
@@ -91,7 +91,7 @@ public class ShelveOperation extends HgOperation {
 					throw new HgCoreException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
-				Set<IPath> resources = new HashSet<IPath>();// getDirtyFiles(hgRoot);
+				Set<IPath> resources = new HashSet<IPath>(); // getDirtyFiles(hgRoot);
 				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, new ArrayList<String>(0));
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$

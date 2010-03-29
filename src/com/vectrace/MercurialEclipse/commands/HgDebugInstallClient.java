@@ -23,7 +23,7 @@ public class HgDebugInstallClient extends AbstractClient {
 	/**
 	 * Key is the charset name, value is "true" if hg supports this charset encoding
 	 */
-	public final static Map<String, Boolean> ENCODINGS = Collections
+	public static final Map<String, Boolean> ENCODINGS = Collections
 			.synchronizedMap(new HashMap<String, Boolean>());
 
 	public static String debugInstall() throws HgException {

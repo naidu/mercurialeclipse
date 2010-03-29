@@ -68,7 +68,7 @@ public abstract class AbstractMercurialTestCase extends TestCase {
 		super(name);
 	}
 
-	static public boolean deleteDirectory(File path) {
+	public static boolean deleteDirectory(File path) {
 		return ResourceUtils.delete(path, true);
 	}
 
@@ -193,7 +193,7 @@ public abstract class AbstractMercurialTestCase extends TestCase {
 				try {
 					fout.close();
 					boolean modified = destination.setLastModified(source.lastModified());
-					if(!modified ){
+					if(!modified){
 						MercurialEclipsePlugin.logError("Could not update last modified stamp for file '"
 								+ destination + "'", null);
 					}

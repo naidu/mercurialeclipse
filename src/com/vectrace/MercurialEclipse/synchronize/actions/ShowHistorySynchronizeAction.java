@@ -74,6 +74,6 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isMatching(Direction d){
-		return (d == Direction.OUTGOING);
+		return d == Direction.OUTGOING;
 	}
 }

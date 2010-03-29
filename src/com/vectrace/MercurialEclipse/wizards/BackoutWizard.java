@@ -33,8 +33,11 @@ public class BackoutWizard extends HgWizard {
 	@Override
 	public void addPages() {
 		super.addPages();
-		page = createPage(Messages.getString("BackoutWizard.pageName"), Messages.getString("BackoutWizard.pageTitle"),null, //$NON-NLS-1$ //$NON-NLS-2$
-				Messages.getString("BackoutWizard.pageDescription") ); //$NON-NLS-1$
+		page = createPage(
+				Messages.getString("BackoutWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("BackoutWizard.pageTitle"),
+				null,
+				Messages.getString("BackoutWizard.pageDescription")); //$NON-NLS-1$
 		addPage(page);
 	}
 

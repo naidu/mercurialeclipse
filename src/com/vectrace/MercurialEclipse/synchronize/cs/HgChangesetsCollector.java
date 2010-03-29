@@ -51,7 +51,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	private final MercurialSynchronizeParticipant participant;
 	private final IPropertyListener branchListener;
-	private final static Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
+	private static final Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
 
 	private final class ChangesetsCollectorJob extends Job {
 
@@ -148,7 +148,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
 				if(getScope().getChangesetProvider().isParticipantCreated()) {
-					branchChanged((HgRoot)source);
+					branchChanged((HgRoot) source);
 				}
 			}
 		};

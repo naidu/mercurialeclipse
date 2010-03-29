@@ -34,7 +34,6 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
-import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 

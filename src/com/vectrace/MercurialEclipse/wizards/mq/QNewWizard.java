@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  *
  */
 public class QNewWizard extends HgWizard {
-	private QNewWizardPage page = null;
+	private final QNewWizardPage page;
 
 	private class NewOperation extends HgOperation {
 
@@ -80,7 +80,7 @@ public class QNewWizard extends HgWizard {
 
 	}
 
-	private IResource resource;
+	private final IResource resource;
 
 	/**
 	 * @param windowTitle

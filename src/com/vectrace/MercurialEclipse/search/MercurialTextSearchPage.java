@@ -70,6 +70,7 @@ import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
 public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
@@ -589,7 +590,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	}
 
 	private String insertEscapeChars(String text) {
-		if (text == null || text.equals("")) {
+		if (StringUtils.isEmpty(text)) {
 			return ""; //$NON-NLS-1$
 		}
 		StringBuffer sbIn = new StringBuffer(text);
@@ -730,7 +731,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		s.put(STORE_HISTORY_SIZE, historySize);
 		for (int i = 0; i < historySize; i++) {
 			IDialogSettings histSettings = s.addNewSection(STORE_HISTORY + i);
-			SearchPatternData data = (fPreviousSearchPatterns.get(i));
+			SearchPatternData data = fPreviousSearchPatterns.get(i);
 			data.store(histSettings);
 		}
 	}

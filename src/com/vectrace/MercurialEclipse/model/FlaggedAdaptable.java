@@ -38,8 +38,8 @@ public class FlaggedAdaptable implements IAdaptable {
 	}
 
 	public String getStatus() {
-		return flag == MercurialStatusCache.CHAR_UNRESOLVED ?
-				Messages.getString("FlaggedAdaptable.unresolvedStatus")
+		return flag == MercurialStatusCache.CHAR_UNRESOLVED
+				? Messages.getString("FlaggedAdaptable.unresolvedStatus")
 				: Messages.getString("FlaggedAdaptable.resolvedStatus");
 	}
 }

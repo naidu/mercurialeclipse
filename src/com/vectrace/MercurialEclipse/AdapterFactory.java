@@ -25,7 +25,7 @@ public class AdapterFactory implements IAdapterFactory {
 	@SuppressWarnings("unchecked")
 	public MercurialHistoryPageSource getAdapter(Object adaptableObject, Class adapterType) {
 		if((adaptableObject instanceof MercurialHistoryProvider) && adapterType == IHistoryPageSource.class) {
-			return new MercurialHistoryPageSource((MercurialHistoryProvider)adaptableObject);
+			return new MercurialHistoryPageSource((MercurialHistoryProvider) adaptableObject);
 		}
 		if((adaptableObject instanceof HgRoot) && adapterType == IHistoryPageSource.class) {
 			return new MercurialHistoryPageSource(null);

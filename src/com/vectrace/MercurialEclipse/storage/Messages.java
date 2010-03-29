@@ -17,7 +17,7 @@ import java.util.ResourceBundle;
  * @author bastian
  *
  */
-public class Messages {
+public final class Messages {
 	private static final String BUNDLE_NAME = "com.vectrace.MercurialEclipse.storage.messages"; //$NON-NLS-1$
 
 	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle

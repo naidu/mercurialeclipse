@@ -49,7 +49,7 @@ public class HgBackoutClient extends AbstractClient {
 			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
-		command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg);//$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addUserName(user);
 		if (merge) {
 			command.addOptions("--merge"); //$NON-NLS-1$

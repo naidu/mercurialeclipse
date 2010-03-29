@@ -39,7 +39,7 @@ import org.eclipse.search.ui.text.Match;
 @SuppressWarnings("restriction")
 public class MercurialTextSearchQuery implements ISearchQuery {
 
-	private final static class TextSearchResultCollector extends
+	private static final class TextSearchResultCollector extends
 			TextSearchRequestor {
 
 		private final AbstractTextSearchResult fResult;

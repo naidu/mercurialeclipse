@@ -64,9 +64,10 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		if (target instanceof IProject) {
 			hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
 		} else if (target instanceof ChangeSet) {
-			changeSet = (ChangeSet)target;
+			changeSet = (ChangeSet) target;
 			hgRoot = changeSet.getHgRoot();
-		} if (target instanceof ChangesetGroup){
+		}
+		if (target instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) target;
 			checkChangesets(monitor, group);
 			if(monitor.isCanceled()){
@@ -125,9 +126,8 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		final String message;
 		if(isPull){
 			title = "Hg Pull";
-			message = "Pulling " + csCount + " changesets (or more) from the remote repository.\n" +
-					"The pull will fetch the *latest* version available remote.\n" +
-					"Continue?";
+			message = "Pulling " + csCount + " changesets (or more) from the remote repository.\n"
+					+ "The pull will fetch the *latest* version available remote.\n" + "Continue?";
 		} else {
 			if(csCount == 1){
 				return;

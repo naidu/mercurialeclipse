@@ -51,10 +51,9 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * Class that offers Utility methods for working with the plug-in.
@@ -62,8 +61,8 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  * @author zingo
  *
  */
-public class MercurialUtilities {
-	private final static boolean isWindows = File.separatorChar == '\\';
+public final class MercurialUtilities {
+	private static final boolean IS_WINDOWS = File.separatorChar == '\\';
 	private static final Map<RGB, Color> COLOR_MAP = new HashMap<RGB, Color>();
 	private static final Map<FontData, Font> FONT_MAP = new HashMap<FontData, Font>();
 
@@ -75,7 +74,7 @@ public class MercurialUtilities {
 	}
 
 	public static boolean isWindows() {
-		return isWindows;
+		return IS_WINDOWS;
 	}
 
 	/**
@@ -302,7 +301,7 @@ public class MercurialUtilities {
 				.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
 
 		// try to read username via hg showconfig
-		if (username == null || username.equals("")) {
+		if (StringUtils.isEmpty(username)) {
 			try {
 				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
 						.getLocation().toFile(), "ui.username");
@@ -313,21 +312,21 @@ public class MercurialUtilities {
 
 		// try to read mercurial hgrc in default locations
 		String home = System.getProperty("user.home");
-		if (username == null || username.equals("")) {
+		if (StringUtils.isEmpty(username)) {
 			username = readUsernameFromIni(home + "/.hgrc");
 		}
 
 		if (isWindows()) {
-			if (username == null || username.equals("")) {
+			if (StringUtils.isEmpty(username)) {
 				username = readUsernameFromIni(home + "/Mercurial.ini");
 			}
 
-			if (username == null || username.equals("")) {
+			if (StringUtils.isEmpty(username)) {
 				username = readUsernameFromIni("C:/Mercurial/Mercurial.ini");
 			}
 		}
 
-		if (username == null || username.equals("")) {
+		if (StringUtils.isEmpty(username)) {
 			// use system username
 			username = System.getProperty("user.name");
 		}
@@ -358,12 +357,12 @@ public class MercurialUtilities {
 	 *
 	 *          TODO: Should log failure. TODO: Should not return null for failure.
 	 */
-	public static String executeCommand(String cmd[], File workingDir, boolean consoleOutput)
+	public static String executeCommand(String[] cmd, File workingDir, boolean consoleOutput)
 			throws HgException {
 		return execute(cmd, workingDir).executeToString();
 	}
 
-	private static LegacyAdaptor execute(String cmd[], File workingDir) {
+	private static LegacyAdaptor execute(String[] cmd, File workingDir) {
 		String[] copy = new String[cmd.length - 2];
 		System.arraycopy(cmd, 2, copy, 0, cmd.length - 2);
 		LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);

@@ -98,15 +98,15 @@ public class HgResolveClient extends AbstractClient {
 			command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
 			String result = command.executeToString();
 			// cleanup .orig files left after merge
-			File orig_file = new File(file.getAbsolutePath() + ".orig");
-			if(orig_file.isFile()){
-				IResource file_to_delete = ResourceUtils.convert(orig_file);
-				boolean deleted = orig_file.delete();
+			File origFile = new File(file.getAbsolutePath() + ".orig");
+			if(origFile.isFile()){
+				IResource fileToDelete = ResourceUtils.convert(origFile);
+				boolean deleted = origFile.delete();
 				if(!deleted){
-					MercurialEclipsePlugin.logInfo("Failed to cleanup " + orig_file + " file after merge", null);
+					MercurialEclipsePlugin.logInfo("Failed to cleanup " + origFile + " file after merge", null);
 				} else {
 					try {
-						file_to_delete.refreshLocal(IResource.DEPTH_ZERO, null);
+						fileToDelete.refreshLocal(IResource.DEPTH_ZERO, null);
 					} catch (CoreException e) {
 						MercurialEclipsePlugin.logError(e);
 					}

@@ -95,7 +95,7 @@ public class HgStatusClient extends AbstractClient {
 	public static boolean isDirty(List<? extends IResource> resources) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
+		command.addOptions("-mard"); // modified, added, removed, deleted //$NON-NLS-1$
 		command.addFiles(resources);
 		return command.executeToBytes().length != 0;
 	}
@@ -103,7 +103,7 @@ public class HgStatusClient extends AbstractClient {
 	public static boolean isDirty(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
+		command.addOptions("-mard"); // modified, added, removed, deleted //$NON-NLS-1$
 		return command.executeToBytes().length != 0;
 	}
 
@@ -115,7 +115,7 @@ public class HgStatusClient extends AbstractClient {
 	public static String[] getIdMergeAndBranch(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("id", root, true); //$NON-NLS-1$
 		// Full global IDs + branch name
-		command.addOptions("-ib","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("-ib", "--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		String versionIds = command.executeToString().trim();
 
@@ -198,7 +198,7 @@ public class HgStatusClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static File getPossibleSourcePath(HgRoot root, File file, int firstKnownRevision) throws HgException{
-		return getPossibleSourcePath(root, file, (firstKnownRevision - 1), "" + firstKnownRevision);
+		return getPossibleSourcePath(root, file, firstKnownRevision - 1, "" + firstKnownRevision);
 	}
 
 	/**

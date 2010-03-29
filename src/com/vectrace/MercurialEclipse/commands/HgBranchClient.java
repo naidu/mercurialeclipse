@@ -32,7 +32,7 @@ public class HgBranchClient extends AbstractClient {
 	private static final Pattern GET_BRANCHES_PATTERN = Pattern
 			.compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
-	private static Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
+	private static final Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
 
 	/**
 	 * Returns all available (not closed) branches

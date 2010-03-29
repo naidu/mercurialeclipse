@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2006-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - added default timeout text field
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -22,7 +23,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 
 /**
  * This class represents a preference page that is contributed to the
@@ -38,8 +38,10 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 public class TimeoutPreferencePage extends FieldEditorPreferencePage
 		implements IWorkbenchPreferencePage {
 
+	// Default is 6 minutes. Don't ask why 6... because it is 7 times smaller than 42?
+	public static final int DEFAULT_TIMEOUT = 6 * 60 * 1000;
 
-	private static class TimeoutFieldEditor extends IntegerFieldEditor {
+	private static final class TimeoutFieldEditor extends IntegerFieldEditor {
 		private TimeoutFieldEditor(String name, String labelText,
 				Composite parent) {
 			super(name, labelText, parent);
@@ -50,8 +52,7 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
 			super.load();
 			if (getIntValue() <= 0) {
 				super.setPresentsDefaultValue(true);
-				super.setStringValue(String
-						.valueOf(AbstractShellCommand.DEFAULT_TIMEOUT));
+				super.setStringValue(String.valueOf(DEFAULT_TIMEOUT));
 			}
 		}
 	}
@@ -72,6 +73,10 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
 	public void createFieldEditors() {
 
 		// timeout preferences
+		addField(new TimeoutFieldEditor(
+				MercurialPreferenceConstants.DEFAULT_TIMEOUT,
+				Messages.getString("TimeoutPreferencePage.field.default"), getFieldEditorParent())); //$NON-NLS-1$
+
 		addField(new TimeoutFieldEditor(
 				MercurialPreferenceConstants.CLONE_TIMEOUT,
 				Messages.getString("TimeoutPreferencePage.field.clone"), getFieldEditorParent())); //$NON-NLS-1$

@@ -48,9 +48,12 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
 		Assert.isNotNull(repo);
 		this.repo = repo;
-		this.roots = roots != null ? roots :
-			MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo)
-				.toArray(new IProject[0]);
+		if(roots != null) {
+			this.roots = roots;
+		} else {
+			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+			this.roots = projects.toArray(new IProject[projects.size()]);
+		}
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
@@ -187,7 +190,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		if(!listeners.isEmpty()){
 			Object[] objects = listeners.getListeners();
 			for (Object object : objects) {
-				((ISynchronizationScopeChangeListener)object).scopeChanged(this, mappings, getTraversals());
+				((ISynchronizationScopeChangeListener) object).scopeChanged(this, mappings, getTraversals());
 			}
 		}
 	}

@@ -38,17 +38,17 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractClient {
 
-	private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP]:.*[@]"; //$NON-NLS-1$
-	private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS]:.*[@]"; //$NON-NLS-1$
-	private final static String SSH_PATTERN_STRING = "[sS][sS][hH]:.*[@]"; //$NON-NLS-1$
-	private final static String SVN_PATTERN_STRING = "[sS][vV][nN]:.*[@]"; //$NON-NLS-1$
+	private static final String HTTP_PATTERN_STRING = "[hH][tT][tT][pP]:.*[@]"; //$NON-NLS-1$
+	private static final String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS]:.*[@]"; //$NON-NLS-1$
+	private static final String SSH_PATTERN_STRING = "[sS][sS][hH]:.*[@]"; //$NON-NLS-1$
+	private static final String SVN_PATTERN_STRING = "[sS][vV][nN]:.*[@]"; //$NON-NLS-1$
 
-	private final static Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
-	private final static Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
-	private final static Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
-	private final static Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
+	private static final Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
+	private static final Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
+	private static final Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
+	private static final Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
 
-	public AbstractClient() {
+	protected AbstractClient() {
 		super();
 	}
 
@@ -133,7 +133,7 @@ public abstract class AbstractClient {
 		// see bug http://bitbucket.org/mercurialeclipse/main/issue/224/
 		// If hg command uses non-null directory, which is NOT under the hg control,
 		// MercurialTeamProvider.getAndStoreHgRoot() throws an exception
-		AbstractShellCommand command = new HgCommand("help", (File)null, false);
+		AbstractShellCommand command = new HgCommand("help", (File) null, false);
 		if (extensionEnabler != null && extensionEnabler.length() != 0) {
 			command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
 		}

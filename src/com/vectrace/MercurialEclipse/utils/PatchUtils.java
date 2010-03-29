@@ -34,9 +34,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * @author bastian
  *
  */
-public class PatchUtils {
+public final class PatchUtils {
 
 	public static final Pattern DIFF_START_PATTERN = Pattern.compile("^diff -r ", Pattern.MULTILINE);
+
+	private PatchUtils() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * @param outgoingPatch

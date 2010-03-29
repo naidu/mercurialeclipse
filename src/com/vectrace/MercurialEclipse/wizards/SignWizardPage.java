@@ -65,8 +65,10 @@ public class SignWizardPage extends HgWizardPage {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
 		// list view of changesets
-		Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
-				Messages.getString("SignWizardPage.changeSetGroup.title"),GridData.FILL_BOTH); //$NON-NLS-1$
+		Group changeSetGroup = SWTWidgetHelper.createGroup(
+				composite,
+				Messages.getString("SignWizardPage.changeSetGroup.title"), //$NON-NLS-1$
+				GridData.FILL_BOTH);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;

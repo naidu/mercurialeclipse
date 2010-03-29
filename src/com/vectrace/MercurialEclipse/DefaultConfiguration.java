@@ -1,13 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Stefan	implementation
+ *     Stefan                    - implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - use default timeout from preferences
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
@@ -17,13 +18,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
@@ -62,7 +63,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 	}
 
 	public int getTimeOut(String commandId) {
-		int timeout = AbstractShellCommand.DEFAULT_TIMEOUT;
+		int timeout = TimeoutPreferencePage.DEFAULT_TIMEOUT;
 		String pref = getPreference(commandId, String.valueOf(timeout));
 		try {
 			timeout = Integer.parseInt(pref);

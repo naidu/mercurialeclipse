@@ -53,7 +53,7 @@ public class DeleteAction extends SynchronizeModelAction {
 		Object[] objects = sel.toArray();
 		for (Object object : objects) {
 			if (object instanceof WorkingChangeSet){
-				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
+				selectedResources.addAll(((WorkingChangeSet) object).getFiles());
 			} else if(!(object instanceof ChangeSet)){
 				IResource resource = ResourceUtils.getResource(object);
 				if(resource != null) {

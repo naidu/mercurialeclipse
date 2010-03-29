@@ -106,7 +106,7 @@ public class CloneOperation extends HgOperation {
 			m.worked(1);
 		} catch (HgException e) {
 			if(e.getCause() instanceof InterruptedException){
-				throw (InterruptedException)e.getCause();
+				throw (InterruptedException) e.getCause();
 			}
 			throw new InvocationTargetException(e);
 		} finally {

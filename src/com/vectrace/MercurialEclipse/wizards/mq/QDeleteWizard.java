@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  *
  */
 public class QDeleteWizard extends HgWizard {
-	private QDeletePage page = null;
+	private final QDeletePage page;
 
 	private class DeleteOperation extends HgOperation {
 
@@ -57,7 +57,7 @@ public class QDeleteWizard extends HgWizard {
 		 *
 		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
 		 */
-		@SuppressWarnings("unchecked") //$NON-NLS-1$
+		@SuppressWarnings("unchecked")
 		@Override
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
@@ -80,7 +80,7 @@ public class QDeleteWizard extends HgWizard {
 
 	}
 
-	private IResource resource;
+	private final IResource resource;
 
 	/**
 	 * @param windowTitle

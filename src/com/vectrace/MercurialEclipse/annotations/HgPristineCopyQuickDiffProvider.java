@@ -135,7 +135,7 @@ public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvi
 		documentProvider = editor.getDocumentProvider();
 
 		if (documentProvider != null) {
-			(documentProvider).addElementStateListener(documentListener);
+			documentProvider.addElementStateListener(documentListener);
 		}
 		isReferenceInitialized = true;
 	}
@@ -248,11 +248,11 @@ public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvi
 			InputStream contentStream, String encoding) throws CoreException {
 		Reader in = null;
 		try {
-			final int DEFAULT_FILE_SIZE = 15 * 1024;
+			final int defaultFileSize = 15 * 1024;
 
 			in = new BufferedReader(new InputStreamReader(contentStream,
-					encoding), DEFAULT_FILE_SIZE);
-			CharArrayWriter caw = new CharArrayWriter(DEFAULT_FILE_SIZE);
+					encoding), defaultFileSize);
+			CharArrayWriter caw = new CharArrayWriter(defaultFileSize);
 			char[] readBuffer = new char[2048];
 			int n = in.read(readBuffer);
 			while (n > 0) {

@@ -194,7 +194,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		});
 
 		if (showBundleButton) {
-			browseFileButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
+			browseFileButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("PullPage.browseFileButton.text"), 1); //$NON-NLS-1$
 
 			browseFileButton.addSelectionListener(new SelectionAdapter() {
 				@Override
