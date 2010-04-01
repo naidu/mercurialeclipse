@@ -68,8 +68,6 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
-	@SuppressWarnings("unchecked")
 	public void run(IAction action) {
 		try {
 			new CommitHandler().run(getSelectedResources());

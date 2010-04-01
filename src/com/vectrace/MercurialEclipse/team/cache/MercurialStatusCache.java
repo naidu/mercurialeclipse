@@ -267,7 +267,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private boolean computeDeepStatus;
 	private int statusBatchSize;
-	private static final Set<IResource> EMPTY_SET = new HashSet<IResource>();
 
 	static class BitMap {
 		private final Set<IPath> ignore = new HashSet<IPath>();
@@ -545,7 +544,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		if(isMappedState){
 			Set<IPath> set = bitMap.get(statusBits);
 			if(set == null || set.isEmpty()){
-				return EMPTY_SET;
+				return Collections.emptySet();
 			}
 			IPath parentPath = ResourceUtils.getPath(folder);
 			resources = new HashSet<IResource>();
@@ -1236,7 +1235,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private Set<IResource> addConflict(IResource local) {
 		IPath location = local.getLocation();
 		if(location == null){
-			return EMPTY_SET;
+			return Collections.emptySet();
 		}
 		Integer status = statusMap.get(location);
 		boolean isDir = local.getType() == IResource.FOLDER;

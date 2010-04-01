@@ -37,7 +37,7 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 /**
  * @author Andrei
  */
-public class RepositorySynchronizationScope extends AbstractResourceMappingScope implements ISynchronizationScope {
+public class RepositorySynchronizationScope extends AbstractResourceMappingScope {
 
 	private final IProject[] roots;
 	private final ListenerList listeners;

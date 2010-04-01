@@ -64,9 +64,9 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 	public IProject[] getProjects() {
 		Set<IProject> result = new HashSet<IProject>();
 		Set<IFile> files = changeSet.getFiles();
-		for (IFile file : files) {
-			if (file != null && file.getProject() != null) {
-				result.add(file.getProject());
+		for (IFile changeSetFile : files) {
+			if (changeSetFile != null && changeSetFile.getProject() != null) {
+				result.add(changeSetFile.getProject());
 			} else {
 				// it is possible that files are out of eclipse project scope
 				// so resolve project according to hg root.

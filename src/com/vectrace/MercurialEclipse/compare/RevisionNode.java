@@ -12,8 +12,6 @@ package com.vectrace.MercurialEclipse.compare;
 
 import java.io.InputStream;
 
-import org.eclipse.compare.IStreamContentAccessor;
-import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -21,7 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
-public class RevisionNode extends ResourceNode implements IStreamContentAccessor, ITypedElement {
+public class RevisionNode extends ResourceNode {
 	private final MercurialRevisionStorage rev;
 
 	public RevisionNode(MercurialRevisionStorage rev) {

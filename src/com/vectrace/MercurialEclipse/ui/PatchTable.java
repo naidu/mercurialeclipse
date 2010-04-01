@@ -66,7 +66,7 @@ public class PatchTable extends Composite {
 		viewer = new TableViewer(this, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
 				| SWT.H_SCROLL);
 
-		viewer.setContentProvider(ArrayContentProvider.getInstance());
+		viewer.setContentProvider(new ArrayContentProvider());
 		viewer.setLabelProvider(new PatchTableLabelProvider());
 
 		String[] titles = {

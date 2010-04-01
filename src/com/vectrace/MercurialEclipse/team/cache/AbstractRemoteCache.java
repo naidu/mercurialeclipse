@@ -122,6 +122,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void notifyChanged(HgRoot root, boolean expandMembers) {
 		Set<?> projects = ResourceUtils.getProjects(root);
 		notifyChanged((Set<IResource>) projects, expandMembers);
@@ -152,6 +153,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void notifyChanged(IHgRepositoryLocation repo, boolean expandMembers){
 		Set<?> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
 		notifyChanged((Set<IResource>) projects, expandMembers);

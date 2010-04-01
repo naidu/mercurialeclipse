@@ -5,13 +5,12 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
-public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider implements ITreeContentProvider {
+public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider {
 
 	//the pseudo-root
 	public static final Object ROOT = new Object();
