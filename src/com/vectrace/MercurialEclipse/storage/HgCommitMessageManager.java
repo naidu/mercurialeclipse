@@ -232,7 +232,7 @@ public class HgCommitMessageManager {
 		// first the stored commit name
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		String commitName = store.getString(getKey(hgRoot));
-		if (commitName != null && commitName.length() != 0) {
+		if (!StringUtils.isEmpty(commitName)) {
 			return commitName;
 		}
 
@@ -254,7 +254,7 @@ public class HgCommitMessageManager {
 				.getDefaultRepoLocation(hgRoot);
 		if (repoLocation != null) {
 			String user = repoLocation.getUser();
-			if (user != null && user.trim().length() > 0) {
+			if (!StringUtils.isEmpty(user)) {
 				return user;
 			}
 		}

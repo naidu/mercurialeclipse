@@ -161,7 +161,7 @@ IWorkbenchPreferencePage {
 
 		addField(new BooleanFieldEditor(
 				MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME,
-				"Use Mercurial username as default for commit", getFieldEditorParent())); //$NON-NLS-1$
+				"Prefer 'username' value from .hgrc as default user name", getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
 				PREF_USE_EXTERNAL_MERGE,
