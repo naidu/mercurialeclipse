@@ -129,7 +129,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 			if (branch) {
 				valid &= !StringUtils.isEmpty(branchName);
 				if(!valid){
-					setErrorMessage("Please select branch!");
+					setErrorMessage("Please select local branch!");
 					return;
 				}
 				if (!all) {
@@ -137,7 +137,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 							&& Branch.same(branchName, selectedChangesets.first().getBranch());
 					if(!valid){
 						setErrorMessage("Please select exact one changeset if transplanting "
-								+ "not all changesets from branch!");
+								+ "not all changesets from the local branch!");
 						return;
 					}
 				}
@@ -164,10 +164,10 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	}
 
 	private void addBranchGroup(Composite composite) {
+		createBranchCheckBox(composite);
 		// now the branch group
 		Group branchGroup = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("TransplantPage.branchGroup.title")); //$NON-NLS-1$
-		createBranchCheckBox(branchGroup);
 		createAllCheckBox(branchGroup);
 		createBranchNameCombo(branchGroup);
 	}
@@ -221,28 +221,24 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		allCheckBox.addSelectionListener(allCheckBoxListener);
 	}
 
-	private void createBranchCheckBox(Group branchGroup) {
-		branchCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
+	private void createBranchCheckBox(Composite parent) {
+		branchCheckBox = SWTWidgetHelper.createCheckBox(parent, Messages
 				.getString("TransplantPage.branchCheckBox.title")); //$NON-NLS-1$
 
 		SelectionListener branchCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				branch = branchCheckBox.getSelection();
-				if(branch){
-
-				}
 				setUrlGroupEnabled(!branch);
 //				getUrlCombo().setEnabled(!branch);
 				getUserCombo().setEnabled(!branch);
 				passwordText.setEnabled(!branch);
 				allCheckBox.setEnabled(branch);
-				branchNameCombo.setEnabled(branch);
+				branchNameCombo.setEnabled(branch);				
 				clearChangesets();
+				getUrlCombo().deselectAll();
 				if (branch) {
 					branchName = null;
 					branchNameCombo.deselectAll();
-				} else {
-					getUrlCombo().deselectAll();
 				}
 				validatePage();
 			}
