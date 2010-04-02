@@ -33,7 +33,6 @@ import org.eclipse.ui.navigator.ICommonViewerSite;
 import org.eclipse.ui.navigator.ICommonViewerWorkbenchSite;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;

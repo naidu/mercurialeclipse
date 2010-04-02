@@ -82,8 +82,8 @@ public class MercurialRevisionStorage implements IStorage {
 			} catch (UnsupportedEncodingException e) {
 				error = e;
 				// core API ignores exceptions from this method, so we need to log them here
-				MercurialEclipsePlugin.logWarning("Failed to get revision content for " +
-						MercurialRevisionStorage.this.toString(), e);
+				MercurialEclipsePlugin.logWarning("Failed to get revision content for "
+						+ MercurialRevisionStorage.this.toString(), e);
 				return EMPTY_STREAM;
 			}
 		}
@@ -232,7 +232,7 @@ public class MercurialRevisionStorage implements IStorage {
 			// local: get the contents via cat
 			if(file.exists() && MercurialStatusCache.getInstance().isUnknown(file)){
 				// for existing but unknown files, simply return dummy content
-				return new ContentHolder((byte[])null);
+				return new ContentHolder((byte[]) null);
 			}
 			result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
 		}

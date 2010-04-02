@@ -63,7 +63,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
 	private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
 
-	private final static String[] fonts = new String[] {
+	private static final String[] FONTS = new String[] {
 		ADDED_FONT,
 		CONFLICT_FONT,
 		DELETED_FONT,
@@ -71,7 +71,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		UNKNOWN_FONT,
 		IGNORED_FONT, CHANGE_FONT };
 
-	private final static String[] colors = new String[] {
+	private static final String[] COLORS = new String[] {
 		ADDED_BACKGROUND_COLOR,
 		ADDED_FOREGROUND_COLOR,
 		CHANGE_BACKGROUND_COLOR,
@@ -87,17 +87,17 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		UNKNOWN_BACKGROUND_COLOR,
 		UNKNOWN_FOREGROUND_COLOR };
 
-	private final static Set<String> interestingPrefs = new HashSet<String>();
+	private static final Set<String> INTERESTING_PREFS = new HashSet<String>();
 	static {
-		interestingPrefs.add(LABELDECORATOR_LOGIC_2MM);
-		interestingPrefs.add(LABELDECORATOR_LOGIC);
-		interestingPrefs.add(PREF_DECORATE_WITH_COLORS);
-		interestingPrefs.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
-		interestingPrefs.add(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		INTERESTING_PREFS.add(LABELDECORATOR_LOGIC_2MM);
+		INTERESTING_PREFS.add(LABELDECORATOR_LOGIC);
+		INTERESTING_PREFS.add(PREF_DECORATE_WITH_COLORS);
+		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
+		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
 	}
 
 	/** set to true when having 2 different statuses in a folder flags it has modified */
-	private boolean folder_logic_2MM;
+	private boolean folderLogic2MM;
 	private ITheme theme;
 	private boolean colorise;
 	private boolean showChangeset;
@@ -108,7 +108,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		STATUS_CACHE.addObserver(this);
 		INCOMING_CACHE.addObserver(this);
 		theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-		ensureFontAndColorsCreated(fonts, colors);
+		ensureFontAndColorsCreated(FONTS, COLORS);
 
 		PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
@@ -116,13 +116,13 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 					return;
 				}
 				theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-				ensureFontAndColorsCreated(fonts, colors);
+				ensureFontAndColorsCreated(FONTS, COLORS);
 			}
 		});
 
 		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
-				if(interestingPrefs.contains(event.getProperty())){
+				if(INTERESTING_PREFS.contains(event.getProperty())){
 					configureFromPreferences();
 					fireLabelProviderChanged(new LabelProviderChangedEvent(ResourceDecorator.this));
 				}
@@ -166,7 +166,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	 */
 	private void configureFromPreferences() {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		folder_logic_2MM = LABELDECORATOR_LOGIC_2MM.equals(store.getString(LABELDECORATOR_LOGIC));
+		folderLogic2MM = LABELDECORATOR_LOGIC_2MM.equals(store.getString(LABELDECORATOR_LOGIC));
 		colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
 		showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		showIncomingChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
@@ -188,7 +188,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 			if (!STATUS_CACHE.isStatusKnown(project)) {
 				// simply wait until the cache sends us an event
-				d.addOverlay(DecoratorImages.notTrackedDescriptor);
+				d.addOverlay(DecoratorImages.NOT_TRACKED);
 				if(resource == project){
 					d.addSuffix(" [Hg status pending...]");
 				}
@@ -231,10 +231,10 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		ImageDescriptor overlay = null;
 		// BitSet output = fr.getStatus();
 		// "ignore" does not really count as modified
-		if (folder_logic_2MM
+		if (folderLogic2MM
 				&& (Bits.cardinality(statusBits) > 2 || (Bits.cardinality(statusBits) == 2 && !Bits.contains(statusBits,
 						MercurialStatusCache.BIT_IGNORE)))) {
-			overlay = DecoratorImages.modifiedDescriptor;
+			overlay = DecoratorImages.MODIFIED;
 			if (coloriseLabels) {
 				setBackground(d, CHANGE_BACKGROUND_COLOR);
 				setForeground(d, CHANGE_FOREGROUND_COLOR);
@@ -254,7 +254,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_MODIFIED:
-				overlay = DecoratorImages.modifiedDescriptor;
+				overlay = DecoratorImages.MODIFIED;
 				if (coloriseLabels) {
 					setBackground(d, CHANGE_BACKGROUND_COLOR);
 					setForeground(d, CHANGE_FOREGROUND_COLOR);
@@ -264,7 +264,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_ADDED:
-				overlay = DecoratorImages.addedDescriptor;
+				overlay = DecoratorImages.ADDED;
 				if (coloriseLabels) {
 					setBackground(d, ADDED_BACKGROUND_COLOR);
 					setForeground(d, ADDED_FOREGROUND_COLOR);
@@ -274,7 +274,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_UNKNOWN:
-				overlay = DecoratorImages.notTrackedDescriptor;
+				overlay = DecoratorImages.NOT_TRACKED;
 				if (coloriseLabels) {
 					setBackground(d, UNKNOWN_BACKGROUND_COLOR);
 					setForeground(d, UNKNOWN_FOREGROUND_COLOR);
@@ -284,12 +284,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_CLEAN:
-				overlay = DecoratorImages.managedDescriptor;
+				overlay = DecoratorImages.MANAGED;
 				break;
 				// case BIT_IGNORE:
 				// do nothing
 			case MercurialStatusCache.BIT_REMOVED:
-				overlay = DecoratorImages.removedDescriptor;
+				overlay = DecoratorImages.REMOVED;
 				if (coloriseLabels) {
 					setBackground(d, REMOVED_BACKGROUND_COLOR);
 					setForeground(d, REMOVED_FOREGROUND_COLOR);
@@ -299,7 +299,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_MISSING:
-				overlay = DecoratorImages.deletedStillTrackedDescriptor;
+				overlay = DecoratorImages.DELETED_STILL_TRACKED;
 				if (coloriseLabels) {
 					setBackground(d, DELETED_BACKGROUND_COLOR);
 					setForeground(d, DELETED_FOREGROUND_COLOR);
@@ -309,7 +309,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				}
 				break;
 			case MercurialStatusCache.BIT_CONFLICT:
-				overlay = DecoratorImages.conflictDescriptor;
+				overlay = DecoratorImages.CONFLICT;
 				if (coloriseLabels) {
 					setBackground(d, CONFLICT_BACKGROUND_COLOR);
 					setForeground(d, CONFLICT_FOREGROUND_COLOR);
@@ -413,7 +413,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			String merging = HgStatusClient.getMergeChangesetId(project);
 			String bisecting = null;
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			// XXX should use map, as there can be 100 projects under the same root 
+			// XXX should use map, as there can be 100 projects under the same root
 			if (HgBisectClient.isBisecting(hgRoot)) {
 				bisecting = " BISECTING";
 			}

@@ -55,9 +55,9 @@ public class ActionShowRootHistory implements IWorkbenchWindowActionDelegate {
 		Display.getDefault().asyncExec(r);
 	}
 
-	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection != null && in_selection instanceof IStructuredSelection) {
-			selection = (IStructuredSelection) in_selection;
+	public void selectionChanged(IAction action, ISelection inSelection) {
+		if (inSelection != null && inSelection instanceof IStructuredSelection) {
+			selection = (IStructuredSelection) inSelection;
 		}
 	}
 

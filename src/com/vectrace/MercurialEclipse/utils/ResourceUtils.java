@@ -52,10 +52,14 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * @author bastian
  * @author Andrei Loskutov
  */
-public class ResourceUtils {
+public final class ResourceUtils {
 
 	private static final File TMP_ROOT = new File(System.getProperty("java.io.tmpdir"));
-	private static long tmpFileSuffix = 0;
+	private static long tmpFileSuffix;
+
+	private ResourceUtils() {
+		// hide constructor of utility class.
+	}
 
 	public static File getSystemTempDirectory() {
 		return TMP_ROOT;

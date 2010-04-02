@@ -80,7 +80,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		}
 		if(object instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) object;
-			return (isMatching(group.getDirection()) && !group.getChangesets().isEmpty());
+			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
 		}
 		if(object instanceof ChangeSet){
 			ChangeSet changeSet = (ChangeSet) object;

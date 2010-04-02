@@ -160,7 +160,7 @@ public class GChangeSet {
 	public static class RowCount {
 		public int jump;
 		public List<Integer> cols = new ArrayList<Integer>();
-		private int unique = 0;
+		private int unique;
 		private Edge lastEdge;
 		private int dec = -1;
 
@@ -262,7 +262,9 @@ public class GChangeSet {
 			line, dot, working, plus, dash, slash, backslash
 		}
 
-		private int top, bottom, col;
+		private int top;
+		private int bottom;
+		private int col;
 		private int lane;
 		private boolean finish;
 		private EdgeType type;

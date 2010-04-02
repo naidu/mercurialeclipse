@@ -65,7 +65,7 @@ public class HgChangeSetSorter extends ViewerSorter {
 			return cat1 - cat2;
 		}
 		if(e1 instanceof ChangeSet && e2 instanceof ChangeSet){
-			return csComparator.compare((ChangeSet)e1, (ChangeSet)e2);
+			return csComparator.compare((ChangeSet) e1, (ChangeSet) e2);
 		}
 		if(e1 instanceof ChangesetGroup && e2 instanceof ChangesetGroup){
 			ChangesetGroup group1 = (ChangesetGroup) e1;
@@ -103,10 +103,10 @@ public class HgChangeSetSorter extends ViewerSorter {
 			}
 		}
 		if (name1 == null) {
-			name1 = "";//$NON-NLS-1$
+			name1 = ""; //$NON-NLS-1$
 		}
 		if (name2 == null) {
-			name2 = "";//$NON-NLS-1$
+			name2 = ""; //$NON-NLS-1$
 		}
 
 		// use the comparator to compare the strings

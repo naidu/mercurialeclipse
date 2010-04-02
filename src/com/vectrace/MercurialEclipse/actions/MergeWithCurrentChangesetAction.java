@@ -34,14 +34,14 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class MergeWithCurrentChangesetAction extends Action {
 	private final MercurialHistoryPage mhp;
-	private final static ImageDescriptor imageDesc = MercurialEclipsePlugin
+	private static final ImageDescriptor IMAGE_DESC = MercurialEclipsePlugin
 			.getImageDescriptor("actions/merge.gif"); //$NON-NLS-1$
 
 	/**
 	 *
 	 */
 	public MergeWithCurrentChangesetAction(MercurialHistoryPage mhp) {
-		super(Messages.getString("MergeWithCurrentChangesetAction.mergeSelectedChangesetWithCurrentChangeset"), imageDesc); //$NON-NLS-1$
+		super(Messages.getString("MergeWithCurrentChangesetAction.mergeSelectedChangesetWithCurrentChangeset"), IMAGE_DESC); //$NON-NLS-1$
 		this.mhp = mhp;
 	}
 

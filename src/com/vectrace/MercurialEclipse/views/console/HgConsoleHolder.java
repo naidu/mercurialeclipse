@@ -29,10 +29,10 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 /**
  * This class should only be called from the UI thread as it is not thread-safe.
  */
-public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
+public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
 	private static final String CONSOLE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"; //$NON-NLS-1$
 
-	private static final HgConsoleHolder instance = new HgConsoleHolder();
+	private static final HgConsoleHolder INSTANCE = new HgConsoleHolder();
 
 	private volatile HgConsole console;
 
@@ -43,7 +43,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 	}
 
 	public static HgConsoleHolder getInstance() {
-		return instance;
+		return INSTANCE;
 	}
 
 	private void init() {

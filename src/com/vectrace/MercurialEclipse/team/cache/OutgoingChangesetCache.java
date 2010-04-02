@@ -16,7 +16,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 /**
  * Cache for all changesets not present locally but existing on the server
  */
-public class OutgoingChangesetCache extends AbstractRemoteCache {
+public final class OutgoingChangesetCache extends AbstractRemoteCache {
 
 	private static OutgoingChangesetCache instance;
 
@@ -24,7 +24,7 @@ public class OutgoingChangesetCache extends AbstractRemoteCache {
 		super(Direction.OUTGOING);
 	}
 
-	public synchronized static OutgoingChangesetCache getInstance() {
+	public static synchronized OutgoingChangesetCache getInstance() {
 		if (instance == null) {
 			instance = new OutgoingChangesetCache();
 		}

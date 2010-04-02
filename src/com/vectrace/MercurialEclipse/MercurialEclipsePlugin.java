@@ -59,7 +59,6 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
@@ -74,7 +73,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	public static final String ID = "com.vectrace.MercurialEclipse"; //$NON-NLS-1$
 
-	public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView"; //$NON-NLS-1$
+	public static final String ID_CHANGELOG_VIEW = "com.vectrace.MercurialEclipse.views.ChangeLogView"; //$NON-NLS-1$
 
 	public static final String BUNDLE_FILE_PREFIX = "bundlefile"; //$NON-NLS-1$
 
@@ -222,7 +221,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	/**
 	 * Gets the repository manager
 	 */
-	static public HgRepositoryLocationManager getRepoManager() {
+	public static HgRepositoryLocationManager getRepoManager() {
 		return repoManager;
 	}
 
@@ -306,7 +305,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		return new Status(severity, ID, code, msg, ex);
 	}
 
-	public final static void logError(Throwable ex) {
+	public static final void logError(Throwable ex) {
 		logError(ex.getMessage(), ex);
 	}
 

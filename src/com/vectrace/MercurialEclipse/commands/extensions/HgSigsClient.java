@@ -53,7 +53,7 @@ public class HgSigsClient extends AbstractClient {
 					reader = new LineNumberReader(new FileReader(sigFile));
 					String line = reader.readLine();
 					while (line != null) {
-						String nodeId = line.substring(0,line.indexOf(" 0 ")); //$NON-NLS-1$
+						String nodeId = line.substring(0, line.indexOf(" 0 ")); //$NON-NLS-1$
 						Signature sig = new Signature(null, nodeId, hgRoot);
 						nodes.add(sig);
 						line = reader.readLine();
@@ -83,7 +83,7 @@ public class HgSigsClient extends AbstractClient {
 		try {
 			AbstractShellCommand c = new HgCommand("sigcheck", hgRoot, //$NON-NLS-1$
 					false);
-			c.addOptions("--config","extensions.gpg=");
+			c.addOptions("--config", "extensions.gpg=");
 			c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 			c.addOptions(nodeId);
 			return c.executeToString();

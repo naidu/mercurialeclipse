@@ -180,15 +180,15 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	}
 
 	protected String getRevCheckBoxLabel() {
-		return Messages.getString("PushRepoPage.revCheckBox.text");//$NON-NLS-1$
+		return Messages.getString("PushRepoPage.revCheckBox.text"); //$NON-NLS-1$
 	}
 
 	protected String getForceCheckBoxLabel() {
-		return Messages.getString("PushRepoPage.forceCheckBox.text");//$NON-NLS-1$
+		return Messages.getString("PushRepoPage.forceCheckBox.text"); //$NON-NLS-1$
 	}
 
 	protected String getTimeoutCheckBoxLabel() {
-		return Messages.getString("PushRepoPage.timeoutCheckBox.text");//$NON-NLS-1$
+		return Messages.getString("PushRepoPage.timeoutCheckBox.text"); //$NON-NLS-1$
 	}
 
 	public boolean isForce() {

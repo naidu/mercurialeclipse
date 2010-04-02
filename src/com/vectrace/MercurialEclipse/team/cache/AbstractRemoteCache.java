@@ -27,9 +27,9 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -122,9 +122,10 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private void notifyChanged(HgRoot root, boolean expandMembers) {
 		Set<?> projects = ResourceUtils.getProjects(root);
-		notifyChanged((Set<IResource>)projects, expandMembers);
+		notifyChanged((Set<IResource>) projects, expandMembers);
 	}
 
 	/**
@@ -152,9 +153,10 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	protected void notifyChanged(IHgRepositoryLocation repo, boolean expandMembers){
 		Set<?> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-		notifyChanged((Set<IResource>)projects, expandMembers);
+		notifyChanged((Set<IResource>) projects, expandMembers);
 	}
 
 	@Override
@@ -286,7 +288,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	private void addResourcesToCache(RemoteKey key) throws HgException {
 		if(debug) {
-			System.out.println("\n!fetch " + direction + " for " + key);
+			System.out.println("!fetch " + direction + " for " + key);
 		}
 
 		fastRepoMap.remove(key);
@@ -300,7 +302,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 
 		if(debug) {
-			System.out.println("\n!got " + data.getChangeSets().size() + " " + direction + " changesets");
+			System.out.println("!got " + data.getChangeSets().size() + " " + direction + " changesets");
 		}
 		fastRepoMap.put(key, data);
 

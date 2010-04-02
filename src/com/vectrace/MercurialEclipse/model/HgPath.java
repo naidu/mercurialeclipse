@@ -67,7 +67,7 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 					if (isHgRoot(file)) {
 						children.add(new HgRoot(file));
 					} else {
-						if (!file.getName().equals(".hg")) {
+						if (!".hg".equals(file.getName())) {
 							children.add(new HgPath(file));
 						}
 					}

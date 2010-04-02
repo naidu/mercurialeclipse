@@ -32,7 +32,7 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 public class MercurialTextSearchTreeContentProvider implements ITreeContentProvider,
 		IMercurialTextSearchContentProvider {
 
-	private final Object[] EMPTY_ARR = new Object[0];
+	private static final Object[] EMPTY_ARR = new Object[0];
 
 	private AbstractTextSearchResult fResult;
 	private final MercurialTextSearchResultPage fPage;
@@ -89,7 +89,7 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 			for (int i = 0; i < elements.length; i++) {
 				Match[] matches = result.getMatches(elements[i]);
 				for (int j = 0; j < matches.length; j++) {
-					MercurialMatch m = ((MercurialMatch) matches[j]);
+					MercurialMatch m = (MercurialMatch) matches[j];
 					insert(m, false, m.getMercurialRevisionStorage());
 				}
 			}

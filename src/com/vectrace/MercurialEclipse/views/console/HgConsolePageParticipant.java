@@ -11,8 +11,8 @@
 package com.vectrace.MercurialEclipse.views.console;
 
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.console.*;
 import org.eclipse.ui.console.IConsole;
+import org.eclipse.ui.console.IConsoleConstants;
 import org.eclipse.ui.console.IConsolePageParticipant;
 import org.eclipse.ui.part.IPageBookViewPage;
 

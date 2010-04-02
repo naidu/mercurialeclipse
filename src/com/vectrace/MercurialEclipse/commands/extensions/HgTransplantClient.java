@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
-public class HgTransplantClient {
+public final class HgTransplantClient {
 
 	public static class TransplantOptions {
 		public boolean all;
@@ -37,6 +37,10 @@ public class HgTransplantClient {
 		public String pruneNodeId;
 		/** changesets sorted in the ascending revision order */
 		public SortedSet<ChangeSet> nodes;
+	}
+
+	private HgTransplantClient() {
+		// hide constructor of utility class.
 	}
 
 	/**
@@ -63,7 +67,7 @@ public class HgTransplantClient {
 			} else {
 				command.addOptions("--source"); //$NON-NLS-1$
 				URI uri = repo.getUri();
-				if (uri != null ) {
+				if (uri != null) {
 					command.addOptions(uri.toASCIIString());
 				} else {
 					command.addOptions(repo.getLocation());

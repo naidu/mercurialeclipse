@@ -70,8 +70,8 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  */
 public class HgRepositoryLocationManager {
 
-	final static private String KEY_REPOS_PREFIX = "repo_"; //$NON-NLS-1$
-	final static private String KEY_DEF_REPO_PREFIX = "def_" + KEY_REPOS_PREFIX; //$NON-NLS-1$
+	private static final String KEY_REPOS_PREFIX = "repo_"; //$NON-NLS-1$
+	private static final String KEY_DEF_REPO_PREFIX = "def_" + KEY_REPOS_PREFIX; //$NON-NLS-1$
 
 	private final Map<HgRoot, SortedSet<IHgRepositoryLocation>> rootRepos;
 	private final SortedSet<IHgRepositoryLocation> repoHistory;
@@ -182,7 +182,7 @@ public class HgRepositoryLocationManager {
 	 * Add a repository location to the database.
 	 */
 	private boolean addRepoLocation(IHgRepositoryLocation loc) {
-		return internalAddRepoLocation((HgRoot)null, loc);
+		return internalAddRepoLocation((HgRoot) null, loc);
 	}
 
 	/**

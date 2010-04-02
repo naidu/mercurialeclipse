@@ -92,7 +92,7 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 	Set<IProject> collectSingleProjects(List<IResource> resources){
 		Set<IProject> singleProjects = new HashSet<IProject>();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
-		Set<Entry<HgRoot,List<IResource>>> entrySet = byRoot.entrySet();
+		Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
 		for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 			HgRoot hgRoot = entry.getKey();
 			List<IProject> hgProjects = MercurialTeamProvider.getKnownHgProjects(hgRoot);

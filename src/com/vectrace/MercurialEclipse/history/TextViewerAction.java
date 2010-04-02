@@ -21,7 +21,7 @@ import org.eclipse.ui.texteditor.IUpdate;
  */
 public class TextViewerAction extends Action implements IUpdate {
 	private int operationCode = -1;
-	private ITextOperationTarget operationTarget;
+	private final ITextOperationTarget operationTarget;
 
 	public TextViewerAction(ITextViewer viewer, int operationCode) {
 		this.operationCode = operationCode;
@@ -30,7 +30,7 @@ public class TextViewerAction extends Action implements IUpdate {
 	}
 	public void update() {
 		boolean wasEnabled = isEnabled();
-		boolean isEnabled = (operationTarget != null && operationTarget.canDoOperation(operationCode));
+		boolean isEnabled = operationTarget != null && operationTarget.canDoOperation(operationCode);
 		setEnabled(isEnabled);
 		if (wasEnabled != isEnabled) {
 			firePropertyChange(ENABLED, wasEnabled ? Boolean.TRUE : Boolean.FALSE, isEnabled ? Boolean.TRUE : Boolean.FALSE);

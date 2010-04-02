@@ -122,8 +122,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 
 	@Override
 	protected Object prepareInput(IProgressMonitor monitor)
-	throws InvocationTargetException, InterruptedException
-	{
+	throws InvocationTargetException, InterruptedException {
 		return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
 	}
 
@@ -137,12 +136,11 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	@Override
-	public void saveChanges(IProgressMonitor monitor) throws CoreException
-	{
+	public void saveChanges(IProgressMonitor monitor) throws CoreException {
 		boolean save = isSaveNeeded();
 		super.saveChanges(monitor);
 		if(save) {
-			((IFile)left.getResource()).setContents(left.getContents(), true, true, monitor);
+			((IFile) left.getResource()).setContents(left.getContents(), true, true, monitor);
 		}
 	}
 

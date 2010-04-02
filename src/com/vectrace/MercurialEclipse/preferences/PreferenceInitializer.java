@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (intland)   - bug fixes
+ *     Philip Graf               - use default timeout from preferences
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -88,11 +89,10 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_FOREGROUND, "0,0,0");
 
 
-		// default is 6 minutes. Don't ask why 6... Because it is 7 times smaller as 42?
-		int defaultTimeout = 6 * 60 * 1000;
+		int defaultTimeout = TimeoutPreferencePage.DEFAULT_TIMEOUT;
 		store.setDefault(DEFAULT_TIMEOUT, defaultTimeout);
 
-		// remote operations are always longer then local
+		// remote operations are always longer than local
 		store.setDefault(CLONE_TIMEOUT, defaultTimeout * 10);
 		store.setDefault(PUSH_TIMEOUT, defaultTimeout * 10);
 		store.setDefault(PULL_TIMEOUT, defaultTimeout * 10);

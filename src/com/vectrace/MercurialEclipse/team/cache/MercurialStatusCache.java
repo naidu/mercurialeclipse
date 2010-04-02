@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -72,7 +72,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  *
  * @author Bastian Doetsch
  */
-public class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
+public final class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
 
 	private static final int STATUS_BATCH_SIZE = 10;
 	static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
@@ -186,31 +186,32 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * in the outer class.
 	 */
 	private static final class MercurialStatusCacheHolder {
-		public static final MercurialStatusCache instance = new MercurialStatusCache();
+		private MercurialStatusCacheHolder() { /* hide constructor of utility class. */ }
+		public static final MercurialStatusCache INSTANCE = new MercurialStatusCache();
 	}
 
-	public final static int BIT_IGNORE = 1 << 1;
-	public final static int BIT_CLEAN = 1 << 2;
+	public static final int BIT_IGNORE = 1 << 1;
+	public static final int BIT_CLEAN = 1 << 2;
 	/** file is tracked by hg, but it is missing on a disk (probably deleted by external command) */
-	public final static int BIT_MISSING = 1 << 3;
-	public final static int BIT_REMOVED = 1 << 4;
-	public final static int BIT_UNKNOWN = 1 << 5;
-	public final static int BIT_ADDED = 1 << 6;
-	public final static int BIT_MODIFIED = 1 << 7;
-	public final static int BIT_IMPOSSIBLE = 1 << 8;
-	public final static int BIT_CONFLICT = 1 << 9;
+	public static final int BIT_MISSING = 1 << 3;
+	public static final int BIT_REMOVED = 1 << 4;
+	public static final int BIT_UNKNOWN = 1 << 5;
+	public static final int BIT_ADDED = 1 << 6;
+	public static final int BIT_MODIFIED = 1 << 7;
+	public static final int BIT_IMPOSSIBLE = 1 << 8;
+	public static final int BIT_CONFLICT = 1 << 9;
 	/** directory bit */
-	public final static int BIT_DIR = 1 << 10;
+	public static final int BIT_DIR = 1 << 10;
 
-	private final static Integer _IGNORE = Integer.valueOf(BIT_IGNORE);
-	private final static Integer _CLEAN = Integer.valueOf(BIT_CLEAN);
+	private static final Integer IGNORE = Integer.valueOf(BIT_IGNORE);
+	private static final Integer CLEAN = Integer.valueOf(BIT_CLEAN);
 //    private final static Integer _MISSING = Integer.valueOf(BIT_MISSING);
 //    private final static Integer _REMOVED = Integer.valueOf(BIT_REMOVED);
 //    private final static Integer _UNKNOWN = Integer.valueOf(BIT_UNKNOWN);
 //    private final static Integer _ADDED = Integer.valueOf(BIT_ADDED);
 //    private final static Integer _MODIFIED = Integer.valueOf(BIT_MODIFIED);
 //    private final static Integer _IMPOSSIBLE = Integer.valueOf(BIT_IMPOSSIBLE);
-	private final static Integer _CONFLICT = Integer.valueOf(BIT_CONFLICT);
+	private static final Integer CONFLICT = Integer.valueOf(BIT_CONFLICT);
 
 	/** maximum bits count used in the cache */
 //    private final static int MAX_BITS_COUNT = 9;
@@ -231,15 +232,15 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * we do not propagate this bits to the parent directory directly,
 	 * but propagate only {@link #BIT_MODIFIED} or {@link #BIT_CONFLICT}
 	 */
-	private static final int IGNORED_MASK = BIT_IGNORE | BIT_CLEAN |
-			BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED;
+	private static final int IGNORED_MASK = BIT_IGNORE | BIT_CLEAN | BIT_MISSING | BIT_REMOVED
+			| BIT_UNKNOWN | BIT_ADDED;
 
 	/**
 	 * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any from bits:
 	 * BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED is set on the child file.
 	 */
-	public static final int MODIFIED_MASK = BIT_MISSING | BIT_REMOVED |
-			BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED;
+	public static final int MODIFIED_MASK = BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED
+			| BIT_MODIFIED;
 
 	/** a directory is still supervised if one of the following bits is set */
 	private static final int DIR_SUPERVISED_MASK = BIT_ADDED | BIT_CLEAN | BIT_MISSING
@@ -266,22 +267,21 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	private boolean computeDeepStatus;
 	private int statusBatchSize;
-	private static final Set<IResource> EMPTY_SET = new HashSet<IResource>();
 
 	static class BitMap {
-		private final Set<IPath> IGNORE_SET = new HashSet<IPath>();
+		private final Set<IPath> ignore = new HashSet<IPath>();
 		// don't waste space with most popular state
-		// private final Set<IPath> MAP_CLEAN = new HashSet<IPath>();
-		private final Set<IPath> MISSING_SET = new HashSet<IPath>();
-		private final Set<IPath> REMOVED_SET = new HashSet<IPath>();
-		private final Set<IPath> UNKNOWN_SET = new HashSet<IPath>();
-		private final Set<IPath> ADDED_SET = new HashSet<IPath>();
-		private final Set<IPath> MODIFIED_SET = new HashSet<IPath>();
-		private final Set<IPath> CONFLICT_SET = new HashSet<IPath>();
+		// private final Set<IPath> clean = new HashSet<IPath>();
+		private final Set<IPath> missing = new HashSet<IPath>();
+		private final Set<IPath> removed = new HashSet<IPath>();
+		private final Set<IPath> unknown = new HashSet<IPath>();
+		private final Set<IPath> added = new HashSet<IPath>();
+		private final Set<IPath> modified = new HashSet<IPath>();
+		private final Set<IPath> conflict = new HashSet<IPath>();
 		/** directories */
-		private final Set<IPath> DIR_SET = new HashSet<IPath>();
+		private final Set<IPath> dir = new HashSet<IPath>();
 		// we do not cache impossible values
-		// private final Set<IPath> MAP_IMPOSSIBLE = new HashSet<IPath>();
+		// private final Set<IPath> impossible = new HashSet<IPath>();
 
 		public BitMap() {
 			super();
@@ -291,63 +291,63 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			// removed is the first one for speed
 			int mask = set.intValue();
 			if((mask & BIT_REMOVED) != 0){
-				REMOVED_SET.add(path);
+				removed.add(path);
 			}
 			if((mask & BIT_MISSING) != 0){
-				MISSING_SET.add(path);
+				missing.add(path);
 			}
 			if((mask & BIT_UNKNOWN) != 0){
-				UNKNOWN_SET.add(path);
+				unknown.add(path);
 			}
 			if((mask & BIT_ADDED) != 0){
-				ADDED_SET.add(path);
+				added.add(path);
 			}
 			if((mask & BIT_MODIFIED) != 0){
-				MODIFIED_SET.add(path);
+				modified.add(path);
 			}
 			if((mask & BIT_CONFLICT) != 0){
-				CONFLICT_SET.add(path);
+				conflict.add(path);
 			}
 			if((mask & BIT_IGNORE) != 0){
-				IGNORE_SET.add(path);
+				ignore.add(path);
 			}
 			if((mask & BIT_DIR) != 0){
-				DIR_SET.add(path);
+				dir.add(path);
 			}
 		}
 
 		synchronized Set<IPath> get(int bit){
 			switch (bit) {
 			case BIT_REMOVED:
-				return REMOVED_SET;
+				return removed;
 			case BIT_MISSING:
-				return MISSING_SET;
+				return missing;
 			case BIT_UNKNOWN:
-				return UNKNOWN_SET;
+				return unknown;
 			case BIT_ADDED:
-				return ADDED_SET;
+				return added;
 			case BIT_MODIFIED:
-				return MODIFIED_SET;
+				return modified;
 			case BIT_CONFLICT:
-				return CONFLICT_SET;
+				return conflict;
 			case BIT_IGNORE:
-				return IGNORE_SET;
+				return ignore;
 			case BIT_DIR:
-				return DIR_SET;
+				return dir;
 			default:
 				return null;
 			}
 		}
 
 		synchronized void remove(IPath path) {
-			remove(path, REMOVED_SET);
-			remove(path, MISSING_SET);
-			remove(path, UNKNOWN_SET);
-			remove(path, ADDED_SET);
-			remove(path, MODIFIED_SET);
-			remove(path, CONFLICT_SET);
-			remove(path, IGNORE_SET);
-			remove(path, DIR_SET);
+			remove(path, removed);
+			remove(path, missing);
+			remove(path, unknown);
+			remove(path, added);
+			remove(path, modified);
+			remove(path, conflict);
+			remove(path, ignore);
+			remove(path, dir);
 		}
 
 		void remove(IPath path, Set<IPath> set) {
@@ -364,8 +364,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				IResourceChangeEvent.POST_CHANGE);
 	}
 
-	public static final MercurialStatusCache getInstance() {
-		return MercurialStatusCacheHolder.instance;
+	public static MercurialStatusCache getInstance() {
+		return MercurialStatusCacheHolder.INSTANCE;
 	}
 
 	/**
@@ -544,7 +544,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		if(isMappedState){
 			Set<IPath> set = bitMap.get(statusBits);
 			if(set == null || set.isEmpty()){
-				return EMPTY_SET;
+				return Collections.emptySet();
 			}
 			IPath parentPath = ResourceUtils.getPath(folder);
 			resources = new HashSet<IResource>();
@@ -566,7 +566,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			}
 		} else {
 			resources = new HashSet<IResource>();
-			Set<Entry<IPath,Integer>> entrySet = statusMap.entrySet();
+			Set<Entry<IPath, Integer>> entrySet = statusMap.entrySet();
 			IPath parentPath = ResourceUtils.getPath(folder);
 			for (Entry<IPath, Integer> entry : entrySet) {
 				Integer status = entry.getValue();
@@ -808,7 +808,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		List<FlaggedAdaptable> status = HgResolveClient.list(hgRoot);
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath parentPath = new Path(hgRoot.getAbsolutePath());
-		Set<IPath> members = getPathChildrenFromCache(parentPath );
+		Set<IPath> members = getPathChildrenFromCache(parentPath);
 		for (IPath childPath : members) {
 			if(removeConflict(childPath)){
 				IFile fileHandle = ResourceUtils.getFileHandle(childPath);
@@ -826,7 +826,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		return changed;
 	}
 
-	Pattern NEWLINE = Pattern.compile("\n");
+	private static final Pattern NEWLINE = Pattern.compile("\n");
 
 	/**
 	 * @param lines must contain file paths as paths relative to the hg root
@@ -877,7 +877,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			Integer bitSet;
 			boolean ignoredHint = Team.isIgnoredHint(member);
 			if (ignoredHint) {
-				bitSet = _IGNORE;
+				bitSet = IGNORE;
 			} else {
 				bitSet = Integer.valueOf(bit);
 				changed.add(member);
@@ -906,7 +906,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		int rootegmentCount = hgRootPath.segmentCount();
-		Set<Entry<IProject,IPath>> set = pathMap.entrySet();
+		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
 		for (Entry<IProject, IPath> entry : set) {
 			IPath projectLocation = entry.getValue();
 			// determine project relative path
@@ -941,11 +941,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				continue;
 			}
 			int parentBitSet = 0;
-			{
-				Integer parentBits = statusMap.get(location);
-				if(parentBits != null){
-					parentBitSet = parentBits.intValue();
-				}
+			Integer parentBits = statusMap.get(location);
+			if(parentBits != null){
+				parentBitSet = parentBits.intValue();
 			}
 			int cloneBitSet = resourceBitSet.intValue();
 
@@ -960,8 +958,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			}
 
 			if (computeDeep && resource.getType() != IResource.PROJECT) {
-				if (!Bits.contains(cloneBitSet, BIT_MODIFIED) &&
-						parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
+				if (!Bits.contains(cloneBitSet, BIT_MODIFIED) && parent.isAccessible()
+						&& !parent.isTeamPrivateMember() && !parent.isDerived()) {
 					MemberStatusVisitor visitor = new MemberStatusVisitor(location, cloneBitSet);
 					// we have to traverse all "dirty" resources and change parent state to "dirty"...
 					boolean visit = checkChildrenFor(location, visitor, BIT_MODIFIED);
@@ -1126,7 +1124,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 							}
 							// recursive recalculate parents state
 							// TODO better to combine it with parse status below...
-							setStatusToAncestors(curr, _CLEAN);
+							setStatusToAncestors(curr, CLEAN);
 						}
 					}
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
@@ -1237,13 +1235,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	private Set<IResource> addConflict(IResource local) {
 		IPath location = local.getLocation();
 		if(location == null){
-			return EMPTY_SET;
+			return Collections.emptySet();
 		}
 		Integer status = statusMap.get(location);
 		boolean isDir = local.getType() == IResource.FOLDER;
 		if(status == null){
-			status = _CONFLICT;
-			setStatus(location, _CONFLICT, isDir);
+			status = CONFLICT;
+			setStatus(location, CONFLICT, isDir);
 		} else {
 			status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
 			setStatus(location, status, isDir);
@@ -1281,7 +1279,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		computeDeepStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS);
 		// TODO: group batches by repo root
 
-		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;
+		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE); // STATUS_BATCH_SIZE;
 		if (statusBatchSize <= 0) {
 			store.setValue(MercurialPreferenceConstants.STATUS_BATCH_SIZE, STATUS_BATCH_SIZE);
 			statusBatchSize = STATUS_BATCH_SIZE;

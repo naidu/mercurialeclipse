@@ -137,9 +137,9 @@ final class ChangesetContentHandler implements ContentHandler {
 
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
-		if (name.equals("de")) {
+		if ("de".equals(name)) {
 			description = descriptionChars.toString();
-		} else if (name.equals("cs")) {
+		} else if ("cs".equals(name)) {
 			// only collect changesets from requested branch. Null is: collect everything.
 			if(expectedBranch == null || Branch.same(branchStr, expectedBranch)){
 				ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
@@ -229,35 +229,35 @@ final class ChangesetContentHandler implements ContentHandler {
 		 * <de>{desc|escape|tabindent}</de>
 		 */
 		readDescription = false;
-		if (name.equals("br")) {
+		if ("br".equals(name)) {
 			branchStr = atts.getValue(0);
-		} else if (name.equals("tg")) {
+		} else if ("tg".equals(name)) {
 			tags = atts.getValue(0);
-		} else if (name.equals("rv")) {
+		} else if ("rv".equals(name)) {
 			rev = Integer.parseInt(atts.getValue(0));
-		} else if (name.equals("ns")) {
+		} else if ("ns".equals(name)) {
 			nodeShort = atts.getValue(0);
-		} else if (name.equals("nl")) {
+		} else if ("nl".equals(name)) {
 			nodeLong = atts.getValue(0);
-		} else if (name.equals("di")) {
+		} else if ("di".equals(name)) {
 			dateIso = atts.getValue(0);
-		} else if (name.equals("da")) {
+		} else if ("da".equals(name)) {
 			dateAge = atts.getValue(0);
-		} else if (name.equals("au")) {
+		} else if ("au".equals(name)) {
 			author = atts.getValue(0);
-		} else if (name.equals("pr")) {
+		} else if ("pr".equals(name)) {
 			parents = atts.getValue(0);
-		} else if (name.equals("de")) {
+		} else if ("de".equals(name)) {
 			description = null;
 			descriptionChars = new StringBuilder(42);
 			readDescription = true;
-		} else if (name.equals("fl")) {
+		} else if ("fl".equals(name)) {
 			action = FileStatus.Action.MODIFIED;
-		} else if (name.equals("fa")) {
+		} else if ("fa".equals(name)) {
 			action = FileStatus.Action.ADDED;
-		} else if (name.equals("fd")) {
+		} else if ("fd".equals(name)) {
 			action = FileStatus.Action.REMOVED;
-		} else if (name.equals("f")) {
+		} else if ("f".equals(name)) {
 			if (action == Action.MODIFIED) {
 				filesModified.add(atts.getValue(0));
 			} else if (action == Action.ADDED) {
@@ -272,7 +272,7 @@ final class ChangesetContentHandler implements ContentHandler {
 		}
 	}
 
-	private final void addChangesetToResourceMap(final ChangeSet cs) {
+	private void addChangesetToResourceMap(final ChangeSet cs) {
 		if(withFiles) {
 			if (cs.getChangedFiles() != null) {
 				for (FileStatus file : cs.getChangedFiles()) {

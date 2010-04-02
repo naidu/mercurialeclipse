@@ -18,8 +18,7 @@ import java.util.TimeZone;
 
 import junit.framework.TestCase;
 
-public class AnnotateCommandTest extends TestCase
-{
+public class AnnotateCommandTest extends TestCase {
 	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH);
 	static {
 		DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));

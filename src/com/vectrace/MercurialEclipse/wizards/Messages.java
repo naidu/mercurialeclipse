@@ -13,7 +13,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
-public class Messages {
+public final class Messages {
 	private static final String BUNDLE_NAME = "com.vectrace.MercurialEclipse.wizards.messages"; //$NON-NLS-1$
 
 	private static final ResourceBundle RESOURCE_BUNDLE = ResourceBundle

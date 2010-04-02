@@ -23,10 +23,10 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class HgCommitClientTest extends AbstractCommandTest {
 
-	private final static String UE = "\u00FC";
-	private final static String OE = "\u00F6";
-	private final static String AE = "\u00E4";
-	private final static String SS = "\u00DF";
+	private static final String UE = "\u00FC";
+	private static final String OE = "\u00F6";
+	private static final String AE = "\u00E4";
+	private static final String SS = "\u00DF";
 
 	/* (non-Javadoc)
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractCommandTest#testCreateRepo()

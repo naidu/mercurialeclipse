@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.team.DecoratorImages;
 
 public class FileStatusDecorator extends LabelProvider implements ILightweightLabelDecorator {
 
-	public static String ID = "com.vectrace.MercurialEclipse.history.FileStatusDecorator"; //$NON-NLS-1$
+	public static final String ID = "com.vectrace.MercurialEclipse.history.FileStatusDecorator"; //$NON-NLS-1$
 
 	@Override
 	public void addListener(ILabelProviderListener listener) {
@@ -36,17 +36,17 @@ public class FileStatusDecorator extends LabelProvider implements ILightweightLa
 		final Action action = ((FileStatus) element).getAction();
 		ImageDescriptor overlay = null;
 		if(action == null){
-			overlay = DecoratorImages.notTrackedDescriptor;
+			overlay = DecoratorImages.NOT_TRACKED;
 		} else {
 			switch(action){
 			case ADDED:
-				overlay = DecoratorImages.addedDescriptor;
+				overlay = DecoratorImages.ADDED;
 				break;
 			case MODIFIED:
-				overlay = DecoratorImages.modifiedDescriptor;
+				overlay = DecoratorImages.MODIFIED;
 				break;
 			case REMOVED:
-				overlay = DecoratorImages.removedDescriptor;
+				overlay = DecoratorImages.REMOVED;
 				break;
 			}
 		}

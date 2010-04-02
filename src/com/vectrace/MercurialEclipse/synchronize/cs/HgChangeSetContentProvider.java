@@ -33,8 +33,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
+import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -48,9 +48,9 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -81,7 +81,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final class CollectorListener implements IChangeSetChangeListener, BatchingChangeSetManager.IChangeSetCollectorChangeListener {
 
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			if (isVisibleInMode((ChangeSet)set)) {
+			if (isVisibleInMode((ChangeSet) set)) {
 				final ChangesetGroup toRefresh = ((ChangeSet) set).getDirection() == Direction.INCOMING ? incoming
 						: outgoing;
 				boolean added = toRefresh.getChangesets().add((ChangeSet) set);
@@ -96,7 +96,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 
 		public void setRemoved(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			if (isVisibleInMode((ChangeSet)set)) {
+			if (isVisibleInMode((ChangeSet) set)) {
 				final ChangesetGroup toRefresh = ((ChangeSet) set).getDirection() == Direction.INCOMING ? incoming
 						: outgoing;
 				boolean removed = toRefresh.getChangesets().remove(set);
@@ -162,7 +162,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private boolean isEnabled() {
 		final Object input = getViewer().getInput();
-		return (input instanceof HgChangeSetModelProvider);
+		return input instanceof HgChangeSetModelProvider;
 	}
 
 	@Override
@@ -179,7 +179,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return new Object[0];
 		}
 		if(isEnabled()){
-			if(!((HgChangeSetModelProvider)getViewer().getInput()).isParticipantCreated()){
+			if(!((HgChangeSetModelProvider) getViewer().getInput()).isParticipantCreated()){
 				initCollector();
 				// on startup, do not start to show anything for the first time:
 				// show "reminder" page which allows user to choose synchronize or not
@@ -190,7 +190,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return getRootElements();
 		}
 		if (parent instanceof ChangeSet) {
-			return ((ChangeSet)parent).getChangesetFiles();
+			return ((ChangeSet) parent).getChangesetFiles();
 		}
 		if (parent instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) parent;
@@ -340,7 +340,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private boolean internalHasChildren(Object first) {
 		if (first instanceof ChangeSet) {
-			return hasChildren((ChangeSet)first);
+			return hasChildren((ChangeSet) first);
 		}
 		if (first instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) first;
@@ -402,7 +402,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private void initializeChangeSets(ChangeSetCapability csc) {
 		if (csc.supportsCheckedInChangeSets()) {
-			csCollector = ((HgChangeSetCapability)csc).createSyncInfoSetChangeSetCollector(getConfiguration());
+			csCollector = ((HgChangeSetCapability) csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			csCollector.addListener(collectorListener);
 			IProject[] projects = csCollector.getSubscriber().getProjects();
 			uncommittedSet.setRoots(projects);
@@ -450,7 +450,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private TreeViewer getTreeViewer() {
-		return ((TreeViewer)getViewer());
+		return (TreeViewer) getViewer();
 	}
 
 	@Override

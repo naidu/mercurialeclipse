@@ -5,16 +5,15 @@ import java.util.Set;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
-public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider implements ITreeContentProvider {
+public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider {
 
 	//the pseudo-root
-	public final static Object ROOT = new Object();
+	public static final Object ROOT = new Object();
 	//the real roots
 	private final Set<? extends IResource> roots;
 
@@ -29,7 +28,7 @@ public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider i
 			return roots.toArray(new IResource[0]);
 		} else if(parentElement instanceof IContainer){
 			try {
-				return  ((IContainer)parentElement).members();
+				return  ((IContainer) parentElement).members();
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logWarning(Messages.getString("ResourcesTreeContentProvider.failedToGetChildrenOf")+parentElement, e); //$NON-NLS-1$
 				return null;
@@ -41,7 +40,7 @@ public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider i
 
 	@Override
 	public Object getParent(Object element) {
-		return ((IResource)element).getParent();
+		return ((IResource) element).getParent();
 	}
 
 	@Override

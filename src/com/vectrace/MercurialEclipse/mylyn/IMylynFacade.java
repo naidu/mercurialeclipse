@@ -24,12 +24,12 @@ public interface IMylynFacade {
 	 * @param resources
 	 * @return The comment text, or null if no task is active, or mylyn is not used
 	 */
-	public String getCurrentTaskComment(IResource[] resources);
+	String getCurrentTaskComment(IResource[] resources);
 
 	/**
 	 * Get the resources for the current task (this is the current the mylyn context).
 	 * @return The resources, or null if no task active or mylyn is not used
 	 */
-	public IResource[] getCurrentTaskResources();
+	IResource[] getCurrentTaskResources();
 
 }

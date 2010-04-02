@@ -57,7 +57,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
 				MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
-				subscriber1.branchChanged((HgRoot)source);
+				subscriber1.branchChanged((HgRoot) source);
 			}
 		};
 		MercurialTeamProvider.addBranchListener(branchListener);
@@ -92,7 +92,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			if(!(res instanceof IResource)) {
 				continue;
 			}
-			IResource resource = (IResource)res;
+			IResource resource = (IResource) res;
 			for (IResource root : roots) {
 				if(root.contains(resource)) {
 					if(!projectRefresh && resource.contains(root)){
@@ -122,7 +122,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			int flag = 0;
 			if (o instanceof IncomingChangesetCache) {
 				flag = INCOMING;
-			} else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache ) {
+			} else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache) {
 				flag = OUTGOING;
 			} else if (o instanceof MercurialStatusCache) {
 				flag = LOCAL;
@@ -168,7 +168,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			if(updateJob.equals(job)){
 				job.cancel();
 				if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-					System.out.println("Cancelled refresh UI: " + ((UpdateUIJob)job).events.size());
+					System.out.println("Cancelled refresh UI: " + ((UpdateUIJob) job).events.size());
 				}
 			}
 		}

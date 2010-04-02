@@ -18,8 +18,8 @@ public class AnnotateBlock {
 
 private HgRevision revision = new HgRevision("", -1); //$NON-NLS-1$
 private String user = ""; //$NON-NLS-1$
-private int startLine = 0;
-private int endLine = 0;
+private final int startLine;
+private int endLine;
 private Date date;
 
 public AnnotateBlock(HgRevision revision, String user, Date date, int startLine, int endLine) {
@@ -60,12 +60,12 @@ public int getStartLine() {
 }
 
 /**
-   * Answer true if the receiver contains the given line number, false otherwse.
+   * Answer true if the receiver contains the given line number, false otherwise.
    * @param i a line number
    * @return true if receiver contains a line number.
    */
 public boolean contains(int i) {
-	return (i >= startLine && i <= endLine);
+	return i >= startLine && i <= endLine;
 }
 
 /**

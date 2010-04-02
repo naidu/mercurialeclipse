@@ -73,8 +73,8 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 				setDescription(Messages.getString("MercurialConfigurationWizard.descriptionNew")); //$NON-NLS-1$
 			} else {
 				setTitle(Messages.getString("MercurialConfigurationWizard.titleExisting")); //$NON-NLS-1$
-				setDescription("An existing Mercurial repository was found in the parent directory. " +
-						"Please choose which repository should be connected with the project.");
+				setDescription("An existing Mercurial repository was found in the parent directory. "
+						+ "Please choose which repository should be connected with the project.");
 			}
 			setPageComplete(true);
 		}
@@ -187,7 +187,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 
 	public void init(IWorkbench workbench, IProject proj) {
 		this.project = proj;
-		if (MercurialUtilities.isHgExecutableCallable() == false) {
+		if (!MercurialUtilities.isHgExecutableCallable()) {
 			MercurialUtilities.configureHgExecutable();
 		}
 	}

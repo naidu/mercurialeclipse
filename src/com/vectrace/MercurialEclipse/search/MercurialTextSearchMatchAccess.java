@@ -57,7 +57,7 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		this.rev = Integer.parseInt(split[i++]);
 		this.lineNumber = Integer.parseInt(split[i++]);
 		if (all) {
-			this.becomesMatch = split[i++].equals("-") ? false : true;
+			this.becomesMatch = !"-".equals(split[i++]);
 		}
 		this.user = split[i++];
 		this.extract = split[i++];

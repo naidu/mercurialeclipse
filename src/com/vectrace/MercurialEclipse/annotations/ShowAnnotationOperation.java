@@ -280,8 +280,8 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks()) {
 			final String revisionString = block.getRevision().toString();
-			final ChangeSet logEntry = logEntriesByRevision.get(block
-					.getRevision().getRevision());
+			final ChangeSet logEntry = logEntriesByRevision.get(
+					Integer.valueOf(block.getRevision().getRevision()));
 
 			Revision revision = sets.get(revisionString);
 			if (revision == null) {

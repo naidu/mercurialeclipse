@@ -65,7 +65,7 @@ public class TestConfiguration extends TestCase implements IConsole,
 		return 12000;
 	}
 
-	public void commandCompleted(int exitCode, long timeInMillis,  String message,Throwable error) {
+	public void commandCompleted(int exitCode, long timeInMillis,  String message, Throwable error) {
 		System.out.println(exitCode + " - " + message);
 		if (error != null) {
 			error.printStackTrace(System.err);

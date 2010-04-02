@@ -18,13 +18,17 @@ import java.util.regex.Pattern;
  *
  * @author adam.berkes <adam.berkes@intland.com>
  */
-public class StringUtils {
+public final class StringUtils {
 	public static final String NEW_LINE = System.getProperty("line.separator");
 
 	private static final String OPTIONAL_BLANK_AND_TAB = "[ \t]*";
 
 	private static final String REGEX = OPTIONAL_BLANK_AND_TAB + "(\r|\n)+" + OPTIONAL_BLANK_AND_TAB;
 	private static final Pattern NEWLINE_PATTERN = Pattern.compile(REGEX);
+
+	private StringUtils() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * Removes all \r \n characters and optional leading and/or trailing blanks and TAB characters.

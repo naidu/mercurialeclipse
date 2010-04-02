@@ -24,7 +24,11 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * @author zluspai
  *
  */
-public class MylynFacadeFactory {
+public final class MylynFacadeFactory {
+
+	private MylynFacadeFactory() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * Get the IMylynFacade instance.

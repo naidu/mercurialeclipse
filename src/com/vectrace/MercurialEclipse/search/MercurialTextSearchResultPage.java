@@ -97,7 +97,7 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 		viewer.setLabelProvider(new DecoratingMercurialTextSearchLabelProvider(innerLabelProvider));
 		viewer.setComparator(new ViewerComparator() {
 			@Override
-			public int compare(Viewer viewer, Object e1, Object e2) {
+			public int compare(Viewer v, Object e1, Object e2) {
 				if (e1 instanceof MercurialRevisionStorage
 						&& e2 instanceof MercurialRevisionStorage) {
 					MercurialRevisionStorage mrs1 = (MercurialRevisionStorage) e1;
@@ -110,7 +110,7 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 					MercurialMatch m2 = (MercurialMatch) e2;
 					return m1.getLineNumber() - m2.getLineNumber();
 				}
-				return super.compare(viewer, e1, e2);
+				return super.compare(v, e1, e2);
 			}
 		});
 	}

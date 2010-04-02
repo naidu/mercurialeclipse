@@ -45,7 +45,7 @@ public class HgQImportClient extends AbstractClient {
 		}
 
 		if (changesets != null && changesets.length>0) {
-			command.addOptions("--rev", changesets[changesets.length-1].getChangeset()+ ":" +changesets[0].getChangeset() );                        //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--rev", changesets[changesets.length-1].getChangeset()+ ":" +changesets[0].getChangeset()); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
 			Assert.isNotNull(patchFile);
 			if (existing) {

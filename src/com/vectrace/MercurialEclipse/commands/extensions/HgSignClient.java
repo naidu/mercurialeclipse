@@ -33,9 +33,11 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * @author Bastian Doetsch
  *
  */
-public class HgSignClient {
+public final class HgSignClient {
 
-
+	private HgSignClient() {
+		// hide constructor of utility class.
+	}
 
 	/**
 	 * Calls hg sign. add a signature for the current or given revision If no
@@ -69,17 +71,16 @@ public class HgSignClient {
 			boolean noCommit, String passphrase) throws HgException {
 		HgCommand command = new HgCommand("sign", hgRoot, true); //$NON-NLS-1$
 		File file = new File("me.gpg.tmp"); //$NON-NLS-1$
-		String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
-				MercurialUtilities.getGpgExecutable(true)).concat(
-				" --batch --no-tty --armor"); //$NON-NLS-1$
+		String cmd = "gpg.cmd=" + //$NON-NLS-1$
+				MercurialUtilities.getGpgExecutable(true) + " --batch --no-tty --armor"; //$NON-NLS-1$
 		if (passphrase != null && passphrase.length() > 0) {
 			FileWriter fw = null;
 			try {
 				fw = new FileWriter(file);
 				fw.write(passphrase.concat("\n")); //$NON-NLS-1$
 				fw.flush();
-				cmd = cmd.concat(" --passphrase-file ").concat( //$NON-NLS-1$
-						file.getCanonicalPath());
+				cmd = cmd + " --passphrase-file " + //$NON-NLS-1$
+						file.getCanonicalPath();
 			} catch (IOException e) {
 				throw new HgException(e.getMessage());
 			} finally {
@@ -92,7 +93,7 @@ public class HgSignClient {
 				}
 			}
 		}
-		command.addOptions("-k", key, "--config","extensions.gpg=","--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("-k", key, "--config", "extensions.gpg=", "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
 		if (local) {
 			command.addOptions("-l"); //$NON-NLS-1$
 		}
@@ -113,7 +114,7 @@ public class HgSignClient {
 			command.rememberUserName();
 			return result;
 		} finally {
-			if (file.delete() == false) {
+			if (!file.delete()) {
 				throw new HgException(file.getName()+" could not be deleted.");
 			}
 		}

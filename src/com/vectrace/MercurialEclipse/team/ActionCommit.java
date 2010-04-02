@@ -56,7 +56,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 	private List<IResource> getSelectedResources() {
 		List<IResource> l = new ArrayList<IResource>();
 		for (Object o : selection.toList()) {
-			l.add((IResource)o);
+			l.add((IResource) o);
 		}
 		return l;
 	}
@@ -68,8 +68,6 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
-	@SuppressWarnings("unchecked")
 	public void run(IAction action) {
 		try {
 			new CommitHandler().run(getSelectedResources());
@@ -87,10 +85,10 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
-	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection != null
-				&& in_selection instanceof IStructuredSelection) {
-			selection = (IStructuredSelection) in_selection;
+	public void selectionChanged(IAction action, ISelection inSelection) {
+		if (inSelection != null
+				&& inSelection instanceof IStructuredSelection) {
+			selection = (IStructuredSelection) inSelection;
 		}
 	}
 

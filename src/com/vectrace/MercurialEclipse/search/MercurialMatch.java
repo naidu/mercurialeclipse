@@ -9,7 +9,7 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 public class MercurialMatch extends Match {
 
 	private int rev = -1;
-	private int lineNumber = 0;
+	private int lineNumber;
 	private String extract;
 	private MercurialRevisionStorage mercurialRevisionStorage;
 	private Region originalLocation;

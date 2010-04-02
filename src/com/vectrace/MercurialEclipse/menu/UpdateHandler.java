@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 public class UpdateHandler extends RootHandler {
 
 	private String revision;
-	private boolean cleanEnabled = false;
+	private boolean cleanEnabled;
 
 	/**
 	 * @param hgRoot

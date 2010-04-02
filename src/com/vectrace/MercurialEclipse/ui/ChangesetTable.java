@@ -46,7 +46,7 @@ public class ChangesetTable extends Composite {
 	/** single selection, border, scroll */
 	private static final int DEFAULT_STYLE = SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL;
 
-	private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+	private static final Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
 	private int[] parents;

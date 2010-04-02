@@ -12,11 +12,10 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.window.Window;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -33,7 +32,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 	@Override
 	public void run(List<IResource> resources) throws HgException {
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
-		Set<Entry<HgRoot,List<IResource>>> entrySet = byRoot.entrySet();
+		Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
 
 		for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 			HgRoot hgRoot = entry.getKey();

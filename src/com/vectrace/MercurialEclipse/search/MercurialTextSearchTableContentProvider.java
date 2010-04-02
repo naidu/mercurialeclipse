@@ -8,7 +8,7 @@ import org.eclipse.search.ui.text.AbstractTextSearchResult;
 public class MercurialTextSearchTableContentProvider implements
 		IStructuredContentProvider, IMercurialTextSearchContentProvider {
 
-	private final Object[] EMPTY_ARR = new Object[0];
+	private static final Object[] EMPTY_ARR = new Object[0];
 
 	private final MercurialTextSearchResultPage fPage;
 	private AbstractTextSearchResult fResult;

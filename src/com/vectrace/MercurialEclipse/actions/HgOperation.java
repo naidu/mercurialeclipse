@@ -62,6 +62,7 @@ public abstract class HgOperation extends TeamOperation {
 		return null;
 	}
 
+	@SuppressWarnings("unused")
 	protected File getHgWorkingDir() throws HgException {
 		return null;
 	}
@@ -81,5 +82,5 @@ public abstract class HgOperation extends TeamOperation {
 		return getActionDescription();
 	}
 
-	abstract protected String getActionDescription();
+	protected abstract String getActionDescription();
 }

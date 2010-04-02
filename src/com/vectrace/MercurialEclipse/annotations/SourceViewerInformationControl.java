@@ -63,7 +63,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 
 			@Override
-			protected Map<String,? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+			protected Map<String, ? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
 				return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor",  //$NON-NLS-1$
 					null);
 		//            new IAdaptable() {
@@ -208,7 +208,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 	public void setInput(Object input) {
 		if (input instanceof String) {
-			setInformation((String)input);
+			setInformation((String) input);
 		} else {
 			setInformation(null);
 		}
@@ -256,7 +256,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 	public void setSize(int width, int height) {
 
 		if (fStatusField != null) {
-			GridData gd= (GridData)fViewer.getTextWidget().getLayoutData();
+			GridData gd= (GridData) fViewer.getTextWidget().getLayoutData();
 			Point statusSize= fStatusField.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 			Point separatorSize= fSeparator.computeSize(SWT.DEFAULT, SWT.DEFAULT, true);
 			gd.heightHint= height - statusSize.y - separatorSize.y;

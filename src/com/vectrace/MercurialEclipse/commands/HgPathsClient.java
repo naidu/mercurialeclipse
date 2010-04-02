@@ -31,13 +31,13 @@ public class HgPathsClient extends AbstractClient {
 
 	public static Map<String, String> getPaths(HgRoot hgRoot) throws HgException {
 		File hgrc = hgRoot.getConfig();
-		Map<String,String> paths = new HashMap<String, String>();
+		Map<String, String> paths = new HashMap<String, String>();
 		if (hgrc == null) {
 			return paths;
 		}
 		try {
 			IniFile ini = new IniFile(hgrc.getAbsolutePath());
-			Map<String,String> section = ini.getSection(PATHS_SECTION);
+			Map<String, String> section = ini.getSection(PATHS_SECTION);
 			if (section != null) {
 				paths.putAll(section);
 			}

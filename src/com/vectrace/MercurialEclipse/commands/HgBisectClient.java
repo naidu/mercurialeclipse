@@ -115,7 +115,7 @@ public final class HgBisectClient extends AbstractClient {
 			}
 
 		} catch (IOException e) {
-			throw new HgException(e.getLocalizedMessage(),e);
+			throw new HgException(e.getLocalizedMessage(), e);
 		} finally {
 			try {
 				if (reader != null) {

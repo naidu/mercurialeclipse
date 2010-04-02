@@ -23,7 +23,7 @@ import org.eclipse.jface.wizard.WizardPage;
  * widget creation.
  */
 public abstract class HgWizardPage extends WizardPage {
-	protected Properties properties = null;
+	protected Properties properties;
 	protected IDialogSettings settings;
 
 	/**
