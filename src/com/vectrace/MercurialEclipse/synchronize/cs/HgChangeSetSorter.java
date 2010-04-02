@@ -20,8 +20,8 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * @author Andrei
@@ -73,8 +73,11 @@ public class HgChangeSetSorter extends ViewerSorter {
 			if(group1.getDirection() == group2.getDirection()){
 				return compareByName(viewer, e1, e2);
 			}
-			if(group1.getDirection() == Direction.OUTGOING){
+			if(group1.getDirection() == Direction.LOCAL){
 				return -1;
+			}
+			if(group1.getDirection() == Direction.OUTGOING){
+				return 0;
 			}
 			return 1;
 		}
