@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * Hg root represents the root of hg repository as <b>canonical path</b>
@@ -38,6 +39,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	private Charset encoding;
 	private Charset fallbackencoding;
 	private File config;
+	private String user;
 
 	public HgRoot(String pathname) throws IOException {
 		super(pathname);
@@ -138,7 +140,16 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	}
 
 	public String getUser() {
-		return null;
+		if(user == null){
+			String configItem = getConfigItem("ui", "username");
+			if(StringUtils.isEmpty(configItem)){
+				// set to empty string to avoid multiple reads from file
+				user = "";
+			} else {
+				user = configItem.trim();
+			}
+		}
+		return StringUtils.isEmpty(user)? null : user;
 	}
 
 	@Override

@@ -47,6 +47,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * A manager for all Mercurial commit messages. The commit messages are save to a xml file when
@@ -235,7 +236,10 @@ public class HgCommitMessageManager {
 			return commitName;
 		}
 
-		String defaultUserName = MercurialUtilities.getDefaultUserName();
+		String defaultUserName = hgRoot.getUser();
+		if(StringUtils.isEmpty(defaultUserName)){
+			defaultUserName = MercurialUtilities.getDefaultUserName();
+		}
 
 		/*
 		 * dependent on the preference, use configured Mercurial name or repository
