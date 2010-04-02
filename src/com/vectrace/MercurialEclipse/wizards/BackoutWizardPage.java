@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -89,7 +89,7 @@ public class BackoutWizardPage extends HgWizardPage {
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
 		userTextField = SWTWidgetHelper.createTextField(optionGroup);
-		userTextField.setText(MercurialUtilities.getDefaultUserName());
+		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(hgRoot));
 
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
