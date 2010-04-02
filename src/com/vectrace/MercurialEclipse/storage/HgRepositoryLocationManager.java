@@ -21,11 +21,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -230,8 +230,8 @@ public class HgRepositoryLocationManager {
 	private void getProjectRepos() throws HgException {
 		if (!initialized) {
 			initialized = true;
-			loadRepositoryHistory();
 			loadRepos();
+			loadRepositoryHistory();
 		}
 	}
 
@@ -245,46 +245,38 @@ public class HgRepositoryLocationManager {
 		Map<HgRoot, List<IResource>> roots = ResourceUtils.groupByRoot(projects);
 
 		for (Entry<HgRoot, List<IResource>> entry : roots.entrySet()) {
-
-			// filter out closed projects
-			Set<IProject> hgProjects = new HashSet<IProject>();
-			List<IResource> resources = entry.getValue();
-			for (IResource resource : resources) {
-				if(resource.isAccessible()) {
-					hgProjects.add((IProject) resource);
-				}
-			}
-			resources.clear();
-			resources.addAll(hgProjects);
-
 			HgRoot hgRoot = entry.getKey();
-			// Load .hg/hgrc paths first; plugin settings will override these
-			Map<String, String> hgrcRepos = HgPathsClient.getPaths(hgRoot);
-			for (Map.Entry<String, String> nameAndUrl : hgrcRepos.entrySet()) {
-				String url = nameAndUrl.getValue();
-				IHgRepositoryLocation repoLocation = matchRepoLocation(url);
-				if(repoLocation == null) {
-					// if not existent, add to repository browser
-					try {
-						String logicalName = nameAndUrl.getKey();
-						IHgRepositoryLocation loc = updateRepoLocation(hgRoot, url, logicalName,
-								null, null);
-						internalAddRepoLocation(hgRoot, loc);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
-				}
-			}
-			SortedSet<IHgRepositoryLocation> locations = loadRepositories(getRootKey(hgRoot));
-			for(IHgRepositoryLocation loc : locations) {
-				internalAddRepoLocation(hgRoot, loc);
-			}
-			IHgRepositoryLocation defRepo = getDefaultRepoLocation(hgRoot);
-			if(defRepo == null && !locations.isEmpty()){
-				setDefaultRepository(hgRoot, locations.first());
-			}
+			loadRepos(hgRoot);
 		}
 		return roots;
+	}
+
+	public void loadRepos(HgRoot hgRoot) throws HgException {
+		// Load .hg/hgrc paths first; plugin settings will override these
+		Map<String, String> hgrcRepos = HgPathsClient.getPaths(hgRoot);
+		for (Map.Entry<String, String> nameAndUrl : hgrcRepos.entrySet()) {
+			String url = nameAndUrl.getValue();
+			IHgRepositoryLocation repoLocation = matchRepoLocation(url);
+			if(repoLocation == null) {
+				// if not existent, add to repository browser
+				try {
+					String logicalName = nameAndUrl.getKey();
+					IHgRepositoryLocation loc = updateRepoLocation(hgRoot, url, logicalName,
+							null, null);
+					internalAddRepoLocation(hgRoot, loc);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		}
+		SortedSet<IHgRepositoryLocation> locations = loadRepositories(getRootKey(hgRoot));
+		for(IHgRepositoryLocation loc : locations) {
+			internalAddRepoLocation(hgRoot, loc);
+		}
+		IHgRepositoryLocation defRepo = getDefaultRepoLocation(hgRoot);
+		if(defRepo == null && !locations.isEmpty()){
+			setDefaultRepository(hgRoot, locations.first());
+		}
 	}
 
 	private void loadRepositoryHistory() {
@@ -309,7 +301,7 @@ public class HgRepositoryLocationManager {
 		SortedSet<IHgRepositoryLocation> locations = new TreeSet<IHgRepositoryLocation>();
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		String allReposLine = store.getString(key);
-		if(allReposLine == null || allReposLine.length() == 0){
+		if(StringUtils.isEmpty(allReposLine)){
 			return locations;
 		}
 		String[] repoLine = allReposLine.split("\\|");
@@ -355,12 +347,21 @@ public class HgRepositoryLocationManager {
 	public IHgRepositoryLocation getDefaultRepoLocation(HgRoot hgRoot) {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		String defLoc = store.getString(KEY_DEF_REPO_PREFIX + getRootKey(hgRoot));
+		if(StringUtils.isEmpty(defLoc)){
+			return null;
+		}
 		SortedSet<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
 		if (locations != null && !locations.isEmpty()) {
 			for (IHgRepositoryLocation repo : locations) {
 				if(repo.getLocation().equals(defLoc)){
 					return repo;
 				}
+			}
+		}
+		for (IHgRepositoryLocation repo : repoHistory) {
+			if(repo.getLocation().equals(defLoc)){
+				internalAddRepoLocation(hgRoot, repo);
+				return repo;
 			}
 		}
 		return null;

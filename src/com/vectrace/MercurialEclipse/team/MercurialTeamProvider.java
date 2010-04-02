@@ -55,6 +55,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -143,33 +144,66 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		// try to find .hg directory to set it as private member
 		final IResource hgDir = project.getFolder(".hg"); //$NON-NLS-1$
 		if (hgDir != null) {
-			if(!hgDir.exists()){
-				Job refreshJob = new Job("Refreshing .hg folder") {
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						try {
-							hgDir.refreshLocal(IResource.DEPTH_ZERO, monitor);
-							if(hgDir.exists()) {
-								hgDir.setTeamPrivateMember(true);
-								hgDir.setDerived(true);
-							}
-						} catch (CoreException e) {
-							MercurialEclipsePlugin.logError(e);
-						}
-						return Status.OK_STATUS;
-					}
-				};
-				refreshJob.schedule();
-			} else {
-				hgDir.setTeamPrivateMember(true);
-				hgDir.setDerived(true);
-			}
+			setTeamPrivate(hgDir);
 		}
 		if(!MercurialStatusCache.getInstance().isStatusKnown(project)) {
 			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(), hgRoot).schedule(100);
 		}
+		if(MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot).isEmpty()){
+			loadRootRepos(hgRoot);
+		}
 	}
 
+	private void setTeamPrivate(final IResource hgDir) throws CoreException {
+		if(!hgDir.exists()){
+			Job refreshJob = new Job("Refreshing .hg folder") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					try {
+						hgDir.refreshLocal(IResource.DEPTH_ZERO, monitor);
+						if(hgDir.exists()) {
+							hgDir.setTeamPrivateMember(true);
+							hgDir.setDerived(true);
+						}
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+					return Status.OK_STATUS;
+				}
+			};
+			refreshJob.schedule();
+		} else {
+			hgDir.setTeamPrivateMember(true);
+			hgDir.setDerived(true);
+		}
+	}
+
+	/**
+	 * @param hgRoot non null
+	 */
+	private void loadRootRepos(final HgRoot hgRoot) {
+		Job job = new Job("Reading root repositories") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					MercurialEclipsePlugin.getRepoManager().loadRepos(hgRoot);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+					return e.getStatus();
+				}
+				return Status.OK_STATUS;
+			}
+
+			@Override
+			public boolean shouldSchedule() {
+				return MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot)
+				.isEmpty();
+			}
+		};
+		job.setSystem(true);
+		job.setRule(new HgRootRule(hgRoot));
+		job.schedule(100);
+	}
 	public void deconfigure() throws CoreException {
 		IProject project = getProject();
 		Assert.isNotNull(project);
@@ -207,7 +241,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 *
 	 * @param resource
 	 *            the resource to get the hg root for, not null
-	 * @return the canonical file path of the hg root
+	 * @return the canonical file path of the hg root, never null
 	 * @throws HgException
 	 */
 	private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
