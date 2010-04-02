@@ -47,17 +47,25 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	public UncommittedChangesetManager(HgChangeSetContentProvider provider) {
 		this.provider = provider;
-		group = new UncommittedChangesetGroup();
+		group = new UncommittedChangesetGroup(this);
 		defaultChangeset = new WorkingChangeSet("Default Changeset");
 	}
 
-	public UncommittedChangesetGroup loadChangesets(){
+	public UncommittedChangesetGroup getUncommittedGroup(){
 		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
 		loadfromPreferences(sets);
 		assignRemainingFiles();
 		sets.add(defaultChangeset);
 		group.setChangesets(sets);
 		return group;
+	}
+
+	private void loadSavedChangesets(){
+		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
+		loadfromPreferences(sets);
+		assignRemainingFiles();
+		sets.add(defaultChangeset);
+		group.setChangesets(sets);
 	}
 
 	private void assignRemainingFiles() {
@@ -93,7 +101,10 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	private void loadfromPreferences(Set<WorkingChangeSet> sets) {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		for (IProject project : getProjects()) {
+		if(projects == null){
+			return;
+		}
+		for (IProject project : projects) {
 			String filesStr = store.getString(KEY_PREFIX + project.getName());
 			if(StringUtils.isEmpty(filesStr)){
 				continue;
@@ -158,6 +169,9 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	public void setProjects(IProject[] projects) {
 		this.projects = projects;
+		if(projects != null){
+			loadSavedChangesets();
+		}
 	}
 
 	public IProject[] getProjects() {

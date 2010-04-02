@@ -19,7 +19,7 @@ import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
  */
 public interface IUncommittedChangesetManager {
 
-	UncommittedChangesetGroup loadChangesets();
+	UncommittedChangesetGroup getUncommittedGroup();
 
 	void storeChangesets();
 
