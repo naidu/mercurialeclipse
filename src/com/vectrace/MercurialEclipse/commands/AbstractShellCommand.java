@@ -43,6 +43,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -55,7 +56,21 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private static final int BUFFER_SIZE = 32768;
 
-	public static final int MAX_PARAMS = 120;
+	/**
+	 * See http://msdn.microsoft.com/en-us/library/ms682425(VS.85).aspx The maximum command line
+	 * length for the CreateProcess function is 32767 characters. This limitation comes from the
+	 * UNICODE_STRING structure.
+	 * <p>
+	 * See also http://support.microsoft.com/kb/830473: On computers running Microsoft Windows XP or
+	 * later, the maximum length of the string that you can use at the command prompt is 8191
+	 * characters. On computers running Microsoft Windows 2000 or Windows NT 4.0, the maximum length
+	 * of the string that you can use at the command prompt is 2047 characters.
+	 * <p>
+	 * So here we simply allow maximal 100 file paths to be used in one command. Why 100? Why not?
+	 * TODO The right way would be to construct the command and then check if the full command line
+	 * size is >= 32767.
+	 */
+	public static final int MAX_PARAMS = 100;
 
 	static {
 		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
@@ -220,6 +235,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private ProzessWrapper processWrapper;
 	private boolean showOnConsole;
 	private final boolean debugMode;
+	private final boolean isDebugging;
 	private final boolean debugExecTime;
 
 	private HgRoot hgRoot;
@@ -231,6 +247,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
+		isDebugging = MercurialEclipsePlugin.getDefault().isDebugging();
 		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
@@ -432,18 +449,21 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	protected void logConsoleCommandInvoked(final String commandInvoked) {
+		if(isDebugging){
+			System.out.println(commandInvoked);
+		}
 		if (showOnConsole) {
 			getConsole().commandInvoked(commandInvoked);
 		}
 	}
 
-	protected void logConsoleMessage(final String msg, final Throwable t) {
-		if (showOnConsole) {
-			getConsole().printMessage(msg, t);
-		}
-	}
-
 	private void logConsoleCompleted(final long timeInMillis, final String msg, final int exitCode, final HgException hgex) {
+		if(isDebugging){
+			System.out.println(msg);
+			if(hgex != null){
+				hgex.printStackTrace();
+			}
+		}
 		if (showOnConsole) {
 			getConsole().commandCompleted(exitCode, timeInMillis, msg, hgex);
 		}

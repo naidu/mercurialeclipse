@@ -28,24 +28,29 @@ public class HgRevertClient extends AbstractClient {
 
 	/**
 	 * @param monitor non null
-	 * @param hgRoot
+	 * @param hgRoot the root of all given resources
 	 * @param resources resources to revert
 	 * @param cs might be null
 	 * @throws HgException
 	 */
 	public static void performRevert(IProgressMonitor monitor, HgRoot hgRoot,
 			List<IResource> resources, ChangeSet cs) throws HgException {
-		// the last argument will be replaced with a path
-		HgCommand command = new HgCommand("revert", hgRoot, true); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-		command.addOptions("--no-backup");
-		if (cs != null) {
-			command.addOptions("--rev", cs.getChangeset());
+		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+		// if there are too many resources, do several calls
+		int size = resources.size();
+		int delta = AbstractShellCommand.MAX_PARAMS - 1;
+		for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
+			// the last argument will be replaced with a path
+			HgCommand command = new HgCommand("revert", hgRoot, true); //$NON-NLS-1$
+			command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+			command.addOptions("--no-backup");
+			if (cs != null) {
+				command.addOptions("--rev", cs.getChangeset());
+			}
+			command.addFiles(resources.subList(i, Math.min(i + delta, size)));
+			command.executeToString();
 		}
-		command.addFiles(resources);
-		monitor.subTask(Messages.getString("ActionRevert.reverting") + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-		command.executeToString();
 		monitor.worked(1);
 	}
 }
