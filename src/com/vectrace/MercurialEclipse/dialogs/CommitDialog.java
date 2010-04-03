@@ -651,8 +651,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void updateChangeset(IProgressMonitor pm) throws HgException {
-		if (currentChangeset.getChangedFiles() != null
-				&& currentChangeset.getChangedFiles().length != 0) {
+		if (!currentChangeset.getChangedFiles().isEmpty()) {
 			// no update necessary
 			return;
 		}

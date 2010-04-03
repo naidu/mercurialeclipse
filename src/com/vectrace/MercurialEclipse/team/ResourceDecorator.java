@@ -337,7 +337,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 		if (newestIncomingChangeSet != null) {
 			if (prefix.length() == 0) {
-				prefix.append('<');
+				prefix.append('<').append(' ');
 			} else {
 				prefix.insert(0, '<');
 			}
@@ -388,7 +388,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 					+ fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
 
 				if (cs != null) {
-					suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
+					suffix += " < [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
 						+ cs.getNodeShort() + " - " + cs.getAgeDate()
 						+ " - " + cs.getUser() + "]";
 				}
@@ -454,7 +454,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object updatedObject) {
-		if (updatedObject instanceof Set) {
+		if (updatedObject instanceof Set<?>) {
 			Set<IResource> changed = (Set<IResource>) updatedObject;
 			List<IResource> notification = new ArrayList<IResource>(1000);
 			int i = 0;

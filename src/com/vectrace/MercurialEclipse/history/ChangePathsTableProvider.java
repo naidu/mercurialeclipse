@@ -11,6 +11,7 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.List;
 import java.util.WeakHashMap;
 
 import org.eclipse.core.runtime.IPath;
@@ -177,7 +178,8 @@ public class ChangePathsTableProvider extends TableViewer {
 				public void done(IJobChangeEvent event) {
 					FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
 					if(cs[0] != null) {
-						changedFiles = cs[0].getChangedFiles();
+						List<FileStatus> list = cs[0].getChangedFiles();
+						changedFiles = list.toArray(new FileStatus[list.size()]);
 						if(changedFiles == null || changedFiles.length == 0){
 							changedFiles = EMPTY_CHANGE_PATHS;
 						}

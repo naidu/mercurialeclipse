@@ -20,6 +20,7 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -34,12 +35,15 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
 public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSet> {
 
+	private static final List<FileStatus> EMPTY_STATUS =
+		Collections.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
@@ -57,7 +61,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final String user;
 	private final String date;
 	private String tagsStr;
-	private FileStatus[] changedFiles;
+	private List<FileStatus> changedFiles;
 	private String description;
 	private String ageDate;
 	private String nodeShort;
@@ -162,7 +166,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 
 		public Builder changedFiles(FileStatus[] changedFiles) {
-			this.cs.changedFiles = changedFiles;
+			this.cs.changedFiles = changedFiles == null ? EMPTY_STATUS : Collections
+					.unmodifiableList(Arrays.asList(changedFiles));
 			return this;
 		}
 
@@ -297,14 +302,11 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return the changedFiles
+	 * @return the changedFiles, never null. The returned list is non modifiable so any
+	 * attempt to modify it will lead to an exception.
 	 */
-	public FileStatus[] getChangedFiles() {
-		if (changedFiles != null) {
-			// Don't let clients manipulate the array in-place
-			return changedFiles.clone();
-		}
-		return new FileStatus[0];
+	public List<FileStatus> getChangedFiles() {
+		return changedFiles == null? EMPTY_STATUS : changedFiles;
 	}
 
 	/**
@@ -342,7 +344,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 * @return true if this changeset contains a resource with given action state
 	 */
 	private boolean contains(IResource resource, Action action) {
-		if (changedFiles.length == 0) {
+		if (getChangedFiles().isEmpty()) {
 			return false;
 		}
 		boolean match = false;
@@ -530,7 +532,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	public FileFromChangeSet[] getChangesetFiles() {
 		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
-		if (changedFiles == null) {
+		if (getChangedFiles().isEmpty()) {
 			return fcs.toArray(new FileFromChangeSet[0]);
 		}
 
@@ -587,7 +589,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public boolean isEmpty() {
-		return changedFiles == null || changedFiles.length == 0;
+		return getChangedFiles().isEmpty();
 	}
 
 	@Override

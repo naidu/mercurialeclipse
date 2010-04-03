@@ -125,7 +125,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 			}
 
 			public Object[] getElements(Object inputElement) {
-				return changeset.getChangedFiles();
+				return changeset.getChangedFiles().toArray();
 			}
 		};
 		tableViewer.setContentProvider(contentProvider);
