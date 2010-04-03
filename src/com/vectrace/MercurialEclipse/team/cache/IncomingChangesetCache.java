@@ -20,9 +20,10 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -44,20 +45,29 @@ public final class IncomingChangesetCache extends AbstractRemoteCache {
 	}
 
 	/**
-	 * Gets the newest incoming changeset of <b>all repositories</b>.
+	 * Gets the newest incoming changeset of the default repository. In case no default
+	 * repository is set, <b>all repositories</b> are considered.
 	 *
 	 * @param resource
 	 *            the resource to get the changeset for
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-		Set<IHgRepositoryLocation> locs = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocations(hgRoot);
+		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+		IHgRepositoryLocation defaultRepo = repoManager.getDefaultRepoLocation(hgRoot);
 		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
-		for (IHgRepositoryLocation repository : locs) {
-			ChangeSet candidate = getNewestChangeSet(resource, repository, null);
+		if(defaultRepo != null) {
+			ChangeSet candidate = getNewestChangeSet(resource, defaultRepo, null);
 			if (candidate != null) {
 				changeSets1.add(candidate);
+			}
+		} else {
+			Set<IHgRepositoryLocation> locs = repoManager.getAllRepoLocations(hgRoot);
+			for (IHgRepositoryLocation repository : locs) {
+				ChangeSet candidate = getNewestChangeSet(resource, repository, null);
+				if (candidate != null) {
+					changeSets1.add(candidate);
+				}
 			}
 		}
 		if (changeSets1.size() > 0) {
