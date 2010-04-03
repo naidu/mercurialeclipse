@@ -115,15 +115,29 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		setTitle(left.getName());
 		configuration.setLeftLabel(left.getName());
 		configuration.setLeftEditable(localEditable);
-		configuration.setAncestorLabel(ancestor.getName());
+		if(ancestor != null) {
+			configuration.setAncestorLabel(ancestor.getName());
+		}
 		configuration.setRightLabel(right.getName());
 		configuration.setRightEditable(false);
 	}
 
 	@Override
-	protected Object prepareInput(IProgressMonitor monitor)
-	throws InvocationTargetException, InterruptedException {
-		return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
+	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException,
+			InterruptedException {
+		byte[] content = null;
+		ResourceNode parent = ancestor;
+		if(parent != null){
+			content = parent.getContent();
+		}
+		if(content == null || content.length == 0){
+			// See issue 11149: sometimes we fail to determine the ancestor version, but we
+			// see it too late as the editor is opened with an "empty" parent node.
+			// In such case ENTIRE file is considered as a huge merge conflict.
+			// So as quick and dirty workaround we avoid using 3-way merge if parent content is unknown
+			parent = null;
+		}
+		return DIFFERENCER.findDifferences(parent != null, monitor, null, parent, left, right);
 	}
 
 
