@@ -21,6 +21,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbenchPropertyPage;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -60,10 +62,17 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 		HgRepositoryLocation repo = (HgRepositoryLocation) adapter;
 		IPreferenceStore store = getPreferenceStore();
 		String user = store.getString(KEY_LOGIN_NAME);
-		repo.setUser(user);
 		String pwd = store.getString(KEY_LOGIN_PWD);
-		repo.setPassword(pwd);
 		String lname = store.getString(KEY_LNAME);
+		try {
+			adaptable = MercurialEclipsePlugin.getRepoManager().updateRepoLocation(null,
+					repo.getLocation(), lname, user, pwd);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		// as selection is not updated in the view, simply copy new data to the old one
+		repo.setUser(user);
+		repo.setPassword(pwd);
 		repo.setLogicalName(lname);
 	}
 

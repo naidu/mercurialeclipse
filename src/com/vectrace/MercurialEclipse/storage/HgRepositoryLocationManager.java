@@ -198,10 +198,12 @@ public class HgRepositoryLocationManager {
 			if (repoSet == null) {
 				repoSet = new TreeSet<IHgRepositoryLocation>();
 			}
+			repoSet.remove(loc);
 			repoSet.add(loc);
 			rootRepos.put(hgRoot, repoSet);
 		}
 		synchronized (repoHistory) {
+			repoHistory.remove(loc);
 			repoHistory.add(loc);
 		}
 		repositoryAdded(loc);
@@ -289,6 +291,7 @@ public class HgRepositoryLocationManager {
 				}
 			}
 			synchronized (repoHistory) {
+				repoHistory.remove(loc);
 				repoHistory.add(loc);
 			}
 			if (!usedByProject) {
@@ -519,20 +522,17 @@ public class HgRepositoryLocationManager {
 		if (update) {
 			IHgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName,
 					loc.getLocation(), myUser, myPass);
-			if (hgRoot != null) {
-				for (SortedSet<IHgRepositoryLocation> locs : rootRepos.values()) {
-					if (locs.remove(updated)) {
-						locs.add(updated);
-					}
-				}
-			} else {
-				synchronized (repoHistory) {
-					if (repoHistory.remove(updated)) {
-						repoHistory.add(updated);
-					}
+
+			for (SortedSet<IHgRepositoryLocation> locs : rootRepos.values()) {
+				if (locs.remove(updated)) {
+					locs.add(updated);
 				}
 			}
-
+			synchronized (repoHistory) {
+				if (repoHistory.remove(updated)) {
+					repoHistory.add(updated);
+				}
+			}
 			repositoryModified(updated);
 			return updated;
 		}
