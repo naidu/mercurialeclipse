@@ -13,18 +13,24 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.ICompareNavigator;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -35,15 +41,22 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	private final ResourceNode ancestor;
 	private final ResourceNode right;
 
+	private final ISynchronizePageConfiguration syncConfig;
+
+	private final IFile resource;
+
 	/**
 	 * Does either a 2-way or 3-way compare, depending on if one is an ancestor
 	 * of the other. If they are divergent, then it finds the common ancestor
 	 * and does 3-way compare.
+	 * @param syncConfig
 	 */
 	public HgCompareEditorInput(CompareConfiguration configuration,
-			IFile resource, ResourceNode left, ResourceNode right) {
+			IFile resource, ResourceNode left, ResourceNode right, ISynchronizePageConfiguration syncConfig) {
 		super(configuration);
+		this.resource = resource;
 		this.left = left;
+		this.syncConfig = syncConfig;
 		this.ancestor = findParentNodeIfExists(resource, left, right);
 		this.right = right;
 		setTitle(resource.getName());
@@ -55,7 +68,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 
-	private ResourceNode findParentNodeIfExists(IFile resource, ResourceNode l, ResourceNode r) {
+	private ResourceNode findParentNodeIfExists(IFile file, ResourceNode l, ResourceNode r) {
 		if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
 			return null;
 		}
@@ -67,7 +80,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(resource),
+							MercurialTeamProvider.getHgRoot(file),
 							lNode.getChangeSet(), rNode.getChangeSet());
 				} catch (HgException e) {
 					// continue
@@ -80,7 +93,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if(commonAncestor == -1){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(resource),
+							MercurialTeamProvider.getHgRoot(file),
 							Integer.toString(lId), Integer.toString(rId));
 				} catch (HgException e) {
 					// continue: no changeset in the local repo, se issue #10616
@@ -93,13 +106,13 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if (commonAncestor == rId) {
 				return null;
 			}
-			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(resource));
+			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(file));
 			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
 			if(!localKnown){
 				// no common ancestor
 				return null;
 			}
-			return new RevisionNode(new MercurialRevisionStorage(resource, commonAncestor));
+			return new RevisionNode(new MercurialRevisionStorage(file, commonAncestor));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			return null;
@@ -107,11 +120,13 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	public HgCompareEditorInput(CompareConfiguration configuration,
-			IResource leftResource, ResourceNode ancestor, ResourceNode right, boolean localEditable) {
+			IFile leftResource, ResourceNode ancestor, ResourceNode right, boolean localEditable) {
 		super(configuration);
+		this.syncConfig = null;
 		this.left = new ResourceNode(leftResource);
 		this.ancestor = ancestor;
 		this.right = right;
+		this.resource = leftResource;
 		setTitle(left.getName());
 		configuration.setLeftLabel(left.getName());
 		configuration.setLeftEditable(localEditable);
@@ -158,6 +173,60 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 	}
 
+	/**
+	 *  Overriden to allow navigation through multiple changes in the sync view via shortcuts
+	 *  "Ctrl + ." (Navigate->Next) or "Ctrl + ," (Navigate->Previous).
+	 *  @see SyncInfoCompareInput
+	 */
+	@Override
+	public synchronized ICompareNavigator getNavigator() {
+		ICompareNavigator navigator = super.getNavigator();
+		if (syncConfig != null && isSelectedInSynchronizeView()) {
+			ICompareNavigator nav = (ICompareNavigator) syncConfig
+					.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
+			return new SyncNavigatorWrapper(navigator, nav);
+		}
+		return navigator;
+	}
+
+	private class SyncNavigatorWrapper implements ICompareNavigator {
+
+		private final ICompareNavigator textDfiffDelegate;
+		private final ICompareNavigator syncViewDelegate;
+
+		public SyncNavigatorWrapper(ICompareNavigator textDfiffDelegate,
+				ICompareNavigator syncViewDelegate) {
+			this.textDfiffDelegate = textDfiffDelegate;
+			this.syncViewDelegate = syncViewDelegate;
+		}
+
+		public boolean selectChange(boolean next) {
+			boolean endReached = textDfiffDelegate.selectChange(next);
+			if(endReached && syncViewDelegate != null && isSelectedInSynchronizeView()){
+				// forward navigation to the sync view
+				return syncViewDelegate.selectChange(next);
+			}
+			return endReached;
+		}
+
+	}
+
+	private boolean isSelectedInSynchronizeView() {
+		if (syncConfig == null || resource == null) {
+			return false;
+		}
+		ISelection s = syncConfig.getSite().getSelectionProvider().getSelection();
+		if (!(s instanceof IStructuredSelection)) {
+			return false;
+		}
+		IStructuredSelection ss = (IStructuredSelection) s;
+		Object element = ss.getFirstElement();
+		if (element instanceof FileFromChangeSet) {
+			FileFromChangeSet sime = (FileFromChangeSet) element;
+			return resource.equals(sime.getFile());
+		}
+		return false;
+	}
 
 	@Override
 	public int hashCode() {

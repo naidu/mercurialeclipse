@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
@@ -40,6 +41,7 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 public class CompareAction extends SingleFileAction {
 
 	private boolean mergeEnabled;
+	private ISynchronizePageConfiguration syncConfig;
 
 	/**
 	 * Empty constructor must be here, otherwise Eclipse wouldn't be able to create the object via reflection
@@ -104,7 +106,7 @@ public class CompareAction extends SingleFileAction {
 		ResourceNode leftNode = new ResourceNode(file);
 		// mercurial version
 		RevisionNode rightNode = new RevisionNode(new MercurialRevisionStorage(file));
-		CompareUtils.openEditor(leftNode, rightNode, false, true);
+		CompareUtils.openEditor(leftNode, rightNode, false, true, syncConfig);
 	}
 
 	private void openMergeEditor(IFile file){
@@ -138,6 +140,10 @@ public class CompareAction extends SingleFileAction {
 
 	public void setEnableMerge(boolean enable) {
 		mergeEnabled = enable;
+	}
+
+	public void setSynchronizePageConfiguration(ISynchronizePageConfiguration syncConfig){
+		this.syncConfig = syncConfig;
 	}
 
 }

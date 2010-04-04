@@ -445,7 +445,7 @@ public class CommitFilesChooser extends Composite {
 					selectedFile);
 			ResourceNode right = new RevisionNode(iStorage);
 			ResourceNode left = new ResourceNode(selectedFile);
-			CompareUtils.openEditor(left, right, true, false);
+			CompareUtils.openEditor(left, right, true, false, null);
 		}
 	}
 }

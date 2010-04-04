@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
@@ -103,7 +103,9 @@ public class OpenAction extends Action {
 		}
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
-			new CompareAction(file).run(this);
+			CompareAction compareAction = new CompareAction(file);
+			compareAction.setSynchronizePageConfiguration(configuration);
+			compareAction.run(this);
 			return;
 		}
 
@@ -132,7 +134,7 @@ public class OpenAction extends Action {
 					} else {
 						parentRev = new MercurialRevisionStorage(file, parents[0]);
 					}
-					CompareUtils.openEditor(thisRev, parentRev, false, false);
+					CompareUtils.openEditor(thisRev, parentRev, false, false, configuration);
 				} else {
 					// incoming
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
@@ -163,7 +165,7 @@ public class OpenAction extends Action {
 						parentRev = new MercurialRevisionStorage(
 								file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
 					}
-					CompareUtils.openEditor(remoteRev, parentRev, false, false);
+					CompareUtils.openEditor(remoteRev, parentRev, false, false, configuration);
 					// the line below compares the remote changeset with the local copy.
 					// it was replaced with the code above to fix the issue 10364
 					// CompareUtils.openEditor(file, cs, true, true);
