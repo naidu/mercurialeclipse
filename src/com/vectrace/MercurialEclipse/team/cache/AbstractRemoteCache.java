@@ -17,7 +17,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -243,8 +245,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 				// lazy loading: refresh cache on demand only.
 				// lock the cache till update is complete
 				addResourcesToCache(key);
-				// XXX not sure if the full repo refresh event need to be sent here
-//				notifyChanged(key.getRepo(), true);
 				notifyChanged(hgRoot, true);
 			}
 			RemoteData remoteData = fastRepoMap.get(key);
@@ -253,6 +253,48 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			}
 		}
 		return EMPTY_SET;
+	}
+
+	/**
+	 * Gets all (in or out) changesets for given hg root, which doesn't have any relationship to the
+	 * projects inside Eclipse workspace (e.g. changesets with no files or with files which are
+	 * unknown in terms of Eclipse workspace). Specifying an optional 'canIgnore' argument
+	 * may help to optimize the work on huge amount of changesets or files inside.
+	 *
+	 * @param canIgnore
+	 *            (may be null) changesets which are already known to be mapped and can be ignored.
+	 *
+	 * @param branch
+	 *            name of branch (default or "" for unnamed) or null if branch unaware
+	 * @return never null
+	 */
+	public SortedSet<ChangeSet> getUnmappedChangeSets(HgRoot hgRoot,
+			IHgRepositoryLocation repository, String branch, Set<ChangeSet> canIgnore) throws HgException {
+
+		SortedSet<ChangeSet> all = getChangeSets(hgRoot, repository, branch);
+		if(all.isEmpty()){
+			return all;
+		}
+		if(canIgnore != null && !canIgnore.isEmpty()) {
+			// 'all' was unmodifiable set, so create a copy here for filtering
+			all = new TreeSet<ChangeSet>(all);
+			all.removeAll(canIgnore);
+			if(all.isEmpty()){
+				return all;
+			}
+		}
+		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>();
+		for (ChangeSet cs : all) {
+			if(cs.isEmpty()){
+				sorted.add(cs);
+				continue;
+			}
+			Set<IFile> files = cs.getFiles();
+			if(files.isEmpty()){
+				sorted.add(cs);
+			}
+		}
+		return sorted;
 	}
 
 	/**

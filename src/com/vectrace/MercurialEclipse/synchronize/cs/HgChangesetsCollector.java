@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +43,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.AbstractRemoteCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Andrei
@@ -202,19 +204,29 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		Runnable runnable = new Runnable() {
 			public void run() {
 				for (IProject project : projects) {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+					if(hgRoot == null){
+						continue;
+					}
+					String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
 					try {
-						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-						if(hgRoot == null){
-							return;
-						}
-						final String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
 						result.addAll(cache.getChangeSets(project, repo, currentBranch));
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+				Set<HgRoot> roots = ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet();
+				for (HgRoot hgRoot : roots) {
+					String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+					try {
+						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, currentBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
 				}
 			}
 		};
+
 		try {
 			MercurialSynchronizeSubscriber.executeLockedCacheTask(runnable);
 		} catch (InterruptedException e) {
