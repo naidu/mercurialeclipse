@@ -30,6 +30,7 @@ import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
@@ -109,6 +110,20 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				ISynchronizePageConfiguration.EDIT_GROUP,
+				new EditChangesetSynchronizeAction("Edit Change Set...",
+						configuration, getVisibleRootsSelectionProvider()));
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				ISynchronizePageConfiguration.EDIT_GROUP,
+				new EditChangesetSynchronizeAction("Set as Default Change Set",
+						configuration, getVisibleRootsSelectionProvider()));
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				ISynchronizePageConfiguration.EDIT_GROUP,
+				new EditChangesetSynchronizeAction("Reassign Changes To",
+						configuration, getVisibleRootsSelectionProvider()));
 	}
 
 	@Override
