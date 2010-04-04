@@ -107,11 +107,10 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
-	private CommitFilesChooser commitFilesList;
+	protected CommitFilesChooser commitFilesList;
 	private List<IResource> resourcesToAdd;
 	private List<IResource> resourcesToCommit;
 	private List<IResource> resourcesToRemove;
-	private String commitMessage;
 	private final IDocument commitTextDocument;
 	private SourceViewerDecorationSupport decorationSupport;
 	private final List<IResource> inResources;
@@ -166,7 +165,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	public String getCommitMessage() {
-		return commitMessage;
+		return commitTextDocument.get();
 	}
 
 	public List<IResource> getResourcesToCommit() {
@@ -402,7 +401,7 @@ public class CommitDialog extends TitleAreaDialog {
 		pm.worked(3);
 
 		// get commit message
-		commitMessage = commitTextDocument.get();
+		String commitMessage = getCommitMessage();
 
 		// get commit username
 		user = userTextField.getText();

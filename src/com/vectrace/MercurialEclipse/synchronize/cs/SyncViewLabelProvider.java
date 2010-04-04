@@ -18,9 +18,9 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
@@ -41,8 +41,10 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			ChangesetGroup group = (ChangesetGroup) element;
 			if(group.getDirection() == Direction.OUTGOING){
 				image = MercurialEclipsePlugin.getImage("actions/commit.gif");
-			} else {
+			} else if(group.getDirection() == Direction.INCOMING){
 				image = MercurialEclipsePlugin.getImage("actions/update.gif");
+			} else {
+				image = MercurialEclipsePlugin.getImage("cview16/repository_rep.gif");
 			}
 		} else if(element instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) element;
@@ -70,6 +72,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			FileFromChangeSet ffc = (FileFromChangeSet) element;
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
+		} else if (element instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) element;
+			if(group.getDirection() == Direction.LOCAL){
+				decoratedImage = getImageManager().getImage(base, Differencer.CHANGE);
+			} else {
+				decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
+			}
 		} else {
 			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
