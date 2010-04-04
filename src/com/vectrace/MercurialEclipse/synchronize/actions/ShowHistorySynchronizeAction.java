@@ -21,8 +21,10 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -47,8 +49,24 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 		IStructuredSelection sel = getStructuredSelection();
 		// it's guaranteed that we have exact one element
 		Object object = sel.getFirstElement();
-		IResource resource = ResourceUtils.getResource(object);
-		return new ShowHistorySynchronizeOperation(configuration, elements,	resource);
+		if(object instanceof ChangeSet){
+			ChangeSet changeSet = (ChangeSet) object;
+			if(changeSet.getHgRoot() != null) {
+				object = changeSet.getHgRoot();
+			} else {
+				IResource resource = ResourceUtils.getResource(object);
+				if(resource != null){
+					try {
+						object = MercurialTeamProvider.getHgRoot(resource);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			}
+		} else {
+			object = ResourceUtils.getResource(object);
+		}
+		return new ShowHistorySynchronizeOperation(configuration, elements,	object);
 	}
 
 	@Override

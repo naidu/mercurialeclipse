@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.synchronize.actions;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.ui.history.IHistoryView;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -25,13 +24,13 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
-	private final IResource resource;
+	private final Object input;
 
 	public ShowHistorySynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, IResource resource) {
+			IDiffElement[] elements, Object input) {
 		super(configuration, elements);
-		this.resource = resource;
+		this.input = input;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
@@ -43,7 +42,7 @@ public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
 					IHistoryView view = (IHistoryView) getPart().getSite().getPage()
 						.showView(IHistoryView.VIEW_ID);
 					if (view != null) {
-						view.showHistoryFor(resource);
+						view.showHistoryFor(input);
 					}
 				} catch (PartInitException e) {
 					MercurialEclipsePlugin.logError(e);
