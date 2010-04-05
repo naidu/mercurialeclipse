@@ -52,8 +52,8 @@ public class EditChangesetDialog extends CommitDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite control = (Composite) super.createDialogArea(parent);
-		getShell().setText(Messages.getString("EditChangesetDialog.title")); //$NON-NLS-1$
-		setTitle(Messages.getString("EditChangesetDialog.title")); //$NON-NLS-1$";
+		getShell().setText(Messages.getString("EditChangesetDialog.title", changeset.getName())); //$NON-NLS-1$
+		setTitle(Messages.getString("EditChangesetDialog.title", changeset.getName())); //$NON-NLS-1$";
 		setMessage(Messages.getString("EditChangesetDialog.message")); //$NON-NLS-1$";
 		createChangesetNameContainer(control);
 		return control;
@@ -63,7 +63,7 @@ public class EditChangesetDialog extends CommitDialog {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
 		comp.moveAbove(container.getChildren()[0]);
 
-		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text"));
+		SWTWidgetHelper.createLabel(comp, "Changeset name:");
 		changesetNameText = SWTWidgetHelper.createTextField(comp);
 		changesetNameText.setText(changeset.getName());
 	}
@@ -72,7 +72,7 @@ public class EditChangesetDialog extends CommitDialog {
 	@Override
 	protected CommitFilesChooser createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		return new CommitFilesChooser(root, container, false, true, true, false);
+		return new CommitFilesChooser(root, container, options.filesSelectable, true, true, false);
 	}
 
 	@Override

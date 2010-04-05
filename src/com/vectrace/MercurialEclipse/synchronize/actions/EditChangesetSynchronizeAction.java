@@ -13,7 +13,6 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -21,11 +20,7 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -33,14 +28,14 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 
-	public static final String ID = "hg.history";
+	public static final String ID = "hg.editChangeset";
 
 	public EditChangesetSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
 		setId(ID);
-		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("history.gif"));
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("elcl16/changeset_obj.gif"));
 	}
 
 	@Override
@@ -49,24 +44,11 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 		IStructuredSelection sel = getStructuredSelection();
 		// it's guaranteed that we have exact one element
 		Object object = sel.getFirstElement();
-		if(object instanceof ChangeSet){
-			ChangeSet changeSet = (ChangeSet) object;
-			if(changeSet.getHgRoot() != null) {
-				object = changeSet.getHgRoot();
-			} else {
-				IResource resource = ResourceUtils.getResource(object);
-				if(resource != null){
-					try {
-						object = MercurialTeamProvider.getHgRoot(resource);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
-				}
-			}
-		} else {
-			object = ResourceUtils.getResource(object);
+		if(object instanceof WorkingChangeSet){
+			return new EditChangesetSynchronizeOperation(configuration, elements,
+					(WorkingChangeSet) object);
 		}
-		return new ShowHistorySynchronizeOperation(configuration, elements,	object);
+		return null;
 	}
 
 	@Override
@@ -83,15 +65,7 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		IResource resource = ResourceUtils.getResource(object);
-		if(resource != null){
-			return true;
-		}
-		return object instanceof ChangeSet && isMatching(((ChangeSet) object)
-						.getDirection());
+		return object instanceof WorkingChangeSet;
 	}
 
-	private boolean isMatching(Direction d){
-		return d == Direction.OUTGOING;
-	}
 }

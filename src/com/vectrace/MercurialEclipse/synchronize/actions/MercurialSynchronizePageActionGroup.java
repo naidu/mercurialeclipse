@@ -40,6 +40,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=54581
 	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
+
+	public static final String HG_CHANGESETS_GROUP = "hg.changesets";
 	private final IAction expandAction;
 	private OpenAction openAction;
 
@@ -110,18 +112,19 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
+
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.EDIT_GROUP,
+				HG_CHANGESETS_GROUP,
 				new EditChangesetSynchronizeAction("Edit Change Set...",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.EDIT_GROUP,
+				HG_CHANGESETS_GROUP,
 				new EditChangesetSynchronizeAction("Set as Default Change Set",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.EDIT_GROUP,
+				HG_CHANGESETS_GROUP,
 				new EditChangesetSynchronizeAction("Reassign Changes To",
 						configuration, getVisibleRootsSelectionProvider()));
 	}
@@ -134,6 +137,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 		if(menu.find(HG_COMMIT_GROUP) == null){
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
+		}
+		if(menu.find(HG_CHANGESETS_GROUP) == null){
+			menu.insertAfter(ISynchronizePageConfiguration.EDIT_GROUP, new Separator(HG_CHANGESETS_GROUP));
 		}
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");

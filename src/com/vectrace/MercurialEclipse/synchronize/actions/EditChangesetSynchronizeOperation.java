@@ -13,40 +13,51 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.ui.history.IHistoryView;
+import org.eclipse.jface.window.Window;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
-import org.eclipse.ui.PartInitException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.dialogs.EditChangesetDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation {
-	private final Object input;
+	private final WorkingChangeSet input;
 
 	public EditChangesetSynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, Object input) {
+			IDiffElement[] elements, WorkingChangeSet input) {
 		super(configuration, elements);
 		this.input = input;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
-		monitor.beginTask("Opening History View...", 1);
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				try {
-					IHistoryView view = (IHistoryView) getPart().getSite().getPage()
-						.showView(IHistoryView.VIEW_ID);
-					if (view != null) {
-						view.showHistoryFor(input);
-					}
-				} catch (PartInitException e) {
-					MercurialEclipsePlugin.logError(e);
+				// TODO get hg root and get the changeset type
+				boolean isDefaultChangeset = false;
+				HgRoot hgRoot;
+				Set<IFile> files = input.getFiles();
+				if(files.isEmpty()){
+					// TODO how to get hg root? Should we allow null?
+					hgRoot = null;
+				} else {
+					// TODO not elegant. Should we restrict changesets to one root only?
+					hgRoot = ResourceUtils.groupByRoot(files).keySet().iterator().next();
 				}
+				EditChangesetDialog dialog = new EditChangesetDialog(getShell(), hgRoot, input, isDefaultChangeset);
+				int ok = dialog.open();
+				if(Window.OK != ok){
+					return;
+				}
+				// TODO apply changes
 			}
 		});
 		monitor.done();
