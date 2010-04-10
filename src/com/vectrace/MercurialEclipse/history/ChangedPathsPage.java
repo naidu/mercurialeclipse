@@ -65,12 +65,12 @@ public class ChangedPathsPage {
 	private ChangePathsTableProvider changePathsViewer;
 	private TextViewer textViewer;
 
+	private TextViewer diffLabel;
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore();
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
 
 	private final MercurialHistoryPage page;
-
 	public ChangedPathsPage(MercurialHistoryPage page, Composite parent) {
 		this.page = page;
 		init(parent);
@@ -136,12 +136,14 @@ public class ChangedPathsPage {
 		} else {
 			innerSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
 			createText(innerSashForm);
+			createDiffViewer(innerSashForm);
 		}
 
 		changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
 
 		if (layout == LAYOUT_HORIZONTAL) {
 			createText(innerSashForm);
+			createDiffViewer(innerSashForm);
 		}
 
 		setViewerVisibility();
@@ -159,18 +161,21 @@ public class ChangedPathsPage {
 		if (!(selection instanceof IStructuredSelection)) {
 			textViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
+			diffLabel.setDocument(new Document("nix"));
 			return;
 		}
 		IStructuredSelection ss = (IStructuredSelection) selection;
 		if (ss.size() != 1) {
 			textViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
+			diffLabel.setDocument(new Document("nix"));
 			return;
 		}
 		MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
 		textViewer.setDocument(new Document(entry.getChangeSet()
 				.getComment()));
 		changePathsViewer.setInput(entry);
+		diffLabel.setDocument(new Document(entry.getChangeSet().getDiff()));
 	}
 
 	/**
@@ -229,6 +234,12 @@ public class ChangedPathsPage {
 		StyledText text = this.textViewer.getTextWidget();
 		Menu menu = menuMgr.createContextMenu(text);
 		text.setMenu(menu);
+	}
+
+	private void createDiffViewer(SashForm parent) {
+		// TODO use source viewer
+		diffLabel = new TextViewer(parent, SWT.None);
+		diffLabel.setDocument(new Document());
 	}
 
 	private void contributeActions() {
