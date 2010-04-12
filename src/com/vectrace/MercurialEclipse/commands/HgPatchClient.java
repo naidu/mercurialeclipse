@@ -90,7 +90,6 @@ public class HgPatchClient extends AbstractClient {
 	}
 
 	public static String getDiff(HgRoot hgRoot, HgRevision revision) throws HgException {
-		// TODO do we need param hgRoot?
 		HgCommand command = new HgCommand("diff", hgRoot, true);
 		command.addOptions("-c", "" + revision.getRevision());
 		command.addOptions("--git");
@@ -103,6 +102,28 @@ public class HgPatchClient extends AbstractClient {
 			return "";
 		}
 		return result.substring(indexOf + 1);
+	}
+
+	public static enum DiffLineType { META, ADDED, REMOVED, CONTEXT }
+
+	public static DiffLineType getDiffLineType(String line) {
+		if(line.startsWith("+++ ")) {
+			return DiffLineType.META;
+		} else if(line.startsWith("--- ")) {
+			return DiffLineType.META;
+		} else if(line.startsWith("@@ ")) {
+			return DiffLineType.META;
+		} else if(line.startsWith("new file mode")) {
+			return DiffLineType.META;
+		} else if(line.startsWith("\\ ")) {
+			return DiffLineType.META;
+		} else if(line.startsWith("+")) {
+			return DiffLineType.ADDED;
+		} else if(line.startsWith("-")) {
+			return DiffLineType.REMOVED;
+		} else {
+			return DiffLineType.CONTEXT;
+		}
 	}
 
 	public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {

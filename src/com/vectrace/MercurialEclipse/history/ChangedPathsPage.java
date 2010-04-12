@@ -52,6 +52,7 @@ import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient.DiffLineType;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -206,17 +207,34 @@ public class ChangedPathsPage {
 	 * @param document
 	 */
 	private void applyColoringOnDiffPanel() {
-		Display display = this.diffTextViewer.getControl().getDisplay();
 		IDocument document = diffTextViewer.getDocument();
 		int nrOfLines = document.getNumberOfLines();
 		for (int i = 0; i < nrOfLines; i++) {
 			try {
 				IRegion lineInformation = document.getLineInformation(i);
-				Color color = Math.random() > .5 ? display.getSystemColor(SWT.COLOR_DARK_GREEN) :  display.getSystemColor(SWT.COLOR_DARK_RED);
-				diffTextViewer.setTextColor(color, lineInformation.getOffset(), lineInformation.getLength(), true);
+				int offset = lineInformation.getOffset();
+				int length = lineInformation.getLength();
+				DiffLineType diffLineType = HgPatchClient.getDiffLineType(document.get( offset, length));
+				diffTextViewer.setTextColor(getDiffLineColor(diffLineType), offset, length, true);
 			} catch (BadLocationException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
+		}
+	}
+
+	private Color getDiffLineColor(DiffLineType diffLineType) {
+		Display display = this.diffTextViewer.getControl().getDisplay();
+		switch (diffLineType) {
+		case ADDED:
+			return display.getSystemColor(SWT.COLOR_DARK_GREEN);
+		case REMOVED:
+			return display.getSystemColor(SWT.COLOR_DARK_RED);
+		case META:
+			return display.getSystemColor(SWT.COLOR_GRAY);
+		case CONTEXT:
+			return display.getSystemColor(SWT.COLOR_BLACK);
+		default:
+			throw new IllegalStateException("Unexpected DiffLineType: "+diffLineType);
 		}
 	}
 
