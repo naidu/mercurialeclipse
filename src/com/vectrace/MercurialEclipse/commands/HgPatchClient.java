@@ -21,6 +21,7 @@ import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
@@ -88,10 +89,28 @@ public class HgPatchClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	public static String getDiff(HgRoot hgRoot, HgRevision revision) throws HgException {
+		// TODO do we need param hgRoot?
+		HgCommand command = new HgCommand("diff", hgRoot, true);
+		command.addOptions("-c", "" + revision.getRevision());
+		command.addOptions("--git");
+		return removeFirstLine(command.executeToString());
+	}
+
+	private static String removeFirstLine(String result) {
+		int indexOf = result.indexOf('\n');
+		if (indexOf == -1) {
+			return "";
+		}
+		return result.substring(indexOf + 1);
+	}
+
 	public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {
 		AbstractShellCommand command = new HgCommand(
 				"diff", getWorkingDirectory(getWorkingDirectory(file)), true); //$NON-NLS-1$
 		String patchString = command.executeToString();
 		return PatchUtils.getFilePatches(patchString);
 	}
+
+
 }

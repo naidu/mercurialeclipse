@@ -34,9 +34,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -621,25 +618,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	@Override
 	public void rootRemoved(IResource resource, int depth) {
 		// not supported
-	}
-
-	public String getDiff() {
-		HgCommand command = new HgCommand("diff", hgRoot, false);
-		command.addOptions("-c", ""+getRevision().getRevision());
-		command.addOptions("--git");
-		try {
-			String result = command.executeToString();
-			int indexOf = result.indexOf('\n');
-			if(indexOf == -1) {
-				return "";
-			}
-			String resultWithoutFirstLine = result.substring(indexOf+1);
-			return resultWithoutFirstLine;
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			// TODO ???
-			return e.getMessage();
-		}
 	}
 
 }

@@ -51,6 +51,8 @@ import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -183,14 +185,21 @@ public class ChangedPathsPage {
 		updateDiffPanelFor(entry);
 	}
 
-	/**
-	 * @param entry
-	 */
 	private void updateDiffPanelFor(MercurialRevision entry) {
-		String diff = entry.getChangeSet().getDiff();
-		Document document = new Document(diff);
-		diffTextViewer.setDocument(document);
+		diffTextViewer.setDocument(new Document(getDiff(entry)));
 		applyColoringOnDiffPanel();
+	}
+
+	private String getDiff(MercurialRevision entry) {
+		String diff;
+		try {
+			diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry.getChangeSet().getRevision());
+		} catch (HgException e) {
+			// TODO Check how ExceptionHandling should be done here.
+			MercurialEclipsePlugin.logError(e);
+			throw new IllegalStateException(e);
+		}
+		return diff;
 	}
 
 	/**
