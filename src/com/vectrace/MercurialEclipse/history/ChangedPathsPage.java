@@ -148,11 +148,16 @@ public class ChangedPathsPage {
 	}
 
 	private void inDiffViewerScrollTo(FileStatus path) {
-//				diffTextViewer.setDocument(new Document("p="+path));
+		if(path == null) {
+			return;
+		}
+
 		String pathString = path.getRootRelativePath().toPortableString();
 		int indexOf = diffTextViewer.getDocument().get().indexOf(pathString);
 		if(indexOf != -1) {
 			diffTextViewer.setSelectedRange(indexOf, pathString.length());
+			// TODO why is this necessary here??? Color shouldn't change. Or should it?
+			applyColoringOnDiffPanel();
 		}
 	}
 
@@ -254,6 +259,8 @@ public class ChangedPathsPage {
 	private Color getDiffLineColor(DiffLineType diffLineType) {
 		Display display = this.diffTextViewer.getControl().getDisplay();
 		switch (diffLineType) {
+		case HEADER:
+			return display.getSystemColor(SWT.COLOR_BLUE);
 		case ADDED:
 			return display.getSystemColor(SWT.COLOR_DARK_GREEN);
 		case REMOVED:

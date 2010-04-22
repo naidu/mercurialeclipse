@@ -93,23 +93,16 @@ public class HgPatchClient extends AbstractClient {
 		HgCommand command = new HgCommand("diff", hgRoot, true);
 		command.addOptions("-c", "" + revision.getRevision());
 		command.addOptions("--git");
-		return removeFirstLine(command.executeToString());
+		return command.executeToString();
 	}
 
-	// TODO dont't remove the first line. Leave to the frontend to hide it
-	private static String removeFirstLine(String result) {
-		int indexOf = result.indexOf('\n');
-		if (indexOf == -1) {
-			return "";
-		}
-		return result.substring(indexOf + 1);
-	}
-
-	public static enum DiffLineType { META, ADDED, REMOVED, CONTEXT }
+	public static enum DiffLineType { HEADER, META, ADDED, REMOVED, CONTEXT }
 
 	// TODO Check this against git diff specification
 	public static DiffLineType getDiffLineType(String line) {
-		if(line.startsWith("+++ ")) {
+		if(line.startsWith("diff ")) {
+			return DiffLineType.HEADER;
+		} else if(line.startsWith("+++ ")) {
 			return DiffLineType.META;
 		} else if(line.startsWith("--- ")) {
 			return DiffLineType.META;
