@@ -118,13 +118,15 @@ public class ChangedPathsPage {
 		page.getTableViewer().addSelectionChangedListener(
 				new ISelectionChangedListener() {
 					private Object currentLogEntry;
+					private int currentNumberOfSelectedElements;
 
 					public void selectionChanged(SelectionChangedEvent event) {
 						ISelection selection = event.getSelection();
-						Object logEntry = ((IStructuredSelection) selection)
-								.getFirstElement();
-						if (logEntry != currentLogEntry) {
+						Object logEntry = ((IStructuredSelection) selection).getFirstElement();
+						int nrOfSelectedElements = ((IStructuredSelection) selection).size();
+						if (logEntry != currentLogEntry || nrOfSelectedElements != currentNumberOfSelectedElements) {
 							this.currentLogEntry = logEntry;
+							this.currentNumberOfSelectedElements = nrOfSelectedElements;
 							updatePanels(selection);
 						}
 					}
@@ -206,23 +208,26 @@ public class ChangedPathsPage {
 
 	private void updatePanels(ISelection selection) {
 		if (!(selection instanceof IStructuredSelection)) {
-			commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
-			changePathsViewer.setInput(null);
-			diffTextViewer.setDocument(new Document(""));
+			clearTextChangePathsAndDiffTextViewers();
 			return;
 		}
+
 		IStructuredSelection ss = (IStructuredSelection) selection;
-		if (ss.size() != 1) {
-			commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
-			changePathsViewer.setInput(null);
-			diffTextViewer.setDocument(new Document(""));
-			return;
+		int nrOfSelectedElements = ss.size();
+		if (nrOfSelectedElements == 1) {
+			MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
+			commentTextViewer.setDocument(new Document(entry.getChangeSet().getComment()));
+			changePathsViewer.setInput(entry);
+			updateDiffPanelFor(entry);
+		} else {
+			clearTextChangePathsAndDiffTextViewers();
 		}
-		MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
-		commentTextViewer.setDocument(new Document(entry.getChangeSet()
-				.getComment()));
-		changePathsViewer.setInput(entry);
-		updateDiffPanelFor(entry);
+	}
+
+	private void clearTextChangePathsAndDiffTextViewers() {
+		commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
+		changePathsViewer.setInput(null);
+		diffTextViewer.setDocument(new Document(""));
 	}
 
 	private void updateDiffPanelFor(MercurialRevision entry) {
