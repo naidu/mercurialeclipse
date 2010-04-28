@@ -21,8 +21,8 @@ import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
@@ -89,9 +89,14 @@ public class HgPatchClient extends AbstractClient {
 		return command.executeToString();
 	}
 
-	public static String getDiff(HgRoot hgRoot, HgRevision revision) throws HgException {
+	public static String getDiff(HgRoot hgRoot, MercurialRevision entry, MercurialRevision secondEntry) throws HgException {
 		HgCommand command = new HgCommand("diff", hgRoot, true);
-		command.addOptions("-c", "" + revision.getRevision());
+		if( secondEntry == null ){
+			command.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
+		} else {
+			command.addOptions("-r", ""+entry.getChangeSet().getRevision().getChangeset());
+			command.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getChangeset());
+		}
 		command.addOptions("--git");
 		return command.executeToString();
 	}

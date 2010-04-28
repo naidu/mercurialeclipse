@@ -218,7 +218,14 @@ public class ChangedPathsPage {
 			MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
 			commentTextViewer.setDocument(new Document(entry.getChangeSet().getComment()));
 			changePathsViewer.setInput(entry);
-			updateDiffPanelFor(entry);
+			updateDiffPanelFor(entry, null);
+		} else if (nrOfSelectedElements == 2) {
+			Object[] selectedElememts = ss.toArray();
+			MercurialRevision firstEntry = (MercurialRevision) selectedElememts[1];
+			MercurialRevision secondEntry = (MercurialRevision) selectedElememts[0];
+			commentTextViewer.setDocument(new Document());
+			changePathsViewer.setInput(null);
+			updateDiffPanelFor(firstEntry, secondEntry);
 		} else {
 			clearTextChangePathsAndDiffTextViewers();
 		}
@@ -230,15 +237,15 @@ public class ChangedPathsPage {
 		diffTextViewer.setDocument(new Document(""));
 	}
 
-	private void updateDiffPanelFor(MercurialRevision entry) {
-		diffTextViewer.setDocument(new Document(getDiff(entry)));
+	private void updateDiffPanelFor(MercurialRevision entry, MercurialRevision secondEntry) {
+		diffTextViewer.setDocument(new Document(getDiff(entry, secondEntry)));
 		applyColoringOnDiffPanel();
 	}
 
-	private String getDiff(MercurialRevision entry) {
+	private String getDiff(MercurialRevision entry, MercurialRevision secondEntry) {
 		String diff;
 		try {
-			diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry.getChangeSet().getRevision());
+			diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
 		} catch (HgException e) {
 			// TODO Check how ExceptionHandling should be done here.
 			MercurialEclipsePlugin.logError(e);
