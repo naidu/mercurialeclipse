@@ -61,6 +61,7 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 public class ChangedPathsPage {
 
 	private static final String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
+	private static final String IMG_DIFFS = "diffs.gif"; //$NON-NLS-1$
 	private static final String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
 
 	private SashForm mainSashForm;
@@ -376,7 +377,7 @@ public class ChangedPathsPage {
 		Action toggleShowDiffs = new Action(Messages
 				// TODO create new text & image
 				.getString("HistoryView.showDiffs"), //$NON-NLS-1$
-				MercurialEclipsePlugin.getImageDescriptor(IMG_COMMENTS)) {
+				MercurialEclipsePlugin.getImageDescriptor(IMG_DIFFS)) {
 			@Override
 			public void run() {
 				showDiffs = isChecked();
