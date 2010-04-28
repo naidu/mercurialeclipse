@@ -96,6 +96,7 @@ public class HgPatchClient extends AbstractClient {
 		return removeFirstLine(command.executeToString());
 	}
 
+	// TODO dont't remove the first line. Leave to the frontend to hide it
 	private static String removeFirstLine(String result) {
 		int indexOf = result.indexOf('\n');
 		if (indexOf == -1) {
@@ -106,6 +107,7 @@ public class HgPatchClient extends AbstractClient {
 
 	public static enum DiffLineType { META, ADDED, REMOVED, CONTEXT }
 
+	// TODO Check this against git diff specification
 	public static DiffLineType getDiffLineType(String line) {
 		if(line.startsWith("+++ ")) {
 			return DiffLineType.META;
@@ -113,6 +115,7 @@ public class HgPatchClient extends AbstractClient {
 			return DiffLineType.META;
 		} else if(line.startsWith("@@ ")) {
 			return DiffLineType.META;
+			// TODO there are some more things
 		} else if(line.startsWith("new file mode")) {
 			return DiffLineType.META;
 		} else if(line.startsWith("\\ ")) {

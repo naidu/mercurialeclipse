@@ -86,6 +86,7 @@ public final class MercurialPreferenceConstants {
 
 	// history view
 	public static final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static final String PREF_SHOW_DIFFS = "pref_show_diffs"; //$NON-NLS-1$
 
 	/** shows all tags also for file history, even if the file changeset's was not tagged as such */
 	public static  final String PREF_SHOW_ALL_TAGS = "pref_show_alltags"; //$NON-NLS-1$

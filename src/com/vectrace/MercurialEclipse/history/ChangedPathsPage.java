@@ -68,12 +68,15 @@ public class ChangedPathsPage {
 
 	private boolean showComments;
 	private boolean showAffectedPaths;
+	private boolean showDiffs;
 	private boolean wrapCommentsText;
 
 	private ChangePathsTableProvider changePathsViewer;
-	private TextViewer textViewer;
-
+	private TextViewer commentTextViewer;
 	private TextViewer diffTextViewer;
+
+	private Object currentPath;
+
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore();
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
@@ -88,6 +91,7 @@ public class ChangedPathsPage {
 		this.showComments = store.getBoolean(PREF_SHOW_COMMENTS);
 		this.wrapCommentsText = store.getBoolean(PREF_WRAP_COMMENTS);
 		this.showAffectedPaths = store.getBoolean(PREF_SHOW_PATHS);
+		this.showDiffs = store.getBoolean(PREF_SHOW_DIFFS);
 
 		this.mainSashForm = new SashForm(parent, SWT.VERTICAL);
 		this.mainSashForm.setLayoutData(new GridData(
@@ -106,11 +110,11 @@ public class ChangedPathsPage {
 
 	public void createControl() {
 		createAffectedPathsViewer();
-		addSelectionListener();
+		addSelectionListeners();
 		contributeActions();
 	}
 
-	private void addSelectionListener() {
+	private void addSelectionListeners() {
 		page.getTableViewer().addSelectionChangedListener(
 				new ISelectionChangedListener() {
 					private Object currentLogEntry;
@@ -125,6 +129,31 @@ public class ChangedPathsPage {
 						}
 					}
 				});
+
+		changePathsViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+			public void selectionChanged(SelectionChangedEvent event) {
+				ISelection selection = event.getSelection();
+				FileStatus path = (FileStatus) ((IStructuredSelection) selection)
+					.getFirstElement();
+				diffTextViewer.refresh();
+				if (path != currentPath) {
+					ChangedPathsPage.this.currentPath = path;
+					inDiffViewerScrollTo(path);
+				}
+
+			}
+
+		});
+	}
+
+	private void inDiffViewerScrollTo(FileStatus path) {
+//				diffTextViewer.setDocument(new Document("p="+path));
+		String pathString = path.getRootRelativePath().toPortableString();
+		int indexOf = diffTextViewer.getDocument().get().indexOf(pathString);
+		if(indexOf != -1) {
+			diffTextViewer.setSelectedRange(indexOf, pathString.length());
+		}
 	}
 
 	private void createAffectedPathsViewer() {
@@ -141,46 +170,46 @@ public class ChangedPathsPage {
 
 		if (layout == LAYOUT_HORIZONTAL) {
 			innerSashForm = new SashForm(mainSashForm, SWT.HORIZONTAL);
+
+			createText(innerSashForm);
+			changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
+			createDiffViewer(innerSashForm);
 		} else {
 			innerSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
+
 			createText(innerSashForm);
+			changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
 			createDiffViewer(innerSashForm);
 		}
 
-		changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
 
-		if (layout == LAYOUT_HORIZONTAL) {
-			createText(innerSashForm);
-			createDiffViewer(innerSashForm);
-		}
 
+		updatePanels(page.getTableViewer().getSelection());
 		setViewerVisibility();
-
 		innerSashForm.layout();
+
 		if (weights != null && weights.length == 2) {
 			mainSashForm.setWeights(weights);
 		}
 		mainSashForm.layout();
-
-		updatePanels(page.getTableViewer().getSelection());
 	}
 
 	private void updatePanels(ISelection selection) {
 		if (!(selection instanceof IStructuredSelection)) {
-			textViewer.setDocument(new Document("")); //$NON-NLS-1$
+			commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
 			diffTextViewer.setDocument(new Document(""));
 			return;
 		}
 		IStructuredSelection ss = (IStructuredSelection) selection;
 		if (ss.size() != 1) {
-			textViewer.setDocument(new Document("")); //$NON-NLS-1$
+			commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
 			diffTextViewer.setDocument(new Document(""));
 			return;
 		}
 		MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
-		textViewer.setDocument(new Document(entry.getChangeSet()
+		commentTextViewer.setDocument(new Document(entry.getChangeSet()
 				.getComment()));
 		changePathsViewer.setInput(entry);
 		updateDiffPanelFor(entry);
@@ -253,14 +282,14 @@ public class ChangedPathsPage {
 				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
 		result.getTextWidget().setIndent(2);
 
-		this.textViewer = result;
+		this.commentTextViewer = result;
 
 		// Create actions for the text editor (copy and select all)
 		final TextViewerAction copyAction = new TextViewerAction(
-				this.textViewer, ITextOperationTarget.COPY);
+				this.commentTextViewer, ITextOperationTarget.COPY);
 		copyAction.setText(Messages.getString("HistoryView.copy"));
 
-		this.textViewer
+		this.commentTextViewer
 				.addSelectionChangedListener(new ISelectionChangedListener() {
 					public void selectionChanged(SelectionChangedEvent event) {
 						copyAction.update();
@@ -268,7 +297,7 @@ public class ChangedPathsPage {
 				});
 
 		final TextViewerAction selectAllAction = new TextViewerAction(
-				this.textViewer, ITextOperationTarget.SELECT_ALL);
+				this.commentTextViewer, ITextOperationTarget.SELECT_ALL);
 		selectAllAction.setText(Messages.getString("HistoryView.selectAll"));
 
 		IHistoryPageSite parentSite = getHistoryPageSite();
@@ -291,14 +320,17 @@ public class ChangedPathsPage {
 			}
 		});
 
-		StyledText text = this.textViewer.getTextWidget();
+		StyledText text = this.commentTextViewer.getTextWidget();
 		Menu menu = menuMgr.createContextMenu(text);
 		text.setMenu(menu);
 	}
 
 	private void createDiffViewer(SashForm parent) {
-		// TODO use source viewer
-		diffTextViewer = new TextViewer(parent, SWT.None);
+		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true,
+				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
+		sourceViewer.getTextWidget().setIndent(2);
+
+		diffTextViewer = sourceViewer;
 		diffTextViewer.setDocument(new Document());
 	}
 
@@ -314,7 +346,21 @@ public class ChangedPathsPage {
 				store.setValue(PREF_SHOW_COMMENTS, showComments);
 			}
 		};
+
 		toggleShowComments.setChecked(showComments);
+
+		Action toggleShowDiffs = new Action(Messages
+				// TODO create new text & image
+				.getString("HistoryView.showDiffs"), //$NON-NLS-1$
+				MercurialEclipsePlugin.getImageDescriptor(IMG_COMMENTS)) {
+			@Override
+			public void run() {
+				showDiffs = isChecked();
+				setViewerVisibility();
+				store.setValue(PREF_SHOW_DIFFS, showDiffs);
+			}
+		};
+		toggleShowDiffs.setChecked(showDiffs);
 
 		// Toggle wrap comments action
 		Action toggleWrapCommentsAction = new Action(Messages
@@ -352,6 +398,7 @@ public class ChangedPathsPage {
 		actionBarsMenu.add(new Separator());
 		actionBarsMenu.add(toggleShowComments);
 		actionBarsMenu.add(toggleShowAffectedPathsAction);
+		actionBarsMenu.add(toggleShowDiffs);
 
 		actionBarsMenu.add(new Separator());
 		for (int i = 0; i < toggleAffectedPathsLayoutActions.length; i++) {
@@ -363,6 +410,7 @@ public class ChangedPathsPage {
 		tbm.add(new Separator());
 		tbm.add(toggleShowComments);
 		tbm.add(toggleShowAffectedPathsAction);
+		tbm.add(toggleShowDiffs);
 		tbm.update(false);
 
 		actionBars.updateActionBars();
@@ -424,20 +472,26 @@ public class ChangedPathsPage {
 	}
 
 	private void setViewerVisibility() {
-		if (showComments && showAffectedPaths) {
-			mainSashForm.setMaximizedControl(null);
-			innerSashForm.setMaximizedControl(null);
-		} else if (showComments) {
-			mainSashForm.setMaximizedControl(null);
-			innerSashForm.setMaximizedControl(textViewer.getTextWidget());
-		} else if (showAffectedPaths) {
-			mainSashForm.setMaximizedControl(null);
-			innerSashForm.setMaximizedControl(changePathsViewer.getControl());
-		} else {
-			mainSashForm.setMaximizedControl(page.getTableViewer().getControl().getParent());
-		}
+		// TODO there is some trouble with a missing update after horizontal/vertical change
+		boolean lowerPartVisible = showAffectedPaths || showComments ||  showDiffs;
+		mainSashForm.setMaximizedControl(lowerPartVisible ? null : getChangesetsTableControl());
+
+		int[] weights = {
+				showComments ? 1 : 0, //
+				showAffectedPaths ? 1 : 0, //
+				showDiffs ? 1 : 0 //
+		};
+		innerSashForm.setWeights(weights);
+
+		commentTextViewer.getTextWidget().setWordWrap(wrapCommentsText);
+
+		commentTextViewer.refresh();
 		changePathsViewer.refresh();
-		textViewer.getTextWidget().setWordWrap(wrapCommentsText);
+		diffTextViewer.refresh();
+	}
+
+	private Composite getChangesetsTableControl() {
+		return page.getTableViewer().getControl().getParent();
 	}
 
 	public static class ToggleAffectedPathsOptionAction extends Action {
