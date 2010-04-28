@@ -259,7 +259,7 @@ public class ChangedPathsPage {
 		case REMOVED:
 			return display.getSystemColor(SWT.COLOR_DARK_RED);
 		case META:
-			return display.getSystemColor(SWT.COLOR_GRAY);
+			return display.getSystemColor(SWT.COLOR_DARK_GRAY);
 		case CONTEXT:
 			return display.getSystemColor(SWT.COLOR_BLACK);
 		default:
