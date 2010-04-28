@@ -136,7 +136,6 @@ public class ChangedPathsPage {
 				ISelection selection = event.getSelection();
 				FileStatus path = (FileStatus) ((IStructuredSelection) selection)
 					.getFirstElement();
-				diffTextViewer.refresh();
 				if (path != currentPath) {
 					ChangedPathsPage.this.currentPath = path;
 					inDiffViewerScrollTo(path);
@@ -156,8 +155,14 @@ public class ChangedPathsPage {
 		int indexOf = diffTextViewer.getDocument().get().indexOf(pathString);
 		if(indexOf != -1) {
 			diffTextViewer.setSelectedRange(indexOf, pathString.length());
-			// TODO why is this necessary here??? Color shouldn't change. Or should it?
-			applyColoringOnDiffPanel();
+			try {
+				int line = diffTextViewer.getDocument().getLineOfOffset(indexOf);
+				diffTextViewer.setTopIndex(line);
+				// TODO why is this necessary here??? Color shouldn't change. Or should it?
+				applyColoringOnDiffPanel();
+			} catch (BadLocationException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 	}
 
