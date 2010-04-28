@@ -21,7 +21,10 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -35,8 +38,10 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IActionBars;
@@ -65,7 +70,7 @@ public class ChangedPathsPage {
 	private ChangePathsTableProvider changePathsViewer;
 	private TextViewer textViewer;
 
-	private TextViewer diffLabel;
+	private TextViewer diffTextViewer;
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore();
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
@@ -161,21 +166,49 @@ public class ChangedPathsPage {
 		if (!(selection instanceof IStructuredSelection)) {
 			textViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
-			diffLabel.setDocument(new Document("nix"));
+			diffTextViewer.setDocument(new Document(""));
 			return;
 		}
 		IStructuredSelection ss = (IStructuredSelection) selection;
 		if (ss.size() != 1) {
 			textViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
-			diffLabel.setDocument(new Document("nix"));
+			diffTextViewer.setDocument(new Document(""));
 			return;
 		}
 		MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
 		textViewer.setDocument(new Document(entry.getChangeSet()
 				.getComment()));
 		changePathsViewer.setInput(entry);
-		diffLabel.setDocument(new Document(entry.getChangeSet().getDiff()));
+		updateDiffPanelFor(entry);
+	}
+
+	/**
+	 * @param entry
+	 */
+	private void updateDiffPanelFor(MercurialRevision entry) {
+		String diff = entry.getChangeSet().getDiff();
+		Document document = new Document(diff);
+		diffTextViewer.setDocument(document);
+		applyColoringOnDiffPanel();
+	}
+
+	/**
+	 * @param document
+	 */
+	private void applyColoringOnDiffPanel() {
+		Display display = this.diffTextViewer.getControl().getDisplay();
+		IDocument document = diffTextViewer.getDocument();
+		int nrOfLines = document.getNumberOfLines();
+		for (int i = 0; i < nrOfLines; i++) {
+			try {
+				IRegion lineInformation = document.getLineInformation(i);
+				Color color = Math.random() > .5 ? display.getSystemColor(SWT.COLOR_DARK_GREEN) :  display.getSystemColor(SWT.COLOR_DARK_RED);
+				diffTextViewer.setTextColor(color, lineInformation.getOffset(), lineInformation.getLength(), true);
+			} catch (BadLocationException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 
 	/**
@@ -198,7 +231,7 @@ public class ChangedPathsPage {
 		// Create actions for the text editor (copy and select all)
 		final TextViewerAction copyAction = new TextViewerAction(
 				this.textViewer, ITextOperationTarget.COPY);
-		copyAction.setText(Messages.getString("HistoryView.copy")); //$NON-NLS-1$
+		copyAction.setText(Messages.getString("HistoryView.copy"));
 
 		this.textViewer
 				.addSelectionChangedListener(new ISelectionChangedListener() {
@@ -209,7 +242,7 @@ public class ChangedPathsPage {
 
 		final TextViewerAction selectAllAction = new TextViewerAction(
 				this.textViewer, ITextOperationTarget.SELECT_ALL);
-		selectAllAction.setText(Messages.getString("HistoryView.selectAll")); //$NON-NLS-1$
+		selectAllAction.setText(Messages.getString("HistoryView.selectAll"));
 
 		IHistoryPageSite parentSite = getHistoryPageSite();
 		IPageSite pageSite = parentSite.getWorkbenchPageSite();
@@ -238,8 +271,8 @@ public class ChangedPathsPage {
 
 	private void createDiffViewer(SashForm parent) {
 		// TODO use source viewer
-		diffLabel = new TextViewer(parent, SWT.None);
-		diffLabel.setDocument(new Document());
+		diffTextViewer = new TextViewer(parent, SWT.None);
+		diffTextViewer.setDocument(new Document());
 	}
 
 	private void contributeActions() {
@@ -258,7 +291,7 @@ public class ChangedPathsPage {
 
 		// Toggle wrap comments action
 		Action toggleWrapCommentsAction = new Action(Messages
-				.getString("HistoryView.wrapComments")) { //$NON-NLS-1$
+				.getString("HistoryView.wrapComments")) {
 			@Override
 			public void run() {
 				wrapCommentsText = isChecked();
