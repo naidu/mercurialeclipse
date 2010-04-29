@@ -509,10 +509,6 @@ public class ChangedPathsPage {
 		innerSashForm.setWeights(weights);
 
 		commentTextViewer.getTextWidget().setWordWrap(wrapCommentsText);
-
-		commentTextViewer.refresh();
-		changePathsViewer.refresh();
-		diffTextViewer.refresh();
 	}
 
 	private Composite getChangesetsTableControl() {
