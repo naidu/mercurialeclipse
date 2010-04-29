@@ -192,30 +192,25 @@ public final class HgRepositoryLocationParser {
 		if (uri.getScheme() != null
 				&& !uri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
 			String userInfo = null;
-			if (uri.getUserInfo() == null) {
-				// This is a hack: ssh doesn't allow us to directly enter
-				// in passwords in the URI (even though it says it does)
-				if (uri.getScheme().equalsIgnoreCase("ssh")) {
-					userInfo = user;
-				} else {
-					userInfo = createUserinfo(user, password);
-				}
-			} else {
+			if (uri.getUserInfo() != null) {
 				// extract user and password from given URI
 				String[] authorization = uri.getUserInfo().split(":"); //$NON-NLS-1$
 				user = authorization[0];
 				if (authorization.length > 1) {
 					password = authorization[1];
 				}
-
-				// This is a hack: ssh doesn't allow us to directly enter
-				// in passwords in the URI (even though it says it does)
-				if (uri.getScheme().equalsIgnoreCase("ssh")) {
-					userInfo = user;
-				} else {
-					userInfo = createUserinfo(user, password);
-				}
 			}
+			// This is a hack: ssh doesn't allow us to directly enter
+			// in passwords in the URI (even though it says it does)
+			if (uri.getScheme().equalsIgnoreCase("ssh")) {
+				// Do not provide empty strings as user name: see issue #11828
+				if (!StringUtils.isEmpty(user)) {
+					userInfo = user;
+				}
+			} else {
+				userInfo = createUserinfo(user, password);
+			}
+
 			try {
 				return new URI(uri.getScheme(), userInfo,
 						uri.getHost(), uri.getPort(), uri.getPath(),
