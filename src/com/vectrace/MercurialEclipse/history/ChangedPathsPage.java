@@ -500,6 +500,9 @@ public class ChangedPathsPage {
 		// TODO there is some trouble with a missing update after horizontal/vertical change
 		boolean lowerPartVisible = showAffectedPaths || showComments ||  showDiffs;
 		mainSashForm.setMaximizedControl(lowerPartVisible ? null : getChangesetsTableControl());
+		if(!lowerPartVisible) {
+			return;
+		}
 
 		int[] weights = {
 				showComments ? 1 : 0, //
