@@ -13,7 +13,10 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -43,6 +46,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -243,16 +247,44 @@ public class ChangedPathsPage {
 		applyColoringOnDiffPanel();
 	}
 
-	private String getDiff(MercurialRevision entry, MercurialRevision secondEntry) {
-		String diff;
-		try {
-			diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
-		} catch (HgException e) {
-			// TODO Check how ExceptionHandling should be done here.
-			MercurialEclipsePlugin.logError(e);
-			throw new IllegalStateException(e);
-		}
-		return diff;
+	private String getDiff(final MercurialRevision entry, final MercurialRevision secondEntry) {
+		final String[] resultHolder = new String[] {""};
+			TeamOperation operation = new TeamOperation(page.getSite().getWorkbenchWindow()) {
+
+				public void run(IProgressMonitor monitor) throws InvocationTargetException,
+						InterruptedException {
+					try {
+						resultHolder[0] = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
+						Thread.sleep(5000);
+					} catch (HgException e) {
+						// TODO Check how ExceptionHandling should be done here.
+						MercurialEclipsePlugin.logError(e);
+						throw new IllegalStateException(e);
+					}
+				}
+
+				@Override
+				protected String getJobName() {
+					// TODO Replace this with from resource
+					return "Moin Moin!";
+				}
+
+				@Override
+				protected boolean shouldRun() {
+					// TODO Auto-generated method stub
+					return super.shouldRun();
+				}
+
+			};
+
+			try {
+				operation.run();
+			} catch (InvocationTargetException e) {
+				MercurialEclipsePlugin.logError(e);
+			} catch (InterruptedException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			return resultHolder[0];
 	}
 
 	/**

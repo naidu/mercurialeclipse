@@ -90,6 +90,13 @@ public class HgPatchClient extends AbstractClient {
 	}
 
 	public static String getDiff(HgRoot hgRoot, MercurialRevision entry, MercurialRevision secondEntry) throws HgException {
+		HgCommand command = createDiffCommand(hgRoot, entry, secondEntry);
+		return command.executeToString();
+	}
+
+
+	public static HgCommand createDiffCommand(HgRoot hgRoot, MercurialRevision entry,
+			MercurialRevision secondEntry) {
 		HgCommand command = new HgCommand("diff", hgRoot, true);
 		if( secondEntry == null ){
 			command.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
@@ -98,7 +105,7 @@ public class HgPatchClient extends AbstractClient {
 			command.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getChangeset());
 		}
 		command.addOptions("--git");
-		return command.executeToString();
+		return command;
 	}
 
 	public static enum DiffLineType { HEADER, META, ADDED, REMOVED, CONTEXT }
