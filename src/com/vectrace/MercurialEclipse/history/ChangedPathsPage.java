@@ -242,49 +242,76 @@ public class ChangedPathsPage {
 		diffTextViewer.setDocument(new Document(""));
 	}
 
-	private void updateDiffPanelFor(MercurialRevision entry, MercurialRevision secondEntry) {
-		diffTextViewer.setDocument(new Document(getDiff(entry, secondEntry)));
-		applyColoringOnDiffPanel();
-	}
+	private void updateDiffPanelFor(final MercurialRevision entry, final MercurialRevision secondEntry) {
+		TeamOperation operation = new TeamOperation(page.getHistoryPageSite().getPart(), null) {
 
-	private String getDiff(final MercurialRevision entry, final MercurialRevision secondEntry) {
-		final String[] resultHolder = new String[] {""};
-			TeamOperation operation = new TeamOperation(page.getSite().getWorkbenchWindow()) {
-
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						resultHolder[0] = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
-						Thread.sleep(5000);
-					} catch (HgException e) {
-						// TODO Check how ExceptionHandling should be done here.
-						MercurialEclipsePlugin.logError(e);
-						throw new IllegalStateException(e);
-					}
+			public void run(IProgressMonitor monitor) throws InvocationTargetException,
+					InterruptedException {
+			    String diff = "";
+				try {
+					// TODO add monitoring info
+					diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
+					Thread.sleep(7000);
+				} catch (HgException e) {
+					// TODO Check how ExceptionHandling should be done here.
+					MercurialEclipsePlugin.logError(e);
 				}
 
-				@Override
-				protected String getJobName() {
-					// TODO Replace this with from resource
-					return "Moin Moin!";
-				}
+				final String resultingDiff = diff;
 
-				@Override
-				protected boolean shouldRun() {
-					// TODO Auto-generated method stub
-					return super.shouldRun();
-				}
-
-			};
-
-			try {
-				operation.run();
-			} catch (InvocationTargetException e) {
-				MercurialEclipsePlugin.logError(e);
-			} catch (InterruptedException e) {
-				MercurialEclipsePlugin.logError(e);
+				page.getControl().getDisplay().asyncExec(new Runnable() {
+		               public void run() {
+							diffTextViewer.setDocument(new Document(resultingDiff));
+							applyColoringOnDiffPanel();
+		               }
+				});
+//				SafeUiJob safeUiJob = new SafeUiJob("update diff viewer") {
+//
+//					@Override
+//					protected IStatus runSafe(IProgressMonitor myMonitor) {
+//						diffTextViewer.setDocument(new Document(resultingDiff));
+//						applyColoringOnDiffPanel();
+//						return Status.OK_STATUS;
+//					}
+//
+//				};
+//				safeUiJob.runInUIThread(monitor);
 			}
-			return resultHolder[0];
+
+			@Override
+			protected String getJobName() {
+				// TODO Replace this with from resource
+				return "Moin Moin!";
+			}
+
+			@Override
+			protected boolean shouldRun() {
+				// TODO Auto-generated method stub
+				return true;
+			}
+
+			@Override
+			protected boolean canRunAsJob() {
+
+				return true;
+			}
+
+			@Override
+			public boolean isUserInitiated() {
+				return false;
+			}
+
+
+
+		};
+
+		try {
+			operation.run();
+		} catch (InvocationTargetException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	/**
