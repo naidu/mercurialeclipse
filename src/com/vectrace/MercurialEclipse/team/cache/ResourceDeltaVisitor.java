@@ -10,9 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -27,7 +25,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -37,15 +37,17 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
-	private final Map<IProject, Set<IResource>> removed;
-	private final Map<IProject, Set<IResource>> changed;
-	private final Map<IProject, Set<IResource>> added;
+	private final Map<IProject, RootResourceSet> removed;
+	private final Map<IProject, RootResourceSet> changed;
+	private final Map<IProject, RootResourceSet> added;
 	private final boolean autoShare;
 	private final MercurialStatusCache cache;
 	private int resourcesCount;
+	private HgRoot currentRoot;
 
-	ResourceDeltaVisitor(Map<IProject, Set<IResource>> removed, Map<IProject, Set<IResource>> changed,
-			Map<IProject, Set<IResource>> added) {
+	ResourceDeltaVisitor(Map<IProject, RootResourceSet> removed,
+			Map<IProject, RootResourceSet> changed,
+			Map<IProject, RootResourceSet> added) {
 		this.removed = removed;
 		this.changed = changed;
 		this.added = added;
@@ -76,19 +78,33 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		if (!MercurialUtilities.isPossiblySupervised(res)) {
 			return false;
 		}
+
+		if(currentRoot == null){
+			// first node we visit up to this point
+			currentRoot = AbstractClient.getHgRoot(res);
+		}
+
 		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){
-			addResource(changed, project, project);
+			addResource(changed, project, currentRoot, project);
 			return false;
 		}
 		// System.out.println("Observing change on: " + res);
 
 		// NB: the resource may not exist at this point (deleted/moved)
 		// so any access to the IResource's API should be checked against null
-		if (res.getType() == IResource.FILE) {
+		if(res.getType() == IResource.FOLDER){
+			// each folder is potentially a new subrepos, which may mean another HgRoot for its children
+			HgRoot root = HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(res));
+			if(root != null){
+				// yup that was indeed a subrepos.
+				currentRoot = root;
+			}
+
+		}else if (res.getType() == IResource.FILE) {
 			IResource resource = isCompleteStatusRequested()? project : res;
 			switch (delta.getKind()) {
 			case IResourceDelta.ADDED:
-				addResource(added, project, resource);
+				addResource(added, project, currentRoot, resource);
 				// System.out.println("\t ADDED: " + resource);
 				if(isCompleteStatusRequested()){
 					return false;
@@ -100,10 +116,10 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
 					// fix for issue 10155: No status update after reverting changes on .hgignore
 					if(MercurialStatusCache.canTriggerFullCacheUpdate(resource)){
-						addResource(changed, project, project);
+						addResource(changed, project, currentRoot, project);
 						return false;
 					}
-					addResource(changed, project, resource);
+					addResource(changed, project, currentRoot, resource);
 					// System.out.println("\t CHANGED: " + resource);
 					if(isCompleteStatusRequested()){
 						return false;
@@ -112,7 +128,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 				break;
 			case IResourceDelta.REMOVED:
 				if (cache.isSupervised(project, ResourceUtils.getPath(res))) {
-					addResource(removed, project, resource);
+					addResource(removed, project, currentRoot, resource);
 					// System.out.println("\t REMOVED: " + resource);
 					if(isCompleteStatusRequested()){
 						return false;
@@ -124,7 +140,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 					res = res.getParent();
 					if (res != null && cache.isSupervised(project, ResourceUtils.getPath(res))){
 						resource = isCompleteStatusRequested()? project : res;
-						addResource(changed, project, resource);
+						addResource(changed, project, currentRoot, resource);
 						// System.out.println("\t CHANGED: " + resource);
 						if(isCompleteStatusRequested()){
 							return false;
@@ -142,13 +158,13 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	}
 
 
-	private void addResource(Map<IProject, Set<IResource>> map, IProject project, IResource res){
-		Set<IResource> set = map.get(project);
-		if(set == null) {
-			set = new HashSet<IResource>();
+	private void addResource(Map<IProject, RootResourceSet> map, IProject project, HgRoot root, IResource res){
+		RootResourceSet set = map.get(project);
+		if(set == null){
+			set = new RootResourceSet();
 			map.put(project, set);
 		}
-		set.add(res);
+		set.add(root, res);
 		resourcesCount++;
 	}
 

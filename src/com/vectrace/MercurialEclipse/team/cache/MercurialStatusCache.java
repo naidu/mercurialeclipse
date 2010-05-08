@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
@@ -83,13 +83,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final class ProjectUpdateJob extends Job {
 
 		private final IProject project;
-		private final Set<IResource> resources;
+		private final RootResourceSet resources;
 
-		private ProjectUpdateJob(Set<IResource> removedSet, Set<IResource> changedSet,
-				IProject project, Set<IResource> addedSet) {
+		private ProjectUpdateJob(RootResourceSet removedSet, RootResourceSet changedSet,
+				IProject project, RootResourceSet addedSet) {
 			super(Messages.mercurialStatusCache_RefreshStatus);
 			this.project = project;
-			resources = new HashSet<IResource>();
+			resources = new RootResourceSet();
+
 			if(removedSet != null) {
 				resources.addAll(removedSet);
 			}
@@ -99,9 +100,22 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if(addedSet != null) {
 				resources.addAll(addedSet);
 			}
+
 			if(resources.contains(project) || resources.size() > NUM_CHANGED_FOR_COMPLETE_STATUS){
-				resources.clear();
-				resources.add(project);
+				// refreshing the status of too many files, just refresh the whole project
+				HgRoot projectRoot = resources.rootOf(project);
+				if(projectRoot == null){
+					try{
+						projectRoot = AbstractClient.getHgRoot(project);
+						resources.clear();
+						resources.add(projectRoot, project);
+
+					}catch(CoreException ex){
+						// if for some reason we cant get the root of the project, log it but continue
+						// the status refresh on all the files that were asked.
+						MercurialEclipsePlugin.logError(ex);
+					}
+				}
 			}
 		}
 
@@ -144,13 +158,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return false;
 			}
 			ProjectUpdateJob job = (ProjectUpdateJob) obj;
-			if(resources.size() != job.resources.size()){
-				return false;
-			}
 			if(!project.equals(job.project)){
 				return false;
 			}
-			return resources.containsAll(job.resources);
+			return resources.equals(job.resources);
 		}
 
 		@Override
@@ -1031,9 +1042,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 		IResourceDelta delta = event.getDelta();
 
-		final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
-		final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
-		final Map<IProject, Set<IResource>> removed = new HashMap<IProject, Set<IResource>>();
+		final Map<IProject, RootResourceSet> changed = new HashMap<IProject, RootResourceSet>();
+		final Map<IProject, RootResourceSet> added = new HashMap<IProject, RootResourceSet>();
+		final Map<IProject, RootResourceSet> removed = new HashMap<IProject, RootResourceSet>();
 
 		IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(removed, changed, added);
 
@@ -1049,17 +1060,17 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		changedProjects.addAll(added.keySet());
 		changedProjects.addAll(removed.keySet());
 		for (IProject project : changedProjects) {
-			Set<IResource> addedSet = added.get(project);
-			Set<IResource> removedSet = removed.get(project);
-			Set<IResource> changedSet = changed.get(project);
+			RootResourceSet addedSet = added.get(project);
+			RootResourceSet removedSet = removed.get(project);
+			RootResourceSet changedSet = changed.get(project);
 
 			projectChanged(project, addedSet, removedSet, changedSet);
 		}
 
 	}
 
-	private void projectChanged(final IProject project, final Set<IResource> addedSet, final Set<IResource> removedSet,
-			final Set<IResource> changedSet) {
+	private void projectChanged(final IProject project, final RootResourceSet addedSet, final RootResourceSet removedSet,
+			final RootResourceSet changedSet) {
 		ProjectUpdateJob updateJob = new ProjectUpdateJob(removedSet, changedSet, project, addedSet);
 		Job[] jobs = Job.getJobManager().find(ProjectUpdateJob.class);
 		for (Job job : jobs) {
@@ -1083,7 +1094,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @param project
 	 *            not null. The project which resources state has to be updated
 	 */
-	private Set<IResource> refreshStatus(final Set<IResource> resources, IProject project) throws HgException {
+	private Set<IResource> refreshStatus(final RootResourceSet resources, IProject project) throws HgException {
 		if (resources == null || resources.isEmpty()) {
 			return Collections.emptySet();
 		}
@@ -1094,11 +1105,24 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return Collections.emptySet();
 			}
 		}
+
+		Set<IResource> changed = new HashSet<IResource>();
+		for(Map.Entry<HgRoot, Set<IResource>> entry : resources.entrySet()){
+			changed.addAll(updateStatusInRoot(project, entry.getKey(), entry.getValue()));
+		}
+
+		if(!resources.isEmpty()) {
+			changed.addAll(checkForConflict(project));
+		}
+		notifyChanged(changed, false);
+		return changed;
+	}
+
+	private Set<IResource> updateStatusInRoot(IProject project, HgRoot root, Set<IResource> resources) throws HgException{
 		int batchSize = getStatusBatchSize();
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
 
-		HgRoot root = AbstractClient.getHgRoot(project);
 		for (Iterator<IResource> iterator = resources.iterator(); iterator.hasNext();) {
 			IResource resource = iterator.next();
 
@@ -1136,10 +1160,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				currentBatch.clear();
 			}
 		}
-		if(!resources.isEmpty()) {
-			changed.addAll(checkForConflict(project));
-		}
-		notifyChanged(changed, false);
+
 		return changed;
 	}
 
