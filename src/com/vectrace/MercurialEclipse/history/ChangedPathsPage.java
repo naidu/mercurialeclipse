@@ -247,52 +247,39 @@ public class ChangedPathsPage {
 
 			public void run(IProgressMonitor monitor) throws InvocationTargetException,
 					InterruptedException {
-			    String diff = "";
+
+				monitor.beginTask(getJobName(), 2);
 				try {
 					// TODO add monitoring info
-					diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
-					Thread.sleep(7000);
+					final String diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
+					monitor.worked(1);
+					page.getControl().getDisplay().syncExec(new Runnable() {
+						public void run() {
+							diffTextViewer.setDocument(new Document(diff));
+							applyColoringOnDiffPanel();
+						}
+					});
+					monitor.worked(1);
+					monitor.done();
 				} catch (HgException e) {
-					// TODO Check how ExceptionHandling should be done here.
 					MercurialEclipsePlugin.logError(e);
 				}
 
-				final String resultingDiff = diff;
-
-				page.getControl().getDisplay().asyncExec(new Runnable() {
-		               public void run() {
-							diffTextViewer.setDocument(new Document(resultingDiff));
-							applyColoringOnDiffPanel();
-		               }
-				});
-//				SafeUiJob safeUiJob = new SafeUiJob("update diff viewer") {
-//
-//					@Override
-//					protected IStatus runSafe(IProgressMonitor myMonitor) {
-//						diffTextViewer.setDocument(new Document(resultingDiff));
-//						applyColoringOnDiffPanel();
-//						return Status.OK_STATUS;
-//					}
-//
-//				};
-//				safeUiJob.runInUIThread(monitor);
 			}
 
 			@Override
 			protected String getJobName() {
 				// TODO Replace this with from resource
-				return "Moin Moin!";
+				return "Update diff viewer";
 			}
 
 			@Override
 			protected boolean shouldRun() {
-				// TODO Auto-generated method stub
 				return true;
 			}
 
 			@Override
 			protected boolean canRunAsJob() {
-
 				return true;
 			}
 
@@ -300,8 +287,6 @@ public class ChangedPathsPage {
 			public boolean isUserInitiated() {
 				return false;
 			}
-
-
 
 		};
 
