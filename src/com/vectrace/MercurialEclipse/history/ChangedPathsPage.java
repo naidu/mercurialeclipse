@@ -80,6 +80,7 @@ public class ChangedPathsPage {
 	private TextViewer commentTextViewer;
 	private TextViewer diffTextViewer;
 
+	// TODO find a more expressive name
 	private Object currentPath;
 
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
@@ -166,7 +167,7 @@ public class ChangedPathsPage {
 				int line = diffTextViewer.getDocument().getLineOfOffset(indexOf);
 				diffTextViewer.setTopIndex(line);
 				// TODO why is this necessary here??? Color shouldn't change. Or should it?
-				applyColoringOnDiffPanel();
+				applyColoringToDiffViewer();
 			} catch (BadLocationException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -256,7 +257,7 @@ public class ChangedPathsPage {
 					page.getControl().getDisplay().syncExec(new Runnable() {
 						public void run() {
 							diffTextViewer.setDocument(new Document(diff));
-							applyColoringOnDiffPanel();
+							applyColoringToDiffViewer();
 						}
 					});
 					monitor.worked(1);
@@ -299,10 +300,7 @@ public class ChangedPathsPage {
 		}
 	}
 
-	/**
-	 * @param document
-	 */
-	private void applyColoringOnDiffPanel() {
+	private void applyColoringToDiffViewer() {
 		IDocument document = diffTextViewer.getDocument();
 		int nrOfLines = document.getNumberOfLines();
 		for (int i = 0; i < nrOfLines; i++) {
@@ -541,7 +539,6 @@ public class ChangedPathsPage {
 	}
 
 	private void setViewerVisibility() {
-		// TODO there is some trouble with a missing update after horizontal/vertical change
 		boolean lowerPartVisible = showAffectedPaths || showComments ||  showDiffs;
 		mainSashForm.setMaximizedControl(lowerPartVisible ? null : getChangesetsTableControl());
 		if(!lowerPartVisible) {
