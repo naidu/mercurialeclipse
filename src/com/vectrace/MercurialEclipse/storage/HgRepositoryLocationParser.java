@@ -136,7 +136,7 @@ public final class HgRepositoryLocationParser {
 
 	protected static IHgRepositoryLocation parseLine(String logicalName, String location, String user, String password) throws HgException {
 		if(StringUtils.isEmpty(location)){
-			throw new HgException("Empty location!");
+			throw new HgException("Empty location for " + logicalName + " (user:" + user +")!");
 		}
 
 		String[] repoInfo = location.split(SPLIT_TOKEN);
