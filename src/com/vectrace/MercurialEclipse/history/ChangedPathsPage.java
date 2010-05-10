@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - reference
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Bjoern Stachmann - diff viewer
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -56,7 +57,6 @@ import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
-import com.vectrace.MercurialEclipse.commands.HgPatchClient.DiffLineType;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -167,7 +167,7 @@ public class ChangedPathsPage {
 				int line = diffTextViewer.getDocument().getLineOfOffset(indexOf);
 				diffTextViewer.setTopIndex(line);
 				// TODO why is this necessary here??? Color shouldn't change. Or should it?
-				applyColoringToDiffViewer();
+				applyLineColoringToDiffViewer();
 			} catch (BadLocationException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -257,7 +257,7 @@ public class ChangedPathsPage {
 					page.getControl().getDisplay().syncExec(new Runnable() {
 						public void run() {
 							diffTextViewer.setDocument(new Document(diff));
-							applyColoringToDiffViewer();
+							applyLineColoringToDiffViewer();
 						}
 					});
 					monitor.worked(1);
@@ -300,7 +300,7 @@ public class ChangedPathsPage {
 		}
 	}
 
-	private void applyColoringToDiffViewer() {
+	private void applyLineColoringToDiffViewer() {
 		IDocument document = diffTextViewer.getDocument();
 		int nrOfLines = document.getNumberOfLines();
 		for (int i = 0; i < nrOfLines; i++) {
@@ -308,29 +308,34 @@ public class ChangedPathsPage {
 				IRegion lineInformation = document.getLineInformation(i);
 				int offset = lineInformation.getOffset();
 				int length = lineInformation.getLength();
-				DiffLineType diffLineType = HgPatchClient.getDiffLineType(document.get( offset, length));
-				diffTextViewer.setTextColor(getDiffLineColor(diffLineType), offset, length, true);
+				Color lineColor = getDiffLineColor(document.get( offset, length));
+				diffTextViewer.setTextColor(lineColor, offset, length, true);
 			} catch (BadLocationException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
 	}
 
-	private Color getDiffLineColor(DiffLineType diffLineType) {
+	private Color getDiffLineColor(String line) {
 		Display display = this.diffTextViewer.getControl().getDisplay();
-		switch (diffLineType) {
-		case HEADER:
+		if(line.startsWith("diff ")) {
 			return display.getSystemColor(SWT.COLOR_BLUE);
-		case ADDED:
+		} else if(line.startsWith("+++ ")) {
+			return display.getSystemColor(SWT.COLOR_BLUE);
+		} else if(line.startsWith("--- ")) {
+			return display.getSystemColor(SWT.COLOR_BLUE);
+		} else if(line.startsWith("@@ ")) {
+			return display.getSystemColor(SWT.COLOR_BLUE);
+		} else if(line.startsWith("new file mode")) {
+			return display.getSystemColor(SWT.COLOR_BLUE);
+		} else if(line.startsWith("\\ ")) {
+			return display.getSystemColor(SWT.COLOR_BLUE);
+		} else if(line.startsWith("+")) {
 			return display.getSystemColor(SWT.COLOR_DARK_GREEN);
-		case REMOVED:
+		} else if(line.startsWith("-")) {
 			return display.getSystemColor(SWT.COLOR_DARK_RED);
-		case META:
-			return display.getSystemColor(SWT.COLOR_DARK_GRAY);
-		case CONTEXT:
+		} else {
 			return display.getSystemColor(SWT.COLOR_BLACK);
-		default:
-			throw new IllegalStateException("Unexpected DiffLineType: "+diffLineType);
 		}
 	}
 

@@ -9,6 +9,7 @@
  *     Jerome Negre              - implementation
  *     Steeven Lee               - import/export stuff
  *     Bastian Doetsch           - additions
+ *     Bjoern Stachmann          - diff method for changeset and revision ranges
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -89,50 +90,30 @@ public class HgPatchClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	/**
+	 * Get a diff for a single changeSet or a rage for revisions.
+	 *
+	 * Use the extended diff format (--git) that shows renames and file attributes.
+	 *
+	 * @param hgRoot The root. Must not be null.
+	 * @param entry Revision of the changeset or first revision of changeset-range (if secondEntry != null). Must not be null.
+	 * @param secondEntry second revision of changeset range. If null entry a diff will be created for parameter entry a a single Changeset.
+	 * @return Diff as a string in extended diff format (--git).
+	 * @throws HgException
+	 */
 	public static String getDiff(HgRoot hgRoot, MercurialRevision entry, MercurialRevision secondEntry) throws HgException {
-		HgCommand command = createDiffCommand(hgRoot, entry, secondEntry);
-		return command.executeToString();
-	}
-
-
-	public static HgCommand createDiffCommand(HgRoot hgRoot, MercurialRevision entry,
-			MercurialRevision secondEntry) {
-		HgCommand command = new HgCommand("diff", hgRoot, true);
+		HgCommand diffCommand = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
 		if( secondEntry == null ){
-			command.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
+			diffCommand.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
 		} else {
-			command.addOptions("-r", ""+entry.getChangeSet().getRevision().getChangeset());
-			command.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getChangeset());
+			diffCommand.addOptions("-r", ""+entry.getChangeSet().getRevision().getChangeset());
+			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getChangeset());
 		}
-		command.addOptions("--git");
-		return command;
+		diffCommand.addOptions("--git");
+		return diffCommand.executeToString();
 	}
 
-	public static enum DiffLineType { HEADER, META, ADDED, REMOVED, CONTEXT }
 
-	// TODO Check this against git diff specification
-	public static DiffLineType getDiffLineType(String line) {
-		if(line.startsWith("diff ")) {
-			return DiffLineType.HEADER;
-		} else if(line.startsWith("+++ ")) {
-			return DiffLineType.META;
-		} else if(line.startsWith("--- ")) {
-			return DiffLineType.META;
-		} else if(line.startsWith("@@ ")) {
-			return DiffLineType.META;
-			// TODO there are some more things
-		} else if(line.startsWith("new file mode")) {
-			return DiffLineType.META;
-		} else if(line.startsWith("\\ ")) {
-			return DiffLineType.META;
-		} else if(line.startsWith("+")) {
-			return DiffLineType.ADDED;
-		} else if(line.startsWith("-")) {
-			return DiffLineType.REMOVED;
-		} else {
-			return DiffLineType.CONTEXT;
-		}
-	}
 
 	public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {
 		AbstractShellCommand command = new HgCommand(
