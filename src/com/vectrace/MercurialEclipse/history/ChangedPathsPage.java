@@ -251,7 +251,6 @@ public class ChangedPathsPage {
 
 				monitor.beginTask(getJobName(), 2);
 				try {
-					// TODO add monitoring info
 					final String diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
 					monitor.worked(1);
 					page.getControl().getDisplay().syncExec(new Runnable() {
