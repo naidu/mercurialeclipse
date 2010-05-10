@@ -166,8 +166,6 @@ public class ChangedPathsPage {
 			try {
 				int line = diffTextViewer.getDocument().getLineOfOffset(indexOf);
 				diffTextViewer.setTopIndex(line);
-				// TODO why is this necessary here??? Color shouldn't change. Or should it?
-				applyLineColoringToDiffViewer();
 			} catch (BadLocationException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
