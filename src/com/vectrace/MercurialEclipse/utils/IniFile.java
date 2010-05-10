@@ -137,6 +137,9 @@ public class IniFile {
 	 * @return The Section value
 	 */
 	public Map<String, String> getSection(String section) {
+		if(section == null){
+			return sections.get(null);
+		}
 		return sections.get(section.toLowerCase());
 	}
 
@@ -155,7 +158,8 @@ public class IniFile {
 	}
 
 	/**
-	 * Gets the KeyValue attribute of the IniFile object
+	 * Gets the KeyValue attribute of the IniFile object. If the specified section is null, only values that
+	 * are defined before the first section may be returned
 	 *
 	 * @param section
 	 *            Description of Parameter
@@ -252,7 +256,7 @@ public class IniFile {
 	}
 
 	/**
-	 * Description of the Method
+	 * Loads the whole init file. Values that are defined before the first section are stored in the null section.
 	 *
 	 * @param in
 	 *            Description of Parameter
@@ -274,7 +278,12 @@ public class IniFile {
 							section = new HashMap<String, String>();
 							sections.put(sectionName, section);
 						}
-					} else if (read.indexOf("=") != -1 && section != null) {
+					} else if (read.indexOf("=") != -1) {
+						if(section == null){
+							// create the null-section entry
+							section = new HashMap<String, String>();
+							sections.put(null, section);
+						}
 						// new key
 						String key = read.substring(0, read.indexOf("=")).trim().toLowerCase();
 						String value = read.substring(read.indexOf("=") + 1).trim();
