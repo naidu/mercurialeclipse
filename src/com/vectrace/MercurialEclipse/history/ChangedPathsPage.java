@@ -223,20 +223,14 @@ public class ChangedPathsPage {
 			return;
 		}
 
-		IStructuredSelection ss = (IStructuredSelection) selection;
-		int nrOfSelectedElements = ss.size();
-		if (nrOfSelectedElements == 1) {
-			MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
-			commentTextViewer.setDocument(new Document(entry.getChangeSet().getComment()));
-			changePathsViewer.setInput(entry);
-			updateDiffPanelFor(entry, null);
-		} else if (nrOfSelectedElements == 2) {
-			Object[] selectedElememts = ss.toArray();
-			MercurialRevision firstEntry = (MercurialRevision) selectedElememts[1];
-			MercurialRevision secondEntry = (MercurialRevision) selectedElememts[0];
-			commentTextViewer.setDocument(new Document());
-			changePathsViewer.setInput(null);
-			updateDiffPanelFor(firstEntry, secondEntry);
+		Object[] selectedElememts = ((IStructuredSelection) selection).toArray();
+		if (selectedElememts.length == 1) {
+			MercurialRevision revision = (MercurialRevision) selectedElememts[0];
+			updatePanelsAfterSelectionOf(revision);
+		} else if (selectedElememts.length == 2) {
+			MercurialRevision youngerRevision = (MercurialRevision) selectedElememts[0];
+			MercurialRevision olderRevision = (MercurialRevision) selectedElememts[1];
+			updatePanelsAfterSelectionOf(olderRevision, youngerRevision);
 		} else {
 			clearTextChangePathsAndDiffTextViewers();
 		}
@@ -245,7 +239,21 @@ public class ChangedPathsPage {
 	private void clearTextChangePathsAndDiffTextViewers() {
 		commentTextViewer.setDocument(new Document("")); //$NON-NLS-1$
 		changePathsViewer.setInput(null);
-		diffTextViewer.setDocument(new Document(""));
+		diffTextViewer.setDocument(new Document("")); //$NON-NLS-1$
+	}
+
+	private void updatePanelsAfterSelectionOf(MercurialRevision revision) {
+		commentTextViewer.setDocument(new Document(revision.getChangeSet().getComment()));
+		changePathsViewer.setInput(revision);
+		updateDiffPanelFor(revision, null);
+	}
+
+	private void updatePanelsAfterSelectionOf(MercurialRevision firstRevision, MercurialRevision secondRevision) {
+		// TODO update to combined comment
+		commentTextViewer.setDocument(new Document());
+		// TODO update to combined file list
+		changePathsViewer.setInput(null);
+		updateDiffPanelFor(firstRevision, secondRevision);
 	}
 
 	private void updateDiffPanelFor(final MercurialRevision entry, final MercurialRevision secondEntry) {
