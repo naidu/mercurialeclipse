@@ -80,14 +80,12 @@ public class ChangedPathsPage {
 	private TextViewer commentTextViewer;
 	private TextViewer diffTextViewer;
 
-	// TODO find a more expressive name
-	private Object currentPath;
-
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore();
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
 
 	private final MercurialHistoryPage page;
+
 	public ChangedPathsPage(MercurialHistoryPage page, Composite parent) {
 		this.page = page;
 		init(parent);
@@ -140,35 +138,43 @@ public class ChangedPathsPage {
 
 		changePathsViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 
+			private Object selectedChangePath;
+
 			public void selectionChanged(SelectionChangedEvent event) {
-				ISelection selection = event.getSelection();
-				FileStatus path = (FileStatus) ((IStructuredSelection) selection)
-					.getFirstElement();
-				if (path != currentPath) {
-					ChangedPathsPage.this.currentPath = path;
-					inDiffViewerScrollTo(path);
+				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+				FileStatus changePath = (FileStatus) selection.getFirstElement();
+				if (changePath != selectedChangePath) {
+					selectedChangePath = changePath;
+					selectInDiffViewerAndScroll(changePath);
 				}
-
 			}
-
 		});
 	}
 
-	private void inDiffViewerScrollTo(FileStatus path) {
-		if(path == null) {
+	private void selectInDiffViewerAndScroll(FileStatus selectedChangePath) {
+		if(selectedChangePath == null) {
 			return;
 		}
 
-		String pathString = path.getRootRelativePath().toPortableString();
-		int indexOf = diffTextViewer.getDocument().get().indexOf(pathString);
-		if(indexOf != -1) {
-			diffTextViewer.setSelectedRange(indexOf, pathString.length());
-			try {
-				int line = diffTextViewer.getDocument().getLineOfOffset(indexOf);
-				diffTextViewer.setTopIndex(line);
-			} catch (BadLocationException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+		String pathAsString = selectedChangePath.getRootRelativePath().toString();
+
+		// Note: this is a plain text search for the path in the diff text
+		// This could be refined with a regular expression matching the
+		// whole diff line.
+		int offset = diffTextViewer.getDocument().get().indexOf(pathAsString);
+
+		if(offset != -1) {
+			selectInDiffViewerAndScrollToPosition(offset, pathAsString.length());
+		}
+	}
+
+	private void selectInDiffViewerAndScrollToPosition(int offset, int length) {
+		try {
+			diffTextViewer.setSelectedRange(offset, length);
+			int line = diffTextViewer.getDocument().getLineOfOffset(offset);
+			diffTextViewer.setTopIndex(line);
+		} catch (BadLocationException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
@@ -181,24 +187,16 @@ public class ChangedPathsPage {
 		if (changePathsViewer != null) {
 			changePathsViewer.getControl().dispose();
 		}
+		// TODO dipose all elements and extract this in a method.
 
 		int layout = store.getInt(PREF_AFFECTED_PATHS_LAYOUT);
 
-		if (layout == LAYOUT_HORIZONTAL) {
-			innerSashForm = new SashForm(mainSashForm, SWT.HORIZONTAL);
+		int swtOrientation = layout == LAYOUT_HORIZONTAL ? SWT.HORIZONTAL: SWT.VERTICAL;
 
-			createText(innerSashForm);
-			changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
-			createDiffViewer(innerSashForm);
-		} else {
-			innerSashForm = new SashForm(mainSashForm, SWT.VERTICAL);
-
-			createText(innerSashForm);
-			changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
-			createDiffViewer(innerSashForm);
-		}
-
-
+		innerSashForm = new SashForm(mainSashForm,  swtOrientation);
+		createText(innerSashForm);
+		changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
+		createDiffViewer(innerSashForm);
 
 		updatePanels(page.getTableViewer().getSelection());
 		setViewerVisibility();
@@ -208,6 +206,15 @@ public class ChangedPathsPage {
 			mainSashForm.setWeights(weights);
 		}
 		mainSashForm.layout();
+	}
+
+	private void createDiffViewer(SashForm parent) {
+		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true,
+				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
+		sourceViewer.getTextWidget().setIndent(2);
+
+		diffTextViewer = sourceViewer;
+		diffTextViewer.setDocument(new Document());
 	}
 
 	private void updatePanels(ISelection selection) {
@@ -392,15 +399,6 @@ public class ChangedPathsPage {
 		StyledText text = this.commentTextViewer.getTextWidget();
 		Menu menu = menuMgr.createContextMenu(text);
 		text.setMenu(menu);
-	}
-
-	private void createDiffViewer(SashForm parent) {
-		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true,
-				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
-		sourceViewer.getTextWidget().setIndent(2);
-
-		diffTextViewer = sourceViewer;
-		diffTextViewer.setDocument(new Document());
 	}
 
 	private void contributeActions() {
