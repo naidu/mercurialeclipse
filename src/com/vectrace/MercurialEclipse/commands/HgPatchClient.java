@@ -9,7 +9,6 @@
  *     Jerome Negre              - implementation
  *     Steeven Lee               - import/export stuff
  *     Bastian Doetsch           - additions
- *     Bjoern Stachmann          - diff method for changeset and revision ranges
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
