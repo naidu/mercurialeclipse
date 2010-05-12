@@ -113,7 +113,7 @@ public class ChangedPathsPage {
 
 
 	public void createControl() {
-		createAffectedPathsViewer();
+		createRevisionDetalViewers();
 		addSelectionListeners();
 		contributeActions();
 	}
@@ -178,34 +178,39 @@ public class ChangedPathsPage {
 		}
 	}
 
-	private void createAffectedPathsViewer() {
-		int[] weights = null;
-		weights = mainSashForm.getWeights();
-		if (innerSashForm != null) {
-			innerSashForm.dispose();
-		}
-		if (changePathsViewer != null) {
-			changePathsViewer.getControl().dispose();
-		}
-		// TODO dipose all elements and extract this in a method.
+	/**
+	 * Creates the detail viewers (commentViewer, changePathsViewer and diffViewer) shown
+	 * below the table of revisions. Will rebuild these viewers after a layout change.
+	 */
+	private void createRevisionDetalViewers() {
+		disposeExistingViewers();
 
 		int layout = store.getInt(PREF_AFFECTED_PATHS_LAYOUT);
-
 		int swtOrientation = layout == LAYOUT_HORIZONTAL ? SWT.HORIZONTAL: SWT.VERTICAL;
-
 		innerSashForm = new SashForm(mainSashForm,  swtOrientation);
+
 		createText(innerSashForm);
 		changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
 		createDiffViewer(innerSashForm);
 
 		updatePanels(page.getTableViewer().getSelection());
 		setViewerVisibility();
-		innerSashForm.layout();
+		refreshLayout();
+	}
 
-		if (weights != null && weights.length == 2) {
-			mainSashForm.setWeights(weights);
+	private void disposeExistingViewers() {
+		if (innerSashForm != null) {
+			innerSashForm.dispose();
 		}
-		mainSashForm.layout();
+		if (commentTextViewer != null) {
+			commentTextViewer.getControl().dispose();
+		}
+		if (changePathsViewer != null) {
+			changePathsViewer.getControl().dispose();
+		}
+		if (diffTextViewer != null) {
+			diffTextViewer.getControl().dispose();
+		}
 	}
 
 	private void createDiffViewer(SashForm parent) {
@@ -567,6 +572,18 @@ public class ChangedPathsPage {
 		return page.getTableViewer().getControl().getParent();
 	}
 
+	/**
+	 *
+	 */
+	private void refreshLayout() {
+		innerSashForm.layout();
+		int[] weights = mainSashForm.getWeights();
+		if (weights != null && weights.length == 2) {
+			mainSashForm.setWeights(weights);
+		}
+		mainSashForm.layout();
+	}
+
 	public static class ToggleAffectedPathsOptionAction extends Action {
 		private final ChangedPathsPage page;
 		private final String preferenceName;
@@ -588,7 +605,7 @@ public class ChangedPathsPage {
 			if (isChecked()) {
 				MercurialEclipsePlugin.getDefault().getPreferenceStore()
 						.setValue(preferenceName, value);
-				page.createAffectedPathsViewer();
+				page.createRevisionDetalViewers();
 			}
 		}
 
