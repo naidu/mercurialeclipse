@@ -13,9 +13,9 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -33,12 +33,12 @@ public class HgSubreposClient extends AbstractClient {
 	/**
 	 * Returns the list of the subrepositories of the specified Hg repository that are cloned inside the working copy.
 	 */
-	public static List<HgRoot> findSubrepositories(HgRoot parent){
+	public static Set<HgRoot> findSubrepositories(HgRoot parent){
 		File parentDir = parent.getAbsoluteFile();
 		File hgsub = new File(parentDir, HGSUB);
 
 		if(!hgsub.exists() || !hgsub.isFile()){
-			return new ArrayList<HgRoot>();
+			return new HashSet<HgRoot>();
 		}
 
 		Map<String, String> subrepos;
@@ -50,10 +50,10 @@ public class HgSubreposClient extends AbstractClient {
 			// this shouldn't happen because we checked for existence of the file before, but who knows,
 			// bad timing happens...
 			MercurialEclipsePlugin.logError(e);
-			return new ArrayList<HgRoot>();
+			return new HashSet<HgRoot>();
 		}
 
-		List<HgRoot> result = new ArrayList<HgRoot>();
+		Set<HgRoot> result = new HashSet<HgRoot>();
 		for(String subReposRootPath : subrepos.keySet()){
 			File subReposRootDir = new File(parent.getAbsoluteFile(), subReposRootPath);
 			if(!subReposRootDir.exists()){
@@ -72,5 +72,19 @@ public class HgSubreposClient extends AbstractClient {
 		}
 
 		return result;
+	}
+
+	public static Set<HgRoot> findSubrepositoriesRecursively(HgRoot root){
+		Set<HgRoot> found = new HashSet<HgRoot>();
+		doFindSubrepositoriesRecursively(root, found);
+		return found;
+	}
+
+	private static void doFindSubrepositoriesRecursively(HgRoot root, Set<HgRoot> found){
+		Set<HgRoot> subs = findSubrepositories(root);
+		found.addAll(subs);
+		for(HgRoot sub : subs){
+			doFindSubrepositoriesRecursively(sub, found);
+		}
 	}
 }

@@ -57,6 +57,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -619,19 +620,22 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		monitor = checkMonitor(monitor);
 		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, root.getName()));
 
+		// find all subrepos under the specified root
+		Set<HgRoot> repos = HgSubreposClient.findSubrepositoriesRecursively(root);
+		repos.add(root);
 
-		Set<IProject> projects = ResourceUtils.getProjects(root);
+		// in general we can have several projects under the same root
+		// but due to subrepositories we can also have several roots under the same project
+		Set<IProject> projects = new HashSet<IProject>();
+		for(HgRoot repo : repos){
+			projects.addAll(ResourceUtils.getProjects(repo));
+		}
+
 		Set<IResource> changed = new HashSet<IResource>();
 		synchronized (statusUpdateLock) {
-			// get status and branch for hg root
-			String output = HgStatusClient.getStatusWithoutIgnored(root);
-			String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
-			String currentChangeSetId = mergeStatus[0];
-			LocalChangesetCache.getInstance().checkLatestChangeset(root, currentChangeSetId);
-			String mergeNode = mergeStatus[1];
-			String branch = mergeStatus[2];
 
-			String[] lines = NEWLINE.split(output);
+			// build a map of project->projectPath for all projects under the specified root
+			// as well as projects under the subrepos of the specified root
 			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 			Iterator<IProject> iterator = projects.iterator();
 			while (iterator.hasNext()) {
@@ -649,26 +653,45 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				pathMap.put(project, project.getLocation());
 			}
 
-			changed.addAll(parseStatus(root, pathMap, lines));
-			boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
-			MercurialTeamProvider.setCurrentBranch(branch, root);
-			for (IProject project : projects) {
-				// TODO use multiple projects (from this hg root) as input at ONCE
-				knownStatus.put(project, root);
-				try {
-					HgStatusClient.setMergeStatus(project, mergeNode);
-				} catch (CoreException e) {
-					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+			// for the Root and all its subrepos
+			for(HgRoot repo : repos){
+				// get status and branch for hg root
+				String output = HgStatusClient.getStatusWithoutIgnored(repo);
+				String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
+				String currentChangeSetId = mergeStatus[0];
+				LocalChangesetCache.getInstance().checkLatestChangeset(repo, currentChangeSetId);
+				String mergeNode = mergeStatus[1];
+				String branch = mergeStatus[2];
+
+				// update status of all files in the root that are also contained in projects inside pathMap
+				String[] lines = NEWLINE.split(output);
+				changed.addAll(parseStatus(repo, pathMap, lines));
+
+				boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
+				MercurialTeamProvider.setCurrentBranch(branch, repo);
+				for (IProject project : projects) {
+					// TODO use multiple projects (from this hg root) as input at ONCE
+
+					// TODO:nicolas.piguet, this is probably not going to work since this assumes that the project is entirely contained in one root
+					//       which is not correct with subrepos. The resources of a project may be contained in several different roots
+					knownStatus.put(project, repo);
+					try {
+						HgStatusClient.setMergeStatus(project, mergeNode);
+					} catch (CoreException e) {
+						throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+					}
+				}
+				if(mergeInProgress) {
+					changed.addAll(checkForConflict(repo));
+				}
+
+				monitor.worked(1);
+				if(monitor.isCanceled()){
+					return;
 				}
 			}
-			if(mergeInProgress) {
-				changed.addAll(checkForConflict(root));
-			}
 		}
-		monitor.worked(1);
-		if(monitor.isCanceled()){
-			return;
-		}
+
 		notifyChanged(changed, false);
 
 		monitor.worked(1);
