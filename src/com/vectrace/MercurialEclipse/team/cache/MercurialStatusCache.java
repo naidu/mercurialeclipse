@@ -711,16 +711,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return;
 		}
 
+		// find the reposoritory in which the resource is
 		HgRoot root = AbstractClient.getHgRoot(res);
+		// find all the subrepos that are inside the resource
+		Set<HgRoot> repos = HgSubreposClient.findSubrepositoriesRecursivelyWithin(root, res);
+		repos.add(root);
 
-		Set<IResource> changed;
+		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
+
 		synchronized (statusUpdateLock) {
-			String output = HgStatusClient.getStatusWithoutIgnored(root, res);
-			if(monitor.isCanceled()){
-				return;
-			}
-			monitor.worked(1);
 			// clear status for files, folders or project
 			if(res instanceof IProject){
 				projectDeletedOrClosed(project);
@@ -731,20 +731,33 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if(monitor.isCanceled()){
 				return;
 			}
-			String[] lines = NEWLINE.split(output);
-			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-			pathMap.put(project, projectLocation);
-			changed = parseStatus(root, pathMap, lines);
-			if(!(res instanceof IProject) && !changed.contains(res)){
-				// fix for issue 10155: No status update after reverting changes on .hgignore
-				changed.add(res);
-				if(res instanceof IFolder){
-					IFolder folder = (IFolder) res;
-					ResourceUtils.collectAllResources(folder, changed);
+
+			for(HgRoot repo : repos){
+				// Call hg to get the status of the repository
+				String output = HgStatusClient.getStatusWithoutIgnored(repo, res);
+				monitor.worked(1);
+				if(monitor.isCanceled()){
+					return;
 				}
-			}
-			if(res instanceof IProject) {
-				knownStatus.put(project, root);
+
+				// parse the hg result
+				String[] lines = NEWLINE.split(output);
+				Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+				pathMap.put(project, projectLocation);
+				changed.addAll(parseStatus(repo, pathMap, lines));
+				if(!(res instanceof IProject) && !changed.contains(res)){
+					// fix for issue 10155: No status update after reverting changes on .hgignore
+					changed.add(res);
+					if(res instanceof IFolder){
+						IFolder folder = (IFolder) res;
+						ResourceUtils.collectAllResources(folder, changed);
+					}
+				}
+				if(res instanceof IProject) {
+					// TODO:nicolas.piguet, this is probably not going to work since this assumes that the project is entirely contained in one root
+					//       which is not correct with subrepos. The resources of a project may be contained in several different roots
+					knownStatus.put(project, repo);
+				}
 			}
 		}
 		if(monitor.isCanceled()){
@@ -752,6 +765,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 		monitor.worked(1);
 
+		// refresh the status of the project containing the resource
 		if(res instanceof IProject){
 			try {
 				String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);

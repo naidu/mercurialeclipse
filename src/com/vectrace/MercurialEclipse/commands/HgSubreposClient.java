@@ -17,6 +17,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.IniFile;
@@ -76,15 +79,32 @@ public class HgSubreposClient extends AbstractClient {
 
 	public static Set<HgRoot> findSubrepositoriesRecursively(HgRoot root){
 		Set<HgRoot> found = new HashSet<HgRoot>();
-		doFindSubrepositoriesRecursively(root, found);
+		doFindSubrepositoriesRecursively(root, found, null);
 		return found;
 	}
 
-	private static void doFindSubrepositoriesRecursively(HgRoot root, Set<HgRoot> found){
+	public static Set<HgRoot> findSubrepositoriesRecursivelyWithin(HgRoot root, IResource container){
+		if(container.getType() == IResource.FILE){
+			// a file cannot contain a subrepo
+			return new HashSet<HgRoot>();
+		}
+
+		Set<HgRoot> found = new HashSet<HgRoot>();
+		doFindSubrepositoriesRecursively(root, found, container.getLocation());
+		return found;
+	}
+
+	/**
+	 * recursively finds all the subrepositories under the specified HgRoot and stores all the discovered subrepos in the
+	 * specified set. An IPath can optionally be specified, in which case, all the returned subrepos will be children of that IPath.
+	 */
+	private static void doFindSubrepositoriesRecursively(HgRoot root, Set<HgRoot> found, IPath containerPath){
 		Set<HgRoot> subs = findSubrepositories(root);
-		found.addAll(subs);
 		for(HgRoot sub : subs){
-			doFindSubrepositoriesRecursively(sub, found);
+			if(containerPath == null || containerPath.isPrefixOf(sub.getIPath())) {
+				found.add(sub);
+				doFindSubrepositoriesRecursively(sub, found, containerPath);
+			}
 		}
 	}
 }
