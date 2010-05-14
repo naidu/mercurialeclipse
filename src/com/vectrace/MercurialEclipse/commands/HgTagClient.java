@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 public class HgTagClient extends AbstractClient {
-	private static final Pattern GET_TAGS_PATTERN = Pattern.compile("^(.+[^ ]) +([-0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
+	private static final Pattern GET_TAGS_PATTERN = Pattern.compile("^(.*) ([-0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
 
 	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
 		AbstractShellCommand command = new HgCommand("tags", hgRoot, false); //$NON-NLS-1$
@@ -43,7 +43,8 @@ public class HgTagClient extends AbstractClient {
 		for (String line : lines) {
 			Matcher m = GET_TAGS_PATTERN.matcher(line);
 			if (m.matches()) {
-				Tag tag = new Tag(m.group(1), Integer.parseInt(m.group(2)), m.group(3), m.group(4) != null);
+				String tagName = m.group(1).trim();
+				Tag tag = new Tag(tagName, Integer.parseInt(m.group(2)), m.group(3), m.group(4) != null);
 				tags.add(tag);
 			} else {
 				throw new HgException(Messages.getString("HgTagClient.parseException") + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$

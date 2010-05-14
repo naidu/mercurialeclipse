@@ -51,7 +51,9 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -239,6 +241,10 @@ public final class MercurialUtilities {
 		IProject project = resource.getProject();
 		if (!MercurialTeamProvider.isHgTeamProviderFor(project)) {
 			return false;
+		}
+		if(resource instanceof IProject){
+			// do not try to match project names: this doesn't make sense, see issue #11833
+			return true;
 		}
 		return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember());
 	}

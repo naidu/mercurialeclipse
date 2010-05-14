@@ -76,12 +76,14 @@ public class HgRepositoryLocationManager {
 	private final Map<HgRoot, SortedSet<IHgRepositoryLocation>> rootRepos;
 	private final SortedSet<IHgRepositoryLocation> repoHistory;
 	private final HgRepositoryLocationParserDelegator delegator;
+	private final Object entriesLock;
 
 	private volatile boolean initialized;
 	private final List<IRepositoryListener> repositoryListeners;
 
 	public HgRepositoryLocationManager() {
 		super();
+		entriesLock = new Object();
 		repositoryListeners = new ArrayList<IRepositoryListener>();
 		rootRepos = new ConcurrentHashMap<HgRoot, SortedSet<IHgRepositoryLocation>>();
 		repoHistory = new TreeSet<IHgRepositoryLocation>();
@@ -112,8 +114,10 @@ public class HgRepositoryLocationManager {
 	 */
 	public SortedSet<IHgRepositoryLocation> getAllRepoLocations() {
 		SortedSet<IHgRepositoryLocation> allRepos = new TreeSet<IHgRepositoryLocation>();
-		for (SortedSet<IHgRepositoryLocation> locations : rootRepos.values()) {
-			allRepos.addAll(locations);
+		synchronized (entriesLock){
+			for (SortedSet<IHgRepositoryLocation> locations : rootRepos.values()) {
+				allRepos.addAll(locations);
+			}
 		}
 		allRepos.addAll(repoHistory);
 		return allRepos;
@@ -142,15 +146,14 @@ public class HgRepositoryLocationManager {
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-		Set<HgRoot> loc = rootRepos.keySet();
 
-		for (HgRoot hgRoot : loc) {
-			SortedSet<IHgRepositoryLocation> set = rootRepos.get(hgRoot);
-			if(set != null && set.contains(repo)){
-				projects.addAll(ResourceUtils.getProjects(hgRoot));
+		Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+		for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
+			SortedSet<IHgRepositoryLocation> set = entry.getValue();
+			if (set != null && set.contains(repo)) {
+				projects.addAll(ResourceUtils.getProjects(entry.getKey()));
 			}
 		}
-
 		return projects;
 	}
 
@@ -166,15 +169,14 @@ public class HgRepositoryLocationManager {
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-		Set<HgRoot> loc = rootRepos.keySet();
 
-		for (HgRoot hgRoot : loc) {
-			SortedSet<IHgRepositoryLocation> set = rootRepos.get(hgRoot);
+		Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+		for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
+			SortedSet<IHgRepositoryLocation> set = entry.getValue();
 			if(set != null && set.contains(repo)){
-				roots.add(hgRoot);
+				roots.add(entry.getKey());
 			}
 		}
-
 		return Collections.unmodifiableSet(roots);
 	}
 
@@ -198,8 +200,10 @@ public class HgRepositoryLocationManager {
 			if (repoSet == null) {
 				repoSet = new TreeSet<IHgRepositoryLocation>();
 			}
-			repoSet.remove(loc);
-			repoSet.add(loc);
+			synchronized (entriesLock){
+				repoSet.remove(loc);
+				repoSet.add(loc);
+			}
 			rootRepos.put(hgRoot, repoSet);
 		}
 		synchronized (repoHistory) {
@@ -285,11 +289,16 @@ public class HgRepositoryLocationManager {
 		Set<IHgRepositoryLocation> locations = loadRepositories(KEY_REPOS_PREFIX);
 		for (IHgRepositoryLocation loc : locations) {
 			boolean usedByProject = false;
-			for (HgRoot hgRoot : rootRepos.keySet()) {
-				if (rootRepos.get(hgRoot).contains(loc)) {
+
+			Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+			for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
+				SortedSet<IHgRepositoryLocation> set = entry.getValue();
+				if (set != null && set.contains(loc)) {
 					usedByProject = true;
+					break;
 				}
 			}
+
 			synchronized (repoHistory) {
 				repoHistory.remove(loc);
 				repoHistory.add(loc);
@@ -337,7 +346,9 @@ public class HgRepositoryLocationManager {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		store.setValue(KEY_DEF_REPO_PREFIX + getRootKey(hgRoot), loc.getLocation());
 		if (locations != null && !locations.contains(loc)) {
-			locations.add(loc);
+			synchronized (entriesLock){
+				locations.add(loc);
+			}
 		} else {
 			internalAddRepoLocation(hgRoot, loc);
 		}
@@ -355,9 +366,11 @@ public class HgRepositoryLocationManager {
 		}
 		SortedSet<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
 		if (locations != null && !locations.isEmpty()) {
-			for (IHgRepositoryLocation repo : locations) {
-				if(repo.getLocation().equals(defLoc)){
-					return repo;
+			synchronized (entriesLock){
+				for (IHgRepositoryLocation repo : locations) {
+					if(repo.getLocation().equals(defLoc)){
+						return repo;
+					}
 				}
 			}
 		}
@@ -383,6 +396,12 @@ public class HgRepositoryLocationManager {
 		for (HgRoot hgRoot : roots) {
 			String key = getRootKey(hgRoot);
 			SortedSet<IHgRepositoryLocation> repoSet = rootRepos.get(hgRoot);
+			if(repoSet == null){
+				continue;
+			}
+			synchronized (entriesLock){
+				repoSet = new TreeSet<IHgRepositoryLocation>(repoSet);
+			}
 			saveRepositories(key, repoSet);
 		}
 	}
@@ -523,9 +542,11 @@ public class HgRepositoryLocationManager {
 			IHgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName,
 					loc.getLocation(), myUser, myPass);
 
-			for (SortedSet<IHgRepositoryLocation> locs : rootRepos.values()) {
-				if (locs.remove(updated)) {
-					locs.add(updated);
+			synchronized (entriesLock){
+				for (SortedSet<IHgRepositoryLocation> locs : rootRepos.values()) {
+					if (locs.remove(updated)) {
+						locs.add(updated);
+					}
 				}
 			}
 			synchronized (repoHistory) {
@@ -591,12 +612,17 @@ public class HgRepositoryLocationManager {
 		for (HgRoot hgRoot : rootRepos.keySet()) {
 			SortedSet<IHgRepositoryLocation> pRepos = rootRepos.get(hgRoot);
 			if (pRepos != null) {
-				for (IHgRepositoryLocation repo : pRepos) {
-					if (repo.equals(hgRepo)) {
-						pRepos.remove(repo);
-						repositoryRemoved(hgRepo);
-						break;
+				boolean removed = false;
+				synchronized (entriesLock){
+					for (IHgRepositoryLocation repo : pRepos) {
+						if (repo.equals(hgRepo)) {
+							removed = pRepos.remove(repo);
+							break;
+						}
 					}
+				}
+				if(removed) {
+					repositoryRemoved(hgRepo);
 				}
 			}
 		}

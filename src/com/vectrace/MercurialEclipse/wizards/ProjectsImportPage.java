@@ -311,7 +311,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				String dir;
-				if (!destinationDirText.getText().equals(destinationDir.getAbsolutePath())) {
+				if (destinationDir != null && !destinationDirText.getText().equals(destinationDir.getAbsolutePath())) {
 					dir = destinationDirText.getText();
 				} else {
 					DirectoryDialog dialog = new DirectoryDialog(getShell());
@@ -477,7 +477,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				updateProjectsList(destinationDir.getAbsolutePath());
+				if(destinationDir != null) {
+					updateProjectsList(destinationDir.getAbsolutePath());
+				}
 			}
 		});
 		Dialog.applyDialogFont(refresh);

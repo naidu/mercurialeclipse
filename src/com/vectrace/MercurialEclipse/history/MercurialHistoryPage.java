@@ -518,7 +518,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			@Override
 			public boolean isEnabled() {
 				MercurialRevision[] revs = getSelectedRevisions();
-				if (revs.length == 1) {
+				if (revs != null && revs.length == 1) {
 					rev = revs[0];
 					return true;
 				}
