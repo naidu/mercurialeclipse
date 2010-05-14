@@ -37,17 +37,17 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
-	private final Map<IProject, RootResourceSet> removed;
-	private final Map<IProject, RootResourceSet> changed;
-	private final Map<IProject, RootResourceSet> added;
+	private final Map<IProject, RootResourceSet<IResource>> removed;
+	private final Map<IProject, RootResourceSet<IResource>> changed;
+	private final Map<IProject, RootResourceSet<IResource>> added;
 	private final boolean autoShare;
 	private final MercurialStatusCache cache;
 	private int resourcesCount;
 	private HgRoot currentRoot;
 
-	ResourceDeltaVisitor(Map<IProject, RootResourceSet> removed,
-			Map<IProject, RootResourceSet> changed,
-			Map<IProject, RootResourceSet> added) {
+	ResourceDeltaVisitor(Map<IProject, RootResourceSet<IResource>> removed,
+			Map<IProject, RootResourceSet<IResource>> changed,
+			Map<IProject, RootResourceSet<IResource>> added) {
 		this.removed = removed;
 		this.changed = changed;
 		this.added = added;
@@ -158,10 +158,10 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	}
 
 
-	private void addResource(Map<IProject, RootResourceSet> map, IProject project, HgRoot root, IResource res){
-		RootResourceSet set = map.get(project);
+	private void addResource(Map<IProject, RootResourceSet<IResource>> map, IProject project, HgRoot root, IResource res){
+		RootResourceSet<IResource> set = map.get(project);
 		if(set == null){
-			set = new RootResourceSet();
+			set = new RootResourceSet<IResource>();
 			map.put(project, set);
 		}
 		set.add(root, res);

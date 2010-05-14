@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
@@ -84,13 +85,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final class ProjectUpdateJob extends Job {
 
 		private final IProject project;
-		private final RootResourceSet resources;
+		private final RootResourceSet<IResource> resources;
 
-		private ProjectUpdateJob(RootResourceSet removedSet, RootResourceSet changedSet,
-				IProject project, RootResourceSet addedSet) {
+		private ProjectUpdateJob(RootResourceSet<IResource> removedSet, RootResourceSet<IResource> changedSet,
+				IProject project, RootResourceSet<IResource> addedSet) {
 			super(Messages.mercurialStatusCache_RefreshStatus);
 			this.project = project;
-			resources = new RootResourceSet();
+			resources = new RootResourceSet<IResource>();
 
 			if(removedSet != null) {
 				resources.addAll(removedSet);
@@ -275,7 +276,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final Object statusUpdateLock = new byte[0];
 
 	/** Used to store which projects have already been parsed */
-	private final ConcurrentHashMap<IProject, HgRoot> knownStatus = new ConcurrentHashMap<IProject, HgRoot>();
+	private final CopyOnWriteArraySet<IProject> knownStatus = new CopyOnWriteArraySet<IProject>();
 
 	private boolean computeDeepStatus;
 	private int statusBatchSize;
@@ -388,7 +389,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @return true if known, false if not.
 	 */
 	public boolean isStatusKnown(IProject project) {
-		return project != null && knownStatus.containsKey(project);
+		return project != null && knownStatus.contains(project);
 	}
 
 	/**
@@ -621,14 +622,18 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, root.getName()));
 
 		// find all subrepos under the specified root
+		// in general we can have several projects under the same root
+		// but due to subrepositories we can also have several roots under the same project
 		Set<HgRoot> repos = HgSubreposClient.findSubrepositoriesRecursively(root);
 		repos.add(root);
 
-		// in general we can have several projects under the same root
-		// but due to subrepositories we can also have several roots under the same project
-		Set<IProject> projects = new HashSet<IProject>();
+		// find all projects that are under the root and any of its subrepos. Each project can only
+		// be under one HgRoot (it can contain more roots, but that's not relevant at this point)
+		RootResourceSet<IProject> projects = new RootResourceSet<IProject>();
 		for(HgRoot repo : repos){
-			projects.addAll(ResourceUtils.getProjects(repo));
+			for(IProject proj : ResourceUtils.getProjects(repo)){
+				projects.add(repo, proj);
+			}
 		}
 
 		Set<IResource> changed = new HashSet<IResource>();
@@ -637,7 +642,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// build a map of project->projectPath for all projects under the specified root
 			// as well as projects under the subrepos of the specified root
 			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-			Iterator<IProject> iterator = projects.iterator();
+			Iterator<IProject> iterator = projects.resourceIterator();
 			while (iterator.hasNext()) {
 				IProject project = iterator.next();
 				if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(project)) {
@@ -654,6 +659,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 
 			// for the Root and all its subrepos
+			// we have to iterate over repos instead of projects.getRoot(), because there may be a single project with lot of subrepos inside
 			for(HgRoot repo : repos){
 				// get status and branch for hg root
 				String output = HgStatusClient.getStatusWithoutIgnored(repo);
@@ -669,18 +675,21 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 				boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
 				MercurialTeamProvider.setCurrentBranch(branch, repo);
-				for (IProject project : projects) {
-					// TODO use multiple projects (from this hg root) as input at ONCE
 
-					// TODO:nicolas.piguet, this is probably not going to work since this assumes that the project is entirely contained in one root
-					//       which is not correct with subrepos. The resources of a project may be contained in several different roots
-					knownStatus.put(project, repo);
-					try {
-						HgStatusClient.setMergeStatus(project, mergeNode);
-					} catch (CoreException e) {
-						throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+				// set the project status information
+				// this will happen exactly once for each project (since each project is only under one root)
+				Set<IProject> repoProjects = projects.getResources(repo);
+				if(repoProjects != null){
+					for (IProject project : projects.getResources(repo)) {
+						knownStatus.add(project);
+						try {
+							HgStatusClient.setMergeStatus(project, mergeNode);
+						} catch (CoreException e) {
+							throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+						}
 					}
 				}
+
 				if(mergeInProgress) {
 					changed.addAll(checkForConflict(repo));
 				}
@@ -753,11 +762,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 						ResourceUtils.collectAllResources(folder, changed);
 					}
 				}
-				if(res instanceof IProject) {
-					// TODO:nicolas.piguet, this is probably not going to work since this assumes that the project is entirely contained in one root
-					//       which is not correct with subrepos. The resources of a project may be contained in several different roots
-					knownStatus.put(project, repo);
-				}
+			}
+
+			if(res instanceof IProject) {
+				knownStatus.add(project);
 			}
 		}
 		if(monitor.isCanceled()){
@@ -1079,9 +1087,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 		IResourceDelta delta = event.getDelta();
 
-		final Map<IProject, RootResourceSet> changed = new HashMap<IProject, RootResourceSet>();
-		final Map<IProject, RootResourceSet> added = new HashMap<IProject, RootResourceSet>();
-		final Map<IProject, RootResourceSet> removed = new HashMap<IProject, RootResourceSet>();
+		final Map<IProject, RootResourceSet<IResource>> changed = new HashMap<IProject, RootResourceSet<IResource>>();
+		final Map<IProject, RootResourceSet<IResource>> added = new HashMap<IProject, RootResourceSet<IResource>>();
+		final Map<IProject, RootResourceSet<IResource>> removed = new HashMap<IProject, RootResourceSet<IResource>>();
 
 		IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(removed, changed, added);
 
@@ -1097,17 +1105,17 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		changedProjects.addAll(added.keySet());
 		changedProjects.addAll(removed.keySet());
 		for (IProject project : changedProjects) {
-			RootResourceSet addedSet = added.get(project);
-			RootResourceSet removedSet = removed.get(project);
-			RootResourceSet changedSet = changed.get(project);
+			RootResourceSet<IResource> addedSet = added.get(project);
+			RootResourceSet<IResource> removedSet = removed.get(project);
+			RootResourceSet<IResource> changedSet = changed.get(project);
 
 			projectChanged(project, addedSet, removedSet, changedSet);
 		}
 
 	}
 
-	private void projectChanged(final IProject project, final RootResourceSet addedSet, final RootResourceSet removedSet,
-			final RootResourceSet changedSet) {
+	private void projectChanged(final IProject project, final RootResourceSet<IResource> addedSet, final RootResourceSet<IResource> removedSet,
+			final RootResourceSet<IResource> changedSet) {
 		ProjectUpdateJob updateJob = new ProjectUpdateJob(removedSet, changedSet, project, addedSet);
 		Job[] jobs = Job.getJobManager().find(ProjectUpdateJob.class);
 		for (Job job : jobs) {
@@ -1131,7 +1139,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @param project
 	 *            not null. The project which resources state has to be updated
 	 */
-	private Set<IResource> refreshStatus(final RootResourceSet resources, IProject project) throws HgException {
+	private Set<IResource> refreshStatus(final RootResourceSet<IResource> resources, IProject project) throws HgException {
 		if (resources == null || resources.isEmpty()) {
 			return Collections.emptySet();
 		}
