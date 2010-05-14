@@ -17,11 +17,11 @@ import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class CommitHandler extends MultipleResourcesHandler {
@@ -36,7 +36,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 
 		for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 			HgRoot hgRoot = entry.getKey();
-			if(HgStatusClient.isMergeInProgress(hgRoot)){
+			if(MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)){
 				new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
 				return;
 			}

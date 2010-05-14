@@ -26,6 +26,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -88,7 +89,7 @@ public class RebasePage extends HgWizardPage {
 
 	private void createOptionsWidgets(Composite comp) {
 
-		final boolean mergeInProgress = HgStatusClient.isMergeInProgress(hgRoot);
+		final boolean mergeInProgress = MercurialStatusCache.getInstance().isMergeInProgress(hgRoot);
 
 		Group optionGroup = SWTWidgetHelper.createGroup(comp, Messages.getString("RebasePage.optionGroup.label"), 2, //$NON-NLS-1$
 				GridData.FILL_BOTH);

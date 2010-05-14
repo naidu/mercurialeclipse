@@ -121,7 +121,7 @@ public class MergeHandler extends RootHandler {
 				useExternalMergeTool, forced);
 
 		String mergeChangesetId = cs.getChangeset();
-		HgStatusClient.setMergeStatus(hgRoot, mergeChangesetId);
+		MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 		try {
 			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
 		} catch (CoreException e) {

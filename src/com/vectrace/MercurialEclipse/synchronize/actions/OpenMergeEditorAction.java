@@ -22,7 +22,6 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -71,7 +70,7 @@ public class OpenMergeEditorAction extends SynchronizeModelAction {
 		IFile adapter = MercurialEclipsePlugin.getAdapter(object, IFile.class);
 		if (adapter != null) {
 			return !MercurialStatusCache.getInstance().isClean(adapter)
-				&& HgStatusClient.isMergeInProgress(adapter);
+				&& MercurialStatusCache.getInstance().isMergeInProgress(adapter);
 		}
 		return false;
 	}

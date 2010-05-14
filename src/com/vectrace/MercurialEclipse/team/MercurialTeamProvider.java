@@ -49,7 +49,6 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -209,7 +208,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Assert.isNotNull(project);
 		// cleanup
 		HG_ROOTS.put(project, new HgRoot[1]);
-		HgStatusClient.clearMergeStatus(project);
+		MercurialStatusCache.getInstance().clearMergeStatus(project);
 	}
 
 	/**

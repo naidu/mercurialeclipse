@@ -21,21 +21,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgStatusClient extends AbstractClient {
 
@@ -258,68 +253,6 @@ public class HgStatusClient extends AbstractClient {
 					}
 				}
 			}
-		}
-		return null;
-	}
-
-	public static void clearMergeStatus(HgRoot hgRoot) throws CoreException {
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		for (IProject project : projects) {
-			clearMergeStatus(project);
-		}
-	}
-
-	public static void clearMergeStatus(IProject project) throws CoreException {
-		// clear merge status in Eclipse
-		project.setPersistentProperty(ResourceProperties.MERGING, null);
-		// triggers the decoration update
-		ResourceUtils.touch(project);
-	}
-
-	public static void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		for (IProject project : projects) {
-			// clear merge status in Eclipse
-			setMergeStatus(project, mergeChangesetId);
-		}
-	}
-
-	public static void setMergeStatus(IProject project, String mergeChangesetId) throws CoreException {
-		// clear merge status in Eclipse
-		project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
-		// triggers the decoration update
-		ResourceUtils.touch(project);
-	}
-
-	public static boolean isMergeInProgress(IResource res) {
-		return getMergeChangesetId(res.getProject()) != null;
-	}
-
-	public static boolean isMergeInProgress(HgRoot hgRoot) {
-		return getMergeChangesetId(hgRoot) != null;
-	}
-
-	/**
-	 * @param project non null
-	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
-	 */
-	public static String getMergeChangesetId(IProject project) {
-		try {
-			return project.getPersistentProperty(ResourceProperties.MERGING);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		return null;
-	}
-
-	/**
-	 * @param hgRoot non null
-	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
-	 */
-	public static String getMergeChangesetId(HgRoot hgRoot) {
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		if(!projects.isEmpty()) {
-			return getMergeChangesetId(projects.iterator().next());
 		}
 		return null;
 	}

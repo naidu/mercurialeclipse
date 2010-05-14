@@ -42,7 +42,6 @@ import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -410,7 +409,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-			String merging = HgStatusClient.getMergeChangesetId(project);
+			String merging = MercurialStatusCache.getInstance().getMergeChangesetId(project);
 			String bisecting = null;
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			// XXX should use map, as there can be 100 projects under the same root

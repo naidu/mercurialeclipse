@@ -45,7 +45,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgRevertClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -239,7 +238,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		for (Object obj : selection.toList()) {
 			if (obj instanceof IResource) {
 				IResource resource = (IResource) obj;
-				boolean merging = HgStatusClient.isMergeInProgress(resource);
+				boolean merging = MercurialStatusCache.getInstance().isMergeInProgress(resource);
 				if(merging){
 					mergeIsRunning = true;
 				}
