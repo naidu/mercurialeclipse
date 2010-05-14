@@ -113,7 +113,7 @@ public class ChangedPathsPage {
 
 
 	public void createControl() {
-		createRevisionDetalViewers();
+		createRevisionDetailViewers();
 		addSelectionListeners();
 		contributeActions();
 	}
@@ -182,7 +182,7 @@ public class ChangedPathsPage {
 	 * Creates the detail viewers (commentViewer, changePathsViewer and diffViewer) shown
 	 * below the table of revisions. Will rebuild these viewers after a layout change.
 	 */
-	private void createRevisionDetalViewers() {
+	private void createRevisionDetailViewers() {
 		disposeExistingViewers();
 
 		int layout = store.getInt(PREF_AFFECTED_PATHS_LAYOUT);
@@ -193,7 +193,6 @@ public class ChangedPathsPage {
 		changePathsViewer = new ChangePathsTableProvider(innerSashForm, this);
 		createDiffViewer(innerSashForm);
 
-		updatePanels(page.getTableViewer().getSelection());
 		setViewerVisibility();
 		refreshLayout();
 	}
@@ -566,6 +565,8 @@ public class ChangedPathsPage {
 		innerSashForm.setWeights(weights);
 
 		commentTextViewer.getTextWidget().setWordWrap(wrapCommentsText);
+
+		updatePanels(page.getTableViewer().getSelection());
 	}
 
 	private Composite getChangesetsTableControl() {
@@ -605,7 +606,7 @@ public class ChangedPathsPage {
 			if (isChecked()) {
 				MercurialEclipsePlugin.getDefault().getPreferenceStore()
 						.setValue(preferenceName, value);
-				page.createRevisionDetalViewers();
+				page.createRevisionDetailViewers();
 			}
 		}
 
