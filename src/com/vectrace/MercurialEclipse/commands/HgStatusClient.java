@@ -272,8 +272,10 @@ public class HgStatusClient extends AbstractClient {
 	public static void clearMergeStatus(IProject project) throws CoreException {
 		// clear merge status in Eclipse
 		project.setPersistentProperty(ResourceProperties.MERGING, null);
+		// TODO seems to be not needed, even more: due the extra refresh jobs
+		// it may slowdown workspace, see issue 11928
 		// triggers the decoration update
-		ResourceUtils.touch(project);
+		// ResourceUtils.touch(project);
 	}
 
 	public static void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
@@ -287,8 +289,10 @@ public class HgStatusClient extends AbstractClient {
 	public static void setMergeStatus(IProject project, String mergeChangesetId) throws CoreException {
 		// clear merge status in Eclipse
 		project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
+		// TODO seems to be not needed, even more: due the extra refresh jobs
+		// it may slowdown workspace, see issue 11928
 		// triggers the decoration update
-		ResourceUtils.touch(project);
+		// ResourceUtils.touch(project);
 	}
 
 	public static boolean isMergeInProgress(IResource res) {
