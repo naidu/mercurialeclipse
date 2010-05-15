@@ -27,7 +27,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -94,7 +93,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		// so any access to the IResource's API should be checked against null
 		if(res.getType() == IResource.FOLDER){
 			// each folder is potentially a new subrepos, which may mean another HgRoot for its children
-			HgRoot root = HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(res));
+			HgRoot root = AbstractClient.isHgRoot(res);
 			if(root != null){
 				// yup that was indeed a subrepos.
 				currentRoot = root;

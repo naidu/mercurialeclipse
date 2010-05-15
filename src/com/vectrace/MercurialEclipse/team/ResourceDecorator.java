@@ -24,6 +24,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -41,6 +42,7 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -207,8 +209,9 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			if (!showChangeset) {
-				if (resource.getType() == IResource.PROJECT) {
-					d.addSuffix(getSuffixForProject(project));
+				if (resource.getType() == IResource.PROJECT ||
+						resource.getType() == IResource.FOLDER && AbstractClient.isHgRoot(resource) != null) {
+					d.addSuffix(getSuffixForContainer((IContainer)resource));
 				}
 			} else {
 				addChangesetInfo(d, resource, project, prefix);
@@ -344,10 +347,11 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 		// local changeset info
 		try {
-			// init suffix with project changeset information
+			// init suffix with project changeset information, or for folders that contain a subrepos
 			String suffix = ""; //$NON-NLS-1$
-			if (resource.getType() == IResource.PROJECT) {
-				suffix = getSuffixForProject(project);
+			if (resource.getType() == IResource.PROJECT ||
+					resource.getType() == IResource.FOLDER && AbstractClient.isHgRoot(resource) != null) {
+				suffix = getSuffixForContainer((IContainer)resource);
 			}
 
 			// overwrite suffix for files
@@ -356,7 +360,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// only decorate files and project with suffix
-			if (resource.getType() != IResource.FOLDER && suffix.length() > 0) {
+			if (suffix.length() > 0) {
 				d.addSuffix(suffix);
 			}
 
@@ -396,24 +400,29 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		return suffix;
 	}
 
-	private String getSuffixForProject(IProject project) throws CoreException {
+	private String getSuffixForContainer(IContainer container) throws CoreException {
 		ChangeSet changeSet = null;
 
+		HgRoot root;
+		if(container instanceof IProject){
+			root = MercurialTeamProvider.getHgRoot(container);
+			changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(container);
+		}else{
+			root = AbstractClient.isHgRoot(container);
+			changeSet = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+		}
+
 		StringBuilder suffix = new StringBuilder();
-
-		changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(project);
-
 		if (changeSet == null) {
 			suffix.append(Messages.getString("ResourceDecorator.new"));
 		} else {
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-			String merging = MercurialStatusCache.getInstance().getMergeChangesetId(project);
+			String merging = MercurialStatusCache.getInstance().getMergeChangesetId(container);
 			String bisecting = null;
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			// XXX should use map, as there can be 100 projects under the same root
-			if (HgBisectClient.isBisecting(hgRoot)) {
+			if (HgBisectClient.isBisecting(root)) {
 				bisecting = " BISECTING";
 			}
 
@@ -421,7 +430,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
 
 			// branch
-			String branch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			String branch = MercurialTeamProvider.getCurrentBranch(root);
 			if (branch.length() == 0) {
 				branch = Branch.DEFAULT;
 			}

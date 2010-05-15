@@ -99,6 +99,18 @@ public abstract class AbstractClient {
 		return HgRootClient.getHgRoot(file);
 	}
 
+	/**
+	 * Checks if the specified resource is an HgRoot. If it is, the HgRoot is returned, otherwise null is returned.
+	 */
+	public static HgRoot isHgRoot(IResource res) {
+		Assert.isNotNull(res);
+		if(res.getType() == IResource.FILE){
+			return null;
+		}
+		File file = ResourceUtils.getFileHandle(res);
+		return HgRootClient.hasHgRootDirect(file);
+	}
+
 	static List<File> toFiles(List<IResource> files) {
 		List<File> toFiles = new ArrayList<File>();
 		for (IResource r : files) {
