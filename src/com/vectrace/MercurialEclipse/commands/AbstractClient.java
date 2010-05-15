@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
@@ -102,13 +103,16 @@ public abstract class AbstractClient {
 	/**
 	 * Checks if the specified resource is an HgRoot. If it is, the HgRoot is returned, otherwise null is returned.
 	 */
-	public static HgRoot isHgRoot(IResource res) {
+	public static HgRoot isHgRoot(IResource res) throws HgException {
 		Assert.isNotNull(res);
-		if(res.getType() == IResource.FILE){
+		if(!(res instanceof IContainer)){
 			return null;
 		}
-		File file = ResourceUtils.getFileHandle(res);
-		return HgRootClient.hasHgRootDirect(file);
+		IContainer container = (IContainer)res;
+		if(container.findMember(".hg") != null){
+			return getHgRoot(container);
+		}
+		return null;
 	}
 
 	static List<File> toFiles(List<IResource> files) {
