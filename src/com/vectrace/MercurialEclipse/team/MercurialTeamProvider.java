@@ -55,6 +55,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
@@ -185,8 +186,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Job job = new Job("Reading root repositories") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+				HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+				if(!repoManager.getAllRepoLocations(hgRoot).isEmpty()){
+					return Status.OK_STATUS;
+				}
 				try {
-					MercurialEclipsePlugin.getRepoManager().loadRepos(hgRoot);
+					repoManager.loadRepos(hgRoot);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
