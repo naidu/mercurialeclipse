@@ -146,6 +146,30 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	/**
+	 * @param hgRoot non null hg root
+	 * @param files non null file list from given root to commit
+	 * @return hg status output, never null (may be empty string)
+	 * @throws HgException
+	 */
+	public static String getStatusForCommit(HgRoot hgRoot, List<IResource> files) throws HgException {
+		StringBuilder output = new StringBuilder();
+		// if there are too many resources, do several calls
+		int size = files.size();
+		int delta = AbstractShellCommand.MAX_PARAMS - 1;
+		for (int i = 0; i < size; i += delta) {
+			AbstractShellCommand command = new HgCommand("status", hgRoot, //$NON-NLS-1$
+					true);
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+			// modified, added, removed, deleted, unknown
+			command.addOptions("-mardu"); //$NON-NLS-1$
+			command.addFiles(files.subList(i, Math.min(i + delta, size)));
+			output.append(command.executeToString());
+		}
+
+		return output.toString();
+	}
+
+	/**
 	 * @return root relative paths of changed files, never null
 	 */
 	public static String[] getDirtyFiles(HgRoot root) throws HgException {
@@ -271,11 +295,13 @@ public class HgStatusClient extends AbstractClient {
 
 	public static void clearMergeStatus(IProject project) throws CoreException {
 		// clear merge status in Eclipse
-		project.setPersistentProperty(ResourceProperties.MERGING, null);
-		// TODO seems to be not needed, even more: due the extra refresh jobs
-		// it may slowdown workspace, see issue 11928
-		// triggers the decoration update
-		// ResourceUtils.touch(project);
+		if(project.isAccessible()) {
+			project.setPersistentProperty(ResourceProperties.MERGING, null);
+			// TODO seems to be not needed, even more: due the extra refresh jobs
+			// it may slowdown workspace, see issue 11928
+			// triggers the decoration update
+			// ResourceUtils.touch(project);
+		}
 	}
 
 	public static void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
@@ -288,11 +314,13 @@ public class HgStatusClient extends AbstractClient {
 
 	public static void setMergeStatus(IProject project, String mergeChangesetId) throws CoreException {
 		// clear merge status in Eclipse
-		project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
-		// TODO seems to be not needed, even more: due the extra refresh jobs
-		// it may slowdown workspace, see issue 11928
-		// triggers the decoration update
-		// ResourceUtils.touch(project);
+		if(project.isAccessible()) {
+			project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
+			// TODO seems to be not needed, even more: due the extra refresh jobs
+			// it may slowdown workspace, see issue 11928
+			// triggers the decoration update
+			// ResourceUtils.touch(project);
+		}
 	}
 
 	public static boolean isMergeInProgress(IResource res) {

@@ -17,6 +17,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -26,46 +27,46 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.Team;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public final class CommitResourceUtil {
 
-	private HgRoot root;
 
-	public CommitResourceUtil() {
+	private CommitResourceUtil() {
+		// static utility
 	}
 
 	/**
 	 * @return never null
 	 */
-	public CommitResource[] getCommitResources(IResource[] inResources) throws HgException {
-		if(inResources.length == 0){
+	public static CommitResource[] getCommitResources(List<IResource> inResources) throws HgException {
+		if(inResources.size() == 0){
 			return new CommitResource[0];
 		}
-		StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
-		root = statusAction.getHgWorkingDir();
-		try {
-			statusAction.run();
-			String result = statusAction.getResult();
-			return spliceStatusResult(result);
-		} catch (Exception e) {
-			String msg = "HgRoot: " + root.getAbsolutePath() //$NON-NLS-1$
-					+ Messages.getString("CommitResourceUtil.error.unableToGetStatus") + e.getMessage(); //$NON-NLS-1$
-			MercurialEclipsePlugin.logError(msg, e);
-			return new CommitResource[0];
+		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(inResources);
+		Set<CommitResource> toCommit = new HashSet<CommitResource>();
+		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+			HgRoot hgRoot = mapEntry.getKey();
+			String result = HgStatusClient.getStatusForCommit(hgRoot, inResources);
+			if(!StringUtils.isEmpty(result)) {
+				toCommit.addAll(spliceStatusResult(result, hgRoot));
+			}
 		}
+		return toCommit.toArray(new CommitResource[0]);
 	}
 
 	/**
 	 * Splice the output of the status result and build the CommitResources from that
 	 * @param statusOutput The output string of the Mercurial status action
+	 * @param root
 	 * @return The Commit-resources
 	 */
-	private CommitResource[] spliceStatusResult(String statusOutput) {
+	private static List<CommitResource> spliceStatusResult(String statusOutput, HgRoot root) {
 
 		ArrayList<CommitResource> list = new ArrayList<CommitResource>();
 		StringTokenizer st = new StringTokenizer(statusOutput);
@@ -89,13 +90,13 @@ public final class CommitResourceUtil {
 			}
 		}
 
-		return list.toArray(new CommitResource[0]);
+		return list;
 	}
 
 	/**
 	 * Filter a list of commit-resources to contain only tracked ones (which are already tracked by Mercurial).
 	 */
-	public List<CommitResource> filterForTracked(CommitResource[] commitResources) {
+	public static List<CommitResource> filterForTracked(CommitResource[] commitResources) {
 		List<CommitResource> tracked = new ArrayList<CommitResource>();
 		for (CommitResource commitResource : commitResources) {
 			if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {
@@ -111,7 +112,7 @@ public final class CommitResourceUtil {
 	 * @param resources
 	 * @return The commit resources
 	 */
-	public List<CommitResource> filterForResources(List<CommitResource> commitResources, List<IResource> resources) {
+	public static List<CommitResource> filterForResources(List<CommitResource> commitResources, List<IResource> resources) {
 		List<CommitResource> result = new ArrayList<CommitResource>();
 		if (resources == null || resources.isEmpty()) {
 			return result;

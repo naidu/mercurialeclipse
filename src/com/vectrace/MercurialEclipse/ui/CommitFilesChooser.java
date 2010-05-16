@@ -235,6 +235,7 @@ public class CommitFilesChooser extends Composite {
 		return CompareUtils.getCompareInput(left, right, false);
 	}
 
+	@SuppressWarnings("unused")
 	private void makeActions() {
 		getViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -312,8 +313,7 @@ public class CommitFilesChooser extends Composite {
 		CommitResource[] commitResources = createCommitResources(resources);
 		getViewer().setInput(commitResources);
 
-		List<CommitResource> tracked = new CommitResourceUtil()
-				.filterForTracked(commitResources);
+		List<CommitResource> tracked = CommitResourceUtil.filterForTracked(commitResources);
 		getViewer().setCheckedElements(tracked.toArray());
 		if (selectable && !showUntracked) {
 			selectAllButton.setSelection(true);
@@ -373,8 +373,7 @@ public class CommitFilesChooser extends Composite {
 	 */
 	private CommitResource[] createCommitResources(List<IResource> res) {
 		try {
-			return new CommitResourceUtil().getCommitResources(res
-					.toArray(new IResource[0]));
+			return CommitResourceUtil.getCommitResources(res);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -393,7 +392,7 @@ public class CommitFilesChooser extends Composite {
 		if (allCommitResources == null) {
 			return;
 		}
-		List<CommitResource> selected = new CommitResourceUtil()
+		List<CommitResource> selected = CommitResourceUtil
 				.filterForResources(Arrays.asList(allCommitResources),
 						resources);
 		getViewer().setCheckedElements(selected.toArray());
