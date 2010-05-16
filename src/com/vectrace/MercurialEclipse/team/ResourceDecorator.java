@@ -17,9 +17,7 @@ package com.vectrace.MercurialEclipse.team;
 import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -456,22 +454,13 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	public void update(Observable o, Object updatedObject) {
 		if (updatedObject instanceof Set<?>) {
 			Set<IResource> changed = (Set<IResource>) updatedObject;
-			List<IResource> notification = new ArrayList<IResource>(1000);
-			int i = 0;
-			for (IResource resource : changed) {
-				if (i % 1000 == 0 && notification.size() > 0) {
-					fireNotification(notification);
-				}
-				notification.add(resource);
-				i++;
-			}
-			if (notification.size() > 0) {
-				fireNotification(notification);
+			if (changed.size() > 0) {
+				fireNotification(changed);
 			}
 		}
 	}
 
-	private void fireNotification(List<IResource> notification) {
+	private void fireNotification(Set<IResource> notification) {
 		LabelProviderChangedEvent event = new LabelProviderChangedEvent(this, notification.toArray());
 		fireLabelProviderChanged(event);
 		notification.clear();
