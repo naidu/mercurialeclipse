@@ -278,7 +278,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		public int compare(IPath first, IPath second) {
 			int len1 = first.segmentCount();
 			int len2 = second.segmentCount();
-			return len2 - len1;
+			int result = len2 - len1;
+			if(result == 0){
+				// we should satisfy compare()/equals() contract, see issue #11936:
+				// HashSet can't find the right entry if we consider NOT equal paths as "equal"
+				return System.identityHashCode(first) - System.identityHashCode(second);
+			}
+			return result;
 		}
 	}
 
@@ -566,7 +572,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			resources = new HashSet<IResource>();
 			for (IPath path : set) {
 				// TODO try to use container.getFile (performance?)
-			    // we don't know if it is a file or folder...
+				// we don't know if it is a file or folder...
 				IFile tmp = root.getFileForLocation(path);
 				if(tmp != null) {
 					if(parentPath.isPrefixOf(path)) {
