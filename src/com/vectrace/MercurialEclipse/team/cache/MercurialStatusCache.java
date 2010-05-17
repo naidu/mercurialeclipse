@@ -282,7 +282,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if(result == 0){
 				// we should satisfy compare()/equals() contract, see issue #11936:
 				// HashSet can't find the right entry if we consider NOT equal paths as "equal"
-				return System.identityHashCode(first) - System.identityHashCode(second);
+				// code below is VERY slow on Linux, but seems to be ok on Windows
+				// return System.identityHashCode(first) - System.identityHashCode(second);
+				// line below violates the compare() contract that sgn(x,y) = -sgn(y,x)
+				// but seems to work.
+				return first == second? 0 : -1;
 			}
 			return result;
 		}
