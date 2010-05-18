@@ -119,7 +119,9 @@ public class HgRepositoryLocationManager {
 				allRepos.addAll(locations);
 			}
 		}
-		allRepos.addAll(repoHistory);
+		synchronized (repoHistory) {
+			allRepos.addAll(repoHistory);
+		}
 		return allRepos;
 	}
 

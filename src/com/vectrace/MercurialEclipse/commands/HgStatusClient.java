@@ -21,16 +21,21 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgStatusClient extends AbstractClient {
 
@@ -138,6 +143,30 @@ public class HgStatusClient extends AbstractClient {
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.addFiles(files);
 		return command.executeToString();
+	}
+
+	/**
+	 * @param hgRoot non null hg root
+	 * @param files non null file list from given root to commit
+	 * @return hg status output, never null (may be empty string)
+	 * @throws HgException
+	 */
+	public static String getStatusForCommit(HgRoot hgRoot, List<IResource> files) throws HgException {
+		StringBuilder output = new StringBuilder();
+		// if there are too many resources, do several calls
+		int size = files.size();
+		int delta = AbstractShellCommand.MAX_PARAMS - 1;
+		for (int i = 0; i < size; i += delta) {
+			AbstractShellCommand command = new HgCommand("status", hgRoot, //$NON-NLS-1$
+					true);
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+			// modified, added, removed, deleted, unknown
+			command.addOptions("-mardu"); //$NON-NLS-1$
+			command.addFiles(files.subList(i, Math.min(i + delta, size)));
+			output.append(command.executeToString());
+		}
+
+		return output.toString();
 	}
 
 	/**

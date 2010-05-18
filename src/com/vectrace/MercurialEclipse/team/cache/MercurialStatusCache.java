@@ -527,7 +527,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		int segmentCount = parent.segmentCount();
 		for (IPath path : all) {
 			if(path.segmentCount() <= segmentCount){
-				continue;
+				// map is sorted, so stop search here
+				break;
 			}
 			if(parent.isPrefixOf(path)){
 				if(result == null){
@@ -564,7 +565,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			IPath parentPath = ResourceUtils.getPath(folder);
 			resources = new HashSet<IResource>();
 			for (IPath path : set) {
-			// we don't know if it is a file or folder...
+				// TODO try to use container.getFile (performance?)
+				// we don't know if it is a file or folder...
 				IFile tmp = root.getFileForLocation(path);
 				if(tmp != null) {
 					if(parentPath.isPrefixOf(path)) {
@@ -874,12 +876,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		List<FlaggedAdaptable> status = HgResolveClient.list(hgRoot);
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath parentPath = new Path(hgRoot.getAbsolutePath());
-		Set<IPath> members = getPathChildrenFromCache(parentPath);
-		for (IPath childPath : members) {
-			if(removeConflict(childPath)){
-				IFile fileHandle = ResourceUtils.getFileHandle(childPath);
-				if(fileHandle != null) {
-					changed.add(fileHandle);
+		Set<IPath> members = getPaths(BIT_CONFLICT, parentPath);
+		if(members != null){
+			for (IPath childPath : members) {
+				if(removeConflict(childPath)){
+					IFile fileHandle = ResourceUtils.getFileHandle(childPath);
+					if(fileHandle != null) {
+						changed.add(fileHandle);
+					}
 				}
 			}
 		}
@@ -971,13 +975,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
-		int rootegmentCount = hgRootPath.segmentCount();
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
 		for (Entry<IProject, IPath> entry : set) {
 			IPath projectLocation = entry.getValue();
 			// determine project relative path
 			int equalSegments = path.matchingFirstSegments(projectLocation);
-			if(equalSegments > rootegmentCount || pathMap.size() == 1) {
+			if(equalSegments == projectLocation.segmentCount() || pathMap.size() == 1) {
 				IPath segments = path.removeFirstSegments(equalSegments);
 				return entry.getKey().findMember(segments);
 			}
@@ -1262,16 +1265,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Set<IResource> members = new HashSet<IResource>();
 		if(resource instanceof IContainer){
 			IContainer container = (IContainer) resource;
-			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			int segmentCount = container.getLocation().segmentCount();
 			Set<IPath> children = getChildrenFromCache(container);
 			for (IPath path : children) {
-				// TODO the if block below costs a lot of time because it requires file I/O
-				// hovewer, without it, Eclipse generates a dummy handle to a FILE instead to the directory...
-//				File file = path.toFile();
-//				if(file.isDirectory()){
-//					continue;
-//				}
-				IFile iFile = root.getFileForLocation(path);
+				IFile iFile = container.getFile(path.removeFirstSegments(segmentCount));
 				if(iFile != null) {
 					members.add(iFile);
 				}

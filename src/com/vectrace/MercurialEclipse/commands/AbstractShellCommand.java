@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
@@ -247,7 +248,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
-		isDebugging = MercurialEclipsePlugin.getDefault().isDebugging();
+		isDebugging = Boolean.valueOf(Platform.getDebugOption(MercurialEclipsePlugin.ID + "/debug/commands")).booleanValue();
 		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;

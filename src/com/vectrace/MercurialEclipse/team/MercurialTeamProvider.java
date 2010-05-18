@@ -54,6 +54,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
@@ -141,7 +142,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		HgRoot hgRoot = getAndStoreHgRoot(project);
 		HG_ROOTS.put(project, new HgRoot[] { hgRoot });
 		// try to find .hg directory to set it as private member
-		final IResource hgDir = project.getFolder(".hg"); //$NON-NLS-1$
+		final IResource hgDir = project.findMember(".hg"); //$NON-NLS-1$
 		if (hgDir != null) {
 			setTeamPrivate(hgDir);
 		}
@@ -154,13 +155,13 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	private void setTeamPrivate(final IResource hgDir) throws CoreException {
-		if(!hgDir.exists()){
+		if(!hgDir.exists() && ResourceUtils.getFileHandle(hgDir).exists()){
 			Job refreshJob = new Job("Refreshing .hg folder") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					try {
 						hgDir.refreshLocal(IResource.DEPTH_ZERO, monitor);
-						if(hgDir.exists()) {
+						if(hgDir.exists() && !hgDir.isTeamPrivateMember()) {
 							hgDir.setTeamPrivateMember(true);
 							hgDir.setDerived(true);
 						}
@@ -171,7 +172,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 				}
 			};
 			refreshJob.schedule();
-		} else {
+		} else if(!hgDir.isTeamPrivateMember()){
 			hgDir.setTeamPrivateMember(true);
 			hgDir.setDerived(true);
 		}
@@ -184,8 +185,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Job job = new Job("Reading root repositories") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+				HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+				if(!repoManager.getAllRepoLocations(hgRoot).isEmpty()){
+					return Status.OK_STATUS;
+				}
 				try {
-					MercurialEclipsePlugin.getRepoManager().loadRepos(hgRoot);
+					repoManager.loadRepos(hgRoot);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
