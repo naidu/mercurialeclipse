@@ -358,7 +358,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// only decorate files and project with suffix
-			if (suffix.length() > 0) {
+			if (suffix != null && suffix.length() > 0) {
 				d.addSuffix(suffix);
 			}
 

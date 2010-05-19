@@ -36,11 +36,10 @@ public class HgSubreposClient extends AbstractClient {
 	/**
 	 * Returns the list of the subrepositories of the specified Hg repository that are cloned inside the working copy.
 	 */
-	public static Set<HgRoot> findSubrepositories(HgRoot parent){
-		File parentDir = parent.getAbsoluteFile();
-		File hgsub = new File(parentDir, HGSUB);
+	public static Set<HgRoot> findSubrepositories(HgRoot hgRoot){
+		File hgsub = new File(hgRoot, HGSUB);
 
-		if(!hgsub.exists() || !hgsub.isFile()){
+		if(!hgsub.isFile()){
 			return new HashSet<HgRoot>();
 		}
 
@@ -48,7 +47,6 @@ public class HgSubreposClient extends AbstractClient {
 		try {
 			IniFile iniFile = new IniFile(hgsub.getAbsolutePath());
 			subrepos = iniFile.getSection(null);
-
 		} catch (FileNotFoundException e) {
 			// this shouldn't happen because we checked for existence of the file before, but who knows,
 			// bad timing happens...
@@ -58,17 +56,17 @@ public class HgSubreposClient extends AbstractClient {
 
 		Set<HgRoot> result = new HashSet<HgRoot>();
 		for(String subReposRootPath : subrepos.keySet()){
-			File subReposRootDir = new File(parent.getAbsoluteFile(), subReposRootPath);
-			if(!subReposRootDir.exists()){
+			File subReposRootDir = new File(hgRoot, subReposRootPath);
+			if(!subReposRootDir.isDirectory()){
 				// for some reason the subrepos was not cloned or disappeared, just ignore it
 				continue;
 			}
 			File subRepoHg = new File(subReposRootDir, HGDIR);
-			if(subRepoHg.exists() && subRepoHg.isDirectory()){
+			if(subRepoHg.isDirectory()){
 				// we are reasonably sure that an HgRoot really exists in subReposRootDir
 				try{
 					result.add(new HgRoot(subReposRootDir));
-				}catch(IOException ioe){
+				} catch(IOException ioe){
 					MercurialEclipsePlugin.logError(ioe);
 				}
 			}

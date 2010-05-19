@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -107,16 +107,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refreshing the status of too many files, just refresh the whole project
 				HgRoot projectRoot = resources.rootOf(project);
 				if(projectRoot == null){
-					try{
-						projectRoot = AbstractClient.getHgRoot(project);
-						resources.clear();
-						resources.add(projectRoot, project);
-
-					}catch(CoreException ex){
-						// if for some reason we cant get the root of the project, log it but continue
-						// the status refresh on all the files that were asked.
-						MercurialEclipsePlugin.logError(ex);
-					}
+					projectRoot = MercurialTeamProvider.getHgRoot(project);
+					resources.clear();
+					resources.add(projectRoot, project);
 				}
 			}
 		}
@@ -160,6 +153,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return false;
 			}
 			ProjectUpdateJob job = (ProjectUpdateJob) obj;
+			if(resources.size() != job.resources.size()){
+				return false;
+			}
 			if(!project.equals(job.project)){
 				return false;
 			}
@@ -168,7 +164,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		@Override
 		public int hashCode() {
-			return resources.size() + project.getName().hashCode();
+			return super.hashCode();
 		}
 	}
 
@@ -681,11 +677,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				MercurialTeamProvider.setCurrentBranch(branch, repo);
 
 				// Set the merge status of the root itself
-				try {
-					setMergeStatus(repo, mergeNode);
-				} catch (CoreException e) {
-					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
-				}
+				setMergeStatus(repo, mergeNode);
 
 				// set the projects status information
 				// this will happen exactly once for each project (since each project is only under one root)
@@ -693,7 +685,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				if(repoProjects != null){
 					for (IProject project : projects.getResources(repo)) {
 						knownStatus.add(project);
-							setMergeStatus(project, mergeNode);
+						setMergeStatus(project, mergeNode);
 					}
 				}
 
@@ -749,6 +741,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 
 			for(HgRoot repo : repos){
+
 				// Call hg to get the status of the repository
 				String output = HgStatusClient.getStatusWithoutIgnored(repo, res);
 				monitor.worked(1);
@@ -772,25 +765,23 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 				// refresh the status of the HgRoot we are processing
 				try {
-					String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
+					String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
 					String id = mergeStatus[0];
-					LocalChangesetCache.getInstance().checkLatestChangeset(root, id);
+					LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
 					String mergeNode = mergeStatus[1];
 					String branch = mergeStatus[2];
 					setMergeStatus(repo, mergeNode);
-					MercurialTeamProvider.setCurrentBranch(branch, root);
-
+					MercurialTeamProvider.setCurrentBranch(branch, repo);
 					if(res instanceof IProject && repo == root){
 						// the project is under the current HgRoot, update its status as well
-						MercurialStatusCache.getInstance().setMergeStatus(res, mergeNode);
+						setMergeStatus((IProject)res, mergeNode);
 					}
-
 				} catch (CoreException e) {
 					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 				}
 			}
 
-			if(res instanceof IProject) {
+			if(res instanceof IProject){
 				knownStatus.add(project);
 			}
 		}
@@ -1362,7 +1353,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 
 
-	public void clearMergeStatus(HgRoot hgRoot) throws CoreException {
+	public void clearMergeStatus(HgRoot hgRoot) {
 		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		for (IProject project : projects) {
 			clearMergeStatus(project);
@@ -1370,19 +1361,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		clearMergeStatus(hgRoot.getIPath());
 	}
 
-	public void clearMergeStatus(IPath path) throws CoreException {
-		this.mergeChangesetIds.remove(path);
-		ResourceUtils.touch(ResourceUtils.convert(path.toFile()));
+	private void clearMergeStatus(IPath path) {
+		mergeChangesetIds.remove(path);
 	}
 
-	public void clearMergeStatus(IResource res) {
+	public void clearMergeStatus(IProject res) {
 		// clear merge status in Eclipse
-		this.mergeChangesetIds.remove(res.getFullPath());
-		// triggers the decoration update
-		ResourceUtils.touch(res);
+		mergeChangesetIds.remove(res.getLocation());
 	}
 
-	public void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
+	public void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) {
 		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		for (IProject project : projects) {
 			// clear merge status in Eclipse
@@ -1391,26 +1379,23 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		setMergeStatus(hgRoot.getIPath(), mergeChangesetId);
 	}
 
-	public void setMergeStatus(IPath path, String mergeChangesetId) throws CoreException {
+	private void setMergeStatus(IPath path, String mergeChangesetId) {
 		if(mergeChangesetId != null){
-			this.mergeChangesetIds.put(path, mergeChangesetId);
-		}else{
+			mergeChangesetIds.put(path, mergeChangesetId);
+		} else{
 			// ConcurrentHashMap doesn't support null values, but removing is the same a putting a null value
-			this.mergeChangesetIds.remove(path);
+			mergeChangesetIds.remove(path);
 		}
-		ResourceUtils.touch(ResourceUtils.convert(path.toFile()));
 	}
 
-	public void setMergeStatus(IResource res, String mergeChangesetId) {
+	private void setMergeStatus(IProject project, String mergeChangesetId) {
 		// set merge status in Eclipse
 		if(mergeChangesetId != null){
-			this.mergeChangesetIds.put(res.getFullPath(), mergeChangesetId);
+			mergeChangesetIds.put(project.getLocation(), mergeChangesetId);
 		}else{
 			// ConcurrentHashMap doesn't support null values, but removing is the same a putting a null value
-			this.mergeChangesetIds.remove(res.getFullPath());
+			mergeChangesetIds.remove(project.getLocation());
 		}
-		// triggers the decoration update
-		ResourceUtils.touch(res);
 	}
 
 	public boolean isMergeInProgress(IPath path){
@@ -1430,15 +1415,15 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
 	 */
 	public String getMergeChangesetId(IPath path){
-		return this.mergeChangesetIds.get(path);
+		return mergeChangesetIds.get(path);
 	}
 
 	/**
 	 * @param project non null
 	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
 	 */
-	public String getMergeChangesetId(IResource res) {
-		return getMergeChangesetId(res.getFullPath());
+	public String getMergeChangesetId(IResource project) {
+		return getMergeChangesetId(project.getLocation());
 	}
 
 	/**
