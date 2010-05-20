@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -280,17 +281,17 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private int statusBatchSize;
 
 	static class BitMap {
-		private final Set<IPath> ignore = new HashSet<IPath>();
+		private final Set<IPath> ignore = new LinkedHashSet<IPath>(10000, 0.75f);
 		// don't waste space with most popular state
 		// private final Set<IPath> clean = new HashSet<IPath>();
-		private final Set<IPath> missing = new HashSet<IPath>();
-		private final Set<IPath> removed = new HashSet<IPath>();
-		private final Set<IPath> unknown = new HashSet<IPath>();
-		private final Set<IPath> added = new HashSet<IPath>();
-		private final Set<IPath> modified = new HashSet<IPath>();
-		private final Set<IPath> conflict = new HashSet<IPath>();
+		private final Set<IPath> missing = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final Set<IPath> removed = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final Set<IPath> unknown = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final Set<IPath> added = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final Set<IPath> modified = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final Set<IPath> conflict = new LinkedHashSet<IPath>(10000, 0.75f);
 		/** directories */
-		private final Set<IPath> dir = new HashSet<IPath>();
+		private final Set<IPath> dir = new LinkedHashSet<IPath>(10000, 0.75f);
 		// we do not cache impossible values
 		// private final Set<IPath> impossible = new HashSet<IPath>();
 
