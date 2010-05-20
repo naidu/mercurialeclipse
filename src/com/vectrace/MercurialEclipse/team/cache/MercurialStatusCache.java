@@ -523,10 +523,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		int segmentCount = parent.segmentCount();
 		for (IPath path : all) {
 			if(path.segmentCount() <= segmentCount){
-				// map is sorted, so stop search here
-				break;
+				// IF map would be sorted, we could break here
+				continue;
 			}
-			if(parent.isPrefixOf(path)){
+			if(ResourceUtils.isPrefixOf(parent, path)){
 				if(result == null){
 					result = new HashSet<IPath>();
 				}
@@ -565,13 +565,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// we don't know if it is a file or folder...
 				IFile tmp = root.getFileForLocation(path);
 				if(tmp != null) {
-					if(parentPath.isPrefixOf(path)) {
+					if(ResourceUtils.isPrefixOf(parentPath, path)) {
 						resources.add(tmp);
 					}
 				} else {
 					IContainer container = root.getContainerForLocation(path);
 					if(container != null) {
-						if(parentPath.isPrefixOf(path)) {
+						if(ResourceUtils.isPrefixOf(parentPath, path)) {
 							resources.add(container);
 						}
 					}
@@ -588,13 +588,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					// we don't know if it is a file or folder...
 					IFile tmp = root.getFileForLocation(path);
 					if(tmp != null) {
-						if(parentPath.isPrefixOf(path)) {
+						if(ResourceUtils.isPrefixOf(parentPath, path)) {
 							resources.add(tmp);
 						}
 					} else {
 						IContainer container = root.getContainerForLocation(path);
 						if(container != null) {
-							if(parentPath.isPrefixOf(path)) {
+							if(ResourceUtils.isPrefixOf(parentPath, path)) {
 								resources.add(container);
 							}
 						}
@@ -830,7 +830,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Set<IPath> children = new HashSet<IPath>();
 		Set<IPath> keySet = statusMap.keySet();
 		for (IPath path : keySet) {
-			if(path != null && parentPath.isPrefixOf(path)) {
+			if(path != null && ResourceUtils.isPrefixOf(parentPath, path)) {
 				children.add(path);
 			}
 		}
@@ -1228,7 +1228,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				Iterator<IPath> it = entrySet.iterator();
 				while (it.hasNext()) {
 					IPath path = it.next();
-					if(path != null && parentPath.isPrefixOf(path)) {
+					if(path != null && ResourceUtils.isPrefixOf(parentPath, path)) {
 						it.remove();
 						bitMap.remove(path);
 					}
