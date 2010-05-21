@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -171,7 +170,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private final class MemberStatusVisitor {
 
-		private int bitSet;
+		int bitSet;
 
 		public MemberStatusVisitor(IPath parentLocation, int bitSet) {
 			this.bitSet = bitSet;
@@ -268,30 +267,32 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		| IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
 
 	/** Used to store the last known status of a resource */
-	private final ConcurrentHashMap<IPath, Integer> statusMap = new ConcurrentHashMap<IPath, Integer>(10000, 0.75f, 4);
+	/* private */final ConcurrentHashMap<IPath, Integer> statusMap = new ConcurrentHashMap<IPath, Integer>(
+			10000, 0.75f, 4);
 	private final BitMap bitMap;
 	private final Object statusUpdateLock = new byte[0];
 
 	/** Used to store which projects have already been parsed */
 	private final CopyOnWriteArraySet<IProject> knownStatus = new CopyOnWriteArraySet<IProject>();
 
-	private final ConcurrentHashMap<IPath, String> mergeChangesetIds = new ConcurrentHashMap<IPath, String>(100);
+	private final ConcurrentHashMap<IPath, String> mergeChangesetIds = new ConcurrentHashMap<IPath, String>(
+			100, 0.75f, 4);
 
 	private boolean computeDeepStatus;
 	private int statusBatchSize;
 
 	static class BitMap {
-		private final Set<IPath> ignore = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final PathsSet ignore = new PathsSet(1000, 0.75f);
 		// don't waste space with most popular state
 		// private final Set<IPath> clean = new HashSet<IPath>();
-		private final Set<IPath> missing = new LinkedHashSet<IPath>(10000, 0.75f);
-		private final Set<IPath> removed = new LinkedHashSet<IPath>(10000, 0.75f);
-		private final Set<IPath> unknown = new LinkedHashSet<IPath>(10000, 0.75f);
-		private final Set<IPath> added = new LinkedHashSet<IPath>(10000, 0.75f);
-		private final Set<IPath> modified = new LinkedHashSet<IPath>(10000, 0.75f);
-		private final Set<IPath> conflict = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final PathsSet missing = new PathsSet(1000, 0.75f);
+		private final PathsSet removed = new PathsSet(1000, 0.75f);
+		private final PathsSet unknown = new PathsSet(1000, 0.75f);
+		private final PathsSet added = new PathsSet(1000, 0.75f);
+		private final PathsSet modified = new PathsSet(1000, 0.75f);
+		private final PathsSet conflict = new PathsSet(1000, 0.75f);
 		/** directories */
-		private final Set<IPath> dir = new LinkedHashSet<IPath>(10000, 0.75f);
+		private final PathsSet dir = new PathsSet(1000, 0.75f);
 		// we do not cache impossible values
 		// private final Set<IPath> impossible = new HashSet<IPath>();
 
@@ -328,7 +329,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 		}
 
-		synchronized Set<IPath> get(int bit){
+		synchronized PathsSet get(int bit){
 			switch (bit) {
 			case BIT_REMOVED:
 				return removed;
@@ -362,7 +363,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			remove(path, dir);
 		}
 
-		void remove(IPath path, Set<IPath> set) {
+		void remove(IPath path, PathsSet set) {
 			if(!set.isEmpty()) {
 				set.remove(path);
 			}
@@ -511,30 +512,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @param parent
 	 * @return may return null, if no paths for given parent and bitset are known
 	 */
-	private Set<IPath> getPaths(int statusBit, IPath parent){
+	private List<IPath> getPaths(int statusBit, IPath parent){
 		boolean isMappedState = statusBit != BIT_CLEAN && statusBit != BIT_IMPOSSIBLE;
 		if(!isMappedState) {
 			return null;
 		}
-		Set<IPath> all = bitMap.get(statusBit);
+		PathsSet all = bitMap.get(statusBit);
 		if(all.isEmpty()){
 			return null;
 		}
-		Set<IPath> result = null;
-		int segmentCount = parent.segmentCount();
-		for (IPath path : all) {
-			if(path.segmentCount() <= segmentCount){
-				// IF map would be sorted, we could break here
-				continue;
-			}
-			if(ResourceUtils.isPrefixOf(parent, path)){
-				if(result == null){
-					result = new HashSet<IPath>();
-				}
-				result.add(path);
-			}
-		}
-		return result;
+		return all.getChildren(parent);
 	}
 
 	public Set<IFile> getFiles(int statusBits, IContainer folder){
@@ -555,24 +542,23 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
 			&& Bits.cardinality(statusBits) == 1;
 		if(isMappedState){
-			Set<IPath> set = bitMap.get(statusBits);
+			PathsSet set = bitMap.get(statusBits);
 			if(set == null || set.isEmpty()){
 				return Collections.emptySet();
 			}
 			IPath parentPath = ResourceUtils.getPath(folder);
 			resources = new HashSet<IResource>();
-			for (IPath path : set) {
-				// TODO try to use container.getFile (performance?)
-				// we don't know if it is a file or folder...
-				IFile tmp = root.getFileForLocation(path);
-				if(tmp != null) {
-					if(ResourceUtils.isPrefixOf(parentPath, path)) {
+			List<IPath> children = set.getChildren(parentPath);
+			if(children != null) {
+				for (IPath path : children) {
+					// TODO try to use container.getFile (performance?)
+					// we don't know if it is a file or folder...
+					IFile tmp = root.getFileForLocation(path);
+					if(tmp != null) {
 						resources.add(tmp);
-					}
-				} else {
-					IContainer container = root.getContainerForLocation(path);
-					if(container != null) {
-						if(ResourceUtils.isPrefixOf(parentPath, path)) {
+					} else {
+						IContainer container = root.getContainerForLocation(path);
+						if(container != null) {
 							resources.add(container);
 						}
 					}
@@ -651,7 +637,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					continue;
 				}
 				// clear status for project
-				projectDeletedOrClosed(project);
+				if(knownStatus.contains(project)) {
+					projectDeletedOrClosed(project);
+				}
 				monitor.worked(1);
 				if(monitor.isCanceled()){
 					return;
@@ -731,7 +719,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		synchronized (statusUpdateLock) {
 			// clear status for files, folders or project
-			if(res instanceof IProject){
+			if(res instanceof IProject && knownStatus.contains(project)){
 				projectDeletedOrClosed(project);
 			} else {
 				clearStatusCache(res, false);
@@ -868,9 +856,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		List<FlaggedAdaptable> status = HgResolveClient.list(hgRoot);
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath parentPath = new Path(hgRoot.getAbsolutePath());
-		Set<IPath> members = getPaths(BIT_CONFLICT, parentPath);
+		List<IPath> members = getPaths(BIT_CONFLICT, parentPath);
 		if(members != null){
-			for (IPath childPath : members) {
+			for (int i = 0; i < members.size(); i++) {
+				IPath childPath = members.get(i);
 				if(removeConflict(childPath)){
 					IFile fileHandle = ResourceUtils.getFileHandle(childPath);
 					if(fileHandle != null) {
@@ -968,11 +957,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
+		boolean singleProject = pathMap.size() == 1;
 		for (Entry<IProject, IPath> entry : set) {
 			IPath projectLocation = entry.getValue();
 			// determine project relative path
 			int equalSegments = path.matchingFirstSegments(projectLocation);
-			if(equalSegments == projectLocation.segmentCount() || pathMap.size() == 1) {
+			if(equalSegments == projectLocation.segmentCount() || singleProject) {
 				IPath segments = path.removeFirstSegments(equalSegments);
 				return entry.getKey().findMember(segments);
 			}
@@ -1048,11 +1038,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private boolean checkChildrenFor(IPath location, MemberStatusVisitor visitor, int stateBit) {
-		Set<IPath> resources = getPaths(stateBit, location);
+		List<IPath> resources = getPaths(stateBit, location);
 		if(resources == null){
 			return true;
 		}
-		for (IPath child : resources) {
+		for (int i = 0; i < resources.size(); i++) {
+			IPath child = resources.get(i);
 			boolean continueVisit = visitor.visit(child);
 			if(!continueVisit){
 				return false;
