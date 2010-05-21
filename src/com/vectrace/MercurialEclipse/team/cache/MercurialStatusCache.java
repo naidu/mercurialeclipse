@@ -171,7 +171,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final class MemberStatusVisitor {
 
 		int bitSet;
-
+		
 		public MemberStatusVisitor(IPath parentLocation, int bitSet) {
 			this.bitSet = bitSet;
 		}
@@ -522,6 +522,24 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return null;
 		}
 		return all.getChildren(parent);
+	}
+
+	/**
+	 *
+	 * @param statusBit
+	 * @param parent
+	 * @return may return null, if no paths for given parent and bitset are known
+	 */
+	private List<IPath> getDirectChildren(int statusBit, IPath parent){
+		boolean isMappedState = statusBit != BIT_CLEAN && statusBit != BIT_IMPOSSIBLE;
+		if(!isMappedState) {
+			return null;
+		}
+		PathsSet all = bitMap.get(statusBit);
+		if(all.isEmpty()){
+			return null;
+		}
+		return all.getDirectChildren(parent);
 	}
 
 	public Set<IFile> getFiles(int statusBits, IContainer folder){
@@ -1038,7 +1056,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private boolean checkChildrenFor(IPath location, MemberStatusVisitor visitor, int stateBit) {
-		List<IPath> resources = getPaths(stateBit, location);
+		List<IPath> resources = getDirectChildren(stateBit, location);
 		if(resources == null){
 			return true;
 		}

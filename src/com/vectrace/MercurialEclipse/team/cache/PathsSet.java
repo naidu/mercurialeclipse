@@ -79,6 +79,34 @@ public class PathsSet {
 		return result;
 	}
 
+	public List<IPath> getDirectChildren(IPath parent) {
+		List<IPath> result = null;
+		int segmentCount = parent.segmentCount();
+		int pathKey = categorize(parent.lastSegment());
+		int startSegment = categorize(segmentCount) + 1;
+		if(startSegment == MAX_SEGMENTS){
+			startSegment --;
+		}
+		synchronized (pathsMap) {
+			for (int j = 0; j < MAX_NAME; j++) {
+				Set<IPath> possibleChildren = pathsMap[startSegment][j];
+				if (possibleChildren == null) {
+					continue;
+				}
+				for (IPath path : possibleChildren) {
+					if (pathKey == categorize(path.segment(segmentCount - 1))
+							&& (ResourceUtils.isPrefixOf(parent, path))) {
+						if (result == null) {
+							result = new ArrayList<IPath>();
+						}
+						result.add(path);
+					}
+				}
+			}
+		}
+		return result;
+	}
+
 	public void add(IPath path){
 		int sizeKey = categorize(path.segmentCount());
 		int pathKey = categorize(path.lastSegment());
@@ -138,4 +166,5 @@ public class PathsSet {
 		}
 		return 0;
 	}
+
 }
