@@ -107,7 +107,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refreshing the status of too many files, just refresh the whole project
 				HgRoot projectRoot = resources.rootOf(project);
 				if(projectRoot == null){
-					projectRoot = MercurialTeamProvider.getHgRoot(project);
+					try {
+						projectRoot = AbstractClient.getHgRoot(project);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+						projectRoot = MercurialTeamProvider.getHgRoot(project);
+					}
 					resources.clear();
 					resources.add(projectRoot, project);
 				}
@@ -118,6 +123,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
 			// now process gathered changes (they are in the lists)
+			if(monitor.isCanceled()){
+				return Status.CANCEL_STATUS;
+			}
 			try {
 				updateProject(monitor);
 			} catch (CoreException e) {
@@ -171,7 +179,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final class MemberStatusVisitor {
 
 		int bitSet;
-		
+
 		public MemberStatusVisitor(IPath parentLocation, int bitSet) {
 			this.bitSet = bitSet;
 		}

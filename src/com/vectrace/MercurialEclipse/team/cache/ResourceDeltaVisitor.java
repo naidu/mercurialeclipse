@@ -27,6 +27,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -78,10 +79,16 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			return false;
 		}
 
-		if(currentRoot == null){
-			// first node we visit up to this point
-			currentRoot = AbstractClient.getHgRoot(res);
-		}
+		//if(currentRoot == null){
+			// We should re-set currentRoot each time because the delta resources may be
+			// from different projects AND from different UNRELATED roots too
+			try {
+				currentRoot = AbstractClient.getHgRoot(res);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				currentRoot = MercurialTeamProvider.getHgRoot(res);
+			}
+		//}
 
 		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){
 			addResource(changed, project, currentRoot, project);
