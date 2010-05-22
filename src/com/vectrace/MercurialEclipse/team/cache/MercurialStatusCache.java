@@ -870,7 +870,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 		for (FlaggedAdaptable flaggedAdaptable : status) {
 			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
-			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED) {
+			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED && file != null) {
 				changed.addAll(addConflict(file));
 			}
 		}
@@ -896,7 +896,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 		for (FlaggedAdaptable flaggedAdaptable : status) {
 			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
-			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED) {
+			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED && file != null) {
 				changed.addAll(addConflict(file));
 			}
 		}
