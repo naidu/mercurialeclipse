@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -101,6 +102,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private boolean colorise;
 	private boolean showChangeset;
 	private boolean showIncomingChangeset;
+	private boolean enableSubrepos;
 
 	public ResourceDecorator() {
 		configureFromPreferences();
@@ -169,6 +171,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
 		showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		showIncomingChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 	}
 
 	public void decorate(Object element, IDecoration d) {
@@ -207,8 +210,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			if (!showChangeset) {
-				if (resource.getType() == IResource.PROJECT ||
-						resource.getType() == IResource.FOLDER && AbstractClient.isHgRoot(resource) != null) {
+				if (resource.getType() == IResource.PROJECT || shouldCheckSubrepo(resource)) {
 					d.addSuffix(getSuffixForContainer((IContainer)resource));
 				}
 			} else {
@@ -222,6 +224,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+
+	private boolean shouldCheckSubrepo(IResource resource) throws HgException {
+		return enableSubrepos && resource.getType() == IResource.FOLDER
+				&& AbstractClient.isHgRoot(resource) != null;
 	}
 
 	/**
@@ -347,8 +355,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		try {
 			// init suffix with project changeset information, or for folders that contain a subrepos
 			String suffix = ""; //$NON-NLS-1$
-			if (resource.getType() == IResource.PROJECT ||
-					resource.getType() == IResource.FOLDER && AbstractClient.isHgRoot(resource) != null) {
+			if (resource.getType() == IResource.PROJECT || shouldCheckSubrepo(resource)) {
 				suffix = getSuffixForContainer((IContainer)resource);
 			}
 
@@ -358,7 +365,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// only decorate files and project with suffix
-			if (suffix != null && suffix.length() > 0) {
+			if ((resource.getType() != IResource.FOLDER || enableSubrepos) && suffix != null && suffix.length() > 0) {
 				d.addSuffix(suffix);
 			}
 
@@ -404,10 +411,10 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		HgRoot root;
 		if(container instanceof IProject){
 			root = MercurialTeamProvider.getHgRoot(container);
-			changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(container);
+			changeSet = LOCAL_CACHE.getChangesetByRootId(container);
 		}else{
 			root = AbstractClient.isHgRoot(container);
-			changeSet = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+			changeSet = LOCAL_CACHE.getChangesetForRoot(root);
 		}
 
 		StringBuilder suffix = new StringBuilder();
@@ -417,7 +424,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-			String merging = MercurialStatusCache.getInstance().getMergeChangesetId(container);
+			String merging = STATUS_CACHE.getMergeChangesetId(container);
 			String bisecting = null;
 			// XXX should use map, as there can be 100 projects under the same root
 			if (HgBisectClient.isBisecting(root)) {

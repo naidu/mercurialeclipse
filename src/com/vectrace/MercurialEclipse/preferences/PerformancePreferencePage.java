@@ -85,6 +85,11 @@ implements IWorkbenchPreferencePage {
 				Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
+		addField(new BooleanFieldEditor(
+				PREF_ENABLE_SUBREPO_SUPPORT,
+				Messages.getString("PerformancePreferencePage.field.enableSubrepo"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
 
 		final BooleanFieldEditor showChangesetsInfo = new BooleanFieldEditor(
 				RESOURCE_DECORATOR_SHOW_CHANGESET,

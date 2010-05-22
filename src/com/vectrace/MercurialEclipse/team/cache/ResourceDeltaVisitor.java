@@ -79,7 +79,8 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			return false;
 		}
 
-		//if(currentRoot == null){
+		boolean subrepoEnabled = cache.isSubrepoSupportEnabled();
+		if(subrepoEnabled){
 			// We should re-set currentRoot each time because the delta resources may be
 			// from different projects AND from different UNRELATED roots too
 			try {
@@ -88,7 +89,9 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 				MercurialEclipsePlugin.logError(e);
 				currentRoot = MercurialTeamProvider.getHgRoot(res);
 			}
-		//}
+		} else {
+			currentRoot = MercurialTeamProvider.getHgRoot(project);
+		}
 
 		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){
 			addResource(changed, project, currentRoot, project);
@@ -98,7 +101,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
 		// NB: the resource may not exist at this point (deleted/moved)
 		// so any access to the IResource's API should be checked against null
-		if(res.getType() == IResource.FOLDER){
+		if(subrepoEnabled && res.getType() == IResource.FOLDER){
 			// each folder is potentially a new subrepos, which may mean another HgRoot for its children
 			HgRoot root = AbstractClient.isHgRoot(res);
 			if(root != null){
@@ -106,7 +109,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 				currentRoot = root;
 			}
 
-		}else if (res.getType() == IResource.FILE) {
+		} else if (res.getType() == IResource.FILE) {
 			IResource resource = isCompleteStatusRequested()? project : res;
 			switch (delta.getKind()) {
 			case IResourceDelta.ADDED:

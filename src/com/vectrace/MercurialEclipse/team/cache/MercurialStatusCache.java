@@ -107,10 +107,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refreshing the status of too many files, just refresh the whole project
 				HgRoot projectRoot = resources.rootOf(project);
 				if(projectRoot == null){
-					try {
-						projectRoot = AbstractClient.getHgRoot(project);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
+					if(enableSubrepos){
+						try {
+							projectRoot = AbstractClient.getHgRoot(project);
+						} catch (HgException e) {
+							MercurialEclipsePlugin.logError(e);
+							projectRoot = MercurialTeamProvider.getHgRoot(project);
+						}
+					} else {
 						projectRoot = MercurialTeamProvider.getHgRoot(project);
 					}
 					resources.clear();
@@ -288,6 +292,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private boolean computeDeepStatus;
 	private int statusBatchSize;
+	private boolean enableSubrepos;
 
 	static class BitMap {
 		private final PathsSet ignore = new PathsSet(1000, 0.75f);
@@ -637,7 +642,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// find all subrepos under the specified root
 		// in general we can have several projects under the same root
 		// but due to subrepositories we can also have several roots under the same project
-		Set<HgRoot> repos = HgSubreposClient.findSubrepositoriesRecursively(root);
+		Set<HgRoot> repos;
+		if(enableSubrepos){
+			repos = HgSubreposClient.findSubrepositoriesRecursively(root);
+		} else {
+			repos = new HashSet<HgRoot>();
+		}
 		repos.add(root);
 
 		// find all projects that are under the root and any of its subrepos. Each project can only
@@ -734,11 +744,17 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return;
 		}
 
-		// find the reposoritory in which the resource is
-		HgRoot root = AbstractClient.getHgRoot(res);
 		// find all the subrepos that are inside the resource
-		Set<HgRoot> repos = HgSubreposClient.findSubrepositoriesRecursivelyWithin(root, res);
-		repos.add(root);
+		Set<HgRoot> repos;
+		HgRoot root;
+		if(enableSubrepos){
+			// find the reposoritory in which the resource is
+			root = AbstractClient.getHgRoot(res);
+			repos = HgSubreposClient.findSubrepositoriesRecursivelyWithin(root, res);
+		} else {
+			root = MercurialTeamProvider.getHgRoot(res);
+			repos = new HashSet<HgRoot>();
+		}
 
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
@@ -1359,6 +1375,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	@Override
 	protected void configureFromPreferences(IPreferenceStore store){
 		computeDeepStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS);
+		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 		// TODO: group batches by repo root
 
 		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE); // STATUS_BATCH_SIZE;
@@ -1454,5 +1471,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return getMergeChangesetId(projects.iterator().next());
 		}
 		return null;
+	}
+
+	public boolean isSubrepoSupportEnabled() {
+		return enableSubrepos;
 	}
 }
