@@ -15,6 +15,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
@@ -77,8 +78,17 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 
 		if (force || showOnMessage) {
 			// register console
-			registerConsole();
-			getConsoleManager().showConsoleView(console);
+			if(Display.getCurrent() == null){
+				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						registerConsole();
+						getConsoleManager().showConsoleView(console);
+					}
+				});
+			} else {
+				registerConsole();
+				getConsoleManager().showConsoleView(console);
+			}
 		}
 
 		return console;
@@ -159,8 +169,19 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 	}
 
 	private void setConsoleFont() {
-		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-		Font font = theme.getFontRegistry().get(CONSOLE_FONT);
-		console.setFont(font);
+		if (Display.getCurrent() == null) {
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+					Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+					console.setFont(font);
+				}
+			});
+		} else {
+			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+			Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+			console.setFont(font);
+
+		}
 	}
 }

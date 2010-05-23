@@ -69,6 +69,9 @@ public class HgConsole extends MessageConsole {
 	public HgConsole() {
 		super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
 		document = new ConsoleDocument();
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
+		debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
 	}
 
 
@@ -77,8 +80,6 @@ public class HgConsole extends MessageConsole {
 		// Called when console is added to the console view
 		super.init();
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
-		debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
 		initLimitOutput(store);
 		initWrapSetting(store);
 		initializeStreams();
