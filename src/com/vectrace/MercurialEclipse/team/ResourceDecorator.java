@@ -469,8 +469,15 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	public void update(Observable o, Object updatedObject) {
 		if (updatedObject instanceof Set<?>) {
 			Set<IResource> changed = (Set<IResource>) updatedObject;
-			if (changed.size() > 0) {
+			if(changed.isEmpty()){
+				return;
+			}
+			if (changed.size() < 10) {
 				fireNotification(changed);
+			} else {
+				// if we have a lot of updates, it's easier (faster) to ask clients to update themselves
+				// otherwise unneeded decorator updates may cause Eclipse to be busy for minutes, see issue #11928
+				updateClientDecorations();
 			}
 		}
 	}
