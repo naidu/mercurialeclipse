@@ -754,6 +754,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		} else {
 			root = MercurialTeamProvider.getHgRoot(res);
 			repos = new HashSet<HgRoot>();
+			repos.add(root);
 		}
 
 		Set<IResource> changed = new HashSet<IResource>();
