@@ -772,7 +772,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return;
 			}
 
-			for(HgRoot repo : repos){
+			for (HgRoot repo : repos) {
 
 				// Call hg to get the status of the repository
 				String output = HgStatusClient.getStatusWithoutIgnored(repo, res);
@@ -797,18 +797,20 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 				// refresh the status of the HgRoot we are processing
 				try {
-					String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
-					String id = mergeStatus[0];
-					LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
-					String mergeNode = mergeStatus[1];
-					String branch = mergeStatus[2];
-					setMergeStatus(repo, mergeNode);
-					MercurialTeamProvider.setCurrentBranch(branch, repo);
-					if(res instanceof IProject && repo == root){
-						// the project is under the current HgRoot, update its status as well
-						setMergeStatus((IProject)res, mergeNode);
+					if(res instanceof IProject || repo != root){
+						String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
+						String id = mergeStatus[0];
+						LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
+						String mergeNode = mergeStatus[1];
+						String branch = mergeStatus[2];
+						setMergeStatus(repo, mergeNode);
+						MercurialTeamProvider.setCurrentBranch(branch, repo);
+						if(repo == root){
+							// the project is under the current HgRoot, update its status as well
+							setMergeStatus((IProject)res, mergeNode);
+						}
 					}
-				} catch (CoreException e) {
+				} catch (HgException e) {
 					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 				}
 			}
