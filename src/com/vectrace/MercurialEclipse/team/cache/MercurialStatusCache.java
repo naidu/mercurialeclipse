@@ -290,7 +290,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final ConcurrentHashMap<IPath, String> mergeChangesetIds = new ConcurrentHashMap<IPath, String>(
 			100, 0.75f, 4);
 
-	private boolean computeDeepStatus;
 	private int statusBatchSize;
 	private boolean enableSubrepos;
 
@@ -708,7 +707,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// this will happen exactly once for each project (since each project is only under one root)
 				Set<IProject> repoProjects = projects.getResources(repo);
 				if(repoProjects != null){
-					for (IProject project : projects.getResources(repo)) {
+					for (IProject project : repoProjects) {
 						knownStatus.add(project);
 						setMergeStatus(project, mergeNode);
 					}
@@ -927,6 +926,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/**
 	 * @param lines must contain file paths as paths relative to the hg root
 	 * @param pathMap multiple projects (from this hg root) as input
+	 * @param propagateAllStates true to propagate all changes in children states to parents,
+	 * e.g. both transition from clean to dirty state and from dirty to clean state.
+	 * If false, then only dirty state is propagated to parents.
+	 *
 	 * @return set with resources to refresh
 	 */
 	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines,
@@ -980,10 +983,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				changed.add(member);
 			}
 			setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
-
-			if(propagateAllStates || Bits.contains(bitSet.intValue(), MODIFIED_MASK)) {
-				changed.addAll(setStatusToAncestors(member, bitSet));
-			}
+			changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
 		}
 		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
@@ -1029,57 +1029,76 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 	}
 
-	private Set<IResource> setStatusToAncestors(IResource resource, Integer resourceBitSet) {
+	/**
+	 *
+	 * @param child
+	 * @param childState
+	 * @param propagateAllStates true to propagate all changes in children states to parents,
+	 * e.g. both transition from clean to dirty state and from dirty to clean state.
+	 * If false, then only dirty state is propagated to parents.
+	 * @return
+	 */
+	private Set<IResource> setStatusToAncestors(IResource child, Integer childState, boolean propagateAllStates) {
 		Set<IResource> ancestors = new HashSet<IResource>();
-		boolean computeDeep = isComputeDeepStatus();
-		IContainer parent = resource.getParent();
+		IContainer parent = child.getParent();
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+
 		for (; parent != null && parent != root; parent = parent.getParent()) {
-			IPath location = parent.getLocation();
-			if(location == null){
+			IPath parentLocation = parent.getLocation();
+			if(parentLocation == null){
 				continue;
 			}
-			int parentBitSet = 0;
-			Integer parentBits = statusMap.get(location);
+			int parentBitSet = BIT_CLEAN;
+			Integer parentBits = statusMap.get(parentLocation);
 			if(parentBits != null){
 				parentBitSet = parentBits.intValue();
 			}
-			int cloneBitSet = resourceBitSet.intValue();
+			int childBitSet = childState.intValue();
 
 			// should not propagate ignores states to parents
 			// TODO issue 237: "two status feature"
-			cloneBitSet = Bits.clear(cloneBitSet, IGNORED_MASK);
-			boolean intersects = Bits.contains(resourceBitSet.intValue(), MODIFIED_MASK);
-			if(intersects) {
-				cloneBitSet |= BIT_MODIFIED;
+			childBitSet = Bits.clear(childBitSet, IGNORED_MASK);
+			boolean childIsDirty = Bits.contains(childBitSet, MODIFIED_MASK);
+			if(childIsDirty) {
+				childBitSet |= BIT_MODIFIED;
 			} else {
-				cloneBitSet |= BIT_CLEAN;
+				childBitSet |= BIT_CLEAN;
 			}
 
-			if (computeDeep && resource.getType() != IResource.PROJECT) {
-				if (!Bits.contains(cloneBitSet, BIT_MODIFIED) && parent.isAccessible()
-						&& !parent.isTeamPrivateMember() && !parent.isDerived()) {
-					MemberStatusVisitor visitor = new MemberStatusVisitor(location, cloneBitSet);
-					// we have to traverse all "dirty" resources and change parent state to "dirty"...
-					boolean visit = checkChildrenFor(location, visitor, BIT_MODIFIED);
-					if(visit){
-						visit = checkChildrenFor(location, visitor, BIT_UNKNOWN);
+			if (child.getType() == IResource.PROJECT) {
+				childBitSet |= parentBitSet;
+			} else if (!childIsDirty) {
+				// child is clean, and we have "usual" files and folders
+				if (!propagateAllStates) {
+					if(parentBits != null){
+						// parent status known: just exit here. Saves us A LOT of time
+						return ancestors;
 					}
-					if(visit){
-						visit = checkChildrenFor(location, visitor, BIT_ADDED);
+				} else {
+					// propagate clean state back to parents - e.g. if file was reverted,
+					// and there are NO OTHER dirty children, parent state should change to "clean"
+					if (parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
+						MemberStatusVisitor visitor = new MemberStatusVisitor(parentLocation, childBitSet);
+						// we have to traverse all possible "dirty" children and change
+						// parent state from "dirty" to "clean"...
+						boolean visit = checkChildrenFor(parentLocation, visitor, BIT_MODIFIED);
+						if (visit) {
+							visit = checkChildrenFor(parentLocation, visitor, BIT_UNKNOWN);
+						}
+						if (visit) {
+							visit = checkChildrenFor(parentLocation, visitor, BIT_ADDED);
+						}
+						if (visit) {
+							visit = checkChildrenFor(parentLocation, visitor, BIT_REMOVED);
+						}
+						if (visit) {
+							visit = checkChildrenFor(parentLocation, visitor, BIT_MISSING);
+						}
+						childBitSet = visitor.bitSet;
 					}
-					if(visit){
-						visit = checkChildrenFor(location, visitor, BIT_REMOVED);
-					}
-					if(visit){
-						visit = checkChildrenFor(location, visitor, BIT_MISSING);
-					}
-					cloneBitSet = visitor.bitSet;
 				}
-			} else {
-				cloneBitSet |= parentBitSet;
 			}
-			setStatus(location, Integer.valueOf(cloneBitSet), parent.getType() == IResource.FOLDER);
+			setStatus(parentLocation, Integer.valueOf(childBitSet), parent.getType() == IResource.FOLDER);
 			ancestors.add(parent);
 		}
 		return ancestors;
@@ -1098,10 +1117,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 		}
 		return true;
-	}
-
-	private boolean isComputeDeepStatus() {
-		return computeDeepStatus;
 	}
 
 	private int getBit(char status) {
@@ -1207,7 +1222,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return changed;
 	}
 
-	private Set<IResource> updateStatusInRoot(IProject project, HgRoot root, Set<IResource> resources) throws HgException{
+	private Set<IResource> updateStatusInRoot(IProject project, HgRoot root,
+			Set<IResource> resources) throws HgException {
 		int batchSize = getStatusBatchSize();
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
@@ -1237,7 +1253,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 							}
 							// recursive recalculate parents state
 							// TODO better to combine it with parse status below...
-							setStatusToAncestors(curr, CLEAN);
+							setStatusToAncestors(curr, CLEAN, true);
 						}
 					}
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
@@ -1350,7 +1366,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
 			setStatus(location, status, isDir);
 		}
-		Set<IResource> changed = setStatusToAncestors(local, status);
+		Set<IResource> changed = setStatusToAncestors(local, status, false);
 		changed.add(local);
 		return changed;
 	}
@@ -1380,7 +1396,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	@Override
 	protected void configureFromPreferences(IPreferenceStore store){
-		computeDeepStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS);
 		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 		// TODO: group batches by repo root
 

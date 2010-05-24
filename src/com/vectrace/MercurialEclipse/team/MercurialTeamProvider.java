@@ -147,7 +147,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			setTeamPrivate(hgDir);
 		}
 		if(!MercurialStatusCache.getInstance().isStatusKnown(project)) {
-			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(), hgRoot).schedule(100);
+			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(), project, hgRoot)
+					.schedule(50);
 		}
 		if(MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot).isEmpty()){
 			loadRootRepos(hgRoot);
