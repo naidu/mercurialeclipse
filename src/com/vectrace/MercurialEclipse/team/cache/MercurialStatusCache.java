@@ -696,7 +696,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 				// update status of all files in the root that are also contained in projects inside pathMap
 				String[] lines = NEWLINE.split(output);
-				changed.addAll(parseStatus(repo, pathMap, lines));
+				changed.addAll(parseStatus(repo, pathMap, lines, false));
 
 				boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
 				MercurialTeamProvider.setCurrentBranch(branch, repo);
@@ -785,7 +785,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				String[] lines = NEWLINE.split(output);
 				Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 				pathMap.put(project, projectLocation);
-				changed.addAll(parseStatus(repo, pathMap, lines));
+				changed.addAll(parseStatus(repo, pathMap, lines, !(res instanceof IProject)));
 				if(!(res instanceof IProject) && !changed.contains(res)){
 					// fix for issue 10155: No status update after reverting changes on .hgignore
 					changed.add(res);
@@ -929,7 +929,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @param pathMap multiple projects (from this hg root) as input
 	 * @return set with resources to refresh
 	 */
-	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines) {
+	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines,
+			boolean propagateAllStates) {
 		long start = System.currentTimeMillis();
 
 		// we need the project for performance reasons - gotta hand it to
@@ -980,7 +981,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 			setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
 
-			changed.addAll(setStatusToAncestors(member, bitSet));
+			if(propagateAllStates || Bits.contains(bitSet.intValue(), MODIFIED_MASK)) {
+				changed.addAll(setStatusToAncestors(member, bitSet));
+			}
 		}
 		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
@@ -1241,7 +1244,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					String[] lines = NEWLINE.split(output);
 					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 					pathMap.put(project, project.getLocation());
-					changed.addAll(parseStatus(root, pathMap, lines));
+					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
 				currentBatch.clear();
 			}
