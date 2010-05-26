@@ -261,6 +261,11 @@ public class ChangedPathsPage {
 	}
 
 	private void updateDiffPanelFor(final MercurialRevision entry, final MercurialRevision secondEntry) {
+		if(!showDiffs) {
+			diffTextViewer.setDocument(new Document());
+			return;
+		}
+
 		TeamOperation operation = new TeamOperation(page.getHistoryPageSite().getPart(), null) {
 
 			public void run(IProgressMonitor monitor) throws InvocationTargetException,
