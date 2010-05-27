@@ -32,8 +32,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -78,6 +78,14 @@ public class MercurialRevisionStorage implements IStorage {
 		private InputStream createStreamContent(String result) throws HgException {
 			try {
 				HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+				if(root == null){
+					// core API ignores exceptions from this method, so we need to log them here
+					error = new UnsupportedOperationException("No hg root found for file: "
+							+ result);
+					MercurialEclipsePlugin.logWarning("Failed to get revision content for "
+							+ MercurialRevisionStorage.this.toString(), error);
+					return EMPTY_STREAM;
+				}
 				return new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
 			} catch (UnsupportedEncodingException e) {
 				error = e;
@@ -171,7 +179,7 @@ public class MercurialRevisionStorage implements IStorage {
 		this.parent = parent;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if (adapter.equals(IResource.class)) {
 			return resource;
@@ -325,6 +333,9 @@ public class MercurialRevisionStorage implements IStorage {
 			ChangeSet tip = cache.getNewestChangeSet(res);
 			if (tip == null) {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				if(hgRoot == null){
+					return;
+				}
 				cache.refreshAllLocalRevisions(hgRoot, true);
 				tip = cache.getNewestChangeSet(res.getProject());
 			}
