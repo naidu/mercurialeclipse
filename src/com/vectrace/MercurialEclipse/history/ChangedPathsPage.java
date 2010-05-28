@@ -40,6 +40,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
@@ -275,18 +276,30 @@ public class ChangedPathsPage {
 				try {
 					final String diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
 					monitor.worked(1);
-					page.getControl().getDisplay().syncExec(new Runnable() {
-						public void run() {
-							diffTextViewer.setDocument(new Document(diff));
-							applyLineColoringToDiffViewer();
-						}
-					});
+					applyDiffToViewer(diff);
 					monitor.worked(1);
 					monitor.done();
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 				}
 
+			}
+
+			private void applyDiffToViewer(final String diff) {
+				try {
+					page.getControl().getDisplay().syncExec(new Runnable() {
+						public void run() {
+							diffTextViewer.setDocument(new Document(diff));
+							applyLineColoringToDiffViewer();
+						}
+					});
+				} catch (SWTException e) {
+					if(e.code !=  SWT.ERROR_WIDGET_DISPOSED) {
+						// Note: It is possible and valid that the diff viewer gets disposed
+						// whilst fetching the diff.
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
 			}
 
 			@Override
