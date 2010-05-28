@@ -77,8 +77,10 @@ public class HgResolveClient extends AbstractClient {
 				// hg root relative path must be converted
 				String repoRelPath = line.substring(2);
 				IResource iFile = ResourceUtils.getFileHandle(hgRoot.toAbsolute(new Path(repoRelPath)));
-				FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line.charAt(0));
-				result.add(fa);
+				if(iFile != null){
+					FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line.charAt(0));
+					result.add(fa);
+				}
 			}
 		}
 		return result;

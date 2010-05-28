@@ -69,11 +69,6 @@ implements IWorkbenchPreferencePage {
 		addField(batchStatusSeditor);
 		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
 
-		// for incoming/outgoing, compute add/remove/modified status on changeset files
-		addField(new BooleanFieldEditor(
-				SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS,
-				Messages.getString("PerformancePreferencePage.field.computeFullStatus"), //$NON-NLS-1$
-				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
 				ENABLE_FULL_GLOG,
@@ -81,10 +76,15 @@ implements IWorkbenchPreferencePage {
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
-				RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
-				Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$
+				PREF_ENABLE_SUBREPO_SUPPORT,
+				Messages.getString("PerformancePreferencePage.field.enableSubrepo"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
+		// for incoming/outgoing, compute add/remove/modified status on changeset files
+		addField(new BooleanFieldEditor(
+				SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS,
+				Messages.getString("PerformancePreferencePage.field.computeFullStatus"), //$NON-NLS-1$
+				getFieldEditorParent()));
 
 		final BooleanFieldEditor showChangesetsInfo = new BooleanFieldEditor(
 				RESOURCE_DECORATOR_SHOW_CHANGESET,

@@ -25,7 +25,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -113,7 +112,7 @@ public class CompareAction extends SingleFileAction {
 
 		try {
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
-			String mergeNodeId = HgStatusClient.getMergeChangesetId(hgRoot);
+			String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 
 			String[] parents = HgParentClient.getParentNodeIds(hgRoot);
 			int ancestor = HgParentClient

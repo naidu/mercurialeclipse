@@ -33,6 +33,27 @@ public class RefreshStatusJob extends Job {
 	private final IProject project;
 	private final HgRoot hgRoot;
 
+	/**
+	 * true to re-check the project state before starting the job and if the project
+	 * state is known, cancel the job
+	 */
+	private boolean updateRootIfProjectUnknown;
+
+	/**
+	 * Special constructor for job which ONLY then will be started, if the status of given
+	 * project is unknown at the time the jobs starts.
+	 * @param name non null
+	 * @param project non null
+	 * @param root non null
+	 */
+	public RefreshStatusJob(String name, IProject project, HgRoot root) {
+		super(name);
+		this.project = project;
+		this.hgRoot = root;
+		setRule(new HgRootRule(hgRoot));
+		updateRootIfProjectUnknown = true;
+	}
+
 	public RefreshStatusJob(String name, IProject project) {
 		super(name);
 		this.project = project;
@@ -56,9 +77,14 @@ public class RefreshStatusJob extends Job {
 		}
 		try {
 			monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
-			if(project != null) {
+			if(project != null && !updateRootIfProjectUnknown) {
 				MERCURIAL_STATUS_CACHE.refreshStatus(project, monitor);
 			} else {
+				if(updateRootIfProjectUnknown){
+					if(MercurialStatusCache.getInstance().isStatusKnown(project)){
+						return Status.OK_STATUS;
+					}
+				}
 				MERCURIAL_STATUS_CACHE.refreshStatus(hgRoot, monitor);
 			}
 		} catch (TeamException e) {
@@ -87,6 +113,9 @@ public class RefreshStatusJob extends Job {
 			if(hgRoot.equals(rule.getHgRoot()) && (job.getState() == WAITING || job.getState() == SLEEPING)){
 				return false;
 			}
+		}
+		if(updateRootIfProjectUnknown){
+			return !MercurialStatusCache.getInstance().isStatusKnown(project);
 		}
 		return true;
 	}

@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.jobs.Job;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -88,7 +87,7 @@ public final class RefreshWorkspaceStatusJob extends RefreshRootJob {
 	private void refreshProject(IProgressMonitor monitor, IProject project) throws CoreException {
 		if(!refreshWorkspaceOnly){
 			// reset merge properties
-			HgStatusClient.clearMergeStatus(project);
+			MercurialStatusCache.getInstance().clearMergeStatus(project);
 		}
 
 		// refresh resources

@@ -52,11 +52,13 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
+		// currently this reduces performance 2x => so disable per default
+		store.setDefault(PREF_ENABLE_SUBREPO_SUPPORT, false);
+
 		// "Highest" importance should be default, like "merge conflict"
 		// when having 2 different statuses in a folder it should have the more important one
 		store.setDefault(LABELDECORATOR_LOGIC, LABELDECORATOR_LOGIC_HB);
 
-		store.setDefault(RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
 		store.setDefault(RESOURCE_DECORATOR_SHOW_CHANGESET, false);
 		store.setDefault(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
 

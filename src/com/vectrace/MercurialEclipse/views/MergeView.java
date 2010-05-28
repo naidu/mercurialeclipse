@@ -53,7 +53,6 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -230,7 +229,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private void populateView(boolean attemptToCommit) throws HgException {
 
-		String mergeNodeId = HgStatusClient.getMergeChangesetId(hgRoot);
+		String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 		if(mergeNodeId != null) {
 			statusLabel.setText("Merging " + hgRoot.getName() + " with " + mergeNodeId);
 		} else {
@@ -260,7 +259,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private void attemptToCommitMerge() {
 		try {
-			String mergeNode = HgStatusClient.getMergeChangesetId(hgRoot);
+			String mergeNode = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 
 			// offer commit of merge exactly once if no conflicts
 			// are found
@@ -298,7 +297,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		if ((hgRoot == null) || !newRoot.equals(hgRoot)) {
 			// TODO should schedule a job here...
 			try {
-				if (HgStatusClient.isMergeInProgress(newRoot)) {
+				if (MercurialStatusCache.getInstance().isMergeInProgress(newRoot)) {
 					this.hgRoot = newRoot;
 					populateView(false);
 				} else {

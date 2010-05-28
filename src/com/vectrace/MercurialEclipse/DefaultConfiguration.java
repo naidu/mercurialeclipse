@@ -93,48 +93,34 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 	 * ======================================================
 	 */
 	public void commandCompleted(final int exitCode, final long timeInMillis, final String message, final Throwable error) {
-		MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				int severity = IStatus.OK;
-				switch (exitCode) {
-				case 0:
-					severity = IStatus.OK;
-					break;
-				case 1:
-					severity = IStatus.OK;
-					break;
-				default:
-					severity = IStatus.ERROR;
-				}
-				HgConsoleHolder.getInstance().getConsole().commandCompleted(timeInMillis,
+		int severity = IStatus.OK;
+		switch (exitCode) {
+		case 0:
+			severity = IStatus.OK;
+			break;
+		case 1:
+			severity = IStatus.OK;
+			break;
+		default:
+			severity = IStatus.ERROR;
+		}
+		HgConsoleHolder
+				.getInstance()
+				.getConsole()
+				.commandCompleted(timeInMillis,
 						new Status(severity, MercurialEclipsePlugin.ID, message), error);
-			}
-		});
 	}
 
 	public void commandInvoked(final String command) {
-		MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				HgConsoleHolder.getInstance().getConsole().commandInvoked(command);
-			}
-		});
+		HgConsoleHolder.getInstance().getConsole().commandInvoked(command);
 	}
 
 	public void printError(final String message, final Throwable root) {
-		MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				HgConsoleHolder.getInstance().getConsole().errorLineReceived(root.getMessage());
-			}
-		});
+		HgConsoleHolder.getInstance().getConsole().errorLineReceived(root.getMessage());
 	}
 
 	public void printMessage(final String message, final Throwable root) {
-		MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-			public void run() {
-				HgConsoleHolder.getInstance().getConsole().messageLineReceived(message);
-			}
-		});
+		HgConsoleHolder.getInstance().getConsole().messageLineReceived(message);
 	}
-
 
 }

@@ -137,8 +137,10 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			}
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			IProject project = root.getProject(path.segment(0));
-			if(project == null || !projects.contains(project)){
-				continue;
+			synchronized (projects) {
+				if(project == null || !projects.contains(project)){
+					continue;
+				}
 			}
 			IResource res = project.findMember(path.removeFirstSegments(1));
 			// only allow to hide files which are dirty
@@ -209,17 +211,14 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	public void update(Observable o, Object arg) {
-		update(projects);
-		return;
-	}
-
-	private void update(Set<IProject> projectSet){
 		boolean changed = false;
 		try {
 			beginInput();
 			clear();
-			for (IProject project : projectSet) {
-				changed |= update(project);
+			synchronized (projects) {
+				for (IProject project : projects) {
+					changed |= update(project);
+				}
 			}
 		} finally {
 			updateRequired |= changed;
@@ -247,16 +246,20 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	 * @param projects non null project list the changeset is responsible for
 	 */
 	public void setRoots(IProject[] projects) {
-		this.projects.clear();
-		for (IProject project : projects) {
-			this.projects.add(project);
+		synchronized (this.projects) {
+			this.projects.clear();
+			for (IProject project : projects) {
+				this.projects.add(project);
+			}
 		}
 	}
 
 	public void dispose() {
 		MercurialStatusCache.getInstance().deleteObserver(this);
 		clear();
-		projects.clear();
+		synchronized (projects) {
+			projects.clear();
+		}
 	}
 
 	public void setContext(HgSubscriberMergeContext context) {

@@ -17,13 +17,12 @@ package com.vectrace.MercurialEclipse.team;
 import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -41,12 +40,13 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -102,6 +102,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private boolean colorise;
 	private boolean showChangeset;
 	private boolean showIncomingChangeset;
+	private boolean enableSubrepos;
 
 	public ResourceDecorator() {
 		configureFromPreferences();
@@ -170,6 +171,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
 		showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		showIncomingChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 	}
 
 	public void decorate(Object element, IDecoration d) {
@@ -208,8 +210,8 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			if (!showChangeset) {
-				if (resource.getType() == IResource.PROJECT) {
-					d.addSuffix(getSuffixForProject(project));
+				if (resource.getType() == IResource.PROJECT || shouldCheckSubrepo(resource)) {
+					d.addSuffix(getSuffixForContainer((IContainer)resource));
 				}
 			} else {
 				addChangesetInfo(d, resource, project, prefix);
@@ -222,6 +224,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+
+	private boolean shouldCheckSubrepo(IResource resource) throws HgException {
+		return enableSubrepos && resource.getType() == IResource.FOLDER
+				&& AbstractClient.isHgRoot(resource) != null;
 	}
 
 	/**
@@ -345,10 +353,10 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 		// local changeset info
 		try {
-			// init suffix with project changeset information
+			// init suffix with project changeset information, or for folders that contain a subrepos
 			String suffix = ""; //$NON-NLS-1$
-			if (resource.getType() == IResource.PROJECT) {
-				suffix = getSuffixForProject(project);
+			if (resource.getType() == IResource.PROJECT || shouldCheckSubrepo(resource)) {
+				suffix = getSuffixForContainer((IContainer)resource);
 			}
 
 			// overwrite suffix for files
@@ -357,7 +365,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// only decorate files and project with suffix
-			if (resource.getType() != IResource.FOLDER && suffix.length() > 0) {
+			if ((resource.getType() != IResource.FOLDER || enableSubrepos) && suffix != null && suffix.length() > 0) {
 				d.addSuffix(suffix);
 			}
 
@@ -397,24 +405,29 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		return suffix;
 	}
 
-	private String getSuffixForProject(IProject project) throws CoreException {
+	private String getSuffixForContainer(IContainer container) throws CoreException {
 		ChangeSet changeSet = null;
 
+		HgRoot root;
+		if(container instanceof IProject){
+			root = MercurialTeamProvider.getHgRoot(container);
+			changeSet = LOCAL_CACHE.getChangesetByRootId(container);
+		}else{
+			root = AbstractClient.isHgRoot(container);
+			changeSet = LOCAL_CACHE.getChangesetForRoot(root);
+		}
+
 		StringBuilder suffix = new StringBuilder();
-
-		changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(project);
-
 		if (changeSet == null) {
 			suffix.append(Messages.getString("ResourceDecorator.new"));
 		} else {
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-			String merging = HgStatusClient.getMergeChangesetId(project);
+			String merging = STATUS_CACHE.getMergeChangesetId(container);
 			String bisecting = null;
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			// XXX should use map, as there can be 100 projects under the same root
-			if (HgBisectClient.isBisecting(hgRoot)) {
+			if (HgBisectClient.isBisecting(root)) {
 				bisecting = " BISECTING";
 			}
 
@@ -422,7 +435,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
 
 			// branch
-			String branch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			String branch = MercurialTeamProvider.getCurrentBranch(root);
 			if (branch.length() == 0) {
 				branch = Branch.DEFAULT;
 			}
@@ -456,22 +469,20 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	public void update(Observable o, Object updatedObject) {
 		if (updatedObject instanceof Set<?>) {
 			Set<IResource> changed = (Set<IResource>) updatedObject;
-			List<IResource> notification = new ArrayList<IResource>(1000);
-			int i = 0;
-			for (IResource resource : changed) {
-				if (i % 1000 == 0 && notification.size() > 0) {
-					fireNotification(notification);
-				}
-				notification.add(resource);
-				i++;
+			if(changed.isEmpty()){
+				return;
 			}
-			if (notification.size() > 0) {
-				fireNotification(notification);
+			if (changed.size() < 10) {
+				fireNotification(changed);
+			} else {
+				// if we have a lot of updates, it's easier (faster) to ask clients to update themselves
+				// otherwise unneeded decorator updates may cause Eclipse to be busy for minutes, see issue #11928
+				updateClientDecorations();
 			}
 		}
 	}
 
-	private void fireNotification(List<IResource> notification) {
+	private void fireNotification(Set<IResource> notification) {
 		LabelProviderChangedEvent event = new LabelProviderChangedEvent(this, notification.toArray());
 		fireLabelProviderChanged(event);
 		notification.clear();
