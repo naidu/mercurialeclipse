@@ -139,14 +139,18 @@ public class ChangedPathsPage {
 
 		changePathsViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 
-			private Object selectedChangePath;
+			private Object currentSelectedPath;
+			private int currentNumberOfSelectedPaths;
 
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-				FileStatus changePath = (FileStatus) selection.getFirstElement();
-				if (changePath != selectedChangePath) {
-					selectedChangePath = changePath;
-					selectInDiffViewerAndScroll(changePath);
+				FileStatus newSelectedPath = (FileStatus) selection.getFirstElement();
+				int newNrOfSelectedPaths = selection.size();
+				if (newSelectedPath != currentSelectedPath || newNrOfSelectedPaths != currentNumberOfSelectedPaths ) {
+					currentSelectedPath = newSelectedPath;
+					currentNumberOfSelectedPaths = newNrOfSelectedPaths;
+					diffTextViewer.getControl().setVisible(currentNumberOfSelectedPaths <= 1);
+					selectInDiffViewerAndScroll(newSelectedPath);
 				}
 			}
 		});
@@ -154,6 +158,7 @@ public class ChangedPathsPage {
 
 	private void selectInDiffViewerAndScroll(FileStatus selectedChangePath) {
 		if(selectedChangePath == null) {
+			selectInDiffViewerAndScrollToPosition(0,0);
 			return;
 		}
 
