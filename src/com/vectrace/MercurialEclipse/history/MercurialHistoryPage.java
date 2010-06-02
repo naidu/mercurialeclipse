@@ -712,14 +712,17 @@ public class MercurialHistoryPage extends HistoryPage {
 		scheduleInPage(refreshFileHistoryJob);
 	}
 
-	public void scheduleInPage(Job job) {
+	public void scheduleInPage(Job job, long delayInMillis) {
 		IWorkbenchSiteProgressService progressService = getProgressService();
 
 		if (progressService != null) {
-			progressService.schedule(job);
+			progressService.schedule(job, delayInMillis);
 		} else {
-			job.schedule();
+			job.schedule(delayInMillis);
 		}
+	}
+	public void scheduleInPage(Job job) {
+		scheduleInPage(job, 0);
 	}
 
 	private IWorkbenchSiteProgressService getProgressService() {
