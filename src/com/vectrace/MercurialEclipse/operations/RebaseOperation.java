@@ -39,10 +39,11 @@ public class RebaseOperation extends HgOperation {
 	private final boolean collapse;
 	private final boolean abort;
 	private final boolean cont;
+	private final boolean keepBranchesCheckBox;
 
 	public RebaseOperation(IRunnableContext context, HgRoot hgRoot,
 			int sourceRev, int destRev, int baseRev, boolean collapse,
-			boolean abort, boolean cont) {
+			boolean abort, boolean cont, boolean keepBranchesCheckBox) {
 		super(context);
 		this.hgRoot = hgRoot;
 		this.sourceRev = sourceRev;
@@ -51,6 +52,7 @@ public class RebaseOperation extends HgOperation {
 		this.collapse = collapse;
 		this.abort = abort;
 		this.cont = cont;
+		this.keepBranchesCheckBox = keepBranchesCheckBox;
 	}
 
 	@Override
@@ -63,7 +65,7 @@ public class RebaseOperation extends HgOperation {
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
 			result = HgRebaseClient.rebase(hgRoot,
 					sourceRev,
-					baseRev, destRev, collapse, cont, abort);
+					baseRev, destRev, collapse, cont, abort, keepBranchesCheckBox);
 			monitor.worked(1);
 
 		} catch (HgException e) {

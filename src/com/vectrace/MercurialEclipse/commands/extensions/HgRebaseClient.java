@@ -41,11 +41,12 @@ public class HgRebaseClient extends AbstractClient {
 	 *            true, if --continue is to be used
 	 * @param abort
 	 *            true, if --abort is to be used
+	 * @param keepBranchesCheckBox
 	 * @return the output of the command
 	 * @throws HgException
 	 */
 	public static String rebase(File repoResource, int sourceRev, int baseRev,
-			int destRev, boolean collapse, boolean cont, boolean abort)
+			int destRev, boolean collapse, boolean cont, boolean abort, boolean keepBranchesCheckBox)
 			throws HgException {
 		AbstractShellCommand c = new HgCommand("rebase", //$NON-NLS-1$
 				getWorkingDirectory(repoResource), false);
@@ -74,6 +75,10 @@ public class HgRebaseClient extends AbstractClient {
 		}
 		if (abort && !cont) {
 			c.addOptions("--abort"); //$NON-NLS-1$
+		}
+
+		if(keepBranchesCheckBox) {
+			c.addOptions("--keepbranches");
 		}
 		return c.executeToString();
 	}

@@ -164,6 +164,10 @@ IWorkbenchPreferencePage {
 				"Prefer 'username' value from .hgrc as default user name", getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_DEFAULT_REBASE_KEEP_BRANCHES,
+				"Default to 'Retain the branch name' for Rebase command", getFieldEditorParent())); //$NON-NLS-1$
+
+		addField(new BooleanFieldEditor(
 				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 

@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -43,6 +44,7 @@ public class RebasePage extends HgWizardPage {
 	private Button collapseRevCheckBox;
 	private Button continueRevCheckBox;
 	private Button abortRevCheckBox;
+	private Button keepBranchesCheckBox;
 	private ChangesetTable destTable;
 
 	public RebasePage(String pageName, String title,
@@ -98,6 +100,14 @@ public class RebasePage extends HgWizardPage {
 				Messages.getString("RebasePage.option.collapse")); //$NON-NLS-1$
 		abortRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.abort")); //$NON-NLS-1$
+		keepBranchesCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+				Messages.getString("RebasePage.option.keepBranches")); //$NON-NLS-1$
+
+		if("true".equals(MercurialUtilities.getPreference(
+				MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME, "false")))
+		{
+			keepBranchesCheckBox.setSelection(true);
+		}
 
 		SelectionListener abortSl = new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -271,6 +281,10 @@ public class RebasePage extends HgWizardPage {
 
 	public boolean isAbortSelected() {
 		return abortRevCheckBox.getSelection();
+	}
+
+	public boolean isKeepBranchesCheckBox() {
+		return keepBranchesCheckBox.getSelection();
 	}
 
 	/**
