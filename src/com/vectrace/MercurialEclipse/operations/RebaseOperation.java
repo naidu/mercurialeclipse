@@ -20,9 +20,11 @@ import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -63,13 +65,18 @@ public class RebaseOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
+			boolean useExternalMergeTool = Boolean.valueOf(
+					HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+					"false")).booleanValue(); //$NON-NLS-1$
 			result = HgRebaseClient.rebase(hgRoot,
 					sourceRev,
-					baseRev, destRev, collapse, cont, abort, keepBranchesCheckBox);
+					baseRev, destRev, collapse, cont, abort, keepBranchesCheckBox, useExternalMergeTool);
 			monitor.worked(1);
 
 		} catch (HgException e) {
 			ex = e;
+			throw new InvocationTargetException(e, e.getLocalizedMessage());
+		} catch (Exception e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} finally {
 			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,

@@ -53,6 +53,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -253,7 +254,24 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		markUnresolvedAction.setEnabled(true);
 
 		if(attemptToCommit) {
-			attemptToCommitMerge();
+			if(HgRebaseClient.isRebasing(hgRoot)) {
+				attemptToCommitRebase();
+			} else {
+				attemptToCommitMerge();
+			}
+		}
+	}
+
+	private void attemptToCommitRebase() {
+		try {
+			// try to continue rebase if no conflicts
+			// are found
+			boolean allResolved = areAllResolved();
+			if (allResolved) {
+				HgRebaseClient.continueRebase(hgRoot);
+			}
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 	}
 

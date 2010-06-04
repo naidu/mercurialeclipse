@@ -42,6 +42,7 @@ import org.eclipse.ui.themes.IThemeManager;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -426,6 +427,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
 			String merging = STATUS_CACHE.getMergeChangesetId(container);
 			String bisecting = null;
+			boolean rebasing = false;
+			if(HgRebaseClient.isRebasing(root)) {
+				rebasing = true;
+			}
+
+
 			// XXX should use map, as there can be 100 projects under the same root
 			if (HgBisectClient.isBisecting(root)) {
 				bisecting = " BISECTING";
@@ -447,8 +454,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// merge flag
-			if (merging != null && merging.length() > 0) {
+			if (!rebasing && merging != null && merging.length() > 0) {
 				suffix.append(Messages.getString("ResourceDecorator.merging"));
+			}
+			if(rebasing)
+			{
+				suffix.append(Messages.getString("ResourceDecorator.rebasing"));
 			}
 
 			// bisect information
