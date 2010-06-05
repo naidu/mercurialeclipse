@@ -20,7 +20,6 @@ import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -41,11 +40,11 @@ public class RebaseOperation extends HgOperation {
 	private final boolean collapse;
 	private final boolean abort;
 	private final boolean cont;
-	private final boolean keepBranchesCheckBox;
+	private final boolean keepBranches;
 
 	public RebaseOperation(IRunnableContext context, HgRoot hgRoot,
 			int sourceRev, int destRev, int baseRev, boolean collapse,
-			boolean abort, boolean cont, boolean keepBranchesCheckBox) {
+			boolean abort, boolean cont, boolean keepBranches) {
 		super(context);
 		this.hgRoot = hgRoot;
 		this.sourceRev = sourceRev;
@@ -54,7 +53,7 @@ public class RebaseOperation extends HgOperation {
 		this.collapse = collapse;
 		this.abort = abort;
 		this.cont = cont;
-		this.keepBranchesCheckBox = keepBranchesCheckBox;
+		this.keepBranches = keepBranches;
 	}
 
 	@Override
@@ -65,18 +64,15 @@ public class RebaseOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
-			boolean useExternalMergeTool = Boolean.valueOf(
-					HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-					"false")).booleanValue(); //$NON-NLS-1$
+			boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 			result = HgRebaseClient.rebase(hgRoot,
 					sourceRev,
-					baseRev, destRev, collapse, cont, abort, keepBranchesCheckBox, useExternalMergeTool);
+					baseRev, destRev, collapse, cont, abort, keepBranches, useExternalMergeTool);
 			monitor.worked(1);
 
 		} catch (HgException e) {
 			ex = e;
-			throw new InvocationTargetException(e, e.getLocalizedMessage());
-		} catch (Exception e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} finally {
 			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,

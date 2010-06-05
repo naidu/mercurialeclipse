@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -77,7 +78,7 @@ public class RebasePage extends HgWizardPage {
 	public void setPageComplete(boolean complete) {
 		if(complete){
 			try {
-				if(HgStatusClient.isDirty(hgRoot)){
+				if(HgStatusClient.isDirty(hgRoot) && !HgRebaseClient.isRebasing(hgRoot)){
 					setErrorMessage("Outstanding uncommitted changes! Rebase is not possible.");
 					super.setPageComplete(false);
 					return;
@@ -103,9 +104,8 @@ public class RebasePage extends HgWizardPage {
 		keepBranchesCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.keepBranches")); //$NON-NLS-1$
 
-		if("true".equals(MercurialUtilities.getPreference(
-				MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME, "false")))
-		{
+		if (MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME)) {
 			keepBranchesCheckBox.setSelection(true);
 		}
 
@@ -283,7 +283,7 @@ public class RebasePage extends HgWizardPage {
 		return abortRevCheckBox.getSelection();
 	}
 
-	public boolean isKeepBranchesCheckBox() {
+	public boolean isKeepBranchesSelected() {
 		return keepBranchesCheckBox.getSelection();
 	}
 

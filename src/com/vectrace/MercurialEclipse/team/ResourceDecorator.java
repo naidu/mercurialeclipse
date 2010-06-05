@@ -53,6 +53,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author zingo
@@ -426,16 +427,17 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
 			String merging = STATUS_CACHE.getMergeChangesetId(container);
-			String bisecting = null;
+			boolean bisecting = false;
 			boolean rebasing = false;
+
+			// XXX should use map, as there can be 100 projects under the same root
 			if(HgRebaseClient.isRebasing(root)) {
 				rebasing = true;
 			}
 
-
 			// XXX should use map, as there can be 100 projects under the same root
 			if (HgBisectClient.isBisecting(root)) {
-				bisecting = " BISECTING";
+				bisecting = true;
 			}
 
 			// rev info
@@ -454,17 +456,16 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// merge flag
-			if (!rebasing && merging != null && merging.length() > 0) {
+			if (!rebasing && !StringUtils.isEmpty(merging)) {
 				suffix.append(Messages.getString("ResourceDecorator.merging"));
 			}
-			if(rebasing)
-			{
+			if(rebasing) {
 				suffix.append(Messages.getString("ResourceDecorator.rebasing"));
 			}
 
 			// bisect information
-			if (bisecting != null && bisecting.length() > 0) {
-				suffix.append(bisecting);
+			if (bisecting) {
+				suffix.append(" BISECTING");
 			}
 			suffix.append(']');
 		}

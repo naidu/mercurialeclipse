@@ -160,11 +160,11 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME,
+				PREF_USE_MERCURIAL_USERNAME,
 				"Prefer 'username' value from .hgrc as default user name", getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.PREF_DEFAULT_REBASE_KEEP_BRANCHES,
+				PREF_DEFAULT_REBASE_KEEP_BRANCHES,
 				"Default to 'Retain the branch name' for Rebase command", getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
