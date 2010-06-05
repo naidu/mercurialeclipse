@@ -105,7 +105,7 @@ public class RebasePage extends HgWizardPage {
 				Messages.getString("RebasePage.option.keepBranches")); //$NON-NLS-1$
 
 		if (MercurialEclipsePlugin.getDefault().getPreferenceStore()
-				.getBoolean(MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME)) {
+				.getBoolean(MercurialPreferenceConstants.PREF_DEFAULT_REBASE_KEEP_BRANCHES)) {
 			keepBranchesCheckBox.setSelection(true);
 		}
 
