@@ -14,10 +14,11 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -40,7 +41,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.SWTException;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
@@ -48,19 +48,22 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
-import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.part.IPageSite;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangedPathsPage {
@@ -86,9 +89,18 @@ public class ChangedPathsPage {
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
 
 	private final MercurialHistoryPage page;
+	private final Color colorBlue;
+	private final Color colorGreen;
+	private final Color colorBlack;
+	private final Color colorRed;
 
 	public ChangedPathsPage(MercurialHistoryPage page, Composite parent) {
 		this.page = page;
+		Display display = parent.getDisplay();
+		colorBlue = display.getSystemColor(SWT.COLOR_BLUE);
+		colorGreen = display.getSystemColor(SWT.COLOR_DARK_GREEN);
+		colorBlack = display.getSystemColor(SWT.COLOR_BLACK);
+		colorRed = display.getSystemColor(SWT.COLOR_DARK_RED);
 		init(parent);
 	}
 
@@ -293,78 +305,27 @@ public class ChangedPathsPage {
 			diffTextViewer.setDocument(new Document());
 			return;
 		}
+		Job.getJobManager().cancel(FetchDiffJob.class);
+		diffTextViewer.setDocument(new Document());
+		final HgRoot hgRoot = entry.getChangeSet().getHgRoot();
+		FetchDiffJob job = new FetchDiffJob(entry, secondEntry, hgRoot);
+		// give the changePathsViewer a chance to fetch the data first
+		getHistoryPage().scheduleInPage(job, 100);
+	}
 
-		TeamOperation operation = new TeamOperation(page.getHistoryPageSite().getPart(), null) {
-
-			public void run(IProgressMonitor monitor) throws InvocationTargetException,
-					InterruptedException {
-
-				monitor.beginTask(getJobName(), 2);
-				try {
-					final String diff = HgPatchClient.getDiff(entry.getChangeSet().getHgRoot() , entry, secondEntry);
-					monitor.worked(1);
-					applyDiffToViewer(diff);
-					monitor.worked(1);
-					monitor.done();
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-
-			}
-
-			private void applyDiffToViewer(final String diff) {
-				try {
-					page.getControl().getDisplay().syncExec(new Runnable() {
-						public void run() {
-							diffTextViewer.setDocument(new Document(diff));
-							applyLineColoringToDiffViewer();
-						}
-					});
-				} catch (SWTException e) {
-					if(e.code !=  SWT.ERROR_WIDGET_DISPOSED) {
-						// Note: It is possible and valid that the diff viewer gets disposed
-						// whilst fetching the diff.
-						MercurialEclipsePlugin.logError(e);
+	private void applyLineColoringToDiffViewer(IProgressMonitor monitor) {
+		IDocument document = diffTextViewer.getDocument();
+		int nrOfLines = document.getNumberOfLines();
+		Display display = diffTextViewer.getControl().getDisplay();
+		for (int i = 0; i < nrOfLines && !monitor.isCanceled(); i++) {
+			if(nrOfLines > 100 && i%100 == 0){
+				while(display.readAndDispatch()){
+					if(monitor.isCanceled()){
+						// give user the chance to break the job
+						return;
 					}
 				}
 			}
-
-			@Override
-			protected String getJobName() {
-				// TODO Replace this with from resource
-				return "Update diff viewer";
-			}
-
-			@Override
-			protected boolean shouldRun() {
-				return true;
-			}
-
-			@Override
-			protected boolean canRunAsJob() {
-				return true;
-			}
-
-			@Override
-			public boolean isUserInitiated() {
-				return false;
-			}
-
-		};
-
-		try {
-			operation.run();
-		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.logError(e);
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-	}
-
-	private void applyLineColoringToDiffViewer() {
-		IDocument document = diffTextViewer.getDocument();
-		int nrOfLines = document.getNumberOfLines();
-		for (int i = 0; i < nrOfLines; i++) {
 			try {
 				IRegion lineInformation = document.getLineInformation(i);
 				int offset = lineInformation.getOffset();
@@ -378,25 +339,27 @@ public class ChangedPathsPage {
 	}
 
 	private Color getDiffLineColor(String line) {
-		Display display = this.diffTextViewer.getControl().getDisplay();
+		if(StringUtils.isEmpty(line)){
+			return colorBlack;
+		}
 		if(line.startsWith("diff ")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("+++ ")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("--- ")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("@@ ")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("new file mode")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("\\ ")) {
-			return display.getSystemColor(SWT.COLOR_BLUE);
+			return colorBlue;
 		} else if(line.startsWith("+")) {
-			return display.getSystemColor(SWT.COLOR_DARK_GREEN);
+			return colorGreen;
 		} else if(line.startsWith("-")) {
-			return display.getSystemColor(SWT.COLOR_DARK_RED);
+			return colorRed;
 		} else {
-			return display.getSystemColor(SWT.COLOR_BLACK);
+			return colorBlack;
 		}
 	}
 
@@ -629,6 +592,72 @@ public class ChangedPathsPage {
 			mainSashForm.setWeights(weights);
 		}
 		mainSashForm.layout();
+	}
+
+	/**
+	 * @author Andrei
+	 */
+	private final class FetchDiffJob extends Job {
+
+		private final MercurialRevision entry;
+
+		private final MercurialRevision secondEntry;
+
+		private final HgRoot hgRoot;
+
+
+		private FetchDiffJob(MercurialRevision entry, MercurialRevision secondEntry,
+				HgRoot hgRoot) {
+			super("Fetching the diff data");
+			this.entry = entry;
+			this.secondEntry = secondEntry;
+			this.hgRoot = hgRoot;
+			setRule(new HgRootRule(hgRoot));
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			try {
+				String diff = HgPatchClient.getDiff(hgRoot, entry, secondEntry);
+				if(!monitor.isCanceled() && !diffTextViewer.getControl().isDisposed()) {
+					getHistoryPage().scheduleInPage(new UpdateDiffViewerJob(diff));
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				return e.getStatus();
+			}
+			return Status.OK_STATUS;
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return FetchDiffJob.class == family;
+		}
+	}
+
+	class UpdateDiffViewerJob extends UIJob {
+
+		private final String diff;
+
+		public UpdateDiffViewerJob(String diff) {
+			super(diffTextViewer.getControl().getDisplay(), "Updating diff pane");
+			this.diff = diff;
+		}
+
+		@Override
+		public IStatus runInUIThread(IProgressMonitor monitor) {
+			if(diffTextViewer.getControl().isDisposed()){
+				return Status.CANCEL_STATUS;
+			}
+			diffTextViewer.setDocument(new Document(diff));
+			applyLineColoringToDiffViewer(monitor);
+			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return FetchDiffJob.class == family;
+		}
 	}
 
 	public static class ToggleAffectedPathsOptionAction extends Action {

@@ -154,13 +154,14 @@ public class ChangePathsTableProvider extends TableViewer {
 		private void fetchPaths(final MercurialRevision rev) {
 			final MercurialHistory history = page.getMercurialHistory();
 			final ChangeSet [] cs = new ChangeSet[1];
+			Job.getJobManager().cancel(ChangePathsTableContentProvider.class);
 			Job pathJob = new Job(NLS.bind(
 					Messages.ChangePathsTableProvider_retrievingAffectedPaths, rev.getChangeSet())) {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					synchronized(revToFiles){
-						if(revToFiles.get(rev) != null){
-							return Status.OK_STATUS;
+						if(revToFiles.get(rev) != null || monitor.isCanceled()){
+							return Status.CANCEL_STATUS;
 						}
 					}
 					try {
@@ -169,13 +170,21 @@ public class ChangePathsTableProvider extends TableViewer {
 						MercurialEclipsePlugin.logError(e);
 						return e.getStatus();
 					}
-					return Status.OK_STATUS;
+					return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+				}
+
+				@Override
+				public boolean belongsTo(Object family) {
+					return ChangePathsTableContentProvider.class == family;
 				}
 			};
 			pathJob.setRule(new ExclusiveHistoryRule());
 			pathJob.addJobChangeListener(new JobChangeAdapter(){
 				@Override
 				public void done(IJobChangeEvent event) {
+					if(!event.getResult().isOK()){
+						return;
+					}
 					FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
 					if(cs[0] != null) {
 						List<FileStatus> list = cs[0].getChangedFiles();
