@@ -222,9 +222,31 @@ public class ChangedPathsPage {
 		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true,
 				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
 		sourceViewer.getTextWidget().setIndent(2);
-
 		diffTextViewer = sourceViewer;
 		diffTextViewer.setDocument(new Document());
+
+		final TextViewerAction copyAction2 = new TextViewerAction(
+				this.diffTextViewer, ITextOperationTarget.COPY);
+		copyAction2.setText(Messages.getString("HistoryView.copy"));
+		// ADD SelectionListener in Constructor?
+		this.diffTextViewer
+				.addSelectionChangedListener(new ISelectionChangedListener() {
+					public void selectionChanged(SelectionChangedEvent event) {
+						copyAction2.update();
+					}
+				});
+
+		MenuManager menuMgr = new MenuManager();
+		menuMgr.setRemoveAllWhenShown(true);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				menuMgr1.add(copyAction2);
+			}
+		});
+
+		StyledText text = this.diffTextViewer.getTextWidget();
+		Menu menu = menuMgr.createContextMenu(text);
+		text.setMenu(menu);
 	}
 
 	private void updatePanels(ISelection selection) {
@@ -415,6 +437,7 @@ public class ChangedPathsPage {
 		IPageSite pageSite = parentSite.getWorkbenchPageSite();
 		IActionBars actionBars = pageSite.getActionBars();
 
+		// TODO untersuchen
 		actionBars.setGlobalActionHandler(ITextEditorActionConstants.COPY,
 				copyAction);
 		actionBars.setGlobalActionHandler(
