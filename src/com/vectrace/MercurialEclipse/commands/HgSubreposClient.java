@@ -54,6 +54,9 @@ public class HgSubreposClient extends AbstractClient {
 			return new HashSet<HgRoot>();
 		}
 
+		if(subrepos == null || subrepos.isEmpty()){
+			return new HashSet<HgRoot>();
+		}
 		Set<HgRoot> result = new HashSet<HgRoot>();
 		for(String subReposRootPath : subrepos.keySet()){
 			File subReposRootDir = new File(hgRoot, subReposRootPath);
