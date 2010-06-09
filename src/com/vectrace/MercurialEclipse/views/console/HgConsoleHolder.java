@@ -56,17 +56,30 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 				return;
 			}
 			console = new HgConsole();
-
-			// install font
-			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-			theme.addPropertyChangeListener(this);
-			setConsoleFont();
-
 			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
 					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
-			JFaceResources.getFontRegistry().addListener(this);
 			MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(this);
+
+			// install font
+			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
+			// we must run this stupid code in the UI thread
+			if (Display.getCurrent() != null) {
+				initUIResources();
+			} else {
+				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						initUIResources();
+					}
+				});
+			}
 		}
+	}
+
+	private void initUIResources() {
+		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+		theme.addPropertyChangeListener(this);
+		JFaceResources.getFontRegistry().addListener(this);
+		setConsoleFont();
 	}
 
 	private boolean isInitialized() {

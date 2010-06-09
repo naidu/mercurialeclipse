@@ -23,6 +23,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -39,10 +40,11 @@ public class RebaseOperation extends HgOperation {
 	private final boolean collapse;
 	private final boolean abort;
 	private final boolean cont;
+	private final boolean keepBranches;
 
 	public RebaseOperation(IRunnableContext context, HgRoot hgRoot,
 			int sourceRev, int destRev, int baseRev, boolean collapse,
-			boolean abort, boolean cont) {
+			boolean abort, boolean cont, boolean keepBranches) {
 		super(context);
 		this.hgRoot = hgRoot;
 		this.sourceRev = sourceRev;
@@ -51,6 +53,7 @@ public class RebaseOperation extends HgOperation {
 		this.collapse = collapse;
 		this.abort = abort;
 		this.cont = cont;
+		this.keepBranches = keepBranches;
 	}
 
 	@Override
@@ -61,9 +64,11 @@ public class RebaseOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
+			boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 			result = HgRebaseClient.rebase(hgRoot,
 					sourceRev,
-					baseRev, destRev, collapse, cont, abort);
+					baseRev, destRev, collapse, cont, abort, keepBranches, useExternalMergeTool);
 			monitor.worked(1);
 
 		} catch (HgException e) {

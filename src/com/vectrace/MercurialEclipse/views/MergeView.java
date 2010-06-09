@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -53,6 +54,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -62,6 +64,8 @@ import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
@@ -146,7 +150,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						HgResolveClient.markResolved(file);
 						populateView(true);
 					}
-				} catch (Exception e) {
+				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());
 				}
@@ -162,7 +166,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						HgResolveClient.markUnresolved(file);
 						populateView(true);
 					}
-				} catch (Exception e) {
+				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());
 				}
@@ -253,7 +257,25 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		markUnresolvedAction.setEnabled(true);
 
 		if(attemptToCommit) {
-			attemptToCommitMerge();
+			if(HgRebaseClient.isRebasing(hgRoot)) {
+				attemptToCommitRebase();
+			} else {
+				attemptToCommitMerge();
+			}
+		}
+	}
+
+	private void attemptToCommitRebase() {
+		// try to continue rebase if no conflicts are found
+		if (areAllResolved()) {
+			try {
+				HgRebaseClient.continueRebase(hgRoot);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			} finally {
+				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
+				job.schedule();
+			}
 		}
 	}
 
@@ -275,7 +297,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, "true");
 				}
 			}
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
 	}

@@ -43,7 +43,7 @@ import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
  *
  * @author Bastian Doetsch
  */
-abstract class AbstractParseChangesetClient extends AbstractClient {
+public abstract class AbstractParseChangesetClient extends AbstractClient {
 
 	private static final String OPEN_TAG = "<c>";
 	private static final String CLOSE_TAG = "</c>";
@@ -70,7 +70,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 *            return one of the STYLE_ constants
 	 * @return a File reference to an existing file
 	 */
-	protected static File getStyleFile(int styleBit) throws HgException {
+	public static File getStyleFile(int styleBit) throws HgException {
 		String style;
 
 		switch (styleBit) {
