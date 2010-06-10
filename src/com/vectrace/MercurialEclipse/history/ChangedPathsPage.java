@@ -237,16 +237,8 @@ public class ChangedPathsPage {
 		diffTextViewer = sourceViewer;
 		diffTextViewer.setDocument(new Document());
 
-		final TextViewerAction copyAction2 = new TextViewerAction(
-				this.diffTextViewer, ITextOperationTarget.COPY);
-		copyAction2.setText(Messages.getString("HistoryView.copy"));
-		// ADD SelectionListener in Constructor?
-		this.diffTextViewer
-				.addSelectionChangedListener(new ISelectionChangedListener() {
-					public void selectionChanged(SelectionChangedEvent event) {
-						copyAction2.update();
-					}
-				});
+		final TextViewerAction copyAction2 = new TextViewerAction(this.diffTextViewer,
+				ITextOperationTarget.COPY, "HistoryView.copy");
 
 		MenuManager menuMgr = new MenuManager();
 		menuMgr.setRemoveAllWhenShown(true);
@@ -380,21 +372,11 @@ public class ChangedPathsPage {
 
 		this.commentTextViewer = result;
 
-		// Create actions for the text editor (copy and select all)
-		final TextViewerAction copyAction = new TextViewerAction(
-				this.commentTextViewer, ITextOperationTarget.COPY);
-		copyAction.setText(Messages.getString("HistoryView.copy"));
+		final TextViewerAction copyAction = new TextViewerAction(this.commentTextViewer,
+				ITextOperationTarget.COPY, "HistoryView.copy");
 
-		this.commentTextViewer
-				.addSelectionChangedListener(new ISelectionChangedListener() {
-					public void selectionChanged(SelectionChangedEvent event) {
-						copyAction.update();
-					}
-				});
-
-		final TextViewerAction selectAllAction = new TextViewerAction(
-				this.commentTextViewer, ITextOperationTarget.SELECT_ALL);
-		selectAllAction.setText(Messages.getString("HistoryView.selectAll"));
+		final TextViewerAction selectAllAction = new TextViewerAction(this.commentTextViewer,
+				ITextOperationTarget.SELECT_ALL, "HistoryView.selectAll");
 
 		IHistoryPageSite parentSite = getHistoryPageSite();
 		IPageSite pageSite = parentSite.getWorkbenchPageSite();

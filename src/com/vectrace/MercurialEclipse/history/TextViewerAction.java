@@ -13,8 +13,12 @@ package com.vectrace.MercurialEclipse.history;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.text.ITextOperationTarget;
-import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.text.TextViewer;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.ui.texteditor.IUpdate;
+
+import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * Used by ConsoleView
@@ -23,11 +27,22 @@ public class TextViewerAction extends Action implements IUpdate {
 	private int operationCode = -1;
 	private final ITextOperationTarget operationTarget;
 
-	public TextViewerAction(ITextViewer viewer, int operationCode) {
+	public TextViewerAction(TextViewer viewer, int operationCode, String labelId) {
 		this.operationCode = operationCode;
 		operationTarget = viewer.getTextOperationTarget();
+		setText(Messages.getString(labelId));
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				TextViewerAction.this.update();
+			}
+		});
+
 		update();
 	}
+
+	/**
+	 * Will enable this action if some text is select, disable it if not.
+	 */
 	public void update() {
 		boolean wasEnabled = isEnabled();
 		boolean isEnabled = operationTarget != null && operationTarget.canDoOperation(operationCode);
