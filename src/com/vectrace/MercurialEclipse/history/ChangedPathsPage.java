@@ -386,7 +386,6 @@ public class ChangedPathsPage {
 		IPageSite pageSite = parentSite.getWorkbenchPageSite();
 		IActionBars actionBars = pageSite.getActionBars();
 
-		// TODO untersuchen
 		actionBars.setGlobalActionHandler(ITextEditorActionConstants.COPY,
 				copyAction);
 		actionBars.setGlobalActionHandler(
