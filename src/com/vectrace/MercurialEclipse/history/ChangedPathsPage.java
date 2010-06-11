@@ -231,20 +231,24 @@ public class ChangedPathsPage {
 	}
 
 	private void createDiffViewer(SashForm parent) {
-		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true,
-				SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
+		SourceViewer sourceViewer = new SourceViewer(parent, null, null, true, SWT.H_SCROLL
+				| SWT.V_SCROLL | SWT.MULTI | SWT.READ_ONLY);
 		sourceViewer.getTextWidget().setIndent(2);
 		diffTextViewer = sourceViewer;
 		diffTextViewer.setDocument(new Document());
 
-		final TextViewerAction copyAction2 = new TextViewerAction(this.diffTextViewer,
+		final TextViewerAction copyAction = new TextViewerAction(this.diffTextViewer,
 				ITextOperationTarget.COPY, "HistoryView.copy");
+
+		final TextViewerAction selectAllAction = new TextViewerAction(this.diffTextViewer,
+				ITextOperationTarget.SELECT_ALL, "HistoryView.selectAll");
 
 		MenuManager menuMgr = new MenuManager();
 		menuMgr.setRemoveAllWhenShown(true);
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
-				menuMgr1.add(copyAction2);
+				menuMgr1.add(copyAction);
+				menuMgr1.add(selectAllAction);
 			}
 		});
 
