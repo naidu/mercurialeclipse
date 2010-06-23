@@ -18,11 +18,9 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -48,14 +46,13 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -88,16 +85,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	public static SortedSet<HgRoot> getKnownHgRoots(){
-		SortedSet<HgRoot> roots = new TreeSet<HgRoot>();
-		Collection<HgRoot[]> values = HG_ROOTS.values();
-		for (HgRoot[] hgRoots : values) {
-			for (HgRoot hgRoot : hgRoots) {
-				if(hgRoot != null) {
-					roots.add(hgRoot);
-				}
-			}
-		}
-		return roots;
+		return MercurialRootCache.getInstance().getKnownHgRoots();
 	}
 
 	public static List<IProject> getKnownHgProjects(){
@@ -225,11 +213,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
 		Assert.isNotNull(project);
-		HgRoot[] result = HG_ROOTS.get(project);
+		HgRoot result = MercurialRootCache.getInstance().hasHgRoot(project);
 		if(result == null){
 			return RepositoryProvider.getProvider(project, ID) != null;
 		}
-		return result[0] != null;
+		return true;
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
@@ -322,11 +310,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		job.schedule();
 	}
 
-
-	private static HgRoot getHgRootFile(File file) throws HgException {
-		return HgRootClient.getHgRoot(file);
-	}
-
 	/**
 	 * Gets the hg root of a resource as {@link java.io.File}.
 	 *
@@ -340,18 +323,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if(resource == null){
 			return null;
 		}
-
-		if(resource instanceof HgRootContainer){
-			HgRootContainer rootContainer = (HgRootContainer) resource;
-			return rootContainer.getHgRoot();
-		}
-
-		IProject project = resource.getProject();
-		if (project == null && resource.getLocation() != null) {
-			// happens in case of IResource instanceof IWorkspaceRoot
-			return AbstractClient.getHgRoot(resource);
-		}
-		return getHgRoot(project);
+		return MercurialRootCache.getInstance().getHgRoot(resource);
 	}
 
 	/**
@@ -362,12 +334,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * @return the {@link java.io.File} referencing the hg root directory
 	 */
 	public static HgRoot getHgRoot(IProject project) {
-		HgRoot[] rootElt = HG_ROOTS.get(project);
-		if(rootElt == null){
-			rootElt = new HgRoot[1];
-			HG_ROOTS.put(project, rootElt);
+		try{
+			return MercurialRootCache.getInstance().getHgRoot(project);
+		}catch(HgException hge){
+			return null;
 		}
-		return rootElt[0];
 	}
 
 	/**
@@ -382,16 +353,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if(resource == null || resource instanceof IWorkspaceRoot){
 			return null;
 		}
-		IProject project = resource.getProject();
-		HgRoot[] result = HG_ROOTS.get(project);
-		if(result != null && result[0] != null){
-			return result[0];
-		}
-		HgRoot hgRoot = HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(resource));
-		if(hgRoot != null && (RepositoryProvider.getProvider(project, ID) != null)) {
-			HG_ROOTS.put(project, new HgRoot[]{hgRoot});
-		}
-		return hgRoot;
+
+		return MercurialRootCache.getInstance().hasHgRoot(resource);
 	}
 
 	/**
@@ -403,11 +366,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * @throws HgException
 	 */
 	public static HgRoot getHgRoot(File file) throws HgException {
-		IResource resource = ResourceUtils.convert(file);
-		if (resource != null) {
-			return getHgRoot(resource);
-		}
-		return getHgRootFile(file);
+		return MercurialRootCache.getInstance().getHgRoot(file);
 	}
 
 	/**
