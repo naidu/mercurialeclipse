@@ -106,10 +106,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	@Override
 	public void setProject(IProject project) {
 		super.setProject(project);
-		HgRoot hgRoot = getHgRoot(project);
-		if(hgRoot != null){
-			return;
-		}
 		try {
 			configureProject();
 		} catch (CoreException e) {

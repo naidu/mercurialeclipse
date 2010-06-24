@@ -99,7 +99,7 @@ public class MercurialRootCache extends AbstractCache {
 
 		File file = ResourceUtils.getFileHandle(resource);
 		HgRoot root = getHgRoot(file);
-		if(root != null && resource instanceof IProject){
+		if(root != null && resource instanceof IProject && !byProject.containsKey(resource)){
 			byProject.put((IProject)resource, new HgRoot[]{root});
 		}
 		return root;
@@ -140,7 +140,7 @@ public class MercurialRootCache extends AbstractCache {
 	}
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
-		byProject.remove(project);
+		this.evict(project);
 		// TODO: maybe we need to clear all the paths inside the project
 		// TODO: maybe not...
 	}
