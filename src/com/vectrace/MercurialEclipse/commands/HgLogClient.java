@@ -37,6 +37,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -373,7 +374,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		try {
 			Assert.isNotNull(nodeId);
 
-			AbstractShellCommand command = new HgCommand("log", res.getProject().getLocation().toFile(), //$NON-NLS-1$
+			HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
+			AbstractShellCommand command = new HgCommand("log", root, //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
