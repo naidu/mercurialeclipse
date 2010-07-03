@@ -17,6 +17,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
@@ -28,14 +29,28 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
  * extension.
  */
 public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWizard {
-	private ClonePage clonePage;
-	private ProjectsImportPage importPage;
+	private final ClonePage clonePage;
+	private final ProjectsImportPage importPage;
 	private IHgRepositoryLocation defaultLocation;
-	private SelectRevisionPage selectRevisionPage;
+	private final SelectRevisionPage selectRevisionPage;
 
 
 	public CloneRepoWizard() {
 		super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+		clonePage = new ClonePage(null, Messages
+				.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
+		clonePage.setDescription(Messages
+				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
+		initPage(clonePage.getDescription(), clonePage);
+		setNeedsProgressMonitor(true);
+
+		selectRevisionPage = new SelectRevisionPage("SelectRevisionPage");
+		importPage = new ProjectsImportPage("ProjectsImportPage");
+
+		addPage(clonePage);
+		addPage(selectRevisionPage);
+		addPage(importPage);
 	}
 
 	@Override
@@ -49,20 +64,18 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 		return super.performCancel();
 	}
 
+	@Override
+	public IWizardPage getStartingPage() {
+		return clonePage;
+	}
+
 	public IHgRepositoryLocation getRepository() {
 		return clonePage.getLastUsedRepository();
 	}
 
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
-		setNeedsProgressMonitor(true);
-		clonePage = new ClonePage(null, Messages
-				.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
-				Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
 
-		clonePage.setDescription(Messages
-				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
-		initPage(clonePage.getDescription(), clonePage);
 		if(!selection.isEmpty()){
 			Object firstElement = selection.getFirstElement();
 			if(firstElement instanceof IHgRepositoryLocation){
@@ -73,19 +86,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 		if(getDefaultLocation() != null) {
 			clonePage.setInitialRepo(getDefaultLocation());
 		}
-
-		selectRevisionPage = new SelectRevisionPage("SelectRevisionPage");
-
-		importPage = new ProjectsImportPage("ProjectsImportPage");
-
-		addPage(clonePage);
-		addPage(selectRevisionPage);
-		addPage(importPage);
 	}
 
 	@Override
 	public boolean canFinish() {
-		return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
+		return getContainer() != null && getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
 	}
 
 	public void setDefaultLocation(IHgRepositoryLocation defaultLocation) {

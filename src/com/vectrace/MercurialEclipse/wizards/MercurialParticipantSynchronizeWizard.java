@@ -92,7 +92,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 */
 	@Override
 	protected IProject[] getRootResources() {
-		return selectionPage != null? selectionPage.getSelectedProjects() : getInitialSelection();
+		return selectionPage != null && selectionPage.isCreated()? selectionPage.getSelectedProjects() : getInitialSelection();
 	}
 
 	protected IProject[] getInitialSelection() {
@@ -116,7 +116,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	public IWizardPage getStartingPage() {
-		return selectionPage;
+		return  getRootResources().length > 0? selectionPage : importWizard.getStartingPage();
 	}
 
 	private ConfigurationWizardMainPage createrepositoryConfigPage() {

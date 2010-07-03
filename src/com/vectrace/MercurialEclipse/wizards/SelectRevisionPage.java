@@ -24,6 +24,7 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.team.internal.ui.wizards.GlobalRefreshWizardSelectionPage;
 import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -144,10 +145,11 @@ public class SelectRevisionPage extends WizardPage {
 					return;
 				}
 				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
+						|| event.getTargetPage() instanceof GlobalRefreshWizardSelectionPage
 						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage
 						|| event.getTargetPage() instanceof SelectRevisionPage
 						|| event.getTargetPage() instanceof ClonePage){
-					// always allow flip back and force from the Eclipse "New..." wizard
+					// always allow flip back and force from the Eclipse "New..."/"Synchronize" wizards
 					event.doit = true;
 					return;
 				}

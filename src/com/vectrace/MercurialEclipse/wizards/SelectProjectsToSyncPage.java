@@ -16,8 +16,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -189,6 +189,10 @@ public class SelectProjectsToSyncPage extends WizardPage {
 
 	private boolean areAnyElementsChecked() {
 		return viewer.getCheckedElements().length > 0;
+	}
+
+	public boolean isCreated(){
+		return viewer != null;
 	}
 
 	protected HgRoot[] getRoots() {

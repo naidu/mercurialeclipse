@@ -37,6 +37,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.team.internal.ui.wizards.GlobalRefreshWizardSelectionPage;
 import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -110,8 +111,10 @@ public class ClonePage extends PushPullPage {
 
 			public void handlePageChanging(PageChangingEvent event) {
 				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
+						|| event.getTargetPage() instanceof ClonePage
+						|| event.getTargetPage() instanceof GlobalRefreshWizardSelectionPage
 						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage){
-					// always allow flip back and force from the Eclipse "New..." wizard
+					// always allow flip back and force from the Eclipse "New..."/"Synchronize" wizards
 					event.doit = true;
 					return;
 				}
