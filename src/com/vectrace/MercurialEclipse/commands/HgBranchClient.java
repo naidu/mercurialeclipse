@@ -28,9 +28,16 @@ import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class HgBranchClient extends AbstractClient {
-
-	private static final Pattern GET_BRANCHES_PATTERN = Pattern
-			.compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
+	/**
+	 * matches branch names which may also contain spaces or consist of only one letter.
+	 * Valid examples:
+	 * "a test                         3:066ee3f79d2a"
+	 * "*                              2:5a953790aa12 (inactive)"
+	 * "default                        0:fd83cc49d230 (inactive)"
+	 */
+	private static final Pattern GET_BRANCHES_PATTERN = Pattern.compile(
+		// (branch name) (version):(hash) (optional "inactive" flag)
+		"^(.*[^ ]+) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
 	private static final Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
 
