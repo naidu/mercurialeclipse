@@ -57,6 +57,8 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
+import com.vectrace.MercurialEclipse.menu.ContinueRebaseHandler;
+import com.vectrace.MercurialEclipse.menu.RunnableHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -64,8 +66,6 @@ import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
@@ -256,54 +256,39 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		markResolvedAction.setEnabled(true);
 		markUnresolvedAction.setEnabled(true);
 
-		if(attemptToCommit) {
-			if(HgRebaseClient.isRebasing(hgRoot)) {
-				attemptToCommitRebase();
-			} else {
-				attemptToCommitMerge();
-			}
-		}
-	}
-
-	private void attemptToCommitRebase() {
-		// try to continue rebase if no conflicts are found
-		if (areAllResolved()) {
+		// offer commit of merge or rebase exactly once if no conflicts are found
+		if (attemptToCommit && areAllResolved()) {
 			try {
-				HgRebaseClient.continueRebase(hgRoot);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			} finally {
-				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
-				job.schedule();
-			}
-		}
-	}
+				boolean merging = !HgRebaseClient.isRebasing(hgRoot);
 
-	private void attemptToCommitMerge() {
-		try {
-			String mergeNode = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-
-			// offer commit of merge exactly once if no conflicts
-			// are found
-			boolean allResolved = areAllResolved();
-			if (allResolved) {
-				String message = hgRoot.getName()
-						+ Messages.getString("MergeView.PleaseCommitMerge") + " " + mergeNode;
-				statusLabel.setText(message);
+				if (merging) {
+					statusLabel.setText(hgRoot.getName()
+							+ Messages.getString("MergeView.PleaseCommitMerge") + " "
+							+ MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot));
+				} else {
+					statusLabel.setText(hgRoot.getName()
+							+ Messages.getString("MergeView.PleaseCommitRebase"));
+				}
 
 				IWorkspaceRoot wsRoot = ResourcesPlugin.getWorkspace().getRoot();
+
 				if (wsRoot.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
-					new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getSite().getShell());
-					ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, "true");
+					RunnableHandler handler = merging ? new CommitMergeHandler()
+							: new ContinueRebaseHandler();
+
+					handler.setShell(getSite().getShell());
+					handler.run(hgRoot);
+					ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(
+							ResourceProperties.MERGE_COMMIT_OFFERED, "true");
 				}
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
 	public void clearView() {
-		statusLabel.setText(""); //$NON-NLS-1$
+		statusLabel.setText("");
 		table.removeAll();
 		abortAction.setEnabled(false);
 		markResolvedAction.setEnabled(false);

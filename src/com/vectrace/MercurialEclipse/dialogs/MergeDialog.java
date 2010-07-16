@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -29,7 +28,7 @@ public class MergeDialog extends CommitDialog {
 
 	public MergeDialog(Shell shell, HgRoot hgRoot, String defaultCommitMessage) {
 		super(shell, hgRoot, null);
-		Assert.isNotNull(hgRoot);
+
 		options.defaultCommitMessage = defaultCommitMessage;
 		// not available when merging
 		options.showAmend = false;
@@ -62,5 +61,4 @@ public class MergeDialog extends CommitDialog {
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs) throws CoreException {
 		return performCommit(messageToCommit, closeBranch);
 	}
-
 }

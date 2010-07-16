@@ -21,13 +21,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public class CommitMergeHandler extends RootHandler {
+public class CommitMergeHandler extends RunnableHandler {
 
 	/**
 	 * run the commit merge handler
 	 */
 	@Override
-	protected void run(HgRoot hgRoot) throws HgException {
+	public void run(HgRoot hgRoot) throws HgException {
 		commitMergeWithCommitDialog(hgRoot, getShell());
 	}
 

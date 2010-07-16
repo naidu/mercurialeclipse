@@ -34,8 +34,8 @@ public final class ResourceProperties {
 
 	/**
 	 * Qualified name for a session property on a project that signifies that
-	 * the commit dialog has already been shown, so the dialog doesn't pop up
-	 * automatically anymore.
+	 * the commit dialog has already been shown by the merge view for either
+	 * a merge or rebase.
 	 *
 	 * @see MergeView
 	 * @see CommitMergeHandler

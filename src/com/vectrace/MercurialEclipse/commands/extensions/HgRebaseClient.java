@@ -18,6 +18,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 
 /**
  * @author bastian
@@ -48,7 +49,7 @@ public class HgRebaseClient extends AbstractClient {
 	 */
 	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev,
 			int destRev, boolean collapse, boolean cont, boolean abort, boolean keepBranches,
-			boolean useExternalMergeTool)
+			boolean useExternalMergeTool, String user)
 			throws HgException {
 		AbstractShellCommand c = new HgCommand("rebase", hgRoot, false);//$NON-NLS-1$
 		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
@@ -58,8 +59,15 @@ public class HgRebaseClient extends AbstractClient {
 			// need this option, though, as we still want the Mercurial merge to
 			// take place.
 			c.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
+
+			// Do not invoke external editor for commit message
+			// Future: Allow user to specify this
+			c.addOptions("--config", "ui.editor=echo"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		c.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
+
+		// User is only applicable for collapse and continued collapse invocations
+		c.addOptions("--config", "ui.username=" + user); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (!cont && !abort) {
 			if (sourceRev >= 0 && baseRev <= 0) {
@@ -92,7 +100,15 @@ public class HgRebaseClient extends AbstractClient {
 		return c.executeToString();
 	}
 
-	/** Check to see if we are in the middle of a rebase. <br/>
+	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev, int destRev,
+			boolean collapse, boolean cont, boolean abort, boolean keepBranches,
+			boolean useExternalMergeTool) throws HgException {
+		return rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont, abort, keepBranches,
+				useExternalMergeTool, HgCommitMessageManager.getDefaultCommitName(hgRoot));
+	}
+
+	/**
+	 * Check to see if we are in the middle of a rebase. <br/>
 	 * Assume the presence of the <code>/.hg/rebasestate</code> file means that we are
 	 *
 	 * @param hgRoot
@@ -102,12 +118,7 @@ public class HgRebaseClient extends AbstractClient {
 		return new File(hgRoot, ".hg" + File.separator + "rebasestate").exists();
 	}
 
-	/**
-	 * @param hgRoot
-	 * @return
-	 * @throws HgException
-	 */
-	public static String continueRebase(HgRoot hgRoot) throws HgException {
-		return rebase(hgRoot, -1, -1, -1, false, true, false, false, false);
+	public static String continueRebase(HgRoot hgRoot, String user) throws HgException {
+		return rebase(hgRoot, -1, -1, -1, false, true, false, false, false, user);
 	}
 }
