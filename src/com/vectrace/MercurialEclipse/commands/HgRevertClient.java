@@ -20,6 +20,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.Messages;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author Andrei
@@ -52,5 +53,7 @@ public class HgRevertClient extends AbstractClient {
 			command.executeToString();
 		}
 		monitor.worked(1);
+
+		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
 	}
 }

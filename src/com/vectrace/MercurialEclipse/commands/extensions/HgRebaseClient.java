@@ -19,6 +19,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author bastian
@@ -97,6 +98,9 @@ public class HgRebaseClient extends AbstractClient {
 		if(keepBranches) {
 			c.addOptions("--keepbranches");
 		}
+
+		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
+
 		return c.executeToString();
 	}
 

@@ -19,8 +19,6 @@ import java.util.Set;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -256,8 +254,19 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		markResolvedAction.setEnabled(true);
 		markUnresolvedAction.setEnabled(true);
 
-		// offer commit of merge or rebase exactly once if no conflicts are found
-		if (attemptToCommit && areAllResolved()) {
+		if (attemptToCommit) {
+			attemptToCommit();
+		}
+	}
+
+	/**
+	 * Offer commit of merge or rebase exactly once if no conflicts are found. Uses
+	 * {@link ResourceProperties#MERGE_COMMIT_OFFERED} to avoid showing the user the commit dialog
+	 * repeatedly. This flag should be cleared when any of the following operations occur: commit,
+	 * rebase, revert.
+	 */
+	private void attemptToCommit() {
+		if (areAllResolved()) {
 			try {
 				boolean merging = !HgRebaseClient.isRebasing(hgRoot);
 
@@ -270,16 +279,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 							+ Messages.getString("MergeView.PleaseCommitRebase"));
 				}
 
-				IWorkspaceRoot wsRoot = ResourcesPlugin.getWorkspace().getRoot();
-
-				if (wsRoot.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
+				if (!MercurialStatusCache.getInstance().isMergeViewDialogShown()) {
+					MercurialStatusCache.getInstance().setMergeViewDialogShown(true);
 					RunnableHandler handler = merging ? new CommitMergeHandler()
 							: new ContinueRebaseHandler();
 
 					handler.setShell(getSite().getShell());
 					handler.run(hgRoot);
-					ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(
-							ResourceProperties.MERGE_COMMIT_OFFERED, "true");
 				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);

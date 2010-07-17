@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.commands;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgMergeClient extends AbstractClient {
 
@@ -35,6 +36,8 @@ public class HgMergeClient extends AbstractClient {
 		if (forced) {
 			command.addOptions("-f"); //$NON-NLS-1$
 		}
+
+		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
 
 		try {
 			String result = command.executeToString();
