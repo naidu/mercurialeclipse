@@ -124,11 +124,15 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			@Override
 			public void run() {
 				try {
-					UpdateHandler update = new UpdateHandler();
-					update.setCleanEnabled(true);
-					update.setRevision(".");
-					update.setShell(table.getShell());
-					update.run(hgRoot);
+					if (HgRebaseClient.isRebasing(hgRoot)) {
+						HgRebaseClient.abortRebase(hgRoot);
+					} else {
+						UpdateHandler update = new UpdateHandler();
+						update.setCleanEnabled(true);
+						update.setRevision(".");
+						update.setShell(table.getShell());
+						update.run(hgRoot);
+					}
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());

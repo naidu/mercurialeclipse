@@ -125,4 +125,8 @@ public class HgRebaseClient extends AbstractClient {
 	public static String continueRebase(HgRoot hgRoot, String user) throws HgException {
 		return rebase(hgRoot, -1, -1, -1, false, true, false, false, false, user);
 	}
+
+	public static String abortRebase(HgRoot hgRoot) throws HgException {
+		return rebase(hgRoot, -1, -1, -1, false, false, true, false, false);
+	}
 }
