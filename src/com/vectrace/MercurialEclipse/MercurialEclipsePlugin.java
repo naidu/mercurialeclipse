@@ -59,6 +59,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
@@ -516,4 +517,18 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		return null;
 	}
 
+	/**
+	 * Unwrap and throw as a CoreException. Note: Never returns
+	 * @param e The exception to use
+	 * @throws CoreException
+	 */
+	public static void rethrow(Throwable e) throws CoreException {
+		if (e instanceof CoreException) {
+			throw (CoreException)e;
+		} else if (e instanceof InvocationTargetException) {
+			rethrow(((InvocationTargetException) e).getTargetException());
+		}
+
+		throw new HgException(e.getLocalizedMessage(), e);
+	}
 }

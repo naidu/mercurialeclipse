@@ -54,6 +54,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.AbortRebaseHandler;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.ContinueRebaseHandler;
 import com.vectrace.MercurialEclipse.menu.RunnableHandler;
@@ -124,16 +125,19 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			@Override
 			public void run() {
 				try {
+					RunnableHandler runnable;
 					if (HgRebaseClient.isRebasing(hgRoot)) {
-						HgRebaseClient.abortRebase(hgRoot);
+						runnable = new AbortRebaseHandler();
 					} else {
 						UpdateHandler update = new UpdateHandler();
 						update.setCleanEnabled(true);
 						update.setRevision(".");
-						update.setShell(table.getShell());
-						update.run(hgRoot);
+						runnable = update;
 					}
-				} catch (HgException e) {
+
+					runnable.setShell(table.getShell());
+					runnable.run(hgRoot);
+				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());
 				}

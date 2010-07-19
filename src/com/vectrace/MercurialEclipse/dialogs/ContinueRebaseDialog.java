@@ -10,17 +10,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.operations.RebaseOperation;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -68,11 +69,17 @@ public class ContinueRebaseDialog extends CommitDialog {
 		return continueRebase(messageToCommit);
 	}
 
-	private String continueRebase(String messageToCommit) throws HgException {
+	private String continueRebase(String messageToCommit) throws CoreException {
+		RebaseOperation op = RebaseOperation.createContinue(MercurialEclipsePlugin.getActiveWindow(), root, getUser());
+
 		try {
-			return HgRebaseClient.continueRebase(root, getUser());
-		} finally {
-			new RefreshWorkspaceStatusJob(root, RefreshRootJob.ALL).schedule();
+			op.run(new NullProgressMonitor());
+		} catch (InvocationTargetException e) {
+			MercurialEclipsePlugin.rethrow(e);
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.rethrow(e);
 		}
+
+		return op.getResult();
 	}
 }

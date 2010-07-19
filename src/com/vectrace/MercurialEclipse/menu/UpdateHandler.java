@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
-public class UpdateHandler extends RootHandler {
+public class UpdateHandler extends RunnableHandler {
 
 	private String revision;
 	private boolean cleanEnabled;
