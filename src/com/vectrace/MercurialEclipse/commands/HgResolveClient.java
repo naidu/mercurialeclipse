@@ -49,8 +49,8 @@ public class HgResolveClient extends AbstractClient {
 			IProject project = res.getProject();
 			for (String line : lines) {
 				// Status line is always hg root relative. For those projects
-				// which has different project root (always deeper than hg root)
-				// hg root relative path must be converted
+				// which has different project root hg root relative path must
+				// be converted to project relative
 				IResource iFile = ResourceUtils.convertRepoRelPath(hgRoot, project, line.substring(2));
 				if(iFile != null){
 					FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line.charAt(0));
