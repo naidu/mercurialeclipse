@@ -29,8 +29,11 @@ public class HgUpdateClient extends AbstractClient {
 		if (clean) {
 			command.addOptions("-C"); //$NON-NLS-1$
 		}
-		command.executeToBytes();
 
-		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
+		try {
+			command.executeToBytes();
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
+		}
 	}
 }
