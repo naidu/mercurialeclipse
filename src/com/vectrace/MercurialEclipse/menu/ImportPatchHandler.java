@@ -11,13 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.wizards.ImportPatchWizard;
 
 public class ImportPatchHandler extends RootHandler {
@@ -30,9 +27,8 @@ public class ImportPatchHandler extends RootHandler {
 	public void openWizard(final HgRoot hgRoot, Shell shell) {
 		ImportPatchWizard wizard = new ImportPatchWizard(hgRoot);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
+
 		dialog.setBlockOnOpen(true);
-		if (Window.OK == dialog.open()) {
-			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
-		}
+		dialog.open();
 	}
 }

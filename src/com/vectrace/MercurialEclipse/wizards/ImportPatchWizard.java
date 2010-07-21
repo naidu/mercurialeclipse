@@ -13,109 +13,65 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.team.ui.TeamOperation;
+import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
-import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
-import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
+import com.vectrace.MercurialEclipse.operations.ImportPatchOperation;
 
 public class ImportPatchWizard extends HgWizard {
 
 	private final ImportPatchPage sourcePage;
 	private final ImportOptionsPage optionsPage;
-	private Location location;
-	private final HgRoot hgRoot;
-	private String result;
-	private ArrayList<String> options;
+
+	final HgRoot hgRoot;
 
 	public ImportPatchWizard(HgRoot hgRoot) {
-		super(Messages.getString("ImportPatchWizard.WizardTitle")); //$NON-NLS-1$
+		super(Messages.getString("ImportPatchWizard.WizardTitle"));
 		setNeedsProgressMonitor(true);
 		this.hgRoot = hgRoot;
 
 		sourcePage = new ImportPatchPage(hgRoot);
 		addPage(sourcePage);
-		initPage(Messages.getString("ImportPatchWizard.pageDescription"), //$NON-NLS-1$
-				sourcePage);
+		initPage(Messages.getString("ImportPatchWizard.pageDescription"), sourcePage);
 
 		optionsPage = new ImportOptionsPage();
 		addPage(optionsPage);
-		initPage(Messages.getString("ImportPatchWizard.optionsPageDescription"), optionsPage); //$NON-NLS-1$
+		initPage(Messages.getString("ImportPatchWizard.optionsPageDescription"), optionsPage);
 	}
 
 	@Override
 	public boolean performFinish() {
 		sourcePage.finish(null);
 		try {
-			location = sourcePage.getLocation();
-			options = optionsPage.getOptions();
-			result = null;
-			ImportOperation operation = new ImportOperation(getContainer());
+			ImportPatchOperation operation = new ImportPatchOperation(getContainer(), hgRoot,
+					sourcePage.getLocation(), optionsPage.getOptions());
+
 			getContainer().run(true, false, operation);
-			if (result != null) {
-				optionsPage.setErrorMessage(result);
-				return false;
+
+			if (operation.isConflict()) {
+				MessageDialog.openInformation(getShell(),
+						Messages.getString("ImportPatchWizard.WizardTitle"),
+						Messages.getString("ImportPatchWizard.conflict") + "\n" +  operation.getResult());
 			}
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(getWindowTitle(), e);
-			MercurialEclipsePlugin.showError(e.getCause());
-			return false;
+
+			return true;
+		} catch (InvocationTargetException e) {
+			handleError(e.getTargetException());
+		} catch (InterruptedException e) {
+			handleError(e);
 		}
-		return true;
+
+		return false;
 	}
 
-	class ImportOperation extends TeamOperation {
+	private void handleError(Throwable e) {
+		MercurialEclipsePlugin.logError(e);
 
-		public ImportOperation(IRunnableContext context) {
-			super(context);
-		}
-
-		public void run(IProgressMonitor monitor)
-				throws InvocationTargetException, InterruptedException {
-			monitor.beginTask(Messages.getString("ExportPatchWizard.pageTitle"), 1); //$NON-NLS-1$
-			try {
-				performOperation();
-			} catch (Exception e) {
-				result = e.getLocalizedMessage();
-				MercurialEclipsePlugin.logError(Messages
-						.getString("ExportPatchWizard.pageTitle") //$NON-NLS-1$
-						+ " failed:", e); //$NON-NLS-1$
-			} finally {
-				monitor.done();
-			}
-		}
-
-	}
-
-	public void performOperation() throws Exception {
-		if (location.getLocationType() == LocationType.Clipboard) {
-			File file = null;
-			try {
-				file = ClipboardUtils.clipboardToTempFile("mercurial_", //$NON-NLS-1$
-						".patch"); //$NON-NLS-1$
-				if (file != null) {
-					HgPatchClient.importPatch(hgRoot, file, options);
-				}
-			} finally {
-				if (file != null && file.exists()) {
-					boolean deleted = file.delete();
-					if(!deleted){
-						MercurialEclipsePlugin.logError("Failed to delete clipboard content file: " + file, null);
-					}
-				}
-			}
-
-		} else {
-			HgPatchClient.importPatch(hgRoot, location.getFile(), options);
-		}
+		// The user might be on either page
+		optionsPage.setErrorMessage(e.getLocalizedMessage());
+		sourcePage.setErrorMessage(e.getLocalizedMessage());
 	}
 }

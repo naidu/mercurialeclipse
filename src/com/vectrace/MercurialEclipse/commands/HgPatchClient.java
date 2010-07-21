@@ -29,6 +29,9 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 public class HgPatchClient extends AbstractClient {
 
 	/**
+	 * Import a patch. Throws an exception if there is a conflict
+	 *
+	 * @see #isPatchImportConflict(HgException)
 	 *
 	 * @param hgRoot non null
 	 * @param patchLocation non null
@@ -41,6 +44,17 @@ public class HgPatchClient extends AbstractClient {
 		command.addFiles(patchLocation.getAbsolutePath());
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();
+	}
+
+	/**
+	 * Determine if the given exception indicates a conflict occurred
+	 *
+	 * @param e
+	 *            The exception to check
+	 * @return True if the exception indicates a conflict occurred
+	 */
+	public static boolean isPatchImportConflict(HgException e) {
+		return e.getMessage().contains("patch failed to apply.");
 	}
 
 	/**
