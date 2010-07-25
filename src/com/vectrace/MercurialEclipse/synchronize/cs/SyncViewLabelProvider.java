@@ -76,7 +76,6 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		return decoratedImage;
 	}
 
-
 	@Override
 	protected String getDelegateText(Object elementOrPath) {
 		if(elementOrPath instanceof ChangeSet){
@@ -86,6 +85,9 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				sb.append(cset.getChangesetIndex());
 				sb.append(" [").append(cset.getAuthor()).append("]");
 				sb.append(" (").append(cset.getAgeDate()).append(")");
+				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
+					sb.append(" ").append(cset.getBranch()).append(":");
+				}
 				sb.append(" ").append(getShortComment(cset));
 			} else {
 				sb.append(cset.toString());
@@ -121,10 +123,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		return delegateText;
 	}
 
+	/**
+	 * TODO: The entire comment should be shown in a tool tip
+	 */
 	private String getShortComment(ChangeSet cset) {
 		String comment = cset.getComment();
-		if(comment.length() > 50){
-			comment = comment.substring(0, 50) + "...";
+		if(comment.length() > 100){
+			comment = comment.substring(0, 100) + "...";
 		}
 		return comment;
 	}

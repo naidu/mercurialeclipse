@@ -193,6 +193,11 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
+		addField(new BooleanFieldEditor(
+				PREF_SYNC_ONLY_CURRENT_BRANCH,
+				Messages.getString("GeneralPreferencePage.syncOnlyCurrentBranch"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
 		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
 				COMMIT_MESSAGE_BATCH_SIZE,
 				Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$

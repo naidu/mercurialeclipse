@@ -40,6 +40,7 @@ public final class MercurialPreferenceConstants {
 	public static final String RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET = "hg.performance.fileShowsChangesetIncoming"; //$NON-NLS-1$
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
 	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+	public static final String PREF_SYNC_ONLY_CURRENT_BRANCH = "hg.syncOnlyCurrentBranch"; //$NON-NLS-1$
 
 	public static final String PREF_ENABLE_SUBREPO_SUPPORT = "enableSubrepoSupport"; //$NON-NLS-1$
 
