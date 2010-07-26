@@ -95,6 +95,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_COMMIT_GROUP,
+				new ResolveSynchronizeAction("Resolve",
+						configuration, getVisibleRootsSelectionProvider()));
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
 				new PushPullSynchronizeAction("Push",
 						configuration, getVisibleRootsSelectionProvider(), false, false));

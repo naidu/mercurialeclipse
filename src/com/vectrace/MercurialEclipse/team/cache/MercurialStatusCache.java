@@ -510,13 +510,27 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return false;
 	}
 
+	/**
+	 * @see #BIT_CLEAN
+	 */
 	public boolean isClean(IResource resource) {
+		return isStatus(resource, BIT_CLEAN);
+	}
+
+	/**
+	 * @see #BIT_CONFLICT
+	 */
+	public boolean isConflict(IResource resource) {
+		return isStatus(resource, BIT_CONFLICT);
+	}
+
+	private boolean isStatus(IResource resource, int flag) {
 		Assert.isNotNull(resource);
 		Integer status = getStatus(resource);
 		if(status == null){
 			return false;
 		}
-		return Bits.contains(status.intValue(), BIT_CLEAN);
+		return Bits.contains(status.intValue(), flag);
 	}
 
 	/**
@@ -698,7 +712,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				String[] lines = NEWLINE.split(output);
 				changed.addAll(parseStatus(repo, pathMap, lines, false));
 
-				boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
 				MercurialTeamProvider.setCurrentBranch(branch, repo);
 
 				// Set the merge status of the root itself
@@ -714,9 +727,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					}
 				}
 
-				if(mergeInProgress) {
-					changed.addAll(checkForConflict(repo));
-				}
+				changed.addAll(checkForConflict(repo));
 
 				monitor.worked(1);
 				if(monitor.isCanceled()){
@@ -873,9 +884,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private Set<IResource> checkForConflict(final IProject project) throws HgException {
-		if (!isMergeInProgress(project)) {
-			return Collections.emptySet();
-		}
+
 		List<FlaggedAdaptable> status = HgResolveClient.list(project);
 		Set<IResource> changed = new HashSet<IResource>();
 		Set<IResource> members = getLocalMembers(project);

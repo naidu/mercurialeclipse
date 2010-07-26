@@ -26,6 +26,7 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -41,7 +42,12 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
-		setImageDescriptor(createImageDescriptor());
+
+		ImageDescriptor descriptor = createImageDescriptor();
+
+		if (descriptor != null) {
+			setImageDescriptor(descriptor);
+		}
 	}
 
 	protected ImageDescriptor createImageDescriptor() {
@@ -49,7 +55,7 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	@Override
-	protected SynchronizeModelOperation getSubscriberOperation(
+	protected final SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		List<IResource> selectedResources = new ArrayList<IResource>();
 
@@ -94,20 +100,29 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		if(object instanceof WorkingChangeSet && ((WorkingChangeSet) object).getFiles().size() > 0){
-			return true;
+		if (object instanceof ChangeSet) {
+			return object instanceof WorkingChangeSet
+					&& ((WorkingChangeSet) object).getFiles().size() > 0;
 		}
 		IResource resource = ResourceUtils.getResource(object);
-		if(resource == null){
+		if (resource == null) {
 			return false;
 		}
-		if(object instanceof FileFromChangeSet){
-			FileFromChangeSet csfile = (FileFromChangeSet) object;
-			if(csfile.getChangeset() instanceof WorkingChangeSet
-					&& !MercurialStatusCache.getInstance().isClean(resource)){
-				return true;
-			}
+		if (object instanceof FileFromChangeSet) {
+			return ((FileFromChangeSet) object).getChangeset() instanceof WorkingChangeSet
+					&& isResourceSupported(resource);
 		}
+
+		return isResourceSupported(resource);
+	}
+
+	/**
+	 * Template method to determine if this action should be enabled for the given resource
+	 *
+	 * @param resource The resource to check
+	 * @return True if this action should be enabled
+	 */
+	protected boolean isResourceSupported(IResource resource) {
 		return !MercurialStatusCache.getInstance().isClean(resource);
 	}
 }

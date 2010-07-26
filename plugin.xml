@@ -1128,6 +1128,13 @@
                  menubarPath="team.main/group4"
                  enablesFor="1">
            </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.ActionResolve"
+                 enablesFor="+"
+                 id="com.vectrace.MercurialEclipse.team.ActionResolve"
+                 label="%resolve"
+                 menubarPath="team.main/group5">
+           </action>
       </objectContribution>
       <objectContribution
             adaptable="true"
