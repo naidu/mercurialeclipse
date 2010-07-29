@@ -28,7 +28,8 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 /**
  * Dialog for showing which files will be committed for a rebase.
  * <p>
- * Future: For --collapse rebases allow the user to set commit message.
+ * Future: For --collapse rebases allow the user to set commit message and commit user when the
+ * rebase is started. Future: The user shouldn't be displayed.
  */
 public class ContinueRebaseDialog extends CommitDialog {
 
