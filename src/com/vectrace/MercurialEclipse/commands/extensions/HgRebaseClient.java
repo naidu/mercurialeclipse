@@ -54,10 +54,9 @@ public class HgRebaseClient extends AbstractClient {
 	 * @return the output of the command
 	 * @throws HgException
 	 */
-	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev,
-			int destRev, boolean collapse, boolean cont, boolean abort, boolean keepBranches,
-			boolean useExternalMergeTool, String user)
-			throws HgException {
+	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev, int destRev,
+			boolean collapse, boolean cont, boolean abort, boolean keepBranches, boolean keep,
+			boolean useExternalMergeTool, String user) throws HgException {
 		AbstractShellCommand c = new HgCommand("rebase", hgRoot, false);//$NON-NLS-1$
 		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
@@ -103,8 +102,11 @@ public class HgRebaseClient extends AbstractClient {
 			c.addOptions("--abort"); //$NON-NLS-1$
 		}
 
-		if(keepBranches) {
-			c.addOptions("--keepbranches");
+		if (keepBranches) {
+			c.addOptions("--keepbranches"); //$NON-NLS-1$
+		}
+		if (keep) {
+			c.addOptions("--keep"); //$NON-NLS-1$
 		}
 
 		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
@@ -123,7 +125,7 @@ public class HgRebaseClient extends AbstractClient {
 	 */
 	public static String abortRebase(HgRoot hgRoot) throws HgException {
 		try {
-			return rebase(hgRoot, -1, -1, -1, false, false, true, false, false, null);
+			return rebase(hgRoot, -1, -1, -1, false, false, true, false, false, false, null);
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		}

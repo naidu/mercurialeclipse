@@ -42,13 +42,14 @@ public class RebaseOperation extends HgOperation {
 	private final boolean collapse;
 	private final boolean abort;
 	private final boolean cont;
-	private final boolean keepBranches;
+	private boolean keepBranches;
+	private boolean keep;
 	private final String user;
 
 	public RebaseOperation(IRunnableContext context, HgRoot hgRoot,
 			int sourceRev, int destRev, int baseRev, boolean collapse,
-			boolean abort, boolean cont, boolean keepBranches) {
-		this(context, hgRoot, sourceRev, destRev, baseRev, collapse, abort, cont, keepBranches, null);
+			boolean abort, boolean cont) {
+		this(context, hgRoot, sourceRev, destRev, baseRev, collapse, abort, cont, false, null);
 	}
 
 	protected RebaseOperation(IRunnableContext context, HgRoot hgRoot,
@@ -66,6 +67,14 @@ public class RebaseOperation extends HgOperation {
 		this.user = user;
 	}
 
+	public void setKeep(boolean keep) {
+		this.keep = keep;
+	}
+
+	public void setKeepBranches(boolean keepBranches) {
+		this.keepBranches = keepBranches;
+	}
+
 	@Override
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
@@ -78,7 +87,7 @@ public class RebaseOperation extends HgOperation {
 				.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 			result = HgRebaseClient.rebase(hgRoot,
 					sourceRev,
-					baseRev, destRev, collapse, cont, abort, keepBranches, useExternalMergeTool, user);
+					baseRev, destRev, collapse, cont, abort, keepBranches, keep, useExternalMergeTool, user);
 			monitor.worked(1);
 
 		} catch (HgException e) {
@@ -139,6 +148,6 @@ public class RebaseOperation extends HgOperation {
 	 */
 	public static RebaseOperation createAbort(IRunnableContext context, HgRoot root)
 	{
-		return new RebaseOperation(context, root, -1, -1, -1, false, true, false, false);
+		return new RebaseOperation(context, root, -1, -1, -1, false, true, false);
 	}
 }

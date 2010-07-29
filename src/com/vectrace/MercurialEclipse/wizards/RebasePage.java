@@ -44,6 +44,7 @@ public class RebasePage extends HgWizardPage {
 	private Button baseRevCheckBox;
 	private Button destRevCheckBox;
 	private Button collapseRevCheckBox;
+	private Button keepCheckBox;
 	private Button keepBranchesCheckBox;
 	private ChangesetTable destTable;
 
@@ -97,6 +98,8 @@ public class RebasePage extends HgWizardPage {
 				Messages.getString("RebasePage.option.collapse")); //$NON-NLS-1$
 		keepBranchesCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.keepBranches")); //$NON-NLS-1$
+		keepCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+				Messages.getString("RebasePage.option.keep")); //$NON-NLS-1$
 
 		if (MercurialEclipsePlugin.getDefault().getPreferenceStore()
 				.getBoolean(MercurialPreferenceConstants.PREF_DEFAULT_REBASE_KEEP_BRANCHES)) {
@@ -196,6 +199,10 @@ public class RebasePage extends HgWizardPage {
 
 	public boolean isCollapseRevSelected() {
 		return collapseRevCheckBox.getSelection();
+	}
+
+	public boolean isKeepSelected() {
+		return keepCheckBox.getSelection();
 	}
 
 	public boolean isKeepBranchesSelected() {
