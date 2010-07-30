@@ -126,8 +126,29 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			job.setSystem(true);
 			job.schedule();
 		}
-		store.setDefault(PREF_USE_MERCURIAL_USERNAME, true);
+		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
+	}
+
+	private File checkForPossibleHgExecutables() {
+		File hgExecutable = null;
+
+		if (!MercurialUtilities.isWindows()) {
+			String extraPath[] = {
+				"/usr/bin/hg",
+				"/usr/local/bin/hg",	// default on MacOS
+				"/opt/local/bin/hg",	// if installed via MacPorts
+			};
+
+			for (String fileName : extraPath) {
+				File file = new File(fileName);
+				if (file.isFile()) {
+					hgExecutable = file;
+					break;
+				}
+			}
+		}
+		return hgExecutable;
 	}
 
 	private void detectAndSetHgExecutable(IPreferenceStore store) {
@@ -136,7 +157,10 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		File hgExecutable = getIntegratedHgExecutable();
 		String defaultExecPath;
 		String existingValue = store.getString(MERCURIAL_EXECUTABLE);
-		if(hgExecutable == null) {
+		if (hgExecutable == null) {
+			hgExecutable = checkForPossibleHgExecutables();
+		}
+		if (hgExecutable == null) {
 			defaultExecPath = "hg";
 			if(existingValue != null && !new File(existingValue).isFile()){
 				store.setValue(MERCURIAL_EXECUTABLE, defaultExecPath);
@@ -154,13 +178,13 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	/**
 	 * @return an full absolute path to the embedded hg executable from the (fragment)
 	 * plugin. This path is guaranteed to point to an <b>existing</b> file. Returns null
-	 * if the file cann ot be found, does not exists or is not a file at all.
+	 * if the file cannot be found, does not exists or is not a file at all.
 	 */
 	public static File getIntegratedHgExecutable(){
 		boolean isWindows = MercurialUtilities.isWindows();
 		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
 		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
-		if(url == null){
+		if(url == null) {
 			return null;
 		}
 		try {
