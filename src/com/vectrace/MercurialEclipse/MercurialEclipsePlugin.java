@@ -11,6 +11,7 @@
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland)     - default encoding
  *     Philip Graf               - proxy support
  *     Bastian Doetsch           - bug fixes and implementation
@@ -108,10 +109,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private ServiceTracker proxyServiceTracker;
 
-	private static final Version LOWEST_WORKING_VERSION = new Version(1, 3, 1);
+	private static final Version LOWEST_WORKING_VERSION = new Version(1, 4, 3);
 
-	private static final Pattern VERSION_PATTERN = Pattern.compile(
-			".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
+	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
 
 	public MercurialEclipsePlugin() {
