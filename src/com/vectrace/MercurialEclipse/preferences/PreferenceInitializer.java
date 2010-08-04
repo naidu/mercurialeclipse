@@ -21,6 +21,7 @@ import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConst
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -39,6 +40,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * Class used to initialize default preference values.
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
+	private static final boolean IS_WINDOWS = MercurialUtilities.isWindows();
 
 	@Override
 	public void initializeDefaultPreferences() {
@@ -133,7 +135,22 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	private File checkForPossibleHgExecutables() {
 		File hgExecutable = null;
 
-		if (!MercurialUtilities.isWindows()) {
+		String envPath = System.getenv("PATH");
+
+		if (envPath != null) {
+			String pathSeparator = String.valueOf(File.pathSeparatorChar);
+			String execSuffix = IS_WINDOWS ? ".exe" : "";
+			for (StringTokenizer st = new StringTokenizer(envPath, pathSeparator, false); st.hasMoreElements(); ) {
+				String execPath = st.nextToken() + "/hg" + execSuffix;
+				File file = new File(execPath);
+				if (file.isFile()) {
+					hgExecutable = file;
+					break;
+				}
+			}
+		}
+
+		if (hgExecutable == null && !IS_WINDOWS) {
 			String extraPath[] = {
 				"/usr/bin/hg",
 				"/usr/local/bin/hg",	// default on MacOS
@@ -181,8 +198,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 * if the file cannot be found, does not exists or is not a file at all.
 	 */
 	public static File getIntegratedHgExecutable(){
-		boolean isWindows = MercurialUtilities.isWindows();
-		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
+		IPath path = IS_WINDOWS ? new Path("$os$/hg.exe") : new Path("$os$/hg");
 		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
 		if(url == null) {
 			return null;
