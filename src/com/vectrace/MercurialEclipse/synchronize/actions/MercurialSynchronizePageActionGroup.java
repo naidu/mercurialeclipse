@@ -36,6 +36,8 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
 
 	private static final String HG_COMMIT_GROUP = "hg.commit";
+	private static final String HG_PUSH_PULL_GROUP = "hg.push.pull";
+
 	// see org.eclipse.ui.IWorkbenchCommandConstants.EDIT_DELETE which was introduced in 3.5
 	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=54581
 	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
@@ -101,17 +103,17 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Push",
 						configuration, getVisibleRootsSelectionProvider(), false, false));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Pull and Update",
 						configuration, getVisibleRootsSelectionProvider(), true, true));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
@@ -125,6 +127,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 		if(menu.find(HG_COMMIT_GROUP) == null){
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
+		}
+		if(menu.find(HG_PUSH_PULL_GROUP) == null){
+			menu.insertAfter(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(HG_PUSH_PULL_GROUP));
 		}
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
