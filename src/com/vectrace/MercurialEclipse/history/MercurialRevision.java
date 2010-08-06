@@ -10,12 +10,15 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     John Peberdy              - optimization
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
 import java.io.File;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -52,7 +55,19 @@ public class MercurialRevision extends FileRevision {
 	private final String hash;
 	private final Signature signature;
 	private File parent;
+
+	/**
+	 * Tags sorted by revision
+	 * @see #pendingTags
+	 */
 	private Tag [] tags;
+
+	/**
+	 *  List of unsorted tags not yet added to {@link #tags}. May be null.
+	 *  @see #tags
+	 */
+	private List<Tag> pendingTags;
+
 	private Status bisectStatus;
 
 	/**
@@ -153,7 +168,10 @@ public class MercurialRevision extends FileRevision {
 
 	@Override
 	public Tag [] getTags() {
-		if(tags == null){
+		if (pendingTags != null) {
+			processPendingTags();
+		}
+		if(tags == null) {
 			return changeSet.getTags();
 		}
 		return tags;
@@ -175,7 +193,7 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	/**
-	 * Allows to add extra tags, not contained in the underlined changeset, to this revision.
+	 * Allows to add extra tags, not contained in the underlying changeset, to this revision.
 	 * The point is: we want to be able to show tag information on revisions of particular
 	 * files, which was NOT directly tagged, but we want to know which existing tags are
 	 * covered by the version.
@@ -186,8 +204,23 @@ public class MercurialRevision extends FileRevision {
 		if(newTag == null) {
 			return;
 		}
+		if (pendingTags == null) {
+			pendingTags = new ArrayList<Tag>(4);
+		}
+		pendingTags.add(newTag);
+	}
+
+	private void processPendingTags()
+	{
+		if (pendingTags == null) {
+			return;
+		}
+
 		SortedSet<Tag> all = new TreeSet<Tag>();
-		all.add(newTag);
+
+		all.addAll(pendingTags);
+		pendingTags = null;
+
 		if(tags != null) {
 			for (Tag tag : tags) {
 				if(tag != null) {
@@ -209,6 +242,7 @@ public class MercurialRevision extends FileRevision {
 	 */
 	public void cleanupExtraTags(){
 		tags = null;
+		pendingTags = null;
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
@@ -310,6 +344,10 @@ public class MercurialRevision extends FileRevision {
 		if (tags != null) {
 			builder.append("tags="); //$NON-NLS-1$
 			builder.append(Arrays.asList(tags));
+		}
+		if (pendingTags != null) {
+			builder.append("pendingTags="); //$NON-NLS-1$
+			builder.append(pendingTags);
 		}
 		builder.append("]"); //$NON-NLS-1$
 		return builder.toString();
