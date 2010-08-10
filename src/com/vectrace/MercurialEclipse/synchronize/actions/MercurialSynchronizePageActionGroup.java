@@ -19,9 +19,12 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.internal.ui.synchronize.actions.OpenInCompareAction;
@@ -30,6 +33,8 @@ import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
@@ -121,19 +126,55 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
-		if(menu.find(DeleteAction.HG_DELETE_GROUP) == null){
+		if (menu.find(DeleteAction.HG_DELETE_GROUP) == null) {
 			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
 					DeleteAction.HG_DELETE_GROUP));
 		}
-		if(menu.find(HG_COMMIT_GROUP) == null){
+		if (menu.find(HG_COMMIT_GROUP) == null){
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
 		}
-		if(menu.find(HG_PUSH_PULL_GROUP) == null){
+		if (menu.find(HG_PUSH_PULL_GROUP) == null){
 			menu.insertAfter(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(HG_PUSH_PULL_GROUP));
 		}
+
+		addUndoMenu(menu);
+
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
 		replaceCompareAndMoveDeleteAction(menu);
+	}
+
+
+	private void addUndoMenu(IMenuManager menu) {
+		MenuManager submenu = new MenuManager("Undo",
+				MercurialEclipsePlugin.getImageDescriptor("undo_edit.gif"), null);
+
+		menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, submenu);
+
+		ISelection selection = getContext().getSelection();
+
+		if (!(selection instanceof StructuredSelection)) {
+			return;
+		}
+
+		StructuredSelection stSelection = (StructuredSelection) selection;
+
+		if (stSelection.size() != 1) {
+			return;
+		}
+
+		Object object = stSelection.iterator().next();
+		if (object instanceof ChangesetGroup) {
+			ChangesetGroup csGroup = ((ChangesetGroup) object);
+			if (csGroup.getChangesets().isEmpty()) {
+				return;
+			}
+
+			HgRoot hgRoot = csGroup.getChangesets().iterator().next().getHgRoot();
+			submenu.add(new RollbackSynchronizeAction("Rollback", getConfiguration(), hgRoot, null));
+			submenu.add(new BackoutSynchronizeAction("Backout", getConfiguration(), hgRoot, null));
+			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, null));
+		}
 	}
 
 	/**
