@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -35,8 +36,20 @@ public class UnShelveHandler extends RootHandler {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					UnShelveOperation op = new UnShelveOperation((IWorkbenchPart) null, hgRoot);
+					final UnShelveOperation op = new UnShelveOperation((IWorkbenchPart) null, hgRoot);
 					op.run(monitor);
+
+					if (op.isConflict()) {
+						getShell().getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								MessageDialog.openInformation(getShell(), Messages
+										.getString("UnShelveHandler.Unshelving"), Messages
+										.getString("UnShelveHandler.conflict")
+										+ "\n" + op.getResult());
+							}
+						});
+					}
+
 					return super.runSafe(monitor);
 				} catch (InvocationTargetException e) {
 					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
@@ -47,7 +60,5 @@ public class UnShelveHandler extends RootHandler {
 				}
 			}
 		}.schedule();
-
 	}
-
 }

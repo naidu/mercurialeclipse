@@ -29,10 +29,13 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
+ * Check {@link #isConflict()} after running and display appropriate message to user.
+ *
  * @author bastian
  */
 public class UnShelveOperation extends HgOperation {
 	private final HgRoot hgRoot;
+	private boolean conflict;
 
 	public UnShelveOperation(IWorkbenchPart part, HgRoot hgRoot) {
 		super(part);
@@ -72,16 +75,25 @@ public class UnShelveOperation extends HgOperation {
 						monitor.subTask(Messages.getString("UnShelveOperation.applyingChanges")); //$NON-NLS-1$
 						ArrayList<String> opts = new ArrayList<String>();
 						opts.add("--no-commit");
-						HgPatchClient.importPatch(hgRoot, shelveFile, opts);
-						monitor.worked(1);
-						monitor.subTask(Messages.getString("UnShelveOperation.emptyingShelf")); //$NON-NLS-1$
-						boolean deleted = shelveFile.delete();
-						monitor.worked(1);
-						monitor.subTask(Messages.getString("UnShelveOperation.refreshingProject")); //$NON-NLS-1$
-						new RefreshWorkspaceStatusJob(hgRoot).schedule();
-						monitor.worked(1);
-						if (!deleted) {
-							throw new HgException(shelveFile.getName() + " could not be deleted.");
+
+						try {
+							HgPatchClient.importPatch(hgRoot, shelveFile, opts);
+							monitor.worked(1);
+							monitor.subTask(Messages.getString("UnShelveOperation.emptyingShelf")); //$NON-NLS-1$
+							if (!shelveFile.delete()) {
+								throw new HgException(shelveFile.getName() + " could not be deleted.");
+							}
+							monitor.worked(1);
+							monitor.subTask(Messages.getString("UnShelveOperation.refreshingProject")); //$NON-NLS-1$
+						} catch (HgException e) {
+							if (HgPatchClient.isPatchImportConflict(e)) {
+								conflict = true;
+								result = e.getLocalizedMessage();
+							} else {
+								throw e;
+							}
+						} finally {
+							new RefreshWorkspaceStatusJob(hgRoot).schedule();
 						}
 					} else {
 						throw new HgException(Messages
@@ -94,7 +106,12 @@ public class UnShelveOperation extends HgOperation {
 		} finally {
 			monitor.done();
 		}
-
 	}
 
+	/**
+	 * @return Whether a conflict occurred while unshelving
+	 */
+	public boolean isConflict() {
+		return conflict;
+	}
 }
