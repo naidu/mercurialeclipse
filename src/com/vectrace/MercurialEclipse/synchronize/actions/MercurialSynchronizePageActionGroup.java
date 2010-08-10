@@ -34,6 +34,7 @@ import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
@@ -132,10 +133,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
 					DeleteAction.HG_DELETE_GROUP));
 		}
-		if (menu.find(HG_COMMIT_GROUP) == null){
+		if (menu.find(HG_COMMIT_GROUP) == null) {
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
 		}
-		if (menu.find(HG_PUSH_PULL_GROUP) == null){
+		if (menu.find(HG_PUSH_PULL_GROUP) == null) {
 			menu.insertAfter(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(HG_PUSH_PULL_GROUP));
 		}
 
@@ -173,9 +174,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			}
 
 			HgRoot hgRoot = csGroup.getChangesets().iterator().next().getHgRoot();
-			submenu.add(new RollbackSynchronizeAction("Rollback", getConfiguration(), hgRoot, null));
-			submenu.add(new BackoutSynchronizeAction("Backout", getConfiguration(), hgRoot, null));
-			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, null));
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP,
+					new RollbackSynchronizeAction("Rollback", getConfiguration(), hgRoot, null));
+		} else if (object instanceof ChangeSet) {
+			ChangeSet changeSet = (ChangeSet) object;
+
+			if (changeSet.getDirection() != Direction.OUTGOING) {
+				return;
+			}
+
+			HgRoot hgRoot = changeSet.getHgRoot();
+			submenu.add(new BackoutSynchronizeAction("Backout", getConfiguration(), hgRoot, changeSet));
+			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, changeSet));
 		}
 	}
 

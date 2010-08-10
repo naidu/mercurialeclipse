@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 public class BackoutSynchronizeAction extends SynchronizeModelAction {
 
 	private final HgRoot hgRoot;
-//	private final ChangeSet changeSet;
+	private final ChangeSet changeSet;
 
 	protected BackoutSynchronizeAction(String text, ISynchronizePageConfiguration configuration,
 			HgRoot hgRoot, ChangeSet changeSet) {
@@ -42,7 +42,7 @@ public class BackoutSynchronizeAction extends SynchronizeModelAction {
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/revert.gif"));
 
 		this.hgRoot = hgRoot;
-//		this.changeSet = changeSet;
+		this.changeSet = changeSet;
 	}
 
 	private class BackoutSynchronizeModelOperation extends SynchronizeModelOperation {
@@ -58,7 +58,7 @@ public class BackoutSynchronizeAction extends SynchronizeModelAction {
 			getShell().getDisplay().asyncExec(new Runnable() {
 
 				public void run() {
-					BackoutWizard backoutWizard = new BackoutWizard(hgRoot);
+					BackoutWizard backoutWizard = new BackoutWizard(hgRoot, changeSet);
 					WizardDialog dialog = new WizardDialog(getShell(), backoutWizard);
 					dialog.setBlockOnOpen(true);
 					int result = dialog.open();

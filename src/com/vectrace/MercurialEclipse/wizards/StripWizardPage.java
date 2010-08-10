@@ -8,6 +8,7 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modofications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -45,10 +46,13 @@ public class StripWizardPage extends HgWizardPage {
 	private boolean unrelated;
 	private boolean stripHeads;
 	private boolean backup;
+	private final ChangeSet changeSet;
 
-	public StripWizardPage(String pageName, String title, ImageDescriptor image, HgRoot hgRoot) {
+	public StripWizardPage(String pageName, String title, ImageDescriptor image,
+			HgRoot hgRoot, ChangeSet changeSet) {
 		super(pageName, title, image);
 		this.hgRoot = hgRoot;
+		this.changeSet = changeSet;
 	}
 
 	public void createControl(Composite parent) {
@@ -78,6 +82,8 @@ public class StripWizardPage extends HgWizardPage {
 
 		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);
+
+		changesetTable.setSelection(changeSet);
 
 		// now the options
 		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$

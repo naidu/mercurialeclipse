@@ -8,6 +8,7 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -45,10 +46,14 @@ public class BackoutWizardPage extends HgWizardPage {
 	private ChangeSet backoutRevision;
 	private final HgRoot hgRoot;
 	private Text userTextField;
+	private final ChangeSet selectedChangeSet;
 
-	public BackoutWizardPage(String pageName, String title, ImageDescriptor image, HgRoot hgRoot) {
+	public BackoutWizardPage(String pageName, String title, ImageDescriptor image,
+			HgRoot hgRoot, ChangeSet selectedChangeSet) {
+
 		super(pageName, title, image);
 		this.hgRoot = hgRoot;
+		this.selectedChangeSet = selectedChangeSet;
 	}
 
 	public void createControl(Composite parent) {
@@ -66,11 +71,7 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				backoutRevision = changesetTable.getSelection();
-				messageTextField.setText(Messages.getString(
-						"BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
-						+ " " + backoutRevision.toString()); //$NON-NLS-1$
-				setPageComplete(true);
+				setCommitMessageFromSelectedRevision();
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -81,6 +82,9 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);
+
+		changesetTable.setSelection(selectedChangeSet);
+		setCommitMessageFromSelectedRevision();
 
 		// now the options
 		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
@@ -103,6 +107,20 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		setControl(composite);
 		setPageComplete(true);
+	}
+
+	protected void setCommitMessageFromSelectedRevision() {
+		backoutRevision = changesetTable.getSelection();
+		if (backoutRevision != null) {
+			getShell().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					messageTextField.setText(Messages.getString(
+					"BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
+					+ " " + backoutRevision.toString()); //$NON-NLS-1$
+					setPageComplete(true);
+				}
+			});
+		}
 	}
 
 	@Override

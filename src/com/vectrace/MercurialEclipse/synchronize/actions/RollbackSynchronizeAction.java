@@ -16,6 +16,7 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
@@ -75,4 +76,8 @@ public class RollbackSynchronizeAction extends SynchronizeModelAction {
 		return new RollbackSynchronizeOperation(configuration, elements);
 	}
 
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection) {
+		return true;	// should be always available
+	}
 }

@@ -8,10 +8,12 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modofications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -19,6 +21,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class StripWizard extends HgWizard {
 	private HgRoot hgRoot;
+	private ChangeSet changeSet;
 
 	private StripWizard() {
 		super(Messages.getString("StripWizard.title"));  //$NON-NLS-1$
@@ -28,6 +31,14 @@ public class StripWizard extends HgWizard {
 	public StripWizard(HgRoot hgRoot) {
 		this();
 		this.hgRoot = hgRoot;
+	}
+
+	/**
+	 * Constructor for wizard with preselected change set
+	 */
+	public StripWizard(HgRoot hgRoot, ChangeSet changeSet) {
+		this(hgRoot);
+		this.changeSet = changeSet;
 	}
 
 	@Override
@@ -48,7 +59,7 @@ public class StripWizard extends HgWizard {
 	protected HgWizardPage createPage(String pageName, String pageTitle,
 			String iconPath, String description) {
 		this.page = new StripWizardPage(pageName, pageTitle,
-				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot);
+				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot, changeSet);
 		initPage(description, page);
 		return page;
 	}

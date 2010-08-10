@@ -8,10 +8,12 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modifocations
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -19,6 +21,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class BackoutWizard extends HgWizard {
 	private HgRoot hgRoot;
+	private ChangeSet selectedChangeSet;
 
 	private BackoutWizard() {
 		super(Messages.getString("BackoutWizard.title")); //$NON-NLS-1$
@@ -28,6 +31,17 @@ public class BackoutWizard extends HgWizard {
 	public BackoutWizard(HgRoot hgRoot) {
 		this();
 		this.hgRoot = hgRoot;
+	}
+
+	/**
+	 * Constructor for wizard with preselected change set
+	 * @param hgRoot
+	 * @param selectedChangeSet
+	 */
+	public BackoutWizard(HgRoot hgRoot, ChangeSet selectedChangeSet) {
+		this();
+		this.hgRoot = hgRoot;
+		this.selectedChangeSet = selectedChangeSet;
 	}
 
 	@Override
@@ -47,7 +61,7 @@ public class BackoutWizard extends HgWizard {
 	protected HgWizardPage createPage(String pageName, String pageTitle,
 			String iconPath, String description) {
 		this.page = new BackoutWizardPage(pageName, pageTitle,
-				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot);
+				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot, selectedChangeSet);
 		initPage(description, page);
 		return page;
 	}

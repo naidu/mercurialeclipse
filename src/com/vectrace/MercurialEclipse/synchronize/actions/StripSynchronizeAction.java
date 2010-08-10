@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.wizards.StripWizard;
 public class StripSynchronizeAction extends SynchronizeModelAction {
 
 	private final HgRoot hgRoot;
-//	private final ChangeSet changeSet;
+	private final ChangeSet changeSet;
 
 	protected StripSynchronizeAction(String text, ISynchronizePageConfiguration configuration,
 			HgRoot hgRoot, ChangeSet changeSet) {
@@ -39,7 +39,7 @@ public class StripSynchronizeAction extends SynchronizeModelAction {
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/revert.gif"));
 
 		this.hgRoot = hgRoot;
-//		this.changeSet = changeSet;
+		this.changeSet = changeSet;
 	}
 
 	private class StripSynchronizeModelOperation extends SynchronizeModelOperation {
@@ -55,7 +55,7 @@ public class StripSynchronizeAction extends SynchronizeModelAction {
 			getShell().getDisplay().asyncExec(new Runnable() {
 
 				public void run() {
-					StripWizard stripWizard = new StripWizard(hgRoot);
+					StripWizard stripWizard = new StripWizard(hgRoot, changeSet);
 					WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
 					dialog.setBlockOnOpen(true);
 					dialog.open();

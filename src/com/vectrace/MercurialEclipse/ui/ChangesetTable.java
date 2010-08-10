@@ -10,6 +10,7 @@
  *     Bastian Doetsch           - support for multi-select tables
  *     Andrei Loskutov (Intland) - bug fixes
  *     Philip Graf               - bug fix
+ *     Ilya Ivanov (Intland)     - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -222,6 +223,18 @@ public class ChangesetTable extends Composite {
 		}
 		table.setItemCount(sets.length);
 
+	}
+
+	public void setSelection(ChangeSet selection) {
+		if (selection == null) {
+			return;
+		}
+
+		for (TableItem tItem : table.getItems()) {
+			if (selection.compareTo((ChangeSet) tItem.getData()) == 0) {
+				table.setSelection(tItem);
+			}
+		}
 	}
 
 	public void clearTable() {
