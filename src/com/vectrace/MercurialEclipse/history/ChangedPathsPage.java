@@ -220,7 +220,7 @@ public class ChangedPathsPage {
 		if (changePathsViewer != null) {
 			changePathsViewer.getControl().dispose();
 		}
-		if (diffTextViewer != null) {
+		if (diffTextViewer != null && diffTextViewer.getControl() != null) {
 			diffTextViewer.getControl().dispose();
 		}
 	}
@@ -591,7 +591,8 @@ public class ChangedPathsPage {
 		protected IStatus run(IProgressMonitor monitor) {
 			try {
 				String diff = HgPatchClient.getDiff(hgRoot, entry, secondEntry);
-				if(!monitor.isCanceled() && !diffTextViewer.getControl().isDisposed()) {
+				if (!monitor.isCanceled() && diffTextViewer.getControl() != null
+						&& !diffTextViewer.getControl().isDisposed()) {
 					getHistoryPage().scheduleInPage(new UpdateDiffViewerJob(diff));
 				}
 			} catch (HgException e) {
@@ -618,7 +619,7 @@ public class ChangedPathsPage {
 
 		@Override
 		public IStatus runInUIThread(IProgressMonitor monitor) {
-			if(diffTextViewer.getControl().isDisposed()){
+			if (diffTextViewer.getControl() == null || diffTextViewer.getControl().isDisposed()) {
 				return Status.CANCEL_STATUS;
 			}
 			diffTextViewer.setDocument(new Document(diff));
