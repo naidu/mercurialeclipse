@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Ilya	implementation
+ * Ilya Ivanov (Intland)	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -27,8 +27,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
- * @author Ilya
- *
+ * @author Ilya Ivanov (Intland)
  */
 public class RollbackSynchronizeAction extends SynchronizeModelAction {
 

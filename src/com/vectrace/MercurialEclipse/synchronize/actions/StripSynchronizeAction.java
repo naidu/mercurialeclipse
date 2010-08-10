@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Ilya	implementation
+ * Ilya Ivanov (Intland)	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 /**
- * @author Ilya Ivanov
+ * @author Ilya Ivanov (Intland)
  */
 public class StripSynchronizeAction extends SynchronizeModelAction {
 

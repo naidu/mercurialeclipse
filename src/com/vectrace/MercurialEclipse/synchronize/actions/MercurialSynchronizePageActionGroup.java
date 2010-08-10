@@ -10,6 +10,7 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland) - modifications
+ *     Ilya Ivanov (Intland) - modifications
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 

@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Ilya	implementation
+ * Ilya Ivanov (Intland) implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
 /**
- * @author Ilya Ivanov
+ * @author Ilya Ivanov (Intland)
  */
 public class BackoutSynchronizeAction extends SynchronizeModelAction {
 
