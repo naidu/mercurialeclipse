@@ -34,6 +34,7 @@ import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
@@ -167,7 +168,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		Object object = stSelection.iterator().next();
 		if (object instanceof ChangesetGroup) {
 			ChangesetGroup csGroup = ((ChangesetGroup) object);
-			if (csGroup.getChangesets().isEmpty()) {
+			if (csGroup.getChangesets().isEmpty() || csGroup.getDirection() != Direction.OUTGOING) {
 				return;
 			}
 
