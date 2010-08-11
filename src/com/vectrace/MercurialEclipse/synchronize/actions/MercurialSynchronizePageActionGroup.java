@@ -144,7 +144,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 					HG_COMMIT_GROUP,
 					new ResolveSynchronizeAction("Mark as Resolved",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
-		} else if (isSelectionOutgoing()) {
+		} else if (!isSelectionOutgoing()) {
 			menu.insertAfter(
 					HG_COMMIT_GROUP,
 					new ResolveSynchronizeAction("Mark as Resolved",
