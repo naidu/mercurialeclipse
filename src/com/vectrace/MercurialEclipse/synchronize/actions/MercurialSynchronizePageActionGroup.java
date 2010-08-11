@@ -173,8 +173,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 			HgRoot hgRoot = csGroup.getChangesets().iterator().next().getHgRoot();
 			submenu.add(new RollbackSynchronizeAction("Rollback", getConfiguration(), hgRoot, null));
-			submenu.add(new BackoutSynchronizeAction("Backout", getConfiguration(), hgRoot, null));
-			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, null));
+			submenu.add(new BackoutSynchronizeAction("Backout...", getConfiguration(), hgRoot, null));
+			submenu.add(new StripSynchronizeAction("Strip...", getConfiguration(), hgRoot, null));
 		}
 	}
 
