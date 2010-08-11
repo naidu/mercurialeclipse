@@ -29,7 +29,9 @@ public class RemoteKey {
 	private final HgRoot root;
 	private final IHgRepositoryLocation repo;
 
-	/** never null */
+	/**
+	 * The branch name, or null to indicate all branches.
+	 */
 	private final String branch;
 
 	/**
