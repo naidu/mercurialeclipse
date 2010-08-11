@@ -18,8 +18,8 @@ import java.io.IOException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
@@ -48,9 +48,10 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 			return new RemoteData(key, Direction.INCOMING);
 		}
 
-		// see issue 10495, 11093: there can be many branch heads, so show all of them
-		// otherwise if "-r branch" is used, only branch head at "tip" is shown
-		// command.addOptions("-r", branch);
+		// see issue 10495, 11093: there can be many branch heads: "--rev branch" cannot be used
+		if (branch != null) {
+			command.addOptions("--branch", branch);
+		}
 
 		File bundleFile = null;
 		try {
@@ -61,10 +62,14 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 
 				boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 				int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
+
+				// At one time --debug fixed a problem. Removing it now because we require newer Mercurial.
 				// Fix (?) for issue #10859: in some cases (multiple projects under the same root)
 				// hg fails to find right parent for incoming changesets,
 				// therefore it seems that we must use "--debug"
-				command.addOptions("--debug", "--style", //$NON-NLS-1$
+				// command.addOptions("--debug");
+
+				command.addOptions("--style", //$NON-NLS-1$
 						AbstractParseChangesetClient.getStyleFile(style)
 						.getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
 						.getCanonicalPath());

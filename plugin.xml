@@ -856,12 +856,12 @@
                     </visibleWhen>
 
                     <command
-                      commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
+                      commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
                       icon="icons/actions/revert.gif">
                     </command>
 
                     <command
-                      commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
+                      commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
                       icon="icons/actions/revert.gif">
                     </command>
 

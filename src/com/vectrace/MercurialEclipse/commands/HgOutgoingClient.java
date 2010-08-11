@@ -16,8 +16,8 @@ import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
@@ -69,9 +69,12 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-		// see issue 10495, 11093: there can be many branch heads, so show all of them
-		// otherwise if "-r branch" is used, only branch head at "tip" is shown
-		// command.addOptions("-r", branch);
+
+		// see issue 10495, 11093: there can be many branch heads: "--rev branch" cannot be used
+		if (key.getBranch() != null) {
+			command.addOptions("--branch", key.getBranch());
+		}
+
 		return command;
 	}
 
