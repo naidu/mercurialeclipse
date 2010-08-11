@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -246,7 +247,13 @@ public final class MercurialUtilities {
 			// do not try to match project names: this doesn't make sense, see issue #11833
 			return true;
 		}
-		return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember());
+		if (resource.isTeamPrivateMember()) {
+			return false;
+		}
+		if (resource instanceof IFile) {
+			return !Team.isIgnoredHint(resource);
+		}
+		return true;
 	}
 
 	/**
