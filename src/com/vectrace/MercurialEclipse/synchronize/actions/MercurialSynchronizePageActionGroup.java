@@ -93,11 +93,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				HG_COMMIT_GROUP,
-				new ResolveSynchronizeAction("Mark as Resolved",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Push",
 						configuration, getVisibleRootsSelectionProvider(), false, false));
@@ -129,7 +124,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		addUndoMenu(menu);
 
-		if (getSelectionDirection() == Direction.LOCAL) {
+		if (isSelectionUncommited()) {
 			menu.insertAfter(
 					HG_COMMIT_GROUP,
 					new AddAction("Add...",
@@ -144,11 +139,76 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 					HG_COMMIT_GROUP,
 					new RevertSynchronizeAction("Revert...",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
+
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new ResolveSynchronizeAction("Mark as Resolved",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+		} else if (isSelectionOutgoing()) {
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new ResolveSynchronizeAction("Mark as Resolved",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
 		}
 
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
 		replaceCompareAndMoveDeleteAction(menu);
+	}
+
+
+	private boolean isSelectionUncommited() {
+		Object[] selectedObjects = getSelectedObjects();
+
+		if (selectedObjects == null) {
+			return false;
+		}
+
+		for (Object object : selectedObjects) {
+			if (object instanceof WorkingChangeSet) {
+				continue;
+			} else if (object instanceof FileFromChangeSet) {
+				FileFromChangeSet file = (FileFromChangeSet) object;
+				if (!(file.getChangeset() instanceof WorkingChangeSet)) {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private boolean isSelectionOutgoing() {
+		Object[] selectedObjects = getSelectedObjects();
+
+		if (selectedObjects == null) {
+			return false;
+		}
+
+		for (Object object : selectedObjects) {
+			if (object instanceof ChangesetGroup) {
+				ChangesetGroup csGroup = (ChangesetGroup) object;
+				if (csGroup.getDirection() != Direction.OUTGOING) {
+					return false;
+				}
+			} else if (object instanceof ChangeSet) {
+				ChangeSet cs = (ChangeSet) object;
+				if (cs.getDirection() != Direction.OUTGOING) {
+					return false;
+				}
+			} else if (object instanceof FileFromChangeSet) {
+				FileFromChangeSet file = (FileFromChangeSet) object;
+				if (file.getChangeset().getDirection() != Direction.OUTGOING) {
+					return false;
+				}
+			} else {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 
@@ -196,32 +256,14 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 	}
 
-	private Direction getSelectionDirection() {
-		Object object = getSelectedObject();
-
-		if (object instanceof ChangeSet) {
-			return ((ChangeSet) object).getDirection();
-		} else if (object instanceof ChangesetGroup) {
-			return ((ChangesetGroup) object).getDirection();
-		} else if (object instanceof FileFromChangeSet) {
-			return ((FileFromChangeSet) object).getChangeset().getDirection();
-		}
-
-		return null;
-	}
-
-	private Object getSelectedObject() {
+	private Object[] getSelectedObjects() {
 		ISelection selection = getContext().getSelection();
 		if (!(selection instanceof StructuredSelection)) {
 			return null;
 		}
 
 		StructuredSelection stSelection = (StructuredSelection) selection;
-		if (stSelection.size() == 0) {
-			return null;
-		}
-
-		return stSelection.iterator().next();
+		return stSelection.toArray();
 	}
 
 
