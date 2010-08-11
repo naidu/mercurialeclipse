@@ -36,7 +36,9 @@ import org.eclipse.ui.IActionBars;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
@@ -92,21 +94,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_COMMIT_GROUP,
-				new AddAction("Add...",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				HG_COMMIT_GROUP,
-				new CommitSynchronizeAction("Commit...",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				HG_COMMIT_GROUP,
-				new RevertSynchronizeAction("Revert...",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				HG_COMMIT_GROUP,
 				new ResolveSynchronizeAction("Mark as Resolved",
 						configuration, getVisibleRootsSelectionProvider()));
 
@@ -142,6 +129,23 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		addUndoMenu(menu);
 
+		if (getSelectionDirection() == Direction.LOCAL) {
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new AddAction("Add...",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new CommitSynchronizeAction("Commit...",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new RevertSynchronizeAction("Revert...",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+		}
+
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
 		replaceCompareAndMoveDeleteAction(menu);
@@ -161,12 +165,15 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 
 		StructuredSelection stSelection = (StructuredSelection) selection;
-
 		if (stSelection.size() != 1) {
 			return;
 		}
 
 		Object object = stSelection.iterator().next();
+		if (object instanceof WorkingChangeSet) {
+			return;
+		}
+
 		if (object instanceof ChangesetGroup) {
 			ChangesetGroup csGroup = ((ChangesetGroup) object);
 			if (csGroup.getChangesets().isEmpty() || csGroup.getDirection() != Direction.OUTGOING) {
@@ -188,6 +195,36 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, changeSet));
 		}
 	}
+
+	private Direction getSelectionDirection() {
+		Object object = getSelectedObject();
+
+		if (object instanceof ChangeSet) {
+			return ((ChangeSet) object).getDirection();
+		} else if (object instanceof ChangesetGroup) {
+			return ((ChangesetGroup) object).getDirection();
+		} else if (object instanceof FileFromChangeSet) {
+			return ((FileFromChangeSet) object).getChangeset().getDirection();
+		}
+
+		return null;
+	}
+
+	private Object getSelectedObject() {
+		ISelection selection = getContext().getSelection();
+		if (!(selection instanceof StructuredSelection)) {
+			return null;
+		}
+
+		StructuredSelection stSelection = (StructuredSelection) selection;
+		if (stSelection.size() == 0) {
+			return null;
+		}
+
+		return stSelection.iterator().next();
+	}
+
+
 
 	/**
 	 * Replaces default "OpenInCompareAction" action with our custom, moves delete action
