@@ -251,8 +251,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			}
 
 			HgRoot hgRoot = changeSet.getHgRoot();
-			submenu.add(new BackoutSynchronizeAction("Backout", getConfiguration(), hgRoot, changeSet));
-			submenu.add(new StripSynchronizeAction("Strip", getConfiguration(), hgRoot, changeSet));
+			submenu.add(new BackoutSynchronizeAction("Backout...", getConfiguration(), hgRoot, changeSet));
+			submenu.add(new StripSynchronizeAction("Strip...", getConfiguration(), hgRoot, changeSet));
 		}
 	}
 
