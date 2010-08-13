@@ -29,6 +29,11 @@ public class RevisionNode extends ResourceNode {
 
 	@Override
 	public String getName() {
+		return getResource().getName();
+	}
+
+	public String getLabel()
+	{
 		return rev.getName();
 	}
 
@@ -37,6 +42,16 @@ public class RevisionNode extends ResourceNode {
 		// prefetch byte content
 		getContent();
 		return super.getContents();
+	}
+
+	@Override
+	public long getModificationDate() {
+		if (rev.getChangeSet() != null)
+		{
+			return rev.getChangeSet().getDate().getTime();
+		}
+
+		return super.getModificationDate();
 	}
 
 	public int getRevision() {
@@ -49,11 +64,9 @@ public class RevisionNode extends ResourceNode {
 
 	@Override
 	protected InputStream createStream() throws CoreException {
-		// System.out.println("Creating stream...");
 		return rev.getContents();
 	}
 
-	// to avoid FindBugs warnings
 	@Override
 	public boolean equals(Object other) {
 		boolean superResult = super.equals(other);
@@ -71,7 +84,6 @@ public class RevisionNode extends ResourceNode {
 		return resource1.equals(resource2);
 	}
 
-	// to avoid FindBugs warnings
 	@Override
 	public int hashCode() {
 		return super.hashCode();

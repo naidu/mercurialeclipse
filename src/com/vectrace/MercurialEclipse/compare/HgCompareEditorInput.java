@@ -60,10 +60,10 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		this.ancestor = findParentNodeIfExists(resource, left, right);
 		this.right = right;
 		setTitle(resource.getName());
-		configuration.setLeftLabel(left.getName());
+		configuration.setLeftLabel(getLabel(left));
 		// if left isn't a RevisionNode, then it must be the one on the filesystem
 		configuration.setLeftEditable(!(left instanceof RevisionNode));
-		configuration.setRightLabel(right.getName());
+		configuration.setRightLabel(getLabel(right));
 		configuration.setRightEditable(false);
 	}
 
@@ -128,13 +128,20 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		this.right = right;
 		this.resource = leftResource;
 		setTitle(left.getName());
-		configuration.setLeftLabel(left.getName());
+		configuration.setLeftLabel(getLabel(left));
 		configuration.setLeftEditable(localEditable);
 		if(ancestor != null) {
-			configuration.setAncestorLabel(ancestor.getName());
+			configuration.setAncestorLabel(getLabel(ancestor));
 		}
-		configuration.setRightLabel(right.getName());
+		configuration.setRightLabel(getLabel(right));
 		configuration.setRightEditable(false);
+	}
+
+	private static String getLabel(ResourceNode node) {
+		if (node instanceof RevisionNode) {
+			return ((RevisionNode) node).getLabel();
+		}
+		return node.getName();
 	}
 
 	@Override
