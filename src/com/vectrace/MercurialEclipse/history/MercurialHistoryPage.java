@@ -12,7 +12,7 @@
  *     Subclipse project committers - reference
  *     Charles O'Farrell         - comparison diff
  *     Andrei Loskutov (Intland) - bug fixes
- *     Ilya Ivanov (Intlanf)     - modifications
+ *     Ilya Ivanov (Intland)     - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 

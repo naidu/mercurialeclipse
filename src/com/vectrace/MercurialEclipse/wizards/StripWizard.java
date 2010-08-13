@@ -8,7 +8,7 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *     Andrei Loskutov (Intland) - bug fixes
- *     Ilya Ivanov (Intland) - modofications
+ *     Ilya Ivanov (Intland) - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
