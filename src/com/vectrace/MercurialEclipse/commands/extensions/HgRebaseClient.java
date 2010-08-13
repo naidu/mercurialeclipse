@@ -69,6 +69,7 @@ public class HgRebaseClient extends AbstractClient {
 			// Do not invoke external editor for commit message
 			// Future: Allow user to specify this
 			c.addOptions("--config", "ui.editor=echo"); //$NON-NLS-1$ //$NON-NLS-2$
+			// Future: Delete this block and use  addMergeToolPreference(command);
 		}
 		c.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 

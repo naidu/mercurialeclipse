@@ -18,17 +18,13 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgMergeClient extends AbstractClient {
 
-	public static String merge(HgRoot hgRoot, String revision, boolean useExternalMergeTool, boolean forced)
+	public static String merge(HgRoot hgRoot, String revision, boolean forced)
 			throws HgException {
 		HgCommand command = new HgCommand("merge", hgRoot, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-		if (!useExternalMergeTool) {
-			// we use simplemerge, so no tool is started. We
-			// need this option, though, as we still want the Mercurial merge to
-			// take place.
-			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
+
+		addMergeToolPreference(command);
 
 		if (revision != null) {
 			command.addOptions("-r", revision); //$NON-NLS-1$

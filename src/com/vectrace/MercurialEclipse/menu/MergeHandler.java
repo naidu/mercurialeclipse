@@ -24,7 +24,6 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -35,7 +34,6 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -113,13 +111,7 @@ public class MergeHandler extends RootHandler {
 	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
 			CoreException {
-		boolean useExternalMergeTool = Boolean.valueOf(
-				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-				"false")).booleanValue(); //$NON-NLS-1$
-
-		String result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
-				useExternalMergeTool, forced);
-
+		String result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(), forced);
 		String mergeChangesetId = cs.getChangeset();
 		MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 		try {

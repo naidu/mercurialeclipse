@@ -129,16 +129,7 @@ public class HgResolveClient extends AbstractClient {
 		HgCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
 				false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
-		boolean useExternalMergeTool = Boolean.valueOf(
-				HgClients.getPreference(
-						MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-						"false")).booleanValue(); //$NON-NLS-1$
-		if (!useExternalMergeTool) {
-			// we use an non-existent UI Merge tool, so no tool is started. We
-			// need this option, though, as we still want the Mercurial merge to
-			// take place.
-			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
+		addMergeToolPreference(command);
 		command
 				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		String result = command.executeToString();

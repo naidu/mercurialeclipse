@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
@@ -41,13 +40,8 @@ public class HgBackoutClient extends AbstractClient {
 
 		HgCommand command = new HgCommand("backout", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		boolean useExternalMergeTool = Boolean.valueOf(
-				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-						"false")).booleanValue(); //$NON-NLS-1$
 
-		if (!useExternalMergeTool) {
-			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
+		addMergeToolPreference(command);
 
 		command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addUserName(user);

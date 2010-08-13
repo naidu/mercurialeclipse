@@ -130,6 +130,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		}
 		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
+		store.setDefault(PREF_USE_EXTERNAL_MERGE, false);
 	}
 
 	private File checkForPossibleHgExecutables() {
