@@ -12,6 +12,7 @@
  *     Subclipse project committers - reference
  *     Charles O'Farrell         - comparison diff
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intlanf)     - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -52,6 +53,8 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.dnd.Clipboard;
@@ -62,6 +65,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.history.IFileHistory;
@@ -90,7 +94,11 @@ import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 import com.vectrace.MercurialEclipse.wizards.Messages;
+import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 public class MercurialHistoryPage extends HistoryPage {
 
@@ -115,6 +123,9 @@ public class MercurialHistoryPage extends HistoryPage {
 	private final IAction bisectResetAction = new BisectResetAction(this);
 	private final IAction exportAsBundleAction = new ExportAsBundleAction(this);
 	private final IAction mergeWithCurrentChangesetAction = new MergeWithCurrentChangesetAction(this);
+	private Action stripAction;
+	private Action backoutAction;
+
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -528,9 +539,100 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif")); //$NON-NLS-1$
 
+		stripAction = new Action() {
+			{
+				setText("Strip...");
+				setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/revert.gif"));
+			}
+
+			@Override
+			public void run() {
+				final Shell shell = MercurialEclipsePlugin.getActiveShell();
+
+				shell.getDisplay().asyncExec(new Runnable() {
+
+					public void run() {
+						ChangeSet changeSet = null;
+
+						MercurialRevision[] revisions = getSelectedRevisions();
+						if (revisions == null || revisions.length != 1) {
+							return;
+						}
+						changeSet = revisions[0].getChangeSet();
+
+						StripWizard stripWizard = new StripWizard(changeSet.getHgRoot(), changeSet);
+						WizardDialog dialog = new WizardDialog(shell, stripWizard);
+						dialog.setBlockOnOpen(true);
+						dialog.open();
+					}
+				});
+			}
+
+			@Override
+			public boolean isEnabled() {
+				MercurialRevision[] revs = getSelectedRevisions();
+				if (revs != null && revs.length == 1) {
+					return true;
+				}
+				return false;
+			}
+		};
+
+		backoutAction = new Action() {
+			{
+				setText("Backout...");
+				setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/revert.gif"));
+			}
+
+			@Override
+			public void run() {
+				final Shell shell = MercurialEclipsePlugin.getActiveShell();
+
+				shell.getDisplay().asyncExec(new Runnable() {
+
+					public void run() {
+						ChangeSet changeSet = null;
+
+						MercurialRevision[] revisions = getSelectedRevisions();
+						if (revisions == null || revisions.length != 1) {
+							return;
+						}
+						changeSet = revisions[0].getChangeSet();
+
+						BackoutWizard backoutWizard = new BackoutWizard(changeSet.getHgRoot(), changeSet);
+						WizardDialog dialog = new WizardDialog(shell, backoutWizard);
+						dialog.setBlockOnOpen(true);
+						int result = dialog.open();
+
+						if (result == Window.OK) {
+							new RefreshWorkspaceStatusJob(changeSet.getHgRoot(), RefreshRootJob.ALL).schedule();
+						}
+					}
+				});
+			}
+
+			@Override
+			public boolean isEnabled() {
+				MercurialRevision[] revs = getSelectedRevisions();
+				if (revs != null && revs.length == 1) {
+					return true;
+				}
+				return false;
+			}
+		};
+
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
 		final MenuManager bisectMenu = new MenuManager("Bisect");
+		final MenuManager undoMenu = new MenuManager("Undo",
+				MercurialEclipsePlugin.getImageDescriptor("undo_edit.gif"), null);
+
+		undoMenu.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+				undoMenu.add(stripAction);
+				undoMenu.add(backoutAction);
+			}
+		});
 
 		bisectMenu.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
@@ -569,12 +671,18 @@ public class MercurialHistoryPage extends HistoryPage {
 				menuMgr1.add(mergeWithCurrentChangesetAction);
 				menuMgr1.add(bisectMenu);
 				menuMgr1.add(new Separator());
+				menuMgr1.add(undoMenu);
+				stripAction.setEnabled(stripAction.isEnabled());
+				backoutAction.setEnabled(backoutAction.isEnabled());
+				undoMenu.setVisible(stripAction.isEnabled() || backoutAction.isEnabled());
+				menuMgr1.add(new Separator());
 				menuMgr1.add(exportAsBundleAction);
 				menuMgr1.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 			}
 		});
 
 		bisectMenu.setRemoveAllWhenShown(true);
+		undoMenu.setRemoveAllWhenShown(true);
 		menuMgr.setRemoveAllWhenShown(true);
 		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
 		getSite().registerContextMenu(MercurialEclipsePlugin.ID + ".hgHistoryPage",  menuMgr, viewer);
