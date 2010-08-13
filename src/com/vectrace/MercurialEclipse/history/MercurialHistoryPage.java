@@ -629,8 +629,8 @@ public class MercurialHistoryPage extends HistoryPage {
 
 		undoMenu.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager manager) {
-				undoMenu.add(stripAction);
 				undoMenu.add(backoutAction);
+				undoMenu.add(stripAction);
 			}
 		});
 
