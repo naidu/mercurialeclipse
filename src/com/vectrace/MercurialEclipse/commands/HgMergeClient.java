@@ -23,7 +23,6 @@ public class HgMergeClient extends AbstractClient {
 		HgCommand command = new HgCommand("merge", hgRoot, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-
 		addMergeToolPreference(command);
 
 		if (revision != null) {
