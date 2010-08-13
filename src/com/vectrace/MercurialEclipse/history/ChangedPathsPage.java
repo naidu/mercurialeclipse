@@ -290,24 +290,31 @@ public class ChangedPathsPage {
 		IDocument document = diffTextViewer.getDocument();
 		int nrOfLines = document.getNumberOfLines();
 		Display display = diffTextViewer.getControl().getDisplay();
-		for (int i = 0; i < nrOfLines && !monitor.isCanceled(); i++) {
-			if(nrOfLines > 100 && i%100 == 0){
-				while(display.readAndDispatch()){
-					if(monitor.isCanceled()){
-						// give user the chance to break the job
-						return;
+
+		try {
+			diffTextViewer.getControl().setRedraw(false);
+			for (int i = 0; i < nrOfLines && !monitor.isCanceled(); i++) {
+				if(nrOfLines > 100 && i%100 == 0){
+					while(display.readAndDispatch()){
+						if(monitor.isCanceled()){
+							// give user the chance to break the job
+							return;
+						}
 					}
 				}
+				try {
+					IRegion lineInformation = document.getLineInformation(i);
+					int offset = lineInformation.getOffset();
+					int length = lineInformation.getLength();
+					Color lineColor = getDiffLineColor(document.get( offset, length));
+					diffTextViewer.setTextColor(lineColor, offset, length, true);
+				} catch (BadLocationException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
-			try {
-				IRegion lineInformation = document.getLineInformation(i);
-				int offset = lineInformation.getOffset();
-				int length = lineInformation.getLength();
-				Color lineColor = getDiffLineColor(document.get( offset, length));
-				diffTextViewer.setTextColor(lineColor, offset, length, true);
-			} catch (BadLocationException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+		}
+		finally {
+			diffTextViewer.getControl().setRedraw(true);
 		}
 	}
 
