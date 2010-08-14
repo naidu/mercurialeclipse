@@ -142,7 +142,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		HgRoot hgRoot = getAndStoreHgRoot(project);
 		HG_ROOTS.put(project, new HgRoot[] { hgRoot });
 		// try to find .hg directory to set it as private member
-		final IResource hgDir = project.getFolder(".hg"); //$NON-NLS-1$
+		final IResource hgDir = project.findMember(".hg"); //$NON-NLS-1$
 		if (hgDir != null) {
 			setTeamPrivate(hgDir);
 		}
