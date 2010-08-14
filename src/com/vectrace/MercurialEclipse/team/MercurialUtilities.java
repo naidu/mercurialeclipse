@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -249,10 +248,7 @@ public final class MercurialUtilities {
 			return true;
 		}
 
-		// When first checking out a project the .hg folder is not immediately set as
-		// team private.
-		if ((resource instanceof IFolder && ".hg".equals(resource.getName()))
-				|| resource.isTeamPrivateMember()) {
+		if (resource.isTeamPrivateMember()) {
 			return false;
 		}
 		if (resource instanceof IFile) {
