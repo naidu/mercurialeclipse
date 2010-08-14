@@ -29,7 +29,6 @@ public class HgUpdateClient extends AbstractClient {
 		if (clean) {
 			command.addOptions("-C"); //$NON-NLS-1$
 		}
-		addMergeToolPreference(command);
 
 		try {
 			command.executeToBytes();
