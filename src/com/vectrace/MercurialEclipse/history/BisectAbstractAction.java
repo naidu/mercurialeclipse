@@ -26,7 +26,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
  * @author bastian
@@ -87,7 +88,7 @@ public abstract class BisectAbstractAction extends Action {
 						HgBisectClient.reset(root);
 					}
 
-					MercurialStatusCache.getInstance().refreshStatus(root, monitor);
+					new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL).schedule();
 
 					new SafeUiJob(Messages.BisectAbstractAction_showBisectionResult) {
 						@Override
