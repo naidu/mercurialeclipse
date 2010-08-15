@@ -11,6 +11,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.exception;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -24,6 +27,11 @@ public class HgException extends TeamException {
 	public static final int OPERATION_FAILED = -100;
 	public static final int OPERATION_CANCELLED = -200;
 	public static final String OPERATION_FAILED_STRING = Messages.getString("HgException.operationFailed"); //$NON-NLS-1$
+
+	/**
+	 * @see #getConciseMessage()
+	 */
+	private static final Pattern CONCISE_MESSAGE_PATTERN = Pattern.compile("^abort:\\s*(.+)", Pattern.MULTILINE);
 
 	public HgException(IStatus status) {
 		super(status);
@@ -73,5 +81,21 @@ public class HgException extends TeamException {
 	public String toString() {
 		// never null
 		return getMessage();
+	}
+
+	/**
+	 * Parses the message looking for "abort:" and if present returns the remainder of the line
+	 *
+	 * @return A more concise error message if possible. Otherwise the entire error message
+	 */
+	public String getConciseMessage() {
+		String message = getStatus().getMessage();
+		Matcher matcher = CONCISE_MESSAGE_PATTERN.matcher(message);
+
+		if (matcher.find()) {
+			return matcher.group(1);
+		}
+
+		return message;
 	}
 }

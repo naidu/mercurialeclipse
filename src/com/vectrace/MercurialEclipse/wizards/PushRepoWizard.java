@@ -21,6 +21,7 @@ import java.util.Properties;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -45,6 +46,11 @@ public class PushRepoWizard extends HgWizard {
 
 	private HgRoot hgRoot;
 	private OutgoingPage outgoingPage;
+
+	/**
+	 * Optional message to display when first opening the wizard
+	 */
+	private String message;
 
 	private PushRepoWizard() {
 		super(Messages.getString("PushRepoWizard.title")); //$NON-NLS-1$
@@ -71,6 +77,10 @@ public class PushRepoWizard extends HgWizard {
 		initPage(outgoingPage.getDescription(), outgoingPage);
 		outgoingPage.setHgRoot(hgRoot);
 		addPage(outgoingPage);
+
+		if (message != null) {
+			page.setMessage(message, IMessageProvider.WARNING);
+		}
 	}
 
 	@Override
@@ -197,6 +207,14 @@ public class PushRepoWizard extends HgWizard {
 		} else {
 			IncomingChangesetCache.getInstance().clear(hgRoot, true);
 			OutgoingChangesetCache.getInstance().clear(hgRoot, true);
+		}
+	}
+
+	public void setInitialMessage(String message) {
+		this.message = message;
+
+		if (page != null) {
+			page.setMessage(message, IMessageProvider.WARNING);
 		}
 	}
 
