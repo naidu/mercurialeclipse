@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -248,7 +249,10 @@ public final class MercurialUtilities {
 			return true;
 		}
 
-		if (resource.isTeamPrivateMember()) {
+		// TODO: The .hg folder should always be teamprivate, but support for this is not
+		// implemented for repositories not at project root.
+		if ((resource instanceof IFolder && ".hg".equals(resource.getName()))
+			|| resource.isTeamPrivateMember()) {
 			return false;
 		}
 		if (resource instanceof IFile) {
