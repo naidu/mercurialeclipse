@@ -143,8 +143,7 @@ public class MergeHandler extends RootHandler {
 
 		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
 		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
-		view.clearView();
-		view.setCurrentRoot(hgRoot);
+		view.refresh(hgRoot);
 
 		// auto-commit if desired
 		if (commit) {

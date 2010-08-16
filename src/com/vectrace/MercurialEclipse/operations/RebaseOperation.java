@@ -120,8 +120,7 @@ public class RebaseOperation extends HgOperation {
 				try {
 					view = (MergeView) MercurialEclipsePlugin.getActivePage()
 							.showView(MergeView.ID);
-					view.clearView();
-					view.setCurrentRoot(hgRoot);
+					view.refresh(hgRoot);
 				} catch (PartInitException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}
