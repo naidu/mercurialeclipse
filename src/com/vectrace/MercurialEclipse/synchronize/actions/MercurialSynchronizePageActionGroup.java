@@ -14,6 +14,9 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
@@ -22,6 +25,8 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -35,16 +40,17 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.Messages;
+import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
-
 	private static final String HG_COMMIT_GROUP = "hg.commit";
 	private static final String HG_PUSH_PULL_GROUP = "hg.push.pull";
 
@@ -54,6 +60,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 	private final IAction expandAction;
 	private OpenAction openAction;
+	private ArrayList<IAction> presentationModeActions;
 
 	public MercurialSynchronizePageActionGroup() {
 		super();
@@ -68,7 +75,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			}
 		};
 	}
-
 
 	@Override
 	public void initialize(ISynchronizePageConfiguration configuration) {
@@ -107,6 +113,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
+		presentationModeActions = new ArrayList<IAction>();
+
+		for (PresentationMode mode : PresentationMode.values()) {
+			presentationModeActions.add(new PresentationModeAction(mode, configuration));
+		}
 	}
 
 	@Override
@@ -155,7 +166,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
 		replaceCompareAndMoveDeleteAction(menu);
 	}
-
 
 	private boolean isSelectionUncommited() {
 		Object[] selectedObjects = getSelectedObjects();
@@ -211,7 +221,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		return true;
 	}
 
-
 	private void addUndoMenu(IMenuManager menu) {
 		MenuManager submenu = new MenuManager("Undo",
 				MercurialEclipsePlugin.getImageDescriptor("undo_edit.gif"), null);
@@ -266,10 +275,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		return stSelection.toArray();
 	}
 
-
-
 	/**
 	 * Replaces default "OpenInCompareAction" action with our custom, moves delete action
+	 *
 	 * @see OpenInCompareAction
 	 * @see ModelSynchronizeParticipantActionGroup
 	 * @see HgChangeSetActionProvider
@@ -310,5 +318,50 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		super.fillActionBars(actionBars);
 		IToolBarManager manager = actionBars.getToolBarManager();
 		appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
+
+		IMenuManager menu = actionBars.getMenuManager();
+		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
+		if (menu != null && group != null) {
+			MenuManager layout = new MenuManager(Messages
+					.getString("MercurialSynchronizePageActionGroup.PresentationMode"));
+			menu.appendToGroup(group.getId(), layout);
+
+			for (Iterator<IAction> iter = presentationModeActions.iterator(); iter.hasNext();) {
+				layout.add(iter.next());
+			}
+		}
+	}
+
+	// inner types
+
+	private static class PresentationModeAction extends Action implements IPropertyChangeListener {
+		private final PresentationMode mode;
+		private final ISynchronizePageConfiguration configuration;
+
+		protected PresentationModeAction(PresentationMode mode,
+				ISynchronizePageConfiguration configuration) {
+			super(mode.toString(), IAction.AS_RADIO_BUTTON);
+
+			this.mode = mode;
+			this.configuration = configuration;
+
+			update();
+			configuration.addPropertyChangeListener(this);
+		}
+
+		@Override
+		public void run() {
+			mode.set(configuration);
+		}
+
+		public void update() {
+			setChecked(mode.isSet(configuration));
+		}
+
+		public void propertyChange(PropertyChangeEvent event) {
+			if (event.getProperty().equals(PresentationMode.CONFIG_KEY)) {
+				update();
+			}
+		}
 	}
 }
