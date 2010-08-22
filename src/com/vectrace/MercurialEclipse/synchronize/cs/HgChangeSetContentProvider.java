@@ -49,6 +49,7 @@ import org.eclipse.ui.navigator.INavigatorContentExtension;
 import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
@@ -74,6 +75,25 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
+						treeViewer.getTree().setRedraw(true);
+					}
+				}, getTreeViewer());
+			}
+		}
+	}
+
+	private final class PreferenceListener implements IPropertyChangeListener {
+		public void propertyChange(PropertyChangeEvent event) {
+			Object input = getTreeViewer().getInput();
+			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)
+					&& input instanceof HgChangeSetModelProvider) {
+				Utils.asyncExec(new Runnable() {
+					public void run() {
+						TreeViewer treeViewer = getTreeViewer();
+						treeViewer.getTree().setRedraw(false);
+						treeViewer.refresh(uncommittedSet, true);
+						treeViewer.refresh(outgoing, true);
+						treeViewer.refresh(incoming, true);
 						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());
@@ -137,6 +157,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
 	private final IPropertyChangeListener uncommittedSetListener;
+	private final IPropertyChangeListener preferenceListener;
 	private final ChangesetGroup incoming;
 	private final ChangesetGroup outgoing;
 	private WorkbenchContentProvider provider;
@@ -148,6 +169,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		outgoing = new ChangesetGroup("Outgoing", Direction.OUTGOING);
 		collectorListener = new CollectorListener();
 		uncommittedSetListener = new UcommittedSetListener();
+		preferenceListener = new PreferenceListener();
+
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(preferenceListener);
 	}
 
 	@Override
@@ -208,7 +232,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
 
 			if (files.length != 0) {
-				switch (PresentationMode.get(getConfiguration())) {
+				switch (PresentationMode.get()) {
 				case FLAT:
 					return files;
 				case TREE:
@@ -484,6 +508,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector.removeListener(collectorListener);
 			csCollector.dispose();
 		}
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().removePropertyChangeListener(preferenceListener);
 		uncommittedSet.removeListener(uncommittedSetListener);
 		STATUS_CACHE.deleteObserver(uncommittedSet);
 		uncommittedSet.dispose();

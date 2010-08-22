@@ -10,9 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author johnpeb
@@ -22,7 +21,7 @@ public enum PresentationMode {
 	TREE(Messages.getString("PresentationMode.Tree")), //
 	COMPRESSED_TREE(Messages.getString("PresentationMode.CompressedTree"));
 
-	public static final String CONFIG_KEY = MercurialEclipsePlugin.ID + ".syncPresentationMode";
+	public static final String PREFERENCE_KEY = MercurialPreferenceConstants.PREF_SYNC_PRESENTATION_MODE;
 
 	private final String localized;
 
@@ -38,8 +37,8 @@ public enum PresentationMode {
 		return localized;
 	}
 
-	public static PresentationMode get(ISynchronizePageConfiguration configuration) {
-		String name = (String) configuration.getProperty(CONFIG_KEY);
+	public static PresentationMode get() {
+		String name = MercurialEclipsePlugin.getDefault().getPreferenceStore().getString(PREFERENCE_KEY);
 
 		if (name != null) {
 			try {
@@ -51,11 +50,11 @@ public enum PresentationMode {
 		return FLAT;
 	}
 
-	public void set(ISynchronizePageConfiguration configuration) {
-		configuration.setProperty(CONFIG_KEY, name());
+	public void set() {
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().setValue(PREFERENCE_KEY, name());
 	}
 
-	public boolean isSet(ISynchronizePageConfiguration configuration) {
-		return get(configuration) == this;
+	public boolean isSet() {
+		return get() == this;
 	}
 }

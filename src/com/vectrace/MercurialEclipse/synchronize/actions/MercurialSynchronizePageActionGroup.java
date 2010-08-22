@@ -15,7 +15,6 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
@@ -25,6 +24,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
@@ -60,7 +60,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 	private final IAction expandAction;
 	private OpenAction openAction;
-	private ArrayList<IAction> presentationModeActions;
+	private ArrayList<PresentationModeAction> presentationModeActions;
 
 	public MercurialSynchronizePageActionGroup() {
 		super();
@@ -113,10 +113,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
-		presentationModeActions = new ArrayList<IAction>();
+		presentationModeActions = new ArrayList<PresentationModeAction>();
 
 		for (PresentationMode mode : PresentationMode.values()) {
-			presentationModeActions.add(new PresentationModeAction(mode, configuration));
+			presentationModeActions.add(new PresentationModeAction(mode, MercurialEclipsePlugin
+					.getDefault().getPreferenceStore()));
 		}
 	}
 
@@ -326,20 +327,31 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 					.getString("MercurialSynchronizePageActionGroup.PresentationMode"));
 			menu.appendToGroup(group.getId(), layout);
 
-			for (Iterator<IAction> iter = presentationModeActions.iterator(); iter.hasNext();) {
-				layout.add(iter.next());
+			for (PresentationModeAction action : presentationModeActions) {
+				layout.add(action);
 			}
 		}
+	}
+
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup#dispose()
+	 */
+	@Override
+	public void dispose() {
+		for (PresentationModeAction action : presentationModeActions) {
+			action.dispose();
+		}
+		super.dispose();
 	}
 
 	// inner types
 
 	private static class PresentationModeAction extends Action implements IPropertyChangeListener {
 		private final PresentationMode mode;
-		private final ISynchronizePageConfiguration configuration;
+		private final IPreferenceStore configuration;
 
 		protected PresentationModeAction(PresentationMode mode,
-				ISynchronizePageConfiguration configuration) {
+				IPreferenceStore configuration) {
 			super(mode.toString(), IAction.AS_RADIO_BUTTON);
 
 			this.mode = mode;
@@ -349,17 +361,21 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			configuration.addPropertyChangeListener(this);
 		}
 
+		public void dispose() {
+			configuration.removePropertyChangeListener(this);
+		}
+
 		@Override
 		public void run() {
-			mode.set(configuration);
+			mode.set();
 		}
 
 		public void update() {
-			setChecked(mode.isSet(configuration));
+			setChecked(mode.isSet());
 		}
 
 		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(PresentationMode.CONFIG_KEY)) {
+			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)) {
 				update();
 			}
 		}
