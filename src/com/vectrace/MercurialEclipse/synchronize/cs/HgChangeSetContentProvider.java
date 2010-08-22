@@ -13,7 +13,9 @@ package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -53,6 +55,7 @@ import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 @SuppressWarnings("restriction")
@@ -189,13 +192,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				// shows up.
 			}
 		}
+
 		if (parent == getModelProvider()) {
 			return getRootElements();
-		}
-		if (parent instanceof ChangeSet) {
-			return ((ChangeSet) parent).getChangesetFiles();
-		}
-		if (parent instanceof ChangesetGroup) {
+		} else if (parent instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) parent;
 			Direction direction = group.getDirection();
 			if (isOutgoingVisible()	&& isOutgoing(direction)) {
@@ -204,8 +204,100 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return group.getChangesets().toArray();
 			}
+		} else if (parent instanceof ChangeSet) {
+			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
+
+			if (files.length != 0) {
+				switch (PresentationMode.get(getConfiguration())) {
+				case FLAT:
+					return files;
+				case TREE:
+					return collectTree(files);
+				case COMPRESSED_TREE:
+					return collectCompressedTree(files);
+				}
+			}
+		} else if (parent instanceof PathFromChangeSet) {
+			return ((PathFromChangeSet) parent).getChildren();
 		}
+
 		return new Object[0];
+	}
+
+	private Object[] collectTree(FileFromChangeSet[] files) {
+		List<Object> out = new ArrayList<Object>(files.length * 2);
+
+		for (FileFromChangeSet file : files) {
+			out.add(file.getPath().removeLastSegments(1));
+			out.add(file);
+		}
+
+		return collectTree(out);
+	}
+
+	private Object[] collectTree(List<Object> files) {
+		HashMap<String, List<Object>> map = new HashMap<String, List<Object>>();
+		List<Object> out = new ArrayList<Object>();
+
+		for (Iterator<Object> it = files.iterator(); it.hasNext();) {
+			IPath path = (IPath) it.next();
+			FileFromChangeSet file = (FileFromChangeSet) it.next();
+
+			if (path == null || 0 == path.segmentCount()) {
+				out.add(file);
+			} else {
+				String seg = path.segment(0);
+				List<Object> l = map.get(seg);
+
+				if (l == null) {
+					map.put(seg, l = new ArrayList<Object>());
+				}
+
+				l.add(path.removeFirstSegments(1));
+				l.add(file);
+			}
+		}
+
+		for (String seg : map.keySet()) {
+			final List<Object> data = map.get(seg);
+
+			out.add(new PathFromChangeSet(seg) {
+				@Override
+				public Object[] getChildren() {
+					return collectTree(data);
+				}
+			});
+		}
+
+		return out.toArray(new Object[out.size()]);
+	}
+
+	private Object[] collectCompressedTree(FileFromChangeSet[] files) {
+		HashMap<IPath, List<FileFromChangeSet>> map = new HashMap<IPath, List<FileFromChangeSet>>();
+		List<PathFromChangeSet> out = new ArrayList<PathFromChangeSet>();
+
+		for (FileFromChangeSet file : files) {
+			IPath path = file.getPath().removeLastSegments(1);
+			List<FileFromChangeSet> l = map.get(path);
+
+			if (l == null) {
+				map.put(path, l = new ArrayList<FileFromChangeSet>());
+			}
+
+			l.add(file);
+		}
+
+		for (IPath path : map.keySet()) {
+			final List<FileFromChangeSet> data = map.get(path);
+			out.add(new PathFromChangeSet(path.toString()) {
+				@Override
+				public Object[] getChildren() {
+					return data.toArray(new FileFromChangeSet[data.size()]);
+				}
+			});
+		}
+
+		return out.toArray(new PathFromChangeSet[out.size()]);
 	}
 
 	private void ensureRootsAdded() {
@@ -285,8 +377,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	protected boolean hasChildrenInContext(ISynchronizationContext context, Object element) {
 		if (element instanceof ChangeSet) {
 			return hasChildren((ChangeSet) element);
-		}
-		if (element instanceof ChangesetGroup) {
+		} else if (element instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) element;
 			Direction direction = group.getDirection();
 			if (isOutgoingVisible()	&& isOutgoing(direction)) {
@@ -295,6 +386,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return true;
 			}
+		} else if (element instanceof PathFromChangeSet) {
+			return true;
 		}
 		return false;
 	}
@@ -453,7 +546,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				continue;
 			}
 			TreeItem parentItem = treeItem.getParentItem();
-			if(parentItem != null){
+
+			while (parentItem != null && !(parentItem.getData() instanceof ChangeSet)) {
+				parentItem = parentItem.getParentItem();
+			}
+
+			if (parentItem != null) {
 				return (ChangeSet) parentItem.getData();
 			}
 		}
@@ -506,5 +604,29 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	// inner types
+
+	public abstract static class PathFromChangeSet {
+
+		private final String display;
+
+		/**
+		 * Constructor for tree mode
+		 *
+		 * @param seg
+		 *            The leading segment
+		 */
+		public PathFromChangeSet(String seg) {
+			display = seg;
+		}
+
+		@Override
+		public String toString() {
+			return display;
+		}
+
+		public abstract Object[] getChildren();
 	}
 }

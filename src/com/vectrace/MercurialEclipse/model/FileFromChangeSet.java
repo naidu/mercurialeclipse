@@ -10,12 +10,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetResourceMapping;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -67,6 +73,30 @@ public class FileFromChangeSet implements IAdaptable{
 		return kind;
 	}
 
+	/**
+	 * @return Path relative to the hg root. Not null.
+	 */
+	public IPath getPath() {
+		if (fileStatus != null) {
+			return fileStatus.getRootRelativePath();
+		} else if (file != null) {
+			HgRoot root = changeset.getHgRoot();
+			if (root == null) {
+				try {
+					root = MercurialTeamProvider.getHgRoot(file);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+			if (root != null) {
+				return ResourceUtils.getRelativePath(new Path(root.getAbsolutePath()), file.getLocation());
+			}
+		}
+
+		assert false;
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		return file != null? file.toString() : fileStatus.getAbsolutePath().toOSString();
@@ -114,5 +144,4 @@ public class FileFromChangeSet implements IAdaptable{
 	public ChangeSet getChangeset() {
 		return changeset;
 	}
-
 }

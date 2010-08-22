@@ -21,6 +21,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
@@ -51,6 +52,9 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
 			}
+		} else if (element instanceof PathFromChangeSet) {
+			image = PlatformUI.getWorkbench().getSharedImages().getImage(
+					ISharedImages.IMG_OBJ_FOLDER);
 		} else {
 			try {
 				image = super.getDelegateImage(element);
@@ -115,6 +119,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				delegateText = " " + delegateText;
 			}
 			return delegateText;
+		} else if (elementOrPath instanceof PathFromChangeSet) {
+			return elementOrPath.toString();
 		}
 		String delegateText = super.getDelegateText(elementOrPath);
 		if(delegateText != null && delegateText.length() > 0){

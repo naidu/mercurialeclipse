@@ -1563,6 +1563,7 @@
             <instanceof value="com.vectrace.MercurialEclipse.model.ChangeSet"/>
             <instanceof value="com.vectrace.MercurialEclipse.model.FileFromChangeSet"/>
             <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup"/>
+            <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet"/>
             <instanceof value="org.eclipse.core.resources.IResource"/>
            </or>
          </enablement>
