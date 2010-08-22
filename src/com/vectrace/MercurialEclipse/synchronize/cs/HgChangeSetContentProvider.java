@@ -298,7 +298,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private Object[] collectCompressedTree(FileFromChangeSet[] files) {
 		HashMap<IPath, List<FileFromChangeSet>> map = new HashMap<IPath, List<FileFromChangeSet>>();
-		List<PathFromChangeSet> out = new ArrayList<PathFromChangeSet>();
+		List<Object> out = new ArrayList<Object>();
 
 		for (FileFromChangeSet file : files) {
 			IPath path = file.getPath().removeLastSegments(1);
@@ -313,15 +313,19 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		for (IPath path : map.keySet()) {
 			final List<FileFromChangeSet> data = map.get(path);
-			out.add(new PathFromChangeSet(path.toString()) {
-				@Override
-				public Object[] getChildren() {
-					return data.toArray(new FileFromChangeSet[data.size()]);
-				}
-			});
+			if (path.isEmpty()) {
+				out.addAll(data);
+			} else {
+				out.add(new PathFromChangeSet(path.toString()) {
+					@Override
+					public Object[] getChildren() {
+						return data.toArray(new FileFromChangeSet[data.size()]);
+					}
+				});
+			}
 		}
 
-		return out.toArray(new PathFromChangeSet[out.size()]);
+		return out.toArray(new Object[out.size()]);
 	}
 
 	private void ensureRootsAdded() {
