@@ -33,8 +33,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
+import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -48,9 +48,9 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -275,29 +275,29 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
 		}
 		return new ResourceTraversal[0];
-		// return super.getTraversals(context, object);
 	}
 
 	/**
-	 * Return whether the given element has children in the given
-	 * context. The children may or may not exist locally.
-	 * By default, this method returns true if the traversals for
-	 * the element contain any diffs. This could result in false
-	 * positives. Subclasses can override to provide a more
-	 * efficient or precise answer.
-	 * @param element a model element.
-	 * @return whether the given element has children in the given context
+	 * @see org.eclipse.team.ui.mapping.SynchronizationContentProvider#hasChildrenInContext(org.eclipse.team.core.mapping.ISynchronizationContext,
+	 *      java.lang.Object)
 	 */
 	@Override
 	protected boolean hasChildrenInContext(ISynchronizationContext context, Object element) {
-		return internalHasChildren(element);
-//		ResourceTraversal[] traversals = getTraversals(context, element);
-//		if (traversals == null) {
-//			return true;
-//		}
-//		return context.getDiffTree().getDiffs(traversals).length > 0;
+		if (element instanceof ChangeSet) {
+			return hasChildren((ChangeSet) element);
+		}
+		if (element instanceof ChangesetGroup) {
+			ChangesetGroup group = (ChangesetGroup) element;
+			Direction direction = group.getDirection();
+			if (isOutgoingVisible()	&& isOutgoing(direction)) {
+				return true;
+			}
+			if(isIncomingVisible() && direction == Direction.INCOMING){
+				return true;
+			}
+		}
+		return false;
 	}
-
 
 	private boolean isVisibleInMode(ChangeSet cs) {
 		int mode = getConfiguration().getMode();
@@ -323,47 +323,18 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean hasConflicts(ChangeSet cs) {
-		// XXX implement conflicts display
-//		if (cs instanceof DiffChangeSet) {
-//			DiffChangeSet dcs = (DiffChangeSet) cs;
-//			return dcs.getDiffTree().countFor(IThreeWayDiff.CONFLICTING, IThreeWayDiff.DIRECTION_MASK) > 0;
-//		}
+		// Conflict mode not meaningful in a DVCS
 		return false;
 	}
 
 	private boolean containsConflicts(ChangeSet cs) {
-		// XXX implement conflicts display
-//		if (cs instanceof DiffChangeSet) {
-//			DiffChangeSet dcs = (DiffChangeSet) cs;
-//			return dcs.getDiffTree().hasMatchingDiffs(ResourcesPlugin.getWorkspace().getRoot().getFullPath(), ResourceModelLabelProvider.CONFLICT_FILTER);
-//		}
-		return false;
-	}
-
-
-	private boolean internalHasChildren(Object first) {
-		if (first instanceof ChangeSet) {
-			return hasChildren((ChangeSet) first);
-		}
-		if (first instanceof ChangesetGroup) {
-			ChangesetGroup group = (ChangesetGroup) first;
-			Direction direction = group.getDirection();
-			if (isOutgoingVisible()	&& isOutgoing(direction)) {
-				return true;
-			}
-			if(isIncomingVisible() && direction == Direction.INCOMING){
-				return true;
-			}
-		}
+		// Conflict mode not meaningful in a DVCS
 		return false;
 	}
 
 	private boolean hasChildren(ChangeSet changeset) {
-		return isVisibleInMode(changeset) && hasChildrenInContext(changeset);
-	}
-
-	private boolean hasChildrenInContext(ChangeSet set) {
-		return !set.getFiles().isEmpty() || set.getChangesetFiles().length > 0;
+		return isVisibleInMode(changeset)
+				&& (!changeset.getFiles().isEmpty() || changeset.getChangesetFiles().length > 0);
 	}
 
 	/**
@@ -536,6 +507,4 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		builder.append("]");
 		return builder.toString();
 	}
-
-
 }
