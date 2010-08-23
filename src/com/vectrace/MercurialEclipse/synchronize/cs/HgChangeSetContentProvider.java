@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -90,6 +91,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
+						childrenCache.clear();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
 						treeViewer.refresh(outgoing, true);
@@ -162,6 +164,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final ChangesetGroup outgoing;
 	private WorkbenchContentProvider provider;
 
+	/**
+	 * Cache of the children of a changeset. Used to maintain identity of the children when children
+	 * are re-queried. The changeset is stored with a weak reference.
+	 */
+	private final WeakHashMap<ChangeSet, Object[]> childrenCache = new WeakHashMap<ChangeSet, Object[]>();
+
 	public HgChangeSetContentProvider() {
 		super();
 		uncommittedSet = new WorkingChangeSet("Uncommitted");
@@ -230,16 +238,21 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 		} else if (parent instanceof ChangeSet) {
 			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
+			Object[] children = null;
 
 			if (files.length != 0) {
 				switch (PresentationMode.get()) {
 				case FLAT:
 					return files;
 				case TREE:
-					return collectTree(files);
+					children = collectTree(childrenCache.get(parent), files);
+					break;
 				case COMPRESSED_TREE:
-					return collectCompressedTree(files);
+					children = collectCompressedTree(childrenCache.get(parent), files);
+					break;
 				}
+				childrenCache.put((ChangeSet) parent, children);
+				return children;
 			}
 		} else if (parent instanceof PathFromChangeSet) {
 			return ((PathFromChangeSet) parent).getChildren();
@@ -248,7 +261,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return new Object[0];
 	}
 
-	private Object[] collectTree(FileFromChangeSet[] files) {
+	private Object[] collectTree(Object[] oldChildren, FileFromChangeSet[] files) {
 		List<Object> out = new ArrayList<Object>(files.length * 2);
 
 		for (FileFromChangeSet file : files) {
@@ -256,10 +269,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			out.add(file);
 		}
 
-		return collectTree(out);
+		return collectTree(oldChildren, out);
 	}
 
-	private Object[] collectTree(List<Object> files) {
+	private Object[] collectTree(Object[] oldChildren, List<Object> files) {
 		HashMap<String, List<Object>> map = new HashMap<String, List<Object>>();
 		List<Object> out = new ArrayList<Object>();
 
@@ -283,49 +296,69 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 
 		for (String seg : map.keySet()) {
-			final List<Object> data = map.get(seg);
-
-			out.add(new PathFromChangeSet(seg) {
-				@Override
-				public Object[] getChildren() {
-					return collectTree(data);
-				}
-			});
+			List<Object> data = map.get(seg);
+			PathFromChangeSet pfcs = findExistingChild(oldChildren, seg);
+			if (pfcs == null) {
+				pfcs = new PathFromChangeSet(seg) {
+					@Override
+					public Object[] makeChildren(Object[] prevChildren) {
+						return collectTree(prevChildren, data);
+					}
+				};
+			}
+			pfcs.setData(data);
+			out.add(pfcs);
 		}
 
 		return out.toArray(new Object[out.size()]);
 	}
 
-	private Object[] collectCompressedTree(FileFromChangeSet[] files) {
-		HashMap<IPath, List<FileFromChangeSet>> map = new HashMap<IPath, List<FileFromChangeSet>>();
+	private Object[] collectCompressedTree(Object[] oldChildren, FileFromChangeSet[] files) {
+		HashMap<IPath, List<Object>> map = new HashMap<IPath, List<Object>>();
 		List<Object> out = new ArrayList<Object>();
 
 		for (FileFromChangeSet file : files) {
 			IPath path = file.getPath().removeLastSegments(1);
-			List<FileFromChangeSet> l = map.get(path);
+			List<Object> l = map.get(path);
 
 			if (l == null) {
-				map.put(path, l = new ArrayList<FileFromChangeSet>());
+				map.put(path, l = new ArrayList<Object>());
 			}
 
 			l.add(file);
 		}
 
 		for (IPath path : map.keySet()) {
-			final List<FileFromChangeSet> data = map.get(path);
+			List<Object> data = map.get(path);
 			if (path.isEmpty()) {
 				out.addAll(data);
 			} else {
-				out.add(new PathFromChangeSet(path.toString()) {
-					@Override
-					public Object[] getChildren() {
-						return data.toArray(new FileFromChangeSet[data.size()]);
-					}
-				});
+				PathFromChangeSet pfcs = findExistingChild(oldChildren, path.toString());
+				if (pfcs == null) {
+					pfcs = new PathFromChangeSet(path.toString()) {
+						@Override
+						public Object[] makeChildren(Object[] prevChildren) {
+							return data.toArray(new FileFromChangeSet[data.size()]);
+						}
+					};
+				}
+				pfcs.setData(data);
+				out.add(pfcs);
 			}
 		}
 
 		return out.toArray(new Object[out.size()]);
+	}
+
+	private PathFromChangeSet findExistingChild(Object[] oldChildren, String name) {
+		if (oldChildren != null) {
+			for (Object chld : oldChildren) {
+				if (chld instanceof PathFromChangeSet && name.equals(chld.toString())) {
+					return (PathFromChangeSet) chld;
+				}
+			}
+		}
+		return null;
 	}
 
 	private void ensureRootsAdded() {
@@ -518,6 +551,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		uncommittedSet.dispose();
 		outgoing.getChangesets().clear();
 		incoming.getChangesets().clear();
+		childrenCache.clear();
 		super.dispose();
 	}
 
@@ -640,6 +674,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	public abstract static class PathFromChangeSet {
 
 		private final String display;
+		protected List<Object> data;
+		private Object[] oldChildren;
 
 		/**
 		 * Constructor for tree mode
@@ -648,7 +684,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		 *            The leading segment
 		 */
 		public PathFromChangeSet(String seg) {
-			display = seg;
+			this.display = seg;
+		}
+
+		protected void setData(List<Object> data) {
+			this.data = data;
 		}
 
 		@Override
@@ -656,6 +696,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return display;
 		}
 
-		public abstract Object[] getChildren();
+		public final Object[] getChildren() {
+			return (oldChildren = makeChildren(oldChildren));
+		}
+
+		protected abstract Object[] makeChildren(Object[] prevChildren);
 	}
 }
