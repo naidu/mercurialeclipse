@@ -656,6 +656,22 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return display;
 		}
 
+		/**
+		 * @see java.lang.Object#equals(java.lang.Object)
+		 */
+		@Override
+		public boolean equals(Object other) {
+			return (other instanceof PathFromChangeSet) && ((PathFromChangeSet)other).display.equals(display);
+		}
+
+		/**
+		 * @see java.lang.Object#hashCode()
+		 */
+		@Override
+		public int hashCode() {
+			return 73 ^ display.hashCode();
+		}
+
 		public abstract Object[] getChildren();
 	}
 }
