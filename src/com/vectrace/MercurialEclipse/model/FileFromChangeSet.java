@@ -89,7 +89,7 @@ public class FileFromChangeSet implements IAdaptable{
 				}
 			}
 			if (root != null) {
-				return ResourceUtils.getRelativePath(new Path(root.getAbsolutePath()), file.getLocation());
+				return file.getLocation().makeRelativeTo(new Path(root.getAbsolutePath()));
 			}
 		}
 
