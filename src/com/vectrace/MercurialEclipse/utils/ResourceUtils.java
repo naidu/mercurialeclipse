@@ -316,24 +316,16 @@ public final class ResourceUtils {
 	 *            non null
 	 * @param repoRelPath
 	 *            path <b>relative</b> to the hg root
-	 * @return Relative path - may return null if the path is not found in the project
+	 * @return may return null, if the path is not found in the project
 	 */
 	public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
-		return project.findMember(getRelativePath(project.getLocation(), new Path(hgRoot.getAbsolutePath())
-				.append(repoRelPath)));
-	}
+		// determine absolute path
+		IPath path = new Path(hgRoot.getAbsolutePath()).append(repoRelPath);
 
-	/**
-	 * Get a path relative to the given project
-	 *
-	 * @param project
-	 *            The project
-	 * @param absPath
-	 *            The absolute path
-	 * @return The relative path
-	 */
-	public static IPath getRelativePath(IPath base, IPath absPath) {
-		return absPath.removeFirstSegments(absPath.matchingFirstSegments(base));
+		// determine project relative path
+		int equalSegments = path.matchingFirstSegments(project.getLocation());
+		path = path.removeFirstSegments(equalSegments);
+		return project.findMember(path);
 	}
 
 	public static Set<IResource> getMembers(IResource r) {
