@@ -8,13 +8,17 @@
  * Contributors:
  *     Bastian Doetsch	- implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
@@ -57,6 +61,12 @@ public class UpdateJob extends Job {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
 		} catch (HgException e) {
+			if (e.getMessage().contains("abort: crosses branches")
+					&& e.getStatus().getCode() == -1) {
+
+				// don't log this error because it's a common situation and can be handled
+				return handleMultipleHeads(monitor);
+			}
 			MercurialEclipsePlugin.logError(e);
 			return e.getStatus();
 		} finally {
@@ -65,4 +75,36 @@ public class UpdateJob extends Job {
 		return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update to revision " + revision
 				+ " succeeded.");
 	}
+
+	private IStatus handleMultipleHeads(final IProgressMonitor monitor) {
+		final IStatus[] status = new IStatus[1];
+		status[0] = new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
+
+		Display.getDefault().syncExec(new Runnable() {
+
+			public void run() {
+				try {
+					int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(hgRoot).size();
+					if (extraHeads == 1) {
+						boolean mergeNow = MessageDialog.openQuestion(null,
+								"Multiple heads", "You have one extra head in current branch. Do you want to merge now?");
+
+						if (mergeNow) {
+							MergeHandler.determineMergeHeadAndMerge(hgRoot, Display.getDefault().getActiveShell(), monitor, false, true);
+						}
+					} else {
+						MessageDialog.openInformation(null,
+								"Multiple heads", "Can't update to tip. "
+								+ "You have " + extraHeads + " extra heads in current branch. Consider merging manually");
+					}
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+					status[0] = MercurialEclipsePlugin.createStatus(e.getMessage(), 0, IStatus.ERROR, e);
+				}
+			}
+		});
+
+		return status[0];
+	}
+
 }

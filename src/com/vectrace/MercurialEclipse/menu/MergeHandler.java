@@ -8,10 +8,12 @@
  * Contributors:
  *     Jerome Negre - implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) - modification
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -51,7 +53,7 @@ public class MergeHandler extends RootHandler {
 			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
 		// can we do the equivalent of plain "hg merge"?
-		ChangeSet cs = getOtherHeadInCurrentBranch(hgRoot);
+		ChangeSet cs = getHeadForEasyMerge(hgRoot);
 		boolean forced = false;
 
 		String forceMessage = "Forced merge (this will discard all uncommitted changes!)";
@@ -160,20 +162,33 @@ public class MergeHandler extends RootHandler {
 		return output;
 	}
 
-	private static ChangeSet getOtherHeadInCurrentBranch(HgRoot hgRoot) throws HgException {
-		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
-		// have to be at least two heads total to do easy merge
-		if (heads.length < 2) {
-			return null;
+	private static ChangeSet getHeadForEasyMerge(HgRoot hgRoot) throws HgException {
+		ArrayList<ChangeSet> otherHeads = getOtherHeadsInCurrentBranch(hgRoot);
+
+		if (otherHeads != null && otherHeads.size() == 1) {
+			return otherHeads.get(0);
 		}
 
+		// can not perform easy merge - need to run wizard
+		return null;
+	}
+
+	/**
+	 * Returns list of Heads in the same branch as current head. Current head itself is not included.
+	 * @param hgRoot
+	 * @return
+	 * @throws HgException
+	 */
+	public static ArrayList<ChangeSet> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ArrayList<ChangeSet> otherHeads = new ArrayList<ChangeSet>();
+		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
+
 		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
-		if(currentRevision == null){
-			return null;
+		if (currentRevision == null) {
+			return otherHeads;
 		}
 		String branch = currentRevision.getBranch();
 
-		ChangeSet candidate = null;
 		for (ChangeSet cs : heads) {
 			// must match branch
 			if (!Branch.same(branch, cs.getBranch())) {
@@ -183,14 +198,11 @@ public class MergeHandler extends RootHandler {
 			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
 				continue;
 			}
-			// if we have more than one candidate, then have to ask user anyway.
-			if (candidate != null) {
-				return null;
-			}
-			candidate = cs;
+
+			otherHeads.add(cs);
 		}
 
-		return candidate;
+		return otherHeads;
 	}
 
 }
