@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -63,7 +64,7 @@ public class HgPushPullClient extends AbstractClient {
 
 		addRepoToHgCommand(repo, command);
 
-		String result;
+		String result = null;
 		try {
 			if (timeout) {
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
@@ -72,6 +73,11 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
+			if (update && result != null && result.contains("not updating, since new heads added")) {
+				// inform user about new heads and ask if he wants to merge
+				UpdateJob.handleMultipleHeads(hgRoot);
+			}
+
 			// doesn't metter how far we was: we have to trigger update of caches in case
 			// the pull was *partly* successfull (e.g. pull was ok, but update not)
 			refreshProjects(update, hgRoot);

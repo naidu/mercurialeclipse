@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -65,7 +66,8 @@ public class UpdateJob extends Job {
 					&& e.getStatus().getCode() == -1) {
 
 				// don't log this error because it's a common situation and can be handled
-				return handleMultipleHeads(monitor);
+				handleMultipleHeads(hgRoot);
+				return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
 			}
 			MercurialEclipsePlugin.logError(e);
 			return e.getStatus();
@@ -76,21 +78,18 @@ public class UpdateJob extends Job {
 				+ " succeeded.");
 	}
 
-	private IStatus handleMultipleHeads(final IProgressMonitor monitor) {
-		final IStatus[] status = new IStatus[1];
-		status[0] = new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
-
+	public static void handleMultipleHeads(final HgRoot root) {
 		Display.getDefault().syncExec(new Runnable() {
 
 			public void run() {
 				try {
-					int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(hgRoot).size();
+					int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(root).size();
 					if (extraHeads == 1) {
 						boolean mergeNow = MessageDialog.openQuestion(null,
 								"Multiple heads", "You have one extra head in current branch. Do you want to merge now?");
 
 						if (mergeNow) {
-							MergeHandler.determineMergeHeadAndMerge(hgRoot, Display.getDefault().getActiveShell(), monitor, false, true);
+							MergeHandler.determineMergeHeadAndMerge(root, Display.getDefault().getActiveShell(), new NullProgressMonitor(), false, true);
 						}
 					} else {
 						MessageDialog.openInformation(null,
@@ -99,12 +98,9 @@ public class UpdateJob extends Job {
 					}
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
-					status[0] = MercurialEclipsePlugin.createStatus(e.getMessage(), 0, IStatus.ERROR, e);
 				}
 			}
 		});
-
-		return status[0];
 	}
 
 }
