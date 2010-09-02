@@ -236,9 +236,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				case FLAT:
 					return files;
 				case TREE:
-					return collectTree(files);
+					return collectTree(parent, files);
 				case COMPRESSED_TREE:
-					return collectCompressedTree(files);
+					return collectCompressedTree(parent, files);
 				}
 			}
 		} else if (parent instanceof PathFromChangeSet) {
@@ -248,7 +248,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return new Object[0];
 	}
 
-	private Object[] collectTree(FileFromChangeSet[] files) {
+	private Object[] collectTree(Object parent, FileFromChangeSet[] files) {
 		List<Object> out = new ArrayList<Object>(files.length * 2);
 
 		for (FileFromChangeSet file : files) {
@@ -256,10 +256,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			out.add(file);
 		}
 
-		return collectTree(out);
+		return collectTree(parent, out);
 	}
 
-	private Object[] collectTree(List<Object> files) {
+	private Object[] collectTree(Object parent, List<Object> files) {
 		HashMap<String, List<Object>> map = new HashMap<String, List<Object>>();
 		List<Object> out = new ArrayList<Object>();
 
@@ -285,10 +285,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		for (String seg : map.keySet()) {
 			final List<Object> data = map.get(seg);
 
-			out.add(new PathFromChangeSet(seg) {
+			out.add(new PathFromChangeSet(parent, seg) {
 				@Override
 				public Object[] getChildren() {
-					return collectTree(data);
+					return collectTree(this, data);
 				}
 			});
 		}
@@ -296,7 +296,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return out.toArray(new Object[out.size()]);
 	}
 
-	private Object[] collectCompressedTree(FileFromChangeSet[] files) {
+	private Object[] collectCompressedTree(Object parent, FileFromChangeSet[] files) {
 		HashMap<IPath, List<FileFromChangeSet>> map = new HashMap<IPath, List<FileFromChangeSet>>();
 		List<Object> out = new ArrayList<Object>();
 
@@ -316,7 +316,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if (path.isEmpty()) {
 				out.addAll(data);
 			} else {
-				out.add(new PathFromChangeSet(path.toString()) {
+				out.add(new PathFromChangeSet(parent, path.toString()) {
 					@Override
 					public Object[] getChildren() {
 						return data.toArray(new FileFromChangeSet[data.size()]);
@@ -639,6 +639,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	public abstract static class PathFromChangeSet {
 
+		private final Object parent;
+
 		private final String display;
 
 		/**
@@ -647,7 +649,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		 * @param seg
 		 *            The leading segment
 		 */
-		public PathFromChangeSet(String seg) {
+		public PathFromChangeSet(Object prnt, String seg) {
+			parent = prnt;
 			display = seg;
 		}
 
@@ -661,7 +664,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		 */
 		@Override
 		public boolean equals(Object other) {
-			return (other instanceof PathFromChangeSet) && ((PathFromChangeSet)other).display.equals(display);
+			if (other instanceof PathFromChangeSet) {
+				PathFromChangeSet o = (PathFromChangeSet)other;
+				return o.display.equals(display) && o.parent.equals(parent);
+			}
+			return false;
 		}
 
 		/**
@@ -669,7 +676,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		 */
 		@Override
 		public int hashCode() {
-			return 73 ^ display.hashCode();
+			return 73 ^ display.hashCode() + parent.hashCode();
 		}
 
 		public abstract Object[] getChildren();
