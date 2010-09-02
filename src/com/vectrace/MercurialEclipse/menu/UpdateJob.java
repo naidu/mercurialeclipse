@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.NewHeadsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -59,6 +60,10 @@ public class UpdateJob extends Job {
 		try {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
+
+			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null) {
+				handleMultipleHeads(hgRoot, cleanEnabled);
+			}
 		} catch (HgException e) {
 			if (e.getMessage().contains("abort: crosses branches")
 					&& e.getStatus().getCode() == -1) {

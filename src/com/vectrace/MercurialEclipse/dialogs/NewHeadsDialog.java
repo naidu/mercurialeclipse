@@ -162,7 +162,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			if (HgStatusClient.isDirty(hgRoot)) {
 				boolean clearAndContinue = cleanUpdateRequested
 						|| MessageDialog.openConfirm(getShell(), "Uncommited changes",
-						"WARNING. All uncommited changes will be lost.\nDo you want to continue?");
+						Messages.getString("RevertDialog.uncommitedChanges"));
 				if (clearAndContinue) {
 					HgRevertClient.performRevertAll(new NullProgressMonitor(), hgRoot);
 					return true;
