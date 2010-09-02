@@ -64,7 +64,7 @@ public class UpdateJob extends Job {
 					&& e.getStatus().getCode() == -1) {
 
 				// don't log this error because it's a common situation and can be handled
-				handleMultipleHeads(hgRoot);
+				handleMultipleHeads(hgRoot, cleanEnabled);
 				return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
 			}
 			MercurialEclipsePlugin.logError(e);
@@ -76,44 +76,20 @@ public class UpdateJob extends Job {
 				+ " succeeded.");
 	}
 
-	public static void handleMultipleHeads(final HgRoot root) {
+	public static void handleMultipleHeads(final HgRoot root, final boolean clean) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				NewHeadsDialog dialog;
 				try {
 					dialog = new NewHeadsDialog(Display.getDefault().getActiveShell(), root);
-					dialog.setBlockOnOpen(true);
+					dialog.setClean(clean);
+//					dialog.setBlockOnOpen(true);
 					dialog.open();
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}
 			}
 		});
-
-//		Display.getDefault().syncExec(new Runnable() {
-//
-//			public void run() {
-//				try {
-//
-//					int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(root).size();
-//					if (extraHeads == 1) {
-//						boolean mergeNow = MessageDialog.openQuestion(null,
-//								"Multiple heads", "You have one extra head in current branch. Do you want to merge now?");
-//
-//						if (mergeNow) {
-//							MergeHandler.determineMergeHeadAndMerge(root, Display.getDefault().getActiveShell(), new NullProgressMonitor(), false, true);
-//						}
-//					} else {
-//
-////						MessageDialog.openInformation(null,
-////								"Multiple heads", "Can't update to tip. "
-////								+ "You have " + extraHeads + " extra heads in current branch. Consider merging manually");
-//					}
-//				} catch (CoreException e) {
-//					MercurialEclipsePlugin.logError(e);
-//				}
-//			}
-//		});
 	}
 
 }

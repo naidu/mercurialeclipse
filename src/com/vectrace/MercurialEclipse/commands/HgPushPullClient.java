@@ -75,7 +75,7 @@ public class HgPushPullClient extends AbstractClient {
 		} finally {
 			if (update && result != null && result.contains("not updating, since new heads added")) {
 				// inform user about new heads and ask if he wants to merge
-				UpdateJob.handleMultipleHeads(hgRoot);
+				UpdateJob.handleMultipleHeads(hgRoot, false);
 			}
 
 			// doesn't metter how far we was: we have to trigger update of caches in case

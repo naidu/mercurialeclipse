@@ -14,6 +14,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IconAndMessageDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -24,6 +25,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgRevertClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -43,6 +46,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 
 	private final HgRoot hgRoot;
 	private boolean moreThanTwoHeads = false;
+	private boolean cleanUpdateRequested = false;
 
 	public NewHeadsDialog(Shell parentShell, HgRoot hgRoot) throws HgException {
 		super(parentShell);
@@ -99,34 +103,37 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			switchPressed();
 			break;
 		}
-
-		super.buttonPressed(buttonId);
+		close();	// every button closes the dialog
 	}
 
 	private void switchPressed() {
 
-//		close();
 	}
 
 	private void rebasePressed() {
+		if (!clearAndContinue()) {
+			return;
+		}
+
 		if (moreThanTwoHeads) {
 			RebaseWizard wizard = new RebaseWizard(hgRoot);
 			WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 			wizardDialog.open();
-			close();
 		} else {
 			boolean rebaseConflict = false;
 			try {
 				boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
-				.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
+						.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 
+				// rebase on Tip revision
 				HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, useExternalMergeTool, null);
+
 				// if rebase succeeded try again updating to tip
-				// TODO 'clean' parameter must be taken from original update command!
-				HgUpdateClient.update(hgRoot, null, false);
+				HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
 			} catch (HgException e) {
 				rebaseConflict = HgRebaseClient.isRebaseConflict(e);
 				if (!rebaseConflict) {
+					MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
 					MercurialEclipsePlugin.logError(e);
 				}
 			} finally {
@@ -142,8 +149,30 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 				} catch (InterruptedException e) {
 					MercurialEclipsePlugin.logError(e);
 				}
-				close();
 			}
+		}
+	}
+
+	/**
+	 * Checks that working copy is clear and (if needed) asks user to revert dirty files
+	 * @return false if user cancelled operation or an error occured
+	 */
+	private boolean clearAndContinue() {
+		try {
+			if (HgStatusClient.isDirty(hgRoot)) {
+				boolean clearAndContinue = cleanUpdateRequested
+						|| MessageDialog.openConfirm(getShell(), "Uncommited changes",
+						"WARNING. All uncommited changes will be lost.\nDo you want to continue?");
+				if (clearAndContinue) {
+					HgRevertClient.performRevertAll(new NullProgressMonitor(), hgRoot);
+					return true;
+				}
+				return false;
+			}
+			return true;	// no changes found
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
 		}
 	}
 
@@ -167,19 +196,26 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 	}
 
 	private void mergePressed() {
+		if (!clearAndContinue()) {
+			return;
+		}
+
 		try {
 			MergeHandler.determineMergeHeadAndMerge(hgRoot,
 					getShell(), new NullProgressMonitor(), false, true);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
-		} finally {
-			close();
+			MessageDialog.openError(getShell(), "Merging error", e.getMessage());
 		}
 	}
 
 	@Override
 	protected Image getImage() {
 		return getShell().getDisplay().getSystemImage(SWT.ICON_INFORMATION);
+	}
+
+	public void setClean(boolean clean) {
+		this.cleanUpdateRequested = clean;
 	}
 
 }
