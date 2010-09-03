@@ -52,10 +52,10 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 		super(parentShell);
 		setShellStyle(SWT.TITLE | SWT.CLOSE);
 
-		int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(hgRoot).size();
-		if (extraHeads == 1) {
+		int extraHeads = MergeHandler.getHeadsInCurrentBranch(hgRoot).size();
+		if (extraHeads == 2) {
 			message = Messages.getString("NewHeadsDialog.twoHeads");
-		} else if (extraHeads > 1) {
+		} else if (extraHeads > 2) {
 			message = Messages.getString("NewHeadsDialog.manyHeads");
 			moreThanTwoHeads = true;
 		} else {
@@ -81,7 +81,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 		if (moreThanTwoHeads) {
 //			createButton(parent, SWITCH_ID, Messages.getString("NewHeadsDialog.manyHeads.Switch"), false);
 			createButton(parent, REBASE_ID, Messages.getString("NewHeadsDialog.manyHeads.Rebase"), false);
-			createButton(parent, MERGE_ID, Messages.getString("NewHeadsDialog.manyHeads.Merge"), false).setEnabled(false);
+			createButton(parent, MERGE_ID, Messages.getString("NewHeadsDialog.manyHeads.Merge"), false);
 		} else {
 //			createButton(parent, SWITCH_ID, Messages.getString("NewHeadsDialog.twoHeads.Switch"), false);
 			createButton(parent, REBASE_ID, Messages.getString("NewHeadsDialog.twoHeads.Rebase"), false);
@@ -202,7 +202,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 
 		try {
 			MergeHandler.determineMergeHeadAndMerge(hgRoot,
-					getShell(), new NullProgressMonitor(), false, true);
+					getParentShell(), new NullProgressMonitor(), false, true);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			MessageDialog.openError(getShell(), "Merging error", e.getMessage());

@@ -32,17 +32,24 @@ public class UpdateJob extends Job {
 	private final HgRoot hgRoot;
 	private final boolean cleanEnabled;
 	private final String revision;
+	private boolean handleCrossBranches = false;
 
 	/**
 	 * Job to do a working directory update to the specified version.
 	 * @param revision the target revision
 	 * @param cleanEnabled if true, discard all local changes.
+	 * @param handleCrossBranches
 	 */
-	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot) {
+	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot, boolean handleCrossBranches) {
 		super("Updating working directory");
 		this.hgRoot = hgRoot;
 		this.cleanEnabled = cleanEnabled;
 		this.revision = revision;
+		this.handleCrossBranches = handleCrossBranches;
+	}
+
+	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot) {
+		this(revision, cleanEnabled, hgRoot, false);
 	}
 
 	@Override
@@ -61,12 +68,12 @@ public class UpdateJob extends Job {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
 
-			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null) {
+			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null && handleCrossBranches) {
 				handleMultipleHeads(hgRoot, cleanEnabled);
 			}
 		} catch (HgException e) {
 			if (e.getMessage().contains("abort: crosses branches")
-					&& e.getStatus().getCode() == -1) {
+					&& e.getStatus().getCode() == -1 && handleCrossBranches) {
 
 				// don't log this error because it's a common situation and can be handled
 				handleMultipleHeads(hgRoot, cleanEnabled);

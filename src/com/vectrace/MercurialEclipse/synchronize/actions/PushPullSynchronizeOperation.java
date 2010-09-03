@@ -194,7 +194,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					boolean rebase = false;
 					boolean force = false;
 					boolean timeout = true;
-					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout);
+					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false);
 					// pull client does the refresh automatically, no extra job required here
 				} else {
 					HgPushPullClient.push(hgRoot, location, false, changeSet.getChangeset(), Integer.MAX_VALUE);

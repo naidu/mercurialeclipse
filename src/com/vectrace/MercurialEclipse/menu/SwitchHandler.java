@@ -35,7 +35,7 @@ public class SwitchHandler extends RootHandler {
 				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			new UpdateJob(dialog.getRevision(), true, hgRoot).schedule();
+			new UpdateJob(dialog.getRevision(), true, hgRoot, false).schedule();
 		}
 	}
 

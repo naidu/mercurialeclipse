@@ -512,7 +512,7 @@ public class MercurialHistoryPage extends HistoryPage {
 							return;
 						}
 					}
-					UpdateJob job = new UpdateJob(rev.getHash(), true, root);
+					UpdateJob job = new UpdateJob(rev.getHash(), true, root, false);
 					JobChangeAdapter adap = new JobChangeAdapter() {
 						@Override
 						public void done(IJobChangeEvent event) {

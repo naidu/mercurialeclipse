@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -411,7 +411,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		// To completely undo the uncommitted merge and discard all local modifications,
 		// you will need to issue a hg update -C -r . (note the "dot" at the end of the command).
 		try {
-			UpdateHandler update = new UpdateHandler();
+			UpdateHandler update = new UpdateHandler(false);
 			update.setCleanEnabled(true);
 			update.setRevision(".");
 			update.setShell(getShell());

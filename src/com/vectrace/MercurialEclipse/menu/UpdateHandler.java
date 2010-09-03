@@ -23,6 +23,15 @@ public class UpdateHandler extends RunnableHandler {
 
 	private String revision;
 	private boolean cleanEnabled;
+	private boolean handleCrossBranches = true;
+
+	public UpdateHandler() {
+
+	}
+
+	public UpdateHandler(boolean handleCrossBranches) {
+		this.handleCrossBranches = handleCrossBranches;
+	}
 
 	/**
 	 * @param hgRoot
@@ -50,7 +59,7 @@ public class UpdateHandler extends RunnableHandler {
 				return;
 			}
 		}
-		new UpdateJob(revision, cleanEnabled, hgRoot).schedule();
+		new UpdateJob(revision, cleanEnabled, hgRoot, handleCrossBranches).schedule();
 	}
 
 	/**
