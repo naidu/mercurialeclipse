@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.NewHeadsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -31,17 +32,24 @@ public class UpdateJob extends Job {
 	private final HgRoot hgRoot;
 	private final boolean cleanEnabled;
 	private final String revision;
+	private boolean handleCrossBranches = false;
 
 	/**
 	 * Job to do a working directory update to the specified version.
 	 * @param revision the target revision
 	 * @param cleanEnabled if true, discard all local changes.
+	 * @param handleCrossBranches
 	 */
-	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot) {
+	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot, boolean handleCrossBranches) {
 		super("Updating working directory");
 		this.hgRoot = hgRoot;
 		this.cleanEnabled = cleanEnabled;
 		this.revision = revision;
+		this.handleCrossBranches = handleCrossBranches;
+	}
+
+	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot) {
+		this(revision, cleanEnabled, hgRoot, false);
 	}
 
 	@Override
@@ -59,12 +67,16 @@ public class UpdateJob extends Job {
 		try {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
+
+			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null && handleCrossBranches) {
+				handleMultipleHeads(hgRoot, cleanEnabled);
+			}
 		} catch (HgException e) {
 			if (e.getMessage().contains("abort: crosses branches")
-					&& e.getStatus().getCode() == -1) {
+					&& e.getStatus().getCode() == -1 && handleCrossBranches) {
 
 				// don't log this error because it's a common situation and can be handled
-				handleMultipleHeads(hgRoot);
+				handleMultipleHeads(hgRoot, cleanEnabled);
 				return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
 			}
 			MercurialEclipsePlugin.logError(e);
@@ -76,44 +88,20 @@ public class UpdateJob extends Job {
 				+ " succeeded.");
 	}
 
-	public static void handleMultipleHeads(final HgRoot root) {
+	public static void handleMultipleHeads(final HgRoot root, final boolean clean) {
 		Display.getDefault().syncExec(new Runnable() {
 			public void run() {
 				NewHeadsDialog dialog;
 				try {
 					dialog = new NewHeadsDialog(Display.getDefault().getActiveShell(), root);
-					dialog.setBlockOnOpen(true);
+					dialog.setClean(clean);
+//					dialog.setBlockOnOpen(true);
 					dialog.open();
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}
 			}
 		});
-
-//		Display.getDefault().syncExec(new Runnable() {
-//
-//			public void run() {
-//				try {
-//
-//					int extraHeads = MergeHandler.getOtherHeadsInCurrentBranch(root).size();
-//					if (extraHeads == 1) {
-//						boolean mergeNow = MessageDialog.openQuestion(null,
-//								"Multiple heads", "You have one extra head in current branch. Do you want to merge now?");
-//
-//						if (mergeNow) {
-//							MergeHandler.determineMergeHeadAndMerge(root, Display.getDefault().getActiveShell(), new NullProgressMonitor(), false, true);
-//						}
-//					} else {
-//
-////						MessageDialog.openInformation(null,
-////								"Multiple heads", "Can't update to tip. "
-////								+ "You have " + extraHeads + " extra heads in current branch. Consider merging manually");
-//					}
-//				} catch (CoreException e) {
-//					MercurialEclipsePlugin.logError(e);
-//				}
-//			}
-//		});
 	}
 
 }

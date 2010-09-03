@@ -43,7 +43,7 @@ public class HgPushPullClient extends AbstractClient {
 
 	public static String pull(HgRoot hgRoot, ChangeSet changeset,
 			IHgRepositoryLocation repo, boolean update, boolean rebase,
-			boolean force, boolean timeout) throws HgException {
+			boolean force, boolean timeout, boolean merge) throws HgException {
 
 		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
@@ -73,9 +73,10 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
-			if (update && result != null && result.contains("not updating, since new heads added")) {
-				// inform user about new heads and ask if he wants to merge
-				UpdateJob.handleMultipleHeads(hgRoot);
+			if (update && result != null && result.contains("not updating, since new heads added")
+					&& !merge && !rebase) {
+				// inform user about new heads and ask if he wants to merge or rebase
+				UpdateJob.handleMultipleHeads(hgRoot, false);
 			}
 
 			// doesn't metter how far we was: we have to trigger update of caches in case

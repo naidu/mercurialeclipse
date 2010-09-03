@@ -179,7 +179,33 @@ public class MergeHandler extends RootHandler {
 	 * @return
 	 * @throws HgException
 	 */
-	public static ArrayList<ChangeSet> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
+	private static ArrayList<ChangeSet> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ArrayList<ChangeSet> result = getHeadsInCurrentBranch(hgRoot);
+		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+
+		ChangeSet csToRemove = null;
+		for (ChangeSet cs : result) {
+			// can't be the current
+			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
+				csToRemove = cs;
+				break;
+			}
+		}
+
+		if (csToRemove != null) {
+			result.remove(csToRemove);
+		}
+
+		return result;
+	}
+
+	/**
+	 * Returns list of Heads in the same branch as current head. Current head itself is not included.
+	 * @param hgRoot
+	 * @return
+	 * @throws HgException
+	 */
+	public static ArrayList<ChangeSet> getHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
 		ArrayList<ChangeSet> otherHeads = new ArrayList<ChangeSet>();
 		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
 
@@ -192,10 +218,6 @@ public class MergeHandler extends RootHandler {
 		for (ChangeSet cs : heads) {
 			// must match branch
 			if (!Branch.same(branch, cs.getBranch())) {
-				continue;
-			}
-			// can't be the current
-			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
 				continue;
 			}
 
