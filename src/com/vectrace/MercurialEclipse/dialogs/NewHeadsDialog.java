@@ -10,11 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IconAndMessageDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
@@ -23,6 +27,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.IProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRevertClient;
@@ -120,36 +126,54 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 			wizardDialog.open();
 		} else {
-			boolean rebaseConflict = false;
-			try {
-				boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+			rebaseOnTip();
+		}
+	}
+
+	private void rebaseOnTip() {
+		IProgressService iProgressService = PlatformUI.getWorkbench().getProgressService();
+		try {
+			iProgressService.run(true, false, new IRunnableWithProgress() {
+
+				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
+					boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
 						.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 
-				// rebase on Tip revision
-				HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, useExternalMergeTool, null);
+					boolean rebaseConflict = false;
+					try {
+						monitor.beginTask("Rebasing on tip", 2);
+						// rebase on Tip revision
+						HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, useExternalMergeTool, null);
 
-				// if rebase succeeded try again updating to tip
-				HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
-			} catch (HgException e) {
-				rebaseConflict = HgRebaseClient.isRebaseConflict(e);
-				if (!rebaseConflict) {
-					MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
-					MercurialEclipsePlugin.logError(e);
-				}
-			} finally {
-				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
-						RefreshRootJob.ALL);
+						monitor.worked(1);
+						monitor.setTaskName("Updating");
+						// if rebase succeeded try again updating to tip
+						HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
 
-				try {
-					job.schedule();
-					job.join();
-					if (rebaseConflict) {
-						showMergeView();
+						monitor.done();
+					} catch (HgException e) {
+						rebaseConflict = HgRebaseClient.isRebaseConflict(e);
+						if (!rebaseConflict) {
+							MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
+							MercurialEclipsePlugin.logError(e);
+						}
+					} finally {
+						RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
+
+						try {
+							job.schedule();
+							job.join();
+							if (rebaseConflict) {
+								showMergeView();
+							}
+						} catch (InterruptedException e) {
+							MercurialEclipsePlugin.logError(e);
+						}
 					}
-				} catch (InterruptedException e) {
-					MercurialEclipsePlugin.logError(e);
 				}
-			}
+			});
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
