@@ -30,11 +30,11 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchSite;
 
+import com.vectrace.MercurialEclipse.compare.MercurialCompareInput;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant.MercurialCompareInput;
 
 /**
- * @author Ilya Ivanov (Intland) - implementation
+ * @author Ilya Ivanov
  *
  * @see OpenInCompareAction
  */
