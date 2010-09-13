@@ -57,7 +57,7 @@ public class FileFromChangeSet implements IAdaptable{
 		if(changeset instanceof WorkingChangeSet && adapter == IResource.class){
 			return file;
 		}
-		if (adapter == IFile.class /* || adapter == IResource.class*/) {
+		if (adapter == IFile.class || adapter == IResource.class) {
 			return file;
 		}
 		if(adapter == ResourceMapping.class){

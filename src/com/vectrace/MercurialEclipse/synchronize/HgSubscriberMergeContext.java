@@ -41,9 +41,9 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 	public HgSubscriberMergeContext(Subscriber subscriber,
 			ISynchronizationScopeManager manager) {
 		super(subscriber, manager);
-		initialize();
 		hidden = new HashSet<IFile>();
 		this.subscriber = (MercurialSynchronizeSubscriber) subscriber;
+		initialize();
 	}
 
 	/**

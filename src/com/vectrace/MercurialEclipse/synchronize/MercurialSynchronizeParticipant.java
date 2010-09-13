@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -34,6 +35,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
@@ -214,6 +216,17 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	protected ModelSynchronizeParticipantActionGroup createMergeActionGroup() {
 		// allows us to contribute our own actions to the synchronize view via java code
 		return new MercurialSynchronizePageActionGroup();
+	}
+
+	@Override
+	public ICompareInput asCompareInput(Object object) {
+		// TODO just an experimental code now - it doesn't find correct 
+		// revision for compare
+		if (object instanceof FileFromChangeSet) {
+			FileFromChangeSet fcs = (FileFromChangeSet) object;
+			return super.asCompareInput(fcs.getFile());
+		}
+		return super.asCompareInput(object);
 	}
 
 	@Override

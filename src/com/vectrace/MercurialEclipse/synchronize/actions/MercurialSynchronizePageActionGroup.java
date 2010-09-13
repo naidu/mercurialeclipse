@@ -85,7 +85,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		if(property instanceof Action){
 			openAction = new OpenAction((Action) property, configuration);
 			// override default action used on double click with our custom
-			configuration.setProperty(keyOpen, openAction);
+//			configuration.setProperty(keyOpen, openAction);
 		}
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
