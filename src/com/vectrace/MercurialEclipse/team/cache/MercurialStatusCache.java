@@ -1196,7 +1196,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				}
 			}
 		}
-		updateJob.schedule(100);
+		updateJob.schedule();
+
+		// Can't execute update asynchronously, because other classes (at least MercurialSynchronizeSubscriber) suppose
+		// that MercurialStatusCache provides fresh status information
+		// TODO some different optimization needed instead of using Job
+		try {
+			updateJob.join();
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	/**
