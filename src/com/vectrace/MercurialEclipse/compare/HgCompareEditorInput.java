@@ -21,9 +21,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -180,21 +178,21 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 	}
 
-	/**
-	 *  Overriden to allow navigation through multiple changes in the sync view via shortcuts
-	 *  "Ctrl + ." (Navigate->Next) or "Ctrl + ," (Navigate->Previous).
-	 *  @see SyncInfoCompareInput
-	 */
-	@Override
-	public synchronized ICompareNavigator getNavigator() {
-		ICompareNavigator navigator = super.getNavigator();
-		if (syncConfig != null && isSelectedInSynchronizeView()) {
-			ICompareNavigator nav = (ICompareNavigator) syncConfig
-					.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
-			return new SyncNavigatorWrapper(navigator, nav);
-		}
-		return navigator;
-	}
+//	/**
+//	 *  Overriden to allow navigation through multiple changes in the sync view via shortcuts
+//	 *  "Ctrl + ." (Navigate->Next) or "Ctrl + ," (Navigate->Previous).
+//	 *  @see SyncInfoCompareInput
+//	 */
+//	@Override
+//	public synchronized ICompareNavigator getNavigator() {
+//		ICompareNavigator navigator = super.getNavigator();
+//		if (syncConfig != null && isSelectedInSynchronizeView()) {
+//			ICompareNavigator nav = (ICompareNavigator) syncConfig
+//					.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
+//			return new SyncNavigatorWrapper(navigator, nav);
+//		}
+//		return navigator;
+//	}
 
 	private class SyncNavigatorWrapper implements ICompareNavigator {
 

@@ -59,7 +59,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 	private final IAction expandAction;
-	private OpenAction openAction;
+	private HgOpenInCompareAction openAction;
 	private ArrayList<PresentationModeAction> presentationModeActions;
 
 	public MercurialSynchronizePageActionGroup() {
@@ -83,9 +83,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		String keyOpen = SynchronizePageConfiguration.P_OPEN_ACTION;
 		Object property = configuration.getProperty(keyOpen);
 		if(property instanceof Action){
-			openAction = new OpenAction((Action) property, configuration);
+			openAction = new HgOpenInCompareAction((Action) property, configuration);
 			// override default action used on double click with our custom
-//			configuration.setProperty(keyOpen, openAction);
+			configuration.setProperty(keyOpen, openAction);
 		}
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,

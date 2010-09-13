@@ -14,6 +14,10 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.ResourceNode;
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.compare.structuremergeviewer.ICompareInput;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -23,14 +27,23 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.team.internal.ui.mapping.AbstractCompareInput;
+import org.eclipse.team.internal.ui.mapping.CompareInputChangeNotifier;
+import org.eclipse.team.internal.ui.mapping.ResourceCompareInputChangeNotifier;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.mapping.ISynchronizationCompareInput;
+import org.eclipse.team.ui.mapping.SaveableComparison;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
@@ -41,21 +54,31 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.NullRevision;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 
 /**
- * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
- * Why not {@link SubscriberParticipant}???
+ * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class? Why not
+ * {@link SubscriberParticipant}???
+ *
  * @author Andrei
  */
 @SuppressWarnings("restriction")
-public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
-	implements IChangeSetProvider, ISynchronizationScopeParticipant {
+public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant implements
+		IChangeSetProvider, ISynchronizationScopeParticipant {
 
 	private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
 	private static final String PROJECTS = "PROJECTS";
@@ -75,18 +98,19 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		this.repositoryLocation = repositoryLocation;
 		secondaryId = computeSecondaryId(scope, repositoryLocation);
 		try {
-			ISynchronizeParticipantDescriptor descriptor = TeamUI
-				.getSynchronizeManager().getParticipantDescriptor(getId());
+			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager()
+					.getParticipantDescriptor(getId());
 			setInitializationData(descriptor);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
-	private String computeSecondaryId(RepositorySynchronizationScope scope, IHgRepositoryLocation repo) {
+	private String computeSecondaryId(RepositorySynchronizationScope scope,
+			IHgRepositoryLocation repo) {
 		IProject[] projects = scope.getProjects();
 		StringBuilder sb = new StringBuilder();
-		if(projects.length > 0){
+		if (projects.length > 0) {
 			sb.append("[");
 			for (IProject project : projects) {
 				sb.append(project.getName()).append(',');
@@ -95,7 +119,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			sb.append("] ");
 		}
 		sb.append(repo.getLocation());
-		if(sb.charAt(sb.length() - 1) == '/'){
+		if (sb.charAt(sb.length() - 1) == '/') {
 			sb.deleteCharAt(sb.length() - 1);
 		}
 		return sb.toString();
@@ -119,20 +143,20 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	private void restoreScope(IMemento memento) {
 		String encodedProjects = memento.getString(PROJECTS);
-		if(encodedProjects == null){
+		if (encodedProjects == null) {
 			return;
 		}
 		String[] projectNames = encodedProjects.split(",");
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
-				repositoryLocation);
+		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager()
+				.getAllRepoLocationProjects(repositoryLocation);
 		restoredProjects = new HashSet<IProject>();
 		for (String pName : projectNames) {
-			if(pName.length() == 0){
+			if (pName.length() == 0) {
 				continue;
 			}
 			IProject project = root.getProject(pName);
-			if(project != null && (repoProjects.contains(project) || !project.isOpen())){
+			if (project != null && (repoProjects.contains(project) || !project.isOpen())) {
 				restoredProjects.add(project);
 			}
 		}
@@ -140,20 +164,19 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	@Override
 	public void saveState(IMemento memento) {
-		IMemento myMemento = memento
-			.createChild(MercurialSynchronizeParticipant.class.getName());
+		IMemento myMemento = memento.createChild(MercurialSynchronizeParticipant.class.getName());
 		myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getLocation());
 		saveCurrentScope(myMemento);
 		super.saveState(memento);
 	}
 
-	private void saveCurrentScope(IMemento memento){
+	private void saveCurrentScope(IMemento memento) {
 		IProject[] projects = getContext().getScope().getProjects();
-		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
-				repositoryLocation);
+		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager()
+				.getAllRepoLocationProjects(repositoryLocation);
 		StringBuilder sb = new StringBuilder();
 		for (IProject project : projects) {
-			if(repoProjects.contains(project) || !project.isOpen()) {
+			if (repoProjects.contains(project) || !project.isOpen()) {
 				sb.append(project.getName()).append(",");
 			}
 		}
@@ -161,31 +184,34 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	}
 
 	@Override
-	protected MergeContext restoreContext(ISynchronizationScopeManager manager) throws CoreException {
+	protected MergeContext restoreContext(ISynchronizationScopeManager manager)
+			throws CoreException {
 		Set<IProject> repoProjects;
 		if (restoredProjects != null && !restoredProjects.isEmpty()) {
 			repoProjects = restoredProjects;
 		} else {
-			repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repositoryLocation);
+			repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
+					repositoryLocation);
 		}
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation,
-				repoProjects.toArray(new IProject[0]));
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(
+				repositoryLocation, repoProjects.toArray(new IProject[0]));
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
-		HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);
+		HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(),
+				subscriber);
 		subscriber.setParticipant(this);
 		return new HgSubscriberMergeContext(subscriber, manager2);
 	}
 
 	@Override
 	protected void initializeContext(SynchronizationContext context) {
-		if(context != null) {
+		if (context != null) {
 			super.initializeContext(context);
 		}
 	}
 
 	@Override
 	public void dispose() {
-		if(getContext() != null) {
+		if (getContext() != null) {
 			super.dispose();
 		}
 	}
@@ -218,13 +244,190 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		return new MercurialSynchronizePageActionGroup();
 	}
 
+	public static class MercurialCompareInput extends AbstractCompareInput implements ISynchronizationCompareInput {
+
+		private final ISynchronizationContext context;
+		private final FileFromChangeSet fileFromChangeSet;
+
+		public MercurialCompareInput(RevisionNode ancestor, ITypedElement left, RevisionNode right,
+				ISynchronizationContext context, FileFromChangeSet fcs) {
+			super(Differencer.CHANGE, ancestor, left, right);
+			this.context = context;
+			this.fileFromChangeSet = fcs;
+		}
+
+		@Override
+		protected CompareInputChangeNotifier getChangeNotifier() {
+			return ResourceCompareInputChangeNotifier.getChangeNotifier(context);
+		}
+
+		/**
+		 * @see org.eclipse.team.internal.ui.mapping.AbstractCompareInput#needsUpdate()
+		 */
+		@Override
+		public boolean needsUpdate() {
+			return false;
+		}
+
+		/**
+		 * @see org.eclipse.team.internal.ui.mapping.AbstractCompareInput#update()
+		 */
+		@Override
+		public void update() {
+		}
+
+		/**
+		 * @see org.eclipse.team.ui.mapping.ISynchronizationCompareInput#getFullPath()
+		 */
+		public String getFullPath() {
+			return ((RevisionNode)getRight()).getResource().getFullPath().toString();
+		}
+
+		/**
+		 * @see org.eclipse.team.ui.mapping.ISynchronizationCompareInput#getSaveable()
+		 */
+		public SaveableComparison getSaveable() {
+			return null;
+		}
+
+		/**
+		 * @see org.eclipse.team.ui.mapping.ISynchronizationCompareInput#isCompareInputFor(java.lang.Object)
+		 */
+		public boolean isCompareInputFor(Object object) {
+			IResource resource = ((RevisionNode)getRight()).getResource();
+			IResource other = Utils.getResource(object);
+			if (resource != null && other != null) {
+				return resource.equals(other);
+			}
+			return false;
+		}
+
+		public boolean isInputFor(FileFromChangeSet fcs) {
+			return this.fileFromChangeSet.equals(fcs);
+		}
+
+		/**
+		 * @see org.eclipse.team.ui.mapping.ISynchronizationCompareInput#prepareInput(org.eclipse.compare.CompareConfiguration, org.eclipse.core.runtime.IProgressMonitor)
+		 */
+		public void prepareInput(CompareConfiguration configuration, IProgressMonitor monitor) {
+			configuration.setRightEditable(false);
+			configuration.setLeftEditable(false);
+
+			if (getLeft() instanceof RevisionNode) {
+				configuration.setLeftLabel(((RevisionNode)getLeft()).getLabel());
+			} else {
+				configuration.setLeftLabel(getLeft().getName());
+			}
+			configuration.setRightLabel(((RevisionNode)getRight()).getLabel());
+			if (getAncestor() != null) {
+				configuration.setAncestorLabel(((RevisionNode)getAncestor()).getLabel());
+			}
+		}
+
+		/**
+		 * Fire a compare input change event.
+		 * This method is public so that the change can be fired
+		 * by the containing editor input on a save.
+		 */
+		@Override
+		public void fireChange() {
+			super.fireChange();
+		}
+
+	}
+
 	@Override
 	public ICompareInput asCompareInput(Object object) {
-		// TODO just an experimental code now - it doesn't find correct 
-		// revision for compare
 		if (object instanceof FileFromChangeSet) {
 			FileFromChangeSet fcs = (FileFromChangeSet) object;
-			return super.asCompareInput(fcs.getFile());
+
+			final IFile file = fcs.getFile();
+			if (file == null) {
+				// TODO this can happen, if the file was modified but is OUTSIDE Eclipse workspace
+				MessageDialog.openInformation(null, "Compare",
+						"Diff for files external to Eclipse workspace is not supported yet!");
+				return null;
+			}
+
+			ChangeSet cs = fcs.getChangeset();
+
+			if (cs instanceof ParentChangeSet) {
+				return null;
+			} else if (cs instanceof WorkingChangeSet) {
+				// local workspace version
+				ResourceNode thisNode = new ResourceNode(file);
+				// mercurial version
+				RevisionNode parentNode = new RevisionNode(new MercurialRevisionStorage(file));
+
+				return new MercurialCompareInput(null, thisNode, parentNode, getContext(), fcs);
+			}
+
+			if (cs.getDirection() == Direction.OUTGOING) {
+				String[] parents = cs.getParents();
+				MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
+				MercurialRevisionStorage parentRev;
+				if (parents.length == 0) {
+					// TODO for some reason, we do not always have right parent info in the changesets
+					// if we are on the different branch then the changeset. So simply enforce the parents resolving
+					try {
+						parents = HgParentClient.getParentNodeIds(file, cs);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+				if (cs.getRevision().getRevision() == 0 || parents.length == 0) {
+					parentRev = new NullRevision(file, cs);
+				} else {
+					parentRev = new MercurialRevisionStorage(file, parents[0]);
+				}
+
+				if (parents.length != 1) {
+					return null;
+				}
+
+				RevisionNode thisNode = new RevisionNode(thisRev);
+				RevisionNode parentNode = new RevisionNode(parentRev);
+
+				return new MercurialCompareInput(null, thisNode, parentNode, getContext(), fcs);
+			} else if (cs.getDirection() == Direction.INCOMING) {
+				MercurialRevisionStorage thisRev = new MercurialRevisionStorage(
+						file, cs.getChangesetIndex(), cs.getChangeset(), cs);
+				MercurialRevisionStorage parentRev;
+				String[] parents = cs.getParents();
+				if (cs.getRevision().getRevision() == 0 || parents.length == 0) {
+					parentRev = new NullRevision(file, cs);
+				} else {
+					ChangeSet parentCs = null;
+					String parentId = parents[0];
+
+					Set<ChangeSet> changesets;
+					try {
+						changesets = IncomingChangesetCache.getInstance().getChangeSets(file,
+								getRepositoryLocation(), null);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+						return null;
+					}
+
+					for (ChangeSet cset : changesets) {
+						if (parentId.endsWith(cset.getChangeset())
+								&& parentId.startsWith("" + cset.getChangesetIndex())) {
+							parentCs = cset;
+							break;
+						}
+					}
+					if (parentCs == null) {
+						parentCs = new ParentChangeSet(parentId, cs);
+					}
+					parentRev = new MercurialRevisionStorage(file, parentCs.getChangesetIndex(),
+							parentCs.getChangeset(), parentCs);
+
+				}
+				RevisionNode thisNode = new RevisionNode(thisRev);
+				RevisionNode parentNode = new RevisionNode(parentRev);
+
+				return new MercurialCompareInput(null, thisNode, parentNode, getContext(), fcs);
+			}
 		}
 		return super.asCompareInput(object);
 	}
@@ -232,17 +435,18 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	@Override
 	protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
 		super.initializeConfiguration(configuration);
-		if(!isMergingEnabled()) {
+		if (!isMergingEnabled()) {
 			// add our action group in any case
 			configuration.addActionContribution(createMergeActionGroup());
 		}
 		// Set changesets mode as default
-		configuration.setProperty(ModelSynchronizeParticipant.P_VISIBLE_MODEL_PROVIDER,	HgChangeSetModelProvider.ID);
+		configuration.setProperty(ModelSynchronizeParticipant.P_VISIBLE_MODEL_PROVIDER,
+				HgChangeSetModelProvider.ID);
 	}
 
 	@Override
 	public boolean hasCompareInputFor(Object object) {
-		if(object instanceof IFile || object instanceof FileFromChangeSet){
+		if (object instanceof IFile || object instanceof FileFromChangeSet) {
 			// always allow "Open in Compare Editor" menu to be shown
 			return true;
 		}
@@ -272,7 +476,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	}
 
 	public ChangeSetCapability getChangeSetCapability() {
-		if(changeSetCapability == null) {
+		if (changeSetCapability == null) {
 			changeSetCapability = new HgChangeSetCapability();
 		}
 		return changeSetCapability;
