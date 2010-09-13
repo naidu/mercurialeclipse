@@ -280,10 +280,6 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 					parentRev = new MercurialRevisionStorage(file, parents[0]);
 				}
 
-				if (parents.length != 1) {
-					return null;
-				}
-
 				RevisionNode thisNode = new RevisionNode(thisRev);
 				RevisionNode parentNode = new RevisionNode(parentRev);
 
