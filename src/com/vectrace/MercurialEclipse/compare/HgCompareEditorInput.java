@@ -21,9 +21,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.internal.ui.mapping.ModelCompareEditorInput;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -31,9 +31,11 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
+@SuppressWarnings("restriction")
 public class HgCompareEditorInput extends CompareEditorInput {
 	private static final Differencer DIFFERENCER = new Differencer();
 
@@ -181,41 +183,19 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	/**
-	 *  Overriden to allow navigation through multiple changes in the sync view via shortcuts
+	 *  Overriden to allow navigation between files in the sync view via shortcuts
 	 *  "Ctrl + ." (Navigate->Next) or "Ctrl + ," (Navigate->Previous).
-	 *  @see SyncInfoCompareInput
+	 *  @see ModelCompareEditorInput
 	 */
 	@Override
 	public synchronized ICompareNavigator getNavigator() {
-		ICompareNavigator navigator = super.getNavigator();
-		if (syncConfig != null && isSelectedInSynchronizeView()) {
-			ICompareNavigator nav = (ICompareNavigator) syncConfig
-					.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
-			return new SyncNavigatorWrapper(navigator, nav);
+		if (isSelectedInSynchronizeView()) {
+			ICompareNavigator nav = (ICompareNavigator)syncConfig.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
+			// Set the input navigator property so that the advisor can get at it if needed.
+			syncConfig.setProperty(SynchronizePageConfiguration.P_INPUT_NAVIGATOR, super.getNavigator());
+			return nav;
 		}
-		return navigator;
-	}
-
-	private class SyncNavigatorWrapper implements ICompareNavigator {
-
-		private final ICompareNavigator textDfiffDelegate;
-		private final ICompareNavigator syncViewDelegate;
-
-		public SyncNavigatorWrapper(ICompareNavigator textDfiffDelegate,
-				ICompareNavigator syncViewDelegate) {
-			this.textDfiffDelegate = textDfiffDelegate;
-			this.syncViewDelegate = syncViewDelegate;
-		}
-
-		public boolean selectChange(boolean next) {
-			boolean endReached = textDfiffDelegate.selectChange(next);
-			if(endReached && syncViewDelegate != null && isSelectedInSynchronizeView()){
-				// forward navigation to the sync view
-				return syncViewDelegate.selectChange(next);
-			}
-			return endReached;
-		}
-
+		return super.getNavigator();
 	}
 
 	private boolean isSelectedInSynchronizeView() {
@@ -228,9 +208,9 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 		IStructuredSelection ss = (IStructuredSelection) s;
 		Object element = ss.getFirstElement();
-		if (element instanceof FileFromChangeSet) {
-			FileFromChangeSet sime = (FileFromChangeSet) element;
-			return resource.equals(sime.getFile());
+		if (element instanceof FileFromChangeSet
+				|| element instanceof ChangesetGroup) {
+			return true;
 		}
 		return false;
 	}
@@ -281,6 +261,4 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 		return true;
 	}
-
-
 }
