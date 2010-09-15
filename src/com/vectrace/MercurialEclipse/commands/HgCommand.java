@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +41,8 @@ public class HgCommand extends AbstractShellCommand {
 		)));
 
 	private String lastUserName;
+
+	private String bundleFile;
 
 	public HgCommand(List<String> commands, File workingDir, boolean escapeFiles) {
 		super(commands, workingDir, escapeFiles);
@@ -132,6 +135,14 @@ public class HgCommand extends AbstractShellCommand {
 		return COMMANDS_CONFLICTING_WITH_USER_ARG.contains(command);
 	}
 
+	public void setBundleOverlay(File file) throws IOException {
+		if (file != null) {
+			bundleFile = file.getCanonicalPath();
+		} else {
+			bundleFile = null;
+		}
+	}
+
 	/**
 	 * @param str non null, non empty string
 	 * @return non null string with escaped quotes (depending on the OS)
@@ -150,6 +161,13 @@ public class HgCommand extends AbstractShellCommand {
 
 		// Request non-interactivity flag
 		List<String> cmd = getCommands();
+
+		if (bundleFile != null) {
+			// Add -R <bundleFile>
+			cmd.add(1, bundleFile);
+			cmd.add(1, "-R");
+		}
+
 		cmd.add(1, "-y");
 		commands = cmd;
 		// delegate to superclass

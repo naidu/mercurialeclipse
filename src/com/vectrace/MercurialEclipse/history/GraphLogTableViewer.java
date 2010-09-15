@@ -19,7 +19,6 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.widgets.Composite;
@@ -40,7 +39,6 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class GraphLogTableViewer extends TableViewer {
 	private final List<Color> colours = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
-	private final Font mergeFont;
 	private final Color mergeBack;
 	private final Color mergeFore;
 
@@ -66,10 +64,8 @@ public class GraphLogTableViewer extends TableViewer {
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_RED));
-		// TODO add pref store listener
-		mergeFont = MercurialUtilities
-				.getFontPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT);
 
+		// TODO add pref store listener
 		mergeBack = MercurialUtilities
 				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND);
 		mergeFore = MercurialUtilities
@@ -140,8 +136,7 @@ public class GraphLogTableViewer extends TableViewer {
 			}
 		} else {
 			// use italic dark grey font for merge changesets
-			String[] parents = rev.getChangeSet().getParents();
-			if (parents != null && parents.length == 2) {
+			if (rev.getChangeSet().isMerge()) {
 				decorateMergeChangesets(tableItem);
 			}
 		}

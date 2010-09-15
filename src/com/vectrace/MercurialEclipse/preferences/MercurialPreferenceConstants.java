@@ -101,7 +101,6 @@ public final class MercurialPreferenceConstants {
 	public static final int LAYOUT_VERTICAL = 2;
 	public static final String PREF_HISTORY_MERGE_CHANGESET_BACKGROUND = "hg.history.mergeChangesetsBackground";
 	public static final String PREF_HISTORY_MERGE_CHANGESET_FOREGROUND = "hg.history.mergeChangesetsForeground";
-	public static final String PREF_HISTORY_MERGE_CHANGESET_FONT = "hg.history.mergeChangesetsFont";
 	public static final String PREF_USE_MERCURIAL_USERNAME = "hg.useMercurialUsernameForCommit";
 	public static final String PREF_DEFAULT_REBASE_KEEP_BRANCHES = "hg.defaulRebaseKeepBranches";
 }

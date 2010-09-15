@@ -15,6 +15,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +29,7 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -286,5 +288,34 @@ public class HgStatusClient extends AbstractClient {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Execute 'hg status --rev cs --rev csparent', with bundle overlay if applicable
+	 *
+	 * @param cs
+	 *            The changeset to use
+	 * @return Status output
+	 * @throws HgException
+	 */
+	public static String getStatusForChangeset(ChangeSet cs) throws HgException {
+		HgCommand command = new HgCommand("status", cs.getHgRoot(), true); //$NON-NLS-1$
+
+		if (cs.getBundleFile() != null) {
+			try {
+				command.setBundleOverlay(cs.getBundleFile());
+			} catch (IOException e) {
+				throw new HgException("Couldn't set bundle overlay", e);
+			}
+		}
+
+		// modified, added, removed, deleted
+		command.addOptions("-mard"); //$NON-NLS-1$
+		command.addOptions("--rev", cs.getParentRevision(0).getChangeset());
+		command.addOptions("--rev", cs.getRevision().getChangeset());
+
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+
+		return command.executeToString();
 	}
 }

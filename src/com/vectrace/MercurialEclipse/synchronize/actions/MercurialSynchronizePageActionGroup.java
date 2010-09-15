@@ -135,6 +135,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 
 		addUndoMenu(menu);
+		addMergeViewStyleAction(menu);
 
 		if (isSelectionUncommited()) {
 			menu.insertAfter(
@@ -266,6 +267,22 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 	}
 
+	private void addMergeViewStyleAction(IMenuManager menu) {
+		Object[] selectedObjects = getSelectedObjects();
+
+		if (selectedObjects == null || selectedObjects.length != 1
+				|| !(selectedObjects[0] instanceof ChangeSet)) {
+			return;
+		}
+
+		ChangeSet cs = (ChangeSet) selectedObjects[0];
+
+		if (cs.isMerge() && !(cs instanceof WorkingChangeSet)) {
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP,
+					new ToggleMergeStyleAction(cs));
+		}
+	}
+
 	private Object[] getSelectedObjects() {
 		ISelection selection = getContext().getSelection();
 		if (!(selection instanceof StructuredSelection)) {
@@ -378,6 +395,26 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)) {
 				update();
 			}
+		}
+	}
+
+	private static class ToggleMergeStyleAction extends Action {
+		private final ChangeSet changeset;
+
+		public ToggleMergeStyleAction(ChangeSet cs) {
+			super("Show changes merged in", IAction.AS_CHECK_BOX);
+
+			if (!cs.isMerge() || cs instanceof WorkingChangeSet) {
+				throw new IllegalArgumentException();
+			}
+
+			changeset = cs;
+			setChecked(cs.isShowFirstParentChanges());
+		}
+
+		@Override
+		public void run() {
+			changeset.setShowFirstParentChanges(!changeset.isShowFirstParentChanges());
 		}
 	}
 }

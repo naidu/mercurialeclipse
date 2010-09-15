@@ -446,9 +446,8 @@ public class CommitDialog extends TitleAreaDialog {
 					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend"));
 					return;
 				}
-				String[] parents = currentChangeset.getParents();
-				if(parents != null && parents.length == 2 && !StringUtils.isEmpty(parents[0])
-						&& !StringUtils.isEmpty(parents[1])){
+
+				if(currentChangeset.isMerge()) {
 					setErrorMessage(Messages.getString("CommitDialog.noAmendForMerge"));
 					return;
 				}

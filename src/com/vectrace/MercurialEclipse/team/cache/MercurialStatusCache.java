@@ -60,6 +60,7 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -1011,6 +1012,42 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return changed;
 	}
 
+	/**
+	 * Parse status output. Future: merge with above method?
+	 *
+	 * @param status
+	 *            Status output
+	 * @param hgRoot
+	 *            The root to use for the {@link FileStatus}
+	 * @return A non-null list.
+	 */
+	public static List<FileStatus> parseStatus(String status, HgRoot hgRoot) {
+		List<FileStatus> list = new ArrayList<FileStatus>();
+
+		for (String line : NEWLINE.split(status)) {
+			if (line.length() <= 2 || line.charAt(1) != ' ') {
+				continue;
+			}
+
+			char c = line.charAt(0);
+			FileStatus.Action action;
+
+			if (c == CHAR_ADDED) {
+				action = FileStatus.Action.ADDED;
+			} else if (c == CHAR_REMOVED) {
+				action = FileStatus.Action.REMOVED;
+			} else if (c == CHAR_MODIFIED) {
+				action = FileStatus.Action.MODIFIED;
+			} else {
+				continue;
+			}
+
+			list.add(new FileStatus(action, line.substring(2), hgRoot));
+		}
+
+		return list;
+	}
+
 	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
@@ -1129,7 +1166,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return true;
 	}
 
-	private int getBit(char status) {
+	private static int getBit(char status) {
 		switch (status) {
 		case CHAR_MISSING:
 			return BIT_MISSING;
