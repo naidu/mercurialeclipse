@@ -93,7 +93,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			createButton(parent, REBASE_ID, Messages.getString("NewHeadsDialog.twoHeads.Rebase"), false);
 			createButton(parent, MERGE_ID, Messages.getString("NewHeadsDialog.twoHeads.Merge"), false);
 		}
-		createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+		createButton(parent, IDialogConstants.CANCEL_ID, Messages.getString("NewHeadsDialog.CancelUpdate"), false);
 	}
 
 	@Override
