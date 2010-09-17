@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
@@ -20,6 +21,9 @@ public class HgUpdateClient extends AbstractClient {
 
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
+
+		LocalChangesetCache.getInstance().refreshWorkingChangeSetParent(hgRoot);
+
 		HgCommand command = new HgCommand("update", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);

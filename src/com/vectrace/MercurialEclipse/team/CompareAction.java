@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -60,7 +61,7 @@ public class CompareAction extends SingleFileAction {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				if(mergeEnabled){
+				if (mergeEnabled || isConflict(file)) {
 					openMergeEditor(file);
 					return Status.OK_STATUS;
 				}
@@ -111,17 +112,30 @@ public class CompareAction extends SingleFileAction {
 	private void openMergeEditor(IFile file){
 
 		try {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
-			String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+			RevisionNode ancestorNode;
+			RevisionNode mergeNode;
+			if (isConflict(file)) {
+				ChangeSet parent = LocalChangesetCache.getInstance().getWorkingChangeSetParent();
 
-			String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-			int ancestor = HgParentClient
-					.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				mergeNode = new RevisionNode(new MercurialRevisionStorage(file));
+				if (parent != null) {
+					ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, parent.getChangeset()));
+				} else {
+					ancestorNode = new RevisionNode(new MercurialRevisionStorage(file));
+				}
+			} else {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 
-			RevisionNode mergeNode = new RevisionNode(
-					new MercurialRevisionStorage(file, mergeNodeId));
-			RevisionNode ancestorNode = new RevisionNode(
-					new MercurialRevisionStorage(file, ancestor));
+				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
+
+				int ancestor = HgParentClient
+				.findCommonAncestor(hgRoot, parents[0], parents[1]);
+
+				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, mergeNodeId));
+				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestor));
+			}
+
 
 			final HgCompareEditorInput compareInput = new HgCompareEditorInput(
 					new CompareConfiguration(), file, ancestorNode, mergeNode, true);
@@ -143,6 +157,12 @@ public class CompareAction extends SingleFileAction {
 
 	public void setSynchronizePageConfiguration(ISynchronizePageConfiguration syncConfig){
 		this.syncConfig = syncConfig;
+	}
+
+	private boolean isConflict(IFile file) {
+		Integer status = MercurialStatusCache.getInstance().getStatus(file);
+		int sMask = status != null? status.intValue() : 0;
+		return Bits.contains(sMask, MercurialStatusCache.BIT_CONFLICT);
 	}
 
 }

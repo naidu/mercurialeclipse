@@ -69,6 +69,12 @@ public final class LocalChangesetCache extends AbstractCache {
 
 	private boolean isGetFileInformationForChangesets;
 
+	/**
+	 * Used for resolving conflicts in uncommitted files. Points on change set which
+	 * was the current until Update operation performed
+	 */
+	private ChangeSet workingChangeSetParent;
+
 	private LocalChangesetCache() {
 		super();
 		localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
@@ -591,5 +597,21 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 		return branchChangeSets;
 
+	}
+
+	public ChangeSet getWorkingChangeSetParent() {
+		return workingChangeSetParent;
+	}
+
+	/**
+	 * Must be called before every update operation to save current change set.
+	 * The change set can be used later for resolving conflicts in uncommitted files
+	 *
+	 * @param hgRoot
+	 * @throws HgException
+	 */
+	public void refreshWorkingChangeSetParent(HgRoot hgRoot) throws HgException {
+		ChangeSet cs = getChangesetForRoot(hgRoot);
+		workingChangeSetParent = cs;
 	}
 }
