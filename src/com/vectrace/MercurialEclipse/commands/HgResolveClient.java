@@ -167,6 +167,8 @@ public class HgResolveClient extends AbstractClient {
 	}
 
 	/**
+	 * Executes resolve command to find change sets necessary for merging
+	 *
 	 * Returns array of changeset ids:
 	 * result[0] - 'my'
 	 * result[1] - 'other'

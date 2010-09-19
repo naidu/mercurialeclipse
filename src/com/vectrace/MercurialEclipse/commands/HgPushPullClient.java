@@ -18,7 +18,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
@@ -50,11 +49,9 @@ public class HgPushPullClient extends AbstractClient {
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
 		if (update) {
-			LocalChangesetCache.getInstance().refreshWorkingChangeSetParent(hgRoot);
 			command.addOptions("--update"); //$NON-NLS-1$
 			addMergeToolPreference(command);
 		} else if (rebase) {
-			LocalChangesetCache.getInstance().refreshWorkingChangeSetParent(hgRoot);
 			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 			command.addOptions("--rebase"); //$NON-NLS-1$
 			addMergeToolPreference(command);
