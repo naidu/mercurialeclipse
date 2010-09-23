@@ -449,4 +449,8 @@ public class CommitFilesChooser extends Composite {
 			CompareUtils.openEditor(left, right, true, false, null);
 		}
 	}
+
+	public boolean isSelectable() {
+		return selectable;
+	}
 }

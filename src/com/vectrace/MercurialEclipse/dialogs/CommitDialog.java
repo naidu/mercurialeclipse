@@ -233,7 +233,7 @@ public class CommitDialog extends TitleAreaDialog {
 			setErrorMessage(Messages.getString("CommitDialog.commitMessageRequired")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else if (commitFilesList.getCheckedResources().size() == 0
-				&& !options.allowEmptyCommit) {
+				&& !options.allowEmptyCommit && commitFilesList.isSelectable()) {
 			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
