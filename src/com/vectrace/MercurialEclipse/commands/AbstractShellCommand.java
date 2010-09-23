@@ -396,6 +396,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
 		}
 
+		// removing to allow using eclipse merge editor
+		builder.environment().remove("HGMERGE");
+
 		builder.redirectErrorStream(true); // makes my life easier
 		if (workingDir != null) {
 			builder.directory(workingDir);
