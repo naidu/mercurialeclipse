@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -42,6 +44,7 @@ public class HgResolveClient extends AbstractClient {
 		command
 				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		command.addOptions("-l"); //$NON-NLS-1$
+
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		List<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
 		if (lines.length != 1 || !"".equals(lines[0])) { //$NON-NLS-1$
@@ -161,6 +164,47 @@ public class HgResolveClient extends AbstractClient {
 	private static void refreshStatus(IResource res) throws HgException {
 		MercurialStatusCache.getInstance().refreshStatus(res, null);
 		ResourceUtils.touch(res);
+	}
+
+	/**
+	 * Executes resolve command to find change sets necessary for merging
+	 *
+	 * Returns array of changeset ids:
+	 * result[0] - 'my'
+	 * result[1] - 'other'
+	 * result[2] - 'base'
+	 */
+	public static String[] getChangeSetsForCompare(IFile file) {
+		String[] results = new String[3];
+
+		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
+				getWorkingDirectory(file), false);
+
+		command.addOptions("--config", "ui.merge=internal:mustfail", "-a", "--debug");
+
+		String stringResult = "";
+		try {
+			command.executeToString();
+		} catch (HgException e) {
+			// exception is expected here
+			stringResult = e.getMessage();
+		}
+
+		String filename = file.getName();
+
+		String patternString = "my .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]"
+			+ "other .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]"
+			+ "ancestor .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]";
+
+		Matcher matcher = Pattern.compile(patternString).matcher(stringResult);
+
+		if (matcher.find() && matcher.groupCount() == 3) {
+			results[0] = matcher.group(1);	// my
+			results[1] = matcher.group(2);	// other
+			results[2] = matcher.group(3);	// ancestor
+		}
+
+		return results;
 	}
 
 }
