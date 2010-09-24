@@ -100,11 +100,13 @@ public class MercurialTextSearchVisitor {
 			monitor.worked(1);
 			monitor.subTask("Processing Mercurial grep results...");
 			for (MercurialTextSearchMatchAccess sr : result) {
-				monitor.subTask("Found match in: " + sr.getFile().getName());
-				requestor.acceptFile(sr.getFile());
-				monitor.worked(1);
-				requestor.acceptPatternMatch(sr);
-				monitor.worked(1);
+				if (sr.getFile() != null) {
+					monitor.subTask("Found match in: " + sr.getFile().getName());
+					requestor.acceptFile(sr.getFile());
+					monitor.worked(1);
+					requestor.acceptPatternMatch(sr);
+					monitor.worked(1);
+				}
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
