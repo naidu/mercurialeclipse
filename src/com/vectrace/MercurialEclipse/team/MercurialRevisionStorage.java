@@ -330,21 +330,19 @@ public class MercurialRevisionStorage implements IStorage {
 		try {
 			// hoping the cache is up-to-date!!!
 			LocalChangesetCache cache = LocalChangesetCache.getInstance();
-			ChangeSet tip = cache.getNewestChangeSet(res);
-			if (tip == null) {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
-				if(hgRoot == null){
-					return;
-				}
-				cache.refreshAllLocalRevisions(hgRoot, true);
-				tip = cache.getNewestChangeSet(res.getProject());
+
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+			if (hgRoot == null) {
+				return; 	// TODO returning incompletely initialized object is not reliable!
 			}
+			ChangeSet tip = cache.getNewestChangeSet(hgRoot);
+
 			boolean localKnown = tip.getChangesetIndex() >= rev;
-			if(!localKnown){
+			if (!localKnown) {
 				return;
 			}
 			this.changeSet = cache.getOrFetchChangeSetById(res, String.valueOf(rev));
-			if(changeSet != null){
+			if (changeSet != null) {
 				this.revision = changeSet.getChangesetIndex();
 				this.global = changeSet.getChangeset();
 			}

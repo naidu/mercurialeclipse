@@ -190,6 +190,16 @@ public final class LocalChangesetCache extends AbstractCache {
 		return null;
 	}
 
+	public ChangeSet getNewestChangeSet(HgRoot hgRoot) throws HgException {
+		SortedSet<ChangeSet> revisions = getOrFetchChangeSets(hgRoot);
+		if (revisions.size() > 0) {
+			return revisions.last();
+		}
+
+		return null;
+	}
+
+
 	/**
 	 * Refreshes all local revisions. If limit is set, it looks up the default
 	 * number of revisions to get and fetches the topmost till limit is reached.
