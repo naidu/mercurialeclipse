@@ -47,7 +47,6 @@ public class MercurialTextSearchVisitor {
 	 *
 	 */
 	public MercurialTextSearchVisitor() {
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -86,14 +85,18 @@ public class MercurialTextSearchVisitor {
 			monitor.subTask("Searching in respository " + root.getName());
 			monitor.worked(1);
 			try {
-				return search(root, entry.getValue(), monitor, all);
+				IStatus result = search(root, entry.getValue(), monitor, all);
+				if (!result.isOK()) {
+					return result;
+				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
 						e.getLocalizedMessage(), e);
 			}
 		}
-		return new Status(IStatus.INFO, MercurialEclipsePlugin.ID, "Nothing found.");
+		return new Status(IStatus.OK, MercurialEclipsePlugin.ID,
+				"Mercurial search completed successfully.");
 	}
 
 	/**

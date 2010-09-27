@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.search.MercurialTextSearchMatchAccess;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author Bastian
@@ -42,6 +43,10 @@ public class HgGrepClient extends AbstractClient {
 		if (all) {
 			cmd.addOptions("--all");
 		}
+		if (StringUtils.isEmpty(pattern)) {
+			return new ArrayList<MercurialTextSearchMatchAccess>();
+		}
+
 		cmd.addOptions(pattern);
 		cmd.addFilesWithoutFolders(files);
 		String result = cmd.executeToString(false);

@@ -356,7 +356,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	final void updateOKStatus() {
 		boolean regexStatus = validateRegex();
 		boolean hasFilePattern = fExtensions.getText().length() > 0;
-		getContainer().setPerformActionEnabled(regexStatus && hasFilePattern);
+		boolean hasTextPattern = fPattern.getText().length() > 0;
+		getContainer().setPerformActionEnabled(regexStatus && hasFilePattern && hasTextPattern);
 	}
 
 	// ---- Widget creation ------------------------------------------------
