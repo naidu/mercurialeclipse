@@ -44,7 +44,7 @@ public class HgGrepClient extends AbstractClient {
 		}
 		cmd.addOptions(pattern);
 		cmd.addFilesWithoutFolders(files);
-		String result = cmd.executeToString();
+		String result = cmd.executeToString(false);
 		List<MercurialTextSearchMatchAccess> list = getSearchResults(root, result, all);
 		return list;
 	}
@@ -59,7 +59,9 @@ public class HgGrepClient extends AbstractClient {
 		String[] lines = result.split("\n");
 		List<MercurialTextSearchMatchAccess> list = new ArrayList<MercurialTextSearchMatchAccess>();
 		for (String line : lines) {
-			list.add(new MercurialTextSearchMatchAccess(root, line, all));
+			if (line.length() > 0) {
+				list.add(new MercurialTextSearchMatchAccess(root, line, all));
+			}
 		}
 		return list;
 	}
