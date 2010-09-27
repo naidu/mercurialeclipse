@@ -13,7 +13,9 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.CompareNavigator;
 import org.eclipse.compare.ICompareNavigator;
+import org.eclipse.compare.INavigatable;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
@@ -188,25 +190,28 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	 */
 	@Override
 	public synchronized ICompareNavigator getNavigator() {
-		ICompareNavigator navigator = super.getNavigator();
+		CompareNavigator navigator = (CompareNavigator) super.getNavigator();
 		if (syncConfig != null) {
-			ICompareNavigator nav = (ICompareNavigator) syncConfig.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
+			CompareNavigator nav = (CompareNavigator) syncConfig.getProperty(
+					SynchronizePageConfiguration.P_NAVIGATOR);
+
 			return new SyncNavigatorWrapper(navigator, nav);
 		}
 		return navigator;
 	}
 
-	private class SyncNavigatorWrapper implements ICompareNavigator {
+	private class SyncNavigatorWrapper extends CompareNavigator {
 
-		private final ICompareNavigator textDfiffDelegate;
-		private final ICompareNavigator syncViewDelegate;
+		private final CompareNavigator textDfiffDelegate;
+		private final CompareNavigator syncViewDelegate;
 
-		public SyncNavigatorWrapper(ICompareNavigator textDfiffDelegate,
-				ICompareNavigator syncViewDelegate) {
+		public SyncNavigatorWrapper(CompareNavigator textDfiffDelegate,
+				CompareNavigator syncViewDelegate) {
 			this.textDfiffDelegate = textDfiffDelegate;
 			this.syncViewDelegate = syncViewDelegate;
 		}
 
+		@Override
 		public boolean selectChange(boolean next) {
 			boolean endReached = textDfiffDelegate.selectChange(next);
 			if(endReached && syncViewDelegate != null && isSelectedInSynchronizeView()){
@@ -216,6 +221,16 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			return endReached;
 		}
 
+		@Override
+		// This method won't be used by our implementation
+		protected INavigatable[] getNavigatables() {
+			return new INavigatable[0];
+		}
+
+		@Override
+		public boolean hasChange(boolean next) {
+			return (textDfiffDelegate.hasChange(next) || syncViewDelegate.hasChange(next));
+		}
 	}
 
 	private boolean isSelectedInSynchronizeView() {
