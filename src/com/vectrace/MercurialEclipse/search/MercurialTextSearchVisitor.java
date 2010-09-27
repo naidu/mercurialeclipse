@@ -18,7 +18,10 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -64,6 +67,14 @@ public class MercurialTextSearchVisitor {
 	public IStatus search(MercurialTextSearchScope scope, IProgressMonitor monitor) {
 		IResource[] scopeRoots = scope.getRoots();
 		boolean all = scope.isAll();
+
+		if (scopeRoots.length == 1 && scopeRoots[0].getParent() == null) {
+			// this is workspace root
+			IWorkspace root = ResourcesPlugin.getWorkspace();
+			IProject[] projects = root.getRoot().getProjects();
+
+			scopeRoots = projects;
+		}
 
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(Arrays
 				.asList(scopeRoots));
