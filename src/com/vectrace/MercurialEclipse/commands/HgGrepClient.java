@@ -64,8 +64,10 @@ public class HgGrepClient extends AbstractClient {
 		String[] lines = result.split("\n");
 		List<MercurialTextSearchMatchAccess> list = new ArrayList<MercurialTextSearchMatchAccess>();
 		for (String line : lines) {
-			if (line.length() > 0) {
+			try {
 				list.add(new MercurialTextSearchMatchAccess(root, line, all));
+			} catch (HgException e) {
+				// skip parsing errors, add only successful matches
 			}
 		}
 		return list;
