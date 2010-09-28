@@ -15,6 +15,7 @@
  *     Adam Berkes (Intland)     - default encoding
  *     Philip Graf               - proxy support
  *     Bastian Doetsch           - bug fixes and implementation
+ *     Soren Mathiasen (Schantz) - local changes notification
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse;
@@ -63,6 +64,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.storage.HgDirtyRevisionManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -146,6 +148,12 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 							.getString("MercurialEclipsePlugin.startingCommitMessageManager")); //$NON-NLS-1$
 					commitMessageManager.start();
 					monitor.worked(1);
+
+					monitor.subTask(Messages
+							.getString("MercurialEclipsePlugin.startingDirtyRevisionManager")); //$NON-NLS-1$
+					HgDirtyRevisionManager.getInstance().start();
+					monitor.worked(1);
+
 					monitor.done();
 					return new Status(IStatus.OK, ID, Messages
 							.getString("MercurialEclipsePlugin.startedSuccessfully")); //$NON-NLS-1$

@@ -11,6 +11,7 @@
  *     Adam Berkes (Intland)     - bug fixes
  *     Zsolt Kopany (Intland)    - bug fixes
  *     Philip Graf               - bug fix
+ *     Soren Mathiasen (Schantz) - implemented local changes feature
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -48,6 +49,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgDirtyRevisionManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -214,6 +216,15 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			if (!showChangeset) {
 				if (resource.getType() == IResource.PROJECT || shouldCheckSubrepo(resource)) {
 					d.addSuffix(getSuffixForContainer((IContainer)resource));
+					HgRoot root;
+					if(resource instanceof IProject){
+						root = MercurialTeamProvider.getHgRoot(resource);
+					}else{
+						root = AbstractClient.isHgRoot(resource);
+					}
+					if(HgDirtyRevisionManager.getInstance().isReposDirty(root.getName(), LOCAL_CACHE.getChangesetForRoot(root).getRevision().toString())) {
+						d.addOverlay(DecoratorImages.LOCAL_CHANGE, IDecoration.TOP_LEFT);
+					}
 				}
 			} else {
 				addChangesetInfo(d, resource, project, prefix);
@@ -223,6 +234,8 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			if (prefix.length() > 0) {
 				d.addPrefix(prefix.toString());
 			}
+
+
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}

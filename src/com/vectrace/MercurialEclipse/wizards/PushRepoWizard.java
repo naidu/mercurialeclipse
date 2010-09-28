@@ -11,6 +11,7 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch	         - saving repository to project-specific repos
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Soren Mathiasen (Schantz) - implemented local changes feature
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -35,7 +36,10 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgDirtyRevisionManager;
+import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
@@ -182,6 +186,13 @@ public class PushRepoWizard extends HgWizard {
 			MessageDialog.openError(getContainer().getShell(),
 					"Error on refreshing status after push", e.getMessage()); //$NON-NLS-1$
 			return false;
+		}
+		// save latest revision
+		try {
+			HgDirtyRevisionManager.getInstance().saveLatestRevision(hgRoot.getName(), LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot).getRevision().toString());
+			ResourceDecorator.updateClientDecorations();
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 		return true;
 	}

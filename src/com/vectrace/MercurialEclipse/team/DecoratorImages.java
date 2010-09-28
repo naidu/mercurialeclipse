@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Soren Mathiasen (Schantz) - implemented LOCAL_CHANGE
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -63,5 +64,10 @@ public final class DecoratorImages {
 	 * Conflict Image Descriptor
 	 */
 	public static final ImageDescriptor CONFLICT = ImageDescriptor.createFromFile(DecoratorImages.class, "images/confchg_ov.gif"); //$NON-NLS-1$
+
+	/**
+	 * Local change Image Descriptor
+	 */
+	public static final ImageDescriptor LOCAL_CHANGE = ImageDescriptor.createFromFile(DecoratorImages.class, "images/localchange_ov.png"); //$NON-NLS-1$
 
 }
