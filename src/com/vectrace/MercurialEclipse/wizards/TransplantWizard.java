@@ -13,12 +13,20 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient.TransplantOptions;
+import com.vectrace.MercurialEclipse.dialogs.TransplantRejectsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -33,6 +41,9 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 public class TransplantWizard extends HgWizard {
 
 	private final HgRoot hgRoot;
+
+	private final Pattern reject = Pattern.compile("saving rejects to file (.*)\\s");
+	private final Pattern changeSet = Pattern.compile("applying ([a-z0-9]*)\\s");
 
 	public TransplantWizard(HgRoot hgRoot) {
 		super(Messages.getString("TransplantWizard.title")); //$NON-NLS-1$
@@ -88,9 +99,13 @@ public class TransplantWizard extends HgWizard {
 			MercurialEclipsePlugin.showError(e);
 			return false;
 		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.logError(e.getCause());
-			MercurialEclipsePlugin.showError(e.getCause());
+			if (e.getTargetException() instanceof HgException) {
+				return handleTransplantException((HgException) e.getTargetException());
+			}
 			return false;
+//			MercurialEclipsePlugin.logError(e.getCause());
+//			MercurialEclipsePlugin.showError(e.getCause());
+//			return false;
 		} catch (InterruptedException e) {
 			MercurialEclipsePlugin.logError(e);
 			return false;
@@ -120,6 +135,47 @@ public class TransplantWizard extends HgWizard {
 		options.prune = optionsPage.isPrune();
 		options.pruneNodeId = optionsPage.getPruneNodeId();
 		return options;
+	}
+
+	private boolean handleTransplantException(HgException e) {
+		final String result = e.getMessage();
+		if (!result.contains("abort: Fix up the merge and run hg transplant --continue")) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+			return false;
+		}
+
+		try {
+			Matcher matcher;
+
+			matcher = changeSet.matcher(result);
+			matcher.find();
+			final String changeSetId = matcher.group(1);
+
+			final ArrayList<IFile> rejects = new ArrayList<IFile>();
+
+			matcher = reject.matcher(result);
+			int lastMatchOffset = 0;
+			while (matcher.find(lastMatchOffset) && matcher.groupCount() > 0) {
+				String filename = matcher.group(1);
+				IPath path = new Path(hgRoot.getPath() + "/" + filename);
+				rejects.add(FileBuffers.getWorkspaceFileAtLocation(path));
+
+				lastMatchOffset = matcher.end();
+			}
+
+			getShell().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					new TransplantRejectsDialog(getShell(), hgRoot, changeSetId, rejects).open();
+				}
+			});
+
+			return true;
+		} catch (Exception ex) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+			return false;
+		}
 	}
 
 }
