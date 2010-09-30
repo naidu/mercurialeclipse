@@ -132,15 +132,15 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 					setErrorMessage("Please select local branch!");
 					return;
 				}
-				if (!all) {
-					valid &= selectedChangesets.size() == 1
-							&& Branch.same(branchName, selectedChangesets.first().getBranch());
-					if(!valid){
-						setErrorMessage("Please select exact one changeset if transplanting "
-								+ "not all changesets from the local branch!");
-						return;
-					}
-				}
+//				if (!all) {
+//					valid &= selectedChangesets.size() == 1
+//							&& Branch.same(branchName, selectedChangesets.first().getBranch());
+//					if(!valid){
+//						setErrorMessage("Please select exact one changeset if transplanting "
+//								+ "not all changesets from the local branch!");
+//						return;
+//					}
+//				}
 			} else {
 				valid &= !StringUtils.isEmpty(getUrlText());
 				if(!valid){
@@ -233,7 +233,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 				getUserCombo().setEnabled(!branch);
 				passwordText.setEnabled(!branch);
 				allCheckBox.setEnabled(branch);
-				branchNameCombo.setEnabled(branch);				
+				branchNameCombo.setEnabled(branch);
 				clearChangesets();
 				getUrlCombo().deselectAll();
 				if (branch) {
