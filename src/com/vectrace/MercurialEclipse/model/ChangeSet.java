@@ -68,7 +68,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private String tagsStr;
 	private List<FileStatus> changedFiles;
 	private String description;
-	private String ageDate;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
@@ -195,13 +194,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return this;
 		}
 
-		// what is ageDate? Can it be derived from date and now()
-		public Builder ageDate(String ageDate) {
-			this.cs.ageDate = ageDate;
-			return this;
-		}
-
-		// nodeShort should be first X of changeset, this is superflous
+		// nodeShort should be first X of changeset, this is superfluous
 		public Builder nodeShort(String nodeShort) {
 			this.cs.nodeShort = nodeShort;
 			return this;
