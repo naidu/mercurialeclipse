@@ -56,7 +56,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
 		store.setDefault(PREF_SYNC_ONLY_CURRENT_BRANCH, true);
-		store.setDefault(PREF_SYNC_PRESENTATION_MODE, PresentationMode.FLAT.name());
+		store.setDefault(PREF_SYNC_PRESENTATION_MODE, PresentationMode.COMPRESSED_TREE.name());
 
 		// currently this reduces performance 2x => so disable per default
 		store.setDefault(PREF_ENABLE_SUBREPO_SUPPORT, false);
