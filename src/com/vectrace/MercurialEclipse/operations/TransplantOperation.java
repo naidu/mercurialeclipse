@@ -11,17 +11,26 @@
 package com.vectrace.MercurialEclipse.operations;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.eclipse.core.filebuffers.FileBuffers;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Display;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient.TransplantOptions;
+import com.vectrace.MercurialEclipse.dialogs.TransplantRejectsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -29,6 +38,8 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class TransplantOperation extends HgOperation {
+	private static final Pattern REJECT_PATTERN = Pattern.compile("saving rejects to file (.*)\\s");
+	private static final Pattern CHANGESET_PATTERN = Pattern.compile("applying ([a-z0-9]*)\\s");
 
 	private final TransplantOptions options;
 	private final IHgRepositoryLocation repo;
@@ -65,24 +76,84 @@ public class TransplantOperation extends HgOperation {
 		}
 
 		try {
-			result = HgTransplantClient.transplant(hgRoot, repo, options);
-			if (result != null && result.length() != 0) {
-				HgClients.getConsole().printMessage(result, null);
+			try {
+				result = HgTransplantClient.transplant(hgRoot, repo, options);
+			} finally {
+				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
+						RefreshRootJob.ALL);
+				job.schedule();
+				job.join();
+				t.cancel();
 			}
 		} catch (HgException e) {
-			throw new InvocationTargetException(e);
-		} finally {
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
-					RefreshRootJob.ALL);
-			job.schedule();
-			job.join();
-			t.cancel();
+			if (handleTransplantException(e)) {
+				result = e.getMessage();
+			} else {
+				throw new InvocationTargetException(e);
+			}
+		}
+
+		if (result != null && result.length() != 0) {
+			HgClients.getConsole().printMessage(result, null);
+		}
+	}
+
+	private boolean handleTransplantException(HgException e) {
+		final String message = e.getMessage();
+		if (!message.contains("abort: Fix up the merge and run hg transplant --continue")) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+			return false;
+		}
+
+		try {
+			Matcher matcher;
+
+			matcher = CHANGESET_PATTERN.matcher(message);
+			matcher.find();
+			final String changeSetId = matcher.group(1);
+
+			final ArrayList<IFile> rejects = new ArrayList<IFile>();
+
+			matcher = REJECT_PATTERN.matcher(message);
+			int lastMatchOffset = 0;
+			while (matcher.find(lastMatchOffset) && matcher.groupCount() > 0) {
+				String filename = matcher.group(1);
+				IPath path = new Path(hgRoot.getPath() + "/" + filename);
+				IFile file = FileBuffers.getWorkspaceFileAtLocation(path);
+
+				if (file == null) {
+					assert false;
+				} else {
+					rejects.add(file);
+				}
+
+				lastMatchOffset = matcher.end();
+			}
+
+			getShell().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					new TransplantRejectsDialog(getShell(), hgRoot, changeSetId, rejects).open();
+				}
+			});
+
+			return true;
+		} catch (Exception ex) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+			return false;
 		}
 	}
 
 	@Override
 	protected String getActionDescription() {
 		return "Transplanting to " + hgRoot.getName();
+	}
+
+	public static TransplantOperation createContinueOperation(IRunnableContext context, HgRoot hgRoot) {
+		TransplantOptions options = new TransplantOptions();
+		options.continueLastTransplant = true;
+		return new TransplantOperation(context, hgRoot, options, null);
 	}
 
 }

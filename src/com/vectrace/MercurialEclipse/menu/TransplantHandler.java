@@ -11,13 +11,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.operations.TransplantOperation;
 import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
 public class TransplantHandler extends RootHandler {
@@ -32,7 +35,15 @@ public class TransplantHandler extends RootHandler {
 					Messages.getString("TransplantHandler.continue") }, 0);
 
 			if (dialog.open() == 1) {
-				HgTransplantClient.continueTransplant(hgRoot);
+				TransplantOperation op = TransplantOperation.createContinueOperation(MercurialEclipsePlugin.getActiveWindow(), hgRoot);
+
+				try {
+					op.run();
+				} catch (InvocationTargetException e) {
+					MercurialEclipsePlugin.showError(e.getTargetException());
+				} catch (InterruptedException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		} else {
 			TransplantWizard transplantWizard = new TransplantWizard(hgRoot);

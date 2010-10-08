@@ -21,8 +21,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public final class HgTransplantClient {
 
@@ -54,10 +52,10 @@ public final class HgTransplantClient {
 		AbstractShellCommand command = new HgCommand("transplant", hgRoot, false); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("--log"); //$NON-NLS-1$
 		if (options.continueLastTransplant) {
 			command.addOptions("--continue"); //$NON-NLS-1$
 		} else {
-			command.addOptions("--log"); //$NON-NLS-1$
 			if (options.branch) {
 				command.addOptions("--branch"); //$NON-NLS-1$
 				command.addOptions(options.branchName);
@@ -97,22 +95,5 @@ public final class HgTransplantClient {
 			}
 		}
 		return new String(command.executeToBytes());
-	}
-
-	/**
-	 * Continue a transplant, refreshing the workspace afterwards.
-	 *
-	 * @param hgRoot The repository in which to invoke hg transplant --continue
-	 * @throws HgException
-	 */
-	public static String continueTransplant(HgRoot hgRoot) throws HgException {
-		TransplantOptions options = new TransplantOptions();
-		options.continueLastTransplant = true;
-
-		try {
-			return transplant(hgRoot, null, options);
-		} finally {
-			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
-		}
 	}
 }
