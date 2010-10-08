@@ -769,7 +769,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	CompareRevisionAction getCompareWithCurrentAction() {
 		if(compareWithCurrAction == null) {
 			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this); //$NON-NLS-1$
-			}
+		}
 		return compareWithCurrAction;
 	}
 
