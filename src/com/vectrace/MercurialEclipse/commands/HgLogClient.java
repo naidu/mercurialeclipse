@@ -31,10 +31,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -401,11 +401,15 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 * @return might return null if the changeset is not known/existing in the repo
 	 */
 	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId) throws HgException {
+		return getChangeset(hgRoot, nodeId, false);
+	}
+
+	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId, boolean withFiles) throws HgException {
 		Assert.isNotNull(nodeId);
+		int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
 		String stylePath;
 		try {
-			stylePath = AbstractParseChangesetClient.getStyleFile(
-					AbstractParseChangesetClient.STYLE_DEFAULT).getCanonicalPath();
+			stylePath = AbstractParseChangesetClient.getStyleFile(style).getCanonicalPath();
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}

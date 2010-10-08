@@ -52,7 +52,9 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
@@ -476,4 +478,31 @@ public final class MercurialUtilities {
 		return getFont(data);
 	}
 
+	public static MercurialRevisionStorage getParentRevision(ChangeSet cs, IFile file) {
+		MercurialRevisionStorage parentRev;
+		String[] parents = cs.getParents();
+		if(cs.getRevision().getRevision() == 0){
+			parentRev = new NullRevision(file, cs);
+		} else if (parents.length == 0) {
+			// TODO for some reason, we do not always have right parent info in the changesets
+			// If we are on the different branch then the changeset? or if the changeset
+			// logs was created for a file, and not each version of a *file* has
+			// direct version predecessor. So such tree 20 -> 21 -> 22 works fine,
+			// but tree 20 -> 22 seems not to work per default
+			// So simply enforce the parents resolving
+			try {
+				parents = HgParentClient.getParentNodeIds(file, cs);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			if (parents.length == 0) {
+				parentRev = new NullRevision(file, cs);
+			} else {
+				parentRev = new MercurialRevisionStorage(file, parents[0]);
+			}
+		} else {
+			parentRev = new MercurialRevisionStorage(file, parents[0]);
+		}
+		return parentRev;
+	}
 }

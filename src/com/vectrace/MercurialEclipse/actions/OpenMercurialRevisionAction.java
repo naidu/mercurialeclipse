@@ -33,8 +33,8 @@ import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.history.IFileRevision;
-import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
@@ -42,11 +42,13 @@ import org.eclipse.ui.IEditorRegistry;
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.IWorkbenchAdapter;
+import org.eclipse.ui.part.Page;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
@@ -186,7 +188,8 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 	}
 
 	private IStructuredSelection selection;
-	private HistoryPage page;
+	private Shell shell;
+	private IWorkbenchPage wPage;
 
 	public OpenMercurialRevisionAction(String text) {
 		super(text);
@@ -204,7 +207,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
 			final IFileRevision revision = (IFileRevision) tempRevision;
 			if (revision == null || !revision.exists()) {
-				MessageDialog.openError(page.getSite().getShell(),
+				MessageDialog.openError(shell,
 						Messages.getString("OpenMercurialRevisionAction.error.deletedRevision"), Messages.getString("OpenMercurialRevisionAction.error.cantOpen")); //$NON-NLS-1$ //$NON-NLS-2$
 			} else {
 				SafeUiJob runnable = new SafeUiJob(Messages.getString("OpenMercurialRevisionAction.job.openingEditor")) { //$NON-NLS-1$
@@ -215,7 +218,6 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 						try {
 							file = revision.getStorage(monitor);
 
-							IWorkbenchPage wPage = page.getSite().getPage();
 							if (file instanceof IFile) {
 								// if this is the current workspace file, open it
 								IDE.openEditor(wPage, (IFile) file);
@@ -248,8 +250,14 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 		return shouldShow();
 	}
 
-	public void setPage(HistoryPage page) {
-		this.page = page;
+	public void setPage(Page page) {
+		this.shell = page.getSite().getShell();
+		this.wPage = page.getSite().getPage();
+	}
+
+	public void setPart(IWorkbenchPart part) {
+		this.shell = part.getSite().getShell();
+		this.wPage = part.getSite().getPage();
 	}
 
 	private boolean shouldShow() {
@@ -269,7 +277,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
 	private boolean editorAlreadyOpenOnContents(
 			MercurialRevisionEditorInput input) {
-		IEditorReference[] editorRefs = page.getSite().getPage().getEditorReferences();
+		IEditorReference[] editorRefs = wPage.getEditorReferences();
 		IFileRevision inputRevision = (IFileRevision) input.getAdapter(IFileRevision.class);
 		for (IEditorReference editorRef : editorRefs) {
 			IEditorPart part = editorRef.getEditor(false);
@@ -281,7 +289,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 				if (inputRevision.equals(editorRevision)) {
 					// make the editor that already contains the revision
 					// current
-					page.getSite().getPage().activate(part);
+					wPage.activate(part);
 					return true;
 				}
 			}

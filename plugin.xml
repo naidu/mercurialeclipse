@@ -1168,6 +1168,43 @@
                menubarPath="replaceWithMenu/replaceWithGroup">
          </action>
       </objectContribution>
+      
+      <objectContribution
+            adaptable="true"
+            objectClass="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+            id="com.vectrace.MercurialEclipse.FileFromChangeSetContributions">
+      
+      	 <action
+               class="com.vectrace.MercurialEclipse.actions.CompareWithParentDelegate"
+               enablesFor="1"
+               icon="icons/compare_view.gif"
+               id="com.vectrace.MercurialEclipse.team.CompareWithParentDelegate"
+               label="%compareWithPrevious"
+               path="additions">
+         </action>
+      	 <action
+               class="com.vectrace.MercurialEclipse.actions.CompareWithCurrentDelegate"
+               enablesFor="1"
+               icon="icons/actions/compare_with_local.gif"
+               id="com.vectrace.MercurialEclipse.team.CompareWithCurrentDelegate"
+               label="%compareWithCurrent"
+               path="additions">
+         </action>
+      	 <action
+               class="com.vectrace.MercurialEclipse.actions.OpenSelectedRevisionDelegate"
+               enablesFor="1"
+               id="com.vectrace.MercurialEclipse.actions.OpenRevisionDelegate"
+               label="%openSelectedRevision"
+               path="additions">
+         </action>
+      	 <action
+               class="com.vectrace.MercurialEclipse.actions.OpenCurrentVersionDelegate"
+               enablesFor="1"
+               id="com.vectrace.MercurialEclipse.actions.OpenCurrentVersionDelegate"
+               label="%openCurrentRevision"
+               path="additions">
+         </action>
+      </objectContribution>
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
