@@ -10,36 +10,33 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
-import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.ide.IDE;
 
-import com.vectrace.MercurialEclipse.history.MercurialRevision;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * This delegate is used for object contribution to context menus.
  * Object class must be FileFromChangeSet or be adaptable to it.
  */
-public class OpenSelectedRevisionDelegate implements IObjectActionDelegate {
+public class OpenCurrentVersionDelegate implements IObjectActionDelegate {
 
 	private FileFromChangeSet fileFromChangeSet;
-	private final OpenMercurialRevisionAction openMercurialRevisionAction;
-
-	public OpenSelectedRevisionDelegate() {
-		openMercurialRevisionAction = new OpenMercurialRevisionAction(
-				Messages.getString("MercurialHistoryPage.openSelectedVersion"));
-	}
+	private IWorkbenchPart targetPart;
 
 	public void run(IAction action) {
-		openMercurialRevisionAction.run();
+		try {
+			IDE.openEditor(targetPart.getSite().getPage(), fileFromChangeSet.getFile());
+		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	/**
@@ -52,12 +49,7 @@ public class OpenSelectedRevisionDelegate implements IObjectActionDelegate {
 			if (sel.getFirstElement() instanceof FileFromChangeSet) {
 				this.fileFromChangeSet = (FileFromChangeSet) sel.getFirstElement();
 				IFile file = fileFromChangeSet.getFile();
-				ChangeSet cs = fileFromChangeSet.getChangeset();
-				MercurialRevision rev = new MercurialRevision(cs, null, file, null, null);
-
-				int diffKind = fileFromChangeSet.getDiffKind();
-				if ((diffKind & Differencer.CHANGE_TYPE_MASK) != Differencer.DELETION) {
-					openMercurialRevisionAction.selectionChanged(new StructuredSelection(rev));
+				if (file.exists()) {
 					action.setEnabled(true);
 				}
 			}
@@ -70,6 +62,6 @@ public class OpenSelectedRevisionDelegate implements IObjectActionDelegate {
 	 * @see org.eclipse.ui.IObjectActionDelegate#setActivePart(org.eclipse.jface.action.IAction, org.eclipse.ui.IWorkbenchPart)
 	 */
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-		openMercurialRevisionAction.setPart(targetPart);
+		this.targetPart = targetPart;
 	}
 }
