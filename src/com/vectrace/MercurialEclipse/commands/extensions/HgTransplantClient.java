@@ -52,10 +52,10 @@ public final class HgTransplantClient {
 		AbstractShellCommand command = new HgCommand("transplant", hgRoot, false); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("--log"); //$NON-NLS-1$
 		if (options.continueLastTransplant) {
 			command.addOptions("--continue"); //$NON-NLS-1$
 		} else {
-			command.addOptions("--log"); //$NON-NLS-1$
 			if (options.branch) {
 				command.addOptions("--branch"); //$NON-NLS-1$
 				command.addOptions(options.branchName);

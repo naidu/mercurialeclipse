@@ -18,7 +18,10 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -44,7 +47,6 @@ public class MercurialTextSearchVisitor {
 	 *
 	 */
 	public MercurialTextSearchVisitor() {
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -65,6 +67,14 @@ public class MercurialTextSearchVisitor {
 		IResource[] scopeRoots = scope.getRoots();
 		boolean all = scope.isAll();
 
+		if (scopeRoots.length == 1 && scopeRoots[0].getParent() == null) {
+			// this is workspace root
+			IWorkspace root = ResourcesPlugin.getWorkspace();
+			IProject[] projects = root.getRoot().getProjects();
+
+			scopeRoots = projects;
+		}
+
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(Arrays
 				.asList(scopeRoots));
 		String searchString = pattern.pattern();
@@ -75,14 +85,18 @@ public class MercurialTextSearchVisitor {
 			monitor.subTask("Searching in respository " + root.getName());
 			monitor.worked(1);
 			try {
-				return search(root, entry.getValue(), monitor, all);
+				IStatus result = search(root, entry.getValue(), monitor, all);
+				if (!result.isOK()) {
+					return result;
+				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
 						e.getLocalizedMessage(), e);
 			}
 		}
-		return new Status(IStatus.INFO, MercurialEclipsePlugin.ID, "Nothing found.");
+		return new Status(IStatus.OK, MercurialEclipsePlugin.ID,
+				"Mercurial search completed successfully.");
 	}
 
 	/**
@@ -100,11 +114,13 @@ public class MercurialTextSearchVisitor {
 			monitor.worked(1);
 			monitor.subTask("Processing Mercurial grep results...");
 			for (MercurialTextSearchMatchAccess sr : result) {
-				monitor.subTask("Found match in: " + sr.getFile().getName());
-				requestor.acceptFile(sr.getFile());
-				monitor.worked(1);
-				requestor.acceptPatternMatch(sr);
-				monitor.worked(1);
+				if (sr.getFile() != null) {
+					monitor.subTask("Found match in: " + sr.getFile().getName());
+					requestor.acceptFile(sr.getFile());
+					monitor.worked(1);
+					requestor.acceptPatternMatch(sr);
+					monitor.worked(1);
+				}
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

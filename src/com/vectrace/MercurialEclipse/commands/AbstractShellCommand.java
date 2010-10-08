@@ -283,12 +283,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public byte[] executeToBytes() throws HgException {
-		int timeout;
-		if (timeoutConstant == null) {
-			timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
-		}
-		timeout = HgClients.getTimeOut(timeoutConstant);
-		return executeToBytes(timeout);
+		return executeToBytes(getTimeOut());
 	}
 
 	public byte[] executeToBytes(int timeout) throws HgException {
@@ -395,6 +390,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		if (charset != null) {
 			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
 		}
+
+		// removing to allow using eclipse merge editor
+		builder.environment().remove("HGMERGE");
 
 		builder.redirectErrorStream(true); // makes my life easier
 		if (workingDir != null) {
@@ -504,7 +502,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public String executeToString() throws HgException {
-		byte[] bytes = executeToBytes();
+		return executeToString(true);
+	}
+
+	public String executeToString(boolean expectPositiveReturnValue) throws HgException {
+		byte[] bytes = executeToBytes(getTimeOut(), expectPositiveReturnValue);
 		if (bytes != null && bytes.length > 0) {
 			try {
 				return new String(bytes, getEncoding());
@@ -696,5 +698,14 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	private int getTimeOut() {
+		int timeout;
+		if (timeoutConstant == null) {
+			timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
+		}
+		timeout = HgClients.getTimeOut(timeoutConstant);
+		return timeout;
 	}
 }

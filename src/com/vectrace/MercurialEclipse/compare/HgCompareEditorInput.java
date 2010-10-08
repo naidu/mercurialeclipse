@@ -13,7 +13,9 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.CompareNavigator;
 import org.eclipse.compare.ICompareNavigator;
+import org.eclipse.compare.INavigatable;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
@@ -21,9 +23,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.internal.ui.mapping.ModelCompareEditorInput;
 import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -35,7 +37,6 @@ import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
-@SuppressWarnings("restriction")
 public class HgCompareEditorInput extends CompareEditorInput {
 	private static final Differencer DIFFERENCER = new Differencer();
 
@@ -183,19 +184,53 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	/**
-	 *  Overriden to allow navigation between files in the sync view via shortcuts
+	 *  Overriden to allow navigation through multiple changes in the sync view via shortcuts
 	 *  "Ctrl + ." (Navigate->Next) or "Ctrl + ," (Navigate->Previous).
-	 *  @see ModelCompareEditorInput
+	 *  @see SyncInfoCompareInput
 	 */
 	@Override
 	public synchronized ICompareNavigator getNavigator() {
-		if (isSelectedInSynchronizeView()) {
-			ICompareNavigator nav = (ICompareNavigator)syncConfig.getProperty(SynchronizePageConfiguration.P_NAVIGATOR);
-			// Set the input navigator property so that the advisor can get at it if needed.
-			syncConfig.setProperty(SynchronizePageConfiguration.P_INPUT_NAVIGATOR, super.getNavigator());
-			return nav;
+		CompareNavigator navigator = (CompareNavigator) super.getNavigator();
+		if (syncConfig != null) {
+			CompareNavigator nav = (CompareNavigator) syncConfig.getProperty(
+					SynchronizePageConfiguration.P_NAVIGATOR);
+
+			return new SyncNavigatorWrapper(navigator, nav);
 		}
-		return super.getNavigator();
+		return navigator;
+	}
+
+	private class SyncNavigatorWrapper extends CompareNavigator {
+
+		private final CompareNavigator textDfiffDelegate;
+		private final CompareNavigator syncViewDelegate;
+
+		public SyncNavigatorWrapper(CompareNavigator textDfiffDelegate,
+				CompareNavigator syncViewDelegate) {
+			this.textDfiffDelegate = textDfiffDelegate;
+			this.syncViewDelegate = syncViewDelegate;
+		}
+
+		@Override
+		public boolean selectChange(boolean next) {
+			boolean endReached = textDfiffDelegate.selectChange(next);
+			if(endReached && syncViewDelegate != null && isSelectedInSynchronizeView()){
+				// forward navigation to the sync view
+				return syncViewDelegate.selectChange(next);
+			}
+			return endReached;
+		}
+
+		@Override
+		// This method won't be used by our implementation
+		protected INavigatable[] getNavigatables() {
+			return new INavigatable[0];
+		}
+
+		@Override
+		public boolean hasChange(boolean next) {
+			return (textDfiffDelegate.hasChange(next) || syncViewDelegate.hasChange(next));
+		}
 	}
 
 	private boolean isSelectedInSynchronizeView() {
@@ -261,4 +296,8 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 		return true;
 	}
+
+
+
+
 }

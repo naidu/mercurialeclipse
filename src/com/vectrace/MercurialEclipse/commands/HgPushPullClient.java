@@ -50,9 +50,11 @@ public class HgPushPullClient extends AbstractClient {
 
 		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
+			addMergeToolPreference(command);
 		} else if (rebase) {
 			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 			command.addOptions("--rebase"); //$NON-NLS-1$
+			addMergeToolPreference(command);
 		}
 
 		if (force) {

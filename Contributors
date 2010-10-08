@@ -99,6 +99,7 @@ Bjoern Stachmann:
 	piece of plugin here. Trying it i found that using mercurial isn't 
 	that bad ;-) But it did miss some features so i started to contribute. 
 
-	
+John Peberdy:
+	Improved the synchronize view and conflicted rebase and other usability improvements.
 	 
 	

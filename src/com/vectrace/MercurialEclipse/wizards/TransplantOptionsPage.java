@@ -47,8 +47,6 @@ public class TransplantOptionsPage extends HgWizardPage {
 	private String pruneNodeId;
 	private String filter;
 	private boolean filterChangesets;
-	private boolean continueLastTransplant;
-	private Button continueLastTransplantCheckBox;
 	private Button filterChangesetsCheckBox;
 	private Text filterTextField;
 	private ChangesetTable mergeNodeIdTable;
@@ -66,7 +64,6 @@ public class TransplantOptionsPage extends HgWizardPage {
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
-		addContinueOptionGroup(composite);
 		addOtherOptionsGroup(composite);
 		setControl(composite);
 		setPageComplete(true);
@@ -222,9 +219,6 @@ public class TransplantOptionsPage extends HgWizardPage {
 	private void validatePage() {
 		boolean valid = true;
 		try {
-			if (continueLastTransplant) {
-				return;
-			}
 			if (merge) {
 				valid &= !StringUtils.isEmpty(mergeNodeId);
 				if(!valid){
@@ -255,30 +249,6 @@ public class TransplantOptionsPage extends HgWizardPage {
 				setPageComplete(valid);
 			}
 		}
-	}
-
-	private void addContinueOptionGroup(Composite composite) {
-		// other options
-		Group continueGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.continueGroup.title")); //$NON-NLS-1$
-
-		continueLastTransplantCheckBox = SWTWidgetHelper.createCheckBox(continueGroup,
-				Messages.getString("TransplantOptionsPage.continueCheckBox.title")); //$NON-NLS-1$
-
-		SelectionListener continueLastTransplantCheckBoxListener = new SelectionListener() {
-			public void widgetSelected(SelectionEvent e) {
-				continueLastTransplant = continueLastTransplantCheckBox.getSelection();
-				filterChangesetsCheckBox.setEnabled(!continueLastTransplant);
-				mergeCheckBox.setEnabled(!continueLastTransplant);
-				pruneCheckBox.setEnabled(!continueLastTransplant);
-				validatePage();
-			}
-
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-		};
-
-		continueLastTransplantCheckBox.addSelectionListener(continueLastTransplantCheckBoxListener);
 	}
 
 	private void populatePruneNodeIdTable() {
@@ -314,9 +284,4 @@ public class TransplantOptionsPage extends HgWizardPage {
 	public String getFilter() {
 		return filter;
 	}
-
-	public boolean isContinueLastTransplant() {
-		return continueLastTransplant;
-	}
-
 }

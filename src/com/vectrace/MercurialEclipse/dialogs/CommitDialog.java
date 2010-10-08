@@ -133,23 +133,14 @@ public class CommitDialog extends TitleAreaDialog {
 	protected Options options;
 
 	public static class Options {
-		public boolean showDiff;
-		public boolean showAmend;
-		public boolean showCloseBranch;
-		public boolean showRevert;
-		public boolean filesSelectable;
-		public String defaultCommitMessage;
-		public boolean showCommitMessage;
-
-		public Options() {
-			defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
-			filesSelectable = true;
-			showCloseBranch = true;
-			showDiff = true;
-			showAmend = true;
-			showRevert = true;
-			showCommitMessage = true;
-		}
+		public boolean showDiff = true;
+		public boolean showAmend = true;
+		public boolean showCloseBranch = true;
+		public boolean showRevert = true;
+		public boolean filesSelectable = true;
+		public String defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
+		public boolean showCommitMessage = true;
+		public boolean allowEmptyCommit = false;
 	}
 
 	/**
@@ -235,13 +226,19 @@ public class CommitDialog extends TitleAreaDialog {
 		return control;
 	}
 
-	private void validateCommitMessage(final String message) {
+	private void validateControls() {
+		final String message = commitTextBox.getDocument().get();
 		if (StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
-			setErrorMessage(Messages.getString("CommitDialog.message")); // ";
+
+			setErrorMessage(Messages.getString("CommitDialog.commitMessageRequired")); // ";
+			getButton(IDialogConstants.OK_ID).setEnabled(false);
+		} else if (commitFilesList.getCheckedResources().size() == 0
+				&& !options.allowEmptyCommit && commitFilesList.isSelectable()) {
+			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
 			setErrorMessage(null); // ";
-			setMessage(Messages.getString("CommitDialog.message")); // ";
+			setMessage(Messages.getString("CommitDialog.readyToCommit")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(true);
 		}
 	}
@@ -306,6 +303,12 @@ public class CommitDialog extends TitleAreaDialog {
 		CommitFilesChooser chooser = new CommitFilesChooser(container, areFilesSelectable(), inResources,
 				true, true, false);
 
+		chooser.addStateListener(new Listener() {
+			public void handleEvent(Event event) {
+				validateControls();
+			}
+		});
+
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskResources();
 		if (mylynTaskResources != null) {
@@ -363,7 +366,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 		commitTextBox.addTextListener(new ITextListener() {
 			public void textChanged(TextEvent event) {
-				validateCommitMessage(commitTextBox.getDocument().get());
+				validateControls();
 			}
 		});
 	}

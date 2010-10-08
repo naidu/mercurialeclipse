@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.search.core.text.TextSearchMatchAccess;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -47,20 +48,26 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	 * Expects a line like filename:rev:linenumber:-|+:username:date
 	 *
 	 * @param line
+	 * @throws HgException
 	 */
-	public MercurialTextSearchMatchAccess(HgRoot root, String line, boolean all) {
+	public MercurialTextSearchMatchAccess(HgRoot root, String line, boolean all) throws HgException {
 		this.root = root;
-		String[] split = line.trim().split(":");
-		int i=0;
-		Path path = new Path(root.getAbsolutePath() + File.separator + split[i++]);
-		this.file = ResourceUtils.getFileHandle(path);
-		this.rev = Integer.parseInt(split[i++]);
-		this.lineNumber = Integer.parseInt(split[i++]);
-		if (all) {
-			this.becomesMatch = !"-".equals(split[i++]);
+		try {
+			String[] split = line.trim().split(":");
+			int i=0;
+			Path path = new Path(root.getAbsolutePath() + File.separator + split[i++]);
+			this.file = ResourceUtils.getFileHandle(path);
+			this.rev = Integer.parseInt(split[i++]);
+			this.lineNumber = Integer.parseInt(split[i++]);
+			if (all) {
+				this.becomesMatch = !"-".equals(split[i++]);
+			}
+			this.user = split[i++];
+			this.extract = split[i++];
+		} catch (Exception e) {
+			// result is not correctly formed or the line is not a search result entry
+			throw new HgException("Failed to parse search result", e);
 		}
-		this.user = split[i++];
-		this.extract = split[i++];
 	}
 
 	@Override

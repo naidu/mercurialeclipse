@@ -19,12 +19,14 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -32,6 +34,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -41,6 +44,7 @@ public class CompareAction extends SingleFileAction {
 
 	private boolean mergeEnabled;
 	private ISynchronizePageConfiguration syncConfig;
+	private boolean isUncommittedCompare = false;
 
 	/**
 	 * Empty constructor must be here, otherwise Eclipse wouldn't be able to create the object via reflection
@@ -54,13 +58,18 @@ public class CompareAction extends SingleFileAction {
 		this.selection = file;
 	}
 
+	public CompareAction(IFile file, boolean uncommittedCompare) {
+		this(file);
+		this.isUncommittedCompare = uncommittedCompare;
+	}
+
 	@Override
 	protected void run(final IFile file) throws TeamException {
 		Job job = new Job("Diff for " + file.getName()) {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				if(mergeEnabled){
+				if (mergeEnabled || (isConflict(file) && isUncommittedCompare)) {
 					openMergeEditor(file);
 					return Status.OK_STATUS;
 				}
@@ -111,17 +120,42 @@ public class CompareAction extends SingleFileAction {
 	private void openMergeEditor(IFile file){
 
 		try {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
-			String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+			RevisionNode ancestorNode;
+			RevisionNode mergeNode;
+			if (isConflict(file) && isUncommittedCompare) {
+				String[] changeSets = HgResolveClient.getChangeSetsForCompare(file);
 
-			String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-			int ancestor = HgParentClient
-					.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				String otherId = changeSets[1];
+				String ancestorId = changeSets[2];
 
-			RevisionNode mergeNode = new RevisionNode(
-					new MercurialRevisionStorage(file, mergeNodeId));
-			RevisionNode ancestorNode = new RevisionNode(
-					new MercurialRevisionStorage(file, ancestor));
+				if (otherId == null || ancestorId == null) {
+
+					getShell().getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							MessageDialog.openError(getShell(), "Merge error",
+									"Couldn't retrieve merge info from Mercurial");
+						}
+					});
+
+					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id"));
+					return;
+				}
+
+				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, otherId));
+				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestorId));
+			} else {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+
+				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
+
+				int ancestor = HgParentClient
+				.findCommonAncestor(hgRoot, parents[0], parents[1]);
+
+				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, mergeNodeId));
+				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestor));
+			}
+
 
 			final HgCompareEditorInput compareInput = new HgCompareEditorInput(
 					new CompareConfiguration(), file, ancestorNode, mergeNode, true);
@@ -143,6 +177,12 @@ public class CompareAction extends SingleFileAction {
 
 	public void setSynchronizePageConfiguration(ISynchronizePageConfiguration syncConfig){
 		this.syncConfig = syncConfig;
+	}
+
+	private boolean isConflict(IFile file) {
+		Integer status = MercurialStatusCache.getInstance().getStatus(file);
+		int sMask = status != null? status.intValue() : 0;
+		return Bits.contains(sMask, MercurialStatusCache.BIT_CONFLICT);
 	}
 
 }

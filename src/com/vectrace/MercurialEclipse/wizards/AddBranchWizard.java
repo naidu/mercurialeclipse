@@ -91,6 +91,7 @@ public class AddBranchWizard extends HgWizard {
 					options.showAmend = false;
 					options.showCloseBranch = false;
 					options.showRevert = false;
+					options.allowEmptyCommit = true;
 					commitHandler.setOptions(options);
 					commitHandler.run(projectList);
 					monitor.worked(1);

@@ -58,7 +58,6 @@ final class ChangesetContentHandler implements ContentHandler {
 	private String nodeShort;
 	private String nodeLong;
 	private String dateIso;
-	private String dateAge;
 	private String author;
 	private String parents;
 	private String description;
@@ -145,7 +144,6 @@ final class ChangesetContentHandler implements ContentHandler {
 				ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
 				csb.tags(tags);
 				csb.nodeShort(nodeShort);
-				csb.ageDate(dateAge);
 				csb.description(untab(unescape(description)));
 
 				addParentsInfo(csb);
@@ -241,8 +239,6 @@ final class ChangesetContentHandler implements ContentHandler {
 			nodeLong = atts.getValue(0);
 		} else if ("di".equals(name)) {
 			dateIso = atts.getValue(0);
-		} else if ("da".equals(name)) {
-			dateAge = atts.getValue(0);
 		} else if ("au".equals(name)) {
 			author = atts.getValue(0);
 		} else if ("pr".equals(name)) {

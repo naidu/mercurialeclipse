@@ -504,6 +504,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				if (monitor.isCanceled()) {
 					return;
 				}
+			} catch (HgException e) {
+				throw new TeamException(new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
+						Messages.getString("MercurialSynchronizeSubscriber.connectError")));
 			} catch (InterruptedException e) {
 				MercurialEclipsePlugin.logError(e);
 			} finally {

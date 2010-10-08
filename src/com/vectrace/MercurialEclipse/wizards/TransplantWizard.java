@@ -88,8 +88,7 @@ public class TransplantWizard extends HgWizard {
 			MercurialEclipsePlugin.showError(e);
 			return false;
 		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.logError(e.getCause());
-			MercurialEclipsePlugin.showError(e.getCause());
+			MercurialEclipsePlugin.showError(e.getTargetException());
 			return false;
 		} catch (InterruptedException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -111,7 +110,6 @@ public class TransplantWizard extends HgWizard {
 		} else {
 			options.branchName = transplantPage.getBranchName();
 		}
-		options.continueLastTransplant = optionsPage.isContinueLastTransplant();
 		options.filter = optionsPage.getFilter();
 		options.filterChangesets = optionsPage.isFilterChangesets();
 		options.merge = optionsPage.isMerge();
@@ -121,5 +119,4 @@ public class TransplantWizard extends HgWizard {
 		options.pruneNodeId = optionsPage.getPruneNodeId();
 		return options;
 	}
-
 }

@@ -29,9 +29,11 @@ import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -148,7 +150,10 @@ public class BackoutWizardPage extends HgWizardPage {
 			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
 			HgClients.getConsole().printMessage(result, null);
-
+			if (merge) {
+				MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
+				new CommitMergeHandler().run(hgRoot);
+			}
 		} catch (CoreException e) {
 			MessageDialog.openError(getShell(), Messages
 					.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$

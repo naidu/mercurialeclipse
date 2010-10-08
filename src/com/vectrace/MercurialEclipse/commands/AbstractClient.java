@@ -246,13 +246,13 @@ public abstract class AbstractClient {
 		return host.toString();
 	}
 
-	protected static void addMergeToolPreference(HgCommand command) {
+	protected static void addMergeToolPreference(AbstractShellCommand command) {
 		boolean useExternalMergeTool = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 						"false")).booleanValue(); //$NON-NLS-1$
 
 		if (!useExternalMergeTool) {
-			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--config", "ui.merge=internal:fail"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 }

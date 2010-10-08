@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -67,7 +68,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private String tagsStr;
 	private List<FileStatus> changedFiles;
 	private String description;
-	private String ageDate;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
@@ -194,13 +194,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return this;
 		}
 
-		// what is ageDate? Can it be derived from date and now()
-		public Builder ageDate(String ageDate) {
-			this.cs.ageDate = ageDate;
-			return this;
-		}
-
-		// nodeShort should be first X of changeset, this is superflous
+		// nodeShort should be first X of changeset, this is superfluous
 		public Builder nodeShort(String nodeShort) {
 			this.cs.nodeShort = nodeShort;
 			return this;
@@ -380,7 +374,30 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 * @return the ageDate
 	 */
 	public String getAgeDate() {
-		return ageDate;
+		return constructAge(getRealDate());
+	}
+
+	private String constructAge(Date creationDate) {
+		Calendar now = Calendar.getInstance();
+		Calendar created = Calendar.getInstance();
+		created.setTime(creationDate);
+		if (!created.before(now)) {
+			return "0 seconds ago";
+		}
+
+		if (now.get(Calendar.YEAR) - created.get(Calendar.YEAR) > 0) {
+			return now.get(Calendar.YEAR) - created.get(Calendar.YEAR) + " years ago";
+		} else if (now.get(Calendar.MONTH) - created.get(Calendar.MONTH) > 0) {
+			return now.get(Calendar.MONTH) - created.get(Calendar.MONTH) + " months ago";
+		} else if (now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) > 0) {
+			return now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) + " days ago";
+		} else if (now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) > 0) {
+			return now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) + " hours ago";
+		} else if (now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) > 0) {
+			return now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) + " minutes ago";
+		} else {
+			return "less than a minute ago";
+		}
 	}
 
 	/**
