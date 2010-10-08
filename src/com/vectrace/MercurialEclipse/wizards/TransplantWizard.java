@@ -126,7 +126,6 @@ public class TransplantWizard extends HgWizard {
 		} else {
 			options.branchName = transplantPage.getBranchName();
 		}
-		options.continueLastTransplant = optionsPage.isContinueLastTransplant();
 		options.filter = optionsPage.getFilter();
 		options.filterChangesets = optionsPage.isFilterChangesets();
 		options.merge = optionsPage.isMerge();

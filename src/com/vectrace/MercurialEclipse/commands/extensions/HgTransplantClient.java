@@ -21,6 +21,8 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public final class HgTransplantClient {
 
@@ -95,5 +97,22 @@ public final class HgTransplantClient {
 			}
 		}
 		return new String(command.executeToBytes());
+	}
+
+	/**
+	 * Continue a transplant, refreshing the workspace afterwards.
+	 *
+	 * @param hgRoot The repository in which to invoke hg transplant --continue
+	 * @throws HgException
+	 */
+	public static String continueTransplant(HgRoot hgRoot) throws HgException {
+		TransplantOptions options = new TransplantOptions();
+		options.continueLastTransplant = true;
+
+		try {
+			return transplant(hgRoot, null, options);
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
+		}
 	}
 }
