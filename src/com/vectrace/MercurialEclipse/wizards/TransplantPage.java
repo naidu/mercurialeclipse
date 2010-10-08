@@ -23,6 +23,7 @@ import java.util.TimerTask;
 import java.util.TreeSet;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -45,6 +46,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -102,6 +104,12 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 		addBranchGroup(composite);
 		addChangesetGroup(composite);
+
+		if (MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(
+				MercurialPreferenceConstants.PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES)) {
+			setUseLocalBranch(true);
+		}
+
 		setPageComplete(true);
 		validatePage();
 	}
@@ -122,9 +130,21 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		super.setPageComplete(complete);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().setValue(
+				MercurialPreferenceConstants.PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES,
+				branchCheckBox.getSelection());
+
+		return super.finish(monitor);
+	}
 
 	private void validatePage() {
 		boolean valid = true;
+		setMessage(null, IMessageProvider.WARNING);
 		try {
 			if (branch) {
 				valid &= !StringUtils.isEmpty(branchName);
@@ -141,6 +161,11 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 //						return;
 //					}
 //				}
+				if (valid && !all && selectedChangesets.size() == 0)
+				{
+					setMessage("No changeset selected.", IMessageProvider.WARNING);
+					return;
+				}
 			} else {
 				valid &= !StringUtils.isEmpty(getUrlText());
 				if(!valid){
@@ -227,19 +252,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 		SelectionListener branchCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				branch = branchCheckBox.getSelection();
-				setUrlGroupEnabled(!branch);
-//				getUrlCombo().setEnabled(!branch);
-				getUserCombo().setEnabled(!branch);
-				passwordText.setEnabled(!branch);
-				allCheckBox.setEnabled(branch);
-				branchNameCombo.setEnabled(branch);
-				clearChangesets();
-				getUrlCombo().deselectAll();
-				if (branch) {
-					branchName = null;
-					branchNameCombo.deselectAll();
-				}
+				setUseLocalBranch(branchCheckBox.getSelection());
 				validatePage();
 			}
 
@@ -249,6 +262,24 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		};
 
 		branchCheckBox.addSelectionListener(branchCheckBoxListener);
+	}
+
+	protected void setUseLocalBranch(boolean useLocalBranch) {
+		this.branch = useLocalBranch;
+		if (branchCheckBox.getSelection() != useLocalBranch) {
+			branchCheckBox.setSelection(useLocalBranch);
+		}
+		setUrlGroupEnabled(!useLocalBranch);
+		getUserCombo().setEnabled(!useLocalBranch);
+		passwordText.setEnabled(!useLocalBranch);
+		allCheckBox.setEnabled(useLocalBranch);
+		branchNameCombo.setEnabled(useLocalBranch);
+		clearChangesets();
+		getUrlCombo().deselectAll();
+		if (useLocalBranch) {
+			branchName = null;
+			branchNameCombo.deselectAll();
+		}
 	}
 
 	private void addChangesetGroup(Composite composite) {
