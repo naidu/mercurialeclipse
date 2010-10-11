@@ -390,7 +390,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			IStructuredSelection structured = (IStructuredSelection) selection;
 			IResource resource = MercurialEclipsePlugin.getAdapter(structured.getFirstElement(), IResource.class);
 			if (resource != null) {
-				setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
+				setCurrentRoot(MercurialTeamProvider.hasHgRoot(resource));
 			}
 		}
 	}

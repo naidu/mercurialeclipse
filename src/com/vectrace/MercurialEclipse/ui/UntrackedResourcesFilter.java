@@ -20,7 +20,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class UntrackedResourcesFilter extends ViewerFilter {
@@ -39,7 +39,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 
 		IResource resource = (IResource) element;
-		HgRoot hgRoot = MercurialRootCache.getInstance().hasHgRoot(resource);
+		HgRoot hgRoot = MercurialTeamProvider.hasHgRoot(resource);
 		if(hgRoot == null){
 			// paranoia
 			return false;
