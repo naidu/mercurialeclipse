@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.ui;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -21,7 +20,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class UntrackedResourcesFilter extends ViewerFilter {
@@ -40,12 +39,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 
 		IResource resource = (IResource) element;
-		IProject project = resource.getProject();
-		if(project == null){
-			// paranoia
-			return false;
-		}
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		HgRoot hgRoot = MercurialRootCache.getInstance().hasHgRoot(resource);
 		if(hgRoot == null){
 			// paranoia
 			return false;
