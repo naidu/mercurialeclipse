@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -26,8 +25,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgIgnoreHandler extends SingleResourceHandler {
@@ -74,19 +73,9 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 
-					// if there is a .hgignore at project level, update it via a refresh.
-					IProject project = resource.getProject();
-					IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
-
-					hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
-					if(!hgIgnoreFile.exists()){
-						// If .hgignore is NOT inside the project, we have a multi-project setup in the same root
-						// Refresh status of newly ignored resource for ALL projects in the same hg root.
-						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-						MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
-					} else {
-						MercurialStatusCache.getInstance().clearStatusCache(resource, true);
-					}
+					// update the HgRoot of the resource. This will update all projects that contain this HgRoot
+					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+					MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$

@@ -29,9 +29,9 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -184,7 +184,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
 			return EMPTY_SET;
 		}
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 		synchronized (repoDatas){
 			RemoteData data = fastRepoMap.get(key);
@@ -218,7 +218,13 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
 			return EMPTY_SET;
 		}
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		HgRoot hgRoot;
+		try {
+			hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return EMPTY_SET;
+		}
 		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 		synchronized (repoDatas){
 			RemoteData data = fastRepoMap.get(key);

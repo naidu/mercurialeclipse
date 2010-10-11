@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -88,17 +89,13 @@ public abstract class AbstractClient {
 	 * @throws HgException
 	 */
 	public static HgRoot getHgRoot(IResource resource) throws HgException {
-		File file = ResourceUtils.getFileHandle(resource);
-		return HgRootClient.getHgRoot(file);
-	}
-
-	public static HgRoot getHgRoot(IPath path) throws HgException {
-		return getHgRoot(path.toFile());
+		Assert.isNotNull(resource);
+		return MercurialRootCache.getInstance().getHgRoot(resource);
 	}
 
 	public static HgRoot getHgRoot(File file) throws HgException {
 		Assert.isNotNull(file);
-		return HgRootClient.getHgRoot(file);
+		return MercurialRootCache.getInstance().getHgRoot(file);
 	}
 
 	/**

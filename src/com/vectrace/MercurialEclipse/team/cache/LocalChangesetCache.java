@@ -61,8 +61,18 @@ public final class LocalChangesetCache extends AbstractCache {
 
 	private static LocalChangesetCache instance;
 
+	/**
+	 * Contains all the loaded changesets for each of the paths (resources)
+	 */
 	private final Map<IPath, SortedSet<ChangeSet>> localChangeSets;
+	/**
+	 * Stores all changesets for each project. changesets can be retreived by its rev:node or rev:shortnode strings. Only actually used for reading in
+	 * getChangesetById(Project, String) which is private. This can probably be removed without adverse effect.
+	 */
 	private final Map<IProject, Map<String, ChangeSet>> changesets;
+	/**
+	 * Stores the latest changeset for each root
+	 */
 	private final Map<HgRoot, ChangeSet> latestChangesets;
 
 	private int logBatchSize;

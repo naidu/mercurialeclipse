@@ -310,6 +310,8 @@ public final class ResourceUtils {
 	}
 
 	/**
+	 * Converts a HgRoot relative path to a project relative IResource. The specified hgRoot
+	 * can be higher than, deeper than, or at project level in the directory hierarchy.
 	 * @param hgRoot
 	 *            non null
 	 * @param project

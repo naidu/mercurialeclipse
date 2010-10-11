@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -32,7 +33,8 @@ public class HgRemoveClient extends AbstractClient {
 			monitor.subTask(Messages.getString("HgRemoveClient.removeResource.1") + resource.getName() //$NON-NLS-1$
 					+ Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
 		}
-		HgCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
+		HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+		HgCommand command = new HgCommand("remove", root, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
 		command.addOptions("--force"); //$NON-NLS-1$
 		command.addFiles(resource);
