@@ -14,8 +14,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +29,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -50,10 +53,11 @@ public class HgStatusClient extends AbstractClient {
 	//    filtering src/nexj/core/meta/sys/system.chtypes through
 	//    02bfc05967b86ba65a0cb990178638e4c491c865+d35923c18f8f564c6205e722119d88c6daa3f56d+ default
 	// These leading lines are ignored.
+	private static final Pattern ID_MERGE_AND_BRANCH_IGNORE_PATTERN = Pattern.compile("^filtering\\s.+\\sthrough\\s*$");
 
 	//             group 1                         group 2                             group 3
 	// (first parent, optional dirty flag)(merge parent, optional dirty flag) space (branch name)
-	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^(?:filtering\\s.+\\sthrough\\s*$\\s*^)*([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$", Pattern.MULTILINE); //$NON-NLS-1$
+	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$");
 
 	public static String getStatus(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
@@ -121,9 +125,20 @@ public class HgStatusClient extends AbstractClient {
 		// Full global IDs + branch name
 		command.addOptions("-ib", "--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		String versionIds = command.executeToString().trim();
+		String versionIds = null;
+		BufferedReader br = new BufferedReader(new StringReader(command.executeToString().trim()));
 
-		Matcher m = ID_MERGE_AND_BRANCH_PATTERN.matcher(versionIds);
+		try {
+			while ((versionIds = br.readLine()) != null) {
+				if (!ID_MERGE_AND_BRANCH_IGNORE_PATTERN.matcher(versionIds).matches()) {
+					break;
+				}
+			}
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		Matcher m = ID_MERGE_AND_BRANCH_PATTERN.matcher((versionIds == null) ? "" : versionIds);
 		String mergeId = null;
 		String branch = Branch.DEFAULT;
 		// current working directory id
