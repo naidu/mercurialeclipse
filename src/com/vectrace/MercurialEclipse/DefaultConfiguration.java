@@ -25,8 +25,8 @@ import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
@@ -79,7 +79,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 
 	public HgRoot getHgRoot(File file) throws HgCoreException {
 		try {
-			return MercurialTeamProvider.getHgRoot(file);
+			return MercurialRootCache.getInstance().getHgRoot(file);
 		} catch (CoreException e) {
 			throw new HgCoreException(e);
 		}

@@ -49,6 +49,10 @@ public class MercurialRootCache extends AbstractCache {
 	}
 
 	public HgRoot getHgRoot(File file) throws HgException {
+		if (file instanceof HgRoot) {
+			return (HgRoot) file;
+		}
+
 		// TODO: possible optimization: try to look for the parent in the cache, or load the whole hierarchy in cache
 		//       or something else like that, so we don't need to call HgRootClient for each file in a directory
 

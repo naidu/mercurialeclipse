@@ -15,7 +15,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -321,18 +320,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		}
 
 		return MercurialRootCache.getInstance().hasHgRoot(resource);
-	}
-
-	/**
-	 * Gets the hg root of a resource as {@link java.io.File}.
-	 *
-	 * @param file
-	 *            a {@link java.io.File}, not null
-	 * @return the file object of the root.
-	 * @throws HgException
-	 */
-	public static HgRoot getHgRoot(File file) throws HgException {
-		return MercurialRootCache.getInstance().getHgRoot(file);
 	}
 
 	/**
