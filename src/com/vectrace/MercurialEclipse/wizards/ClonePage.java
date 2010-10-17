@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.operations.CloneOperation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -220,6 +221,8 @@ public class ClonePage extends PushPullPage {
 				.getString("ClonePage.pullCheckBox.title")); //$NON-NLS-1$
 		uncompressedCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
 				.getString("ClonePage.uncompressedCheckBox.title")); //$NON-NLS-1$
+		uncompressedCheckBox.setSelection(MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_CLONE_UNCOMPRESSED));
 		SWTWidgetHelper.createLabel(g, Messages
 				.getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
 		revisionTextField = SWTWidgetHelper.createTextField(g);
@@ -426,6 +429,11 @@ public class ClonePage extends PushPullPage {
 			setErrorMessage("Failed to create destination directory '" + destDirectory + "'!");
 			return false;
 		}
+
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().setValue(
+				MercurialPreferenceConstants.PREF_CLONE_UNCOMPRESSED,
+				uncompressedCheckBox.getSelection());
+
 		try {
 			// run clone
 			boolean pull = pullCheckBox.getSelection();
