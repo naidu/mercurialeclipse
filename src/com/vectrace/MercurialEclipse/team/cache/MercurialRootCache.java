@@ -19,10 +19,14 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.commands.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -36,18 +40,38 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class MercurialRootCache extends AbstractCache {
 
+	// constants
+
+	private static final QualifiedName SESSION_KEY = new QualifiedName(MercurialEclipsePlugin.ID, "MercurialRootCacheKey");
+
+	private static final Object NO_ROOT = new String("No Mercurial root");
+
+	// associations
+
 	/**
 	 * We use an HgRoot[] of size 1 for values because null values are not allowed in ConcurrentHashMaps.
+	 *
+	 * TODO: Can we eliminate this map? It is currently leaking.
+	 * @deprecated
 	 */
+	@Deprecated
 	private final Map<File, HgRoot[]> byFile = new ConcurrentHashMap<File, HgRoot[]>();
-	private final Map<IProject, HgRoot[]> byProject = new ConcurrentHashMap<IProject, HgRoot[]>();
+
 	private final Set<HgRoot> knownRoots = new CopyOnWriteArraySet<HgRoot>();
+
+	// constructor
 
 	private MercurialRootCache(){
 		// do we need to listen to resource changes?
 		// ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 	}
 
+	// operations
+
+	/**
+	 * @deprecated Use {@link #getHgRoot(IResource)}
+	 */
+	@Deprecated
 	public HgRoot getHgRoot(File file) throws HgException {
 		if (file instanceof HgRoot) {
 			return (HgRoot) file;
@@ -95,20 +119,62 @@ public class MercurialRootCache extends AbstractCache {
 	}
 
 	public HgRoot getHgRoot(IResource resource) throws HgException {
-		if(resource instanceof HgRootContainer){
+		if (resource instanceof HgRootContainer) {
 			// special case for HgRootContainers, they already know their HgRoot
 			HgRootContainer rootContainer = (HgRootContainer) resource;
 			return rootContainer.getHgRoot();
 		}
 
-		File file = ResourceUtils.getFileHandle(resource);
-		HgRoot root = getHgRoot(file);
-		if(root != null && resource instanceof IProject && !byProject.containsKey(resource)){
-			byProject.put((IProject)resource, new HgRoot[]{root});
+		// As an optimization only cache for containers not files
+		if (resource instanceof IFile)
+		{
+			IResource parent = ((IFile)resource).getParent();
+			resource = (parent == null) ? resource : parent;
 		}
+
+		boolean cacheResult = true;
+		Object result = null;
+		HgRoot root;
+
+		try {
+			result = resource.getSessionProperty(SESSION_KEY);
+		} catch (CoreException e) {
+			// Possible reasons:
+			// - This resource does not exist.
+			// - This resource is not local.
+			// - This resource is a project that is not open.
+			cacheResult = false;
+		}
+
+		if (result == NO_ROOT) {
+			root = null;
+		} else if (result == null) {
+			root = getHgRoot(ResourceUtils.getFileHandle(resource));
+
+			if (cacheResult) {
+				try {
+					resource.setSessionProperty(SESSION_KEY, root == null ? NO_ROOT : root);
+				} catch (CoreException e) {
+					// Possible reasons:
+					// - 3 reasons above, or
+					// - Resource changes are disallowed during certain types of resource change event
+					// notification. See IResourceChangeEvent for more details.
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		} else {
+			root = (HgRoot) result;
+		}
+
 		return root;
 	}
 
+	/**
+	 * Calls {@link #getHgRoot(IResource)} but returns null rather than throwing an exception.
+	 *
+	 * @param resource The resource to get the root for
+	 * @return The root, or null if an error occurred
+	 */
 	public HgRoot hasHgRoot(IResource resource) {
 		try{
 			return getHgRoot(resource);
@@ -126,10 +192,6 @@ public class MercurialRootCache extends AbstractCache {
 			byFile.remove(canonical);
 		}catch(IOException ioe){
 			// if that happens now, it is unlikely that the canonical file was in the cache to begin with...
-		}
-
-		if(resource instanceof IProject){
-			byProject.remove(resource);
 		}
 	}
 
