@@ -104,4 +104,7 @@ public final class MercurialPreferenceConstants {
 	public static final String PREF_USE_MERCURIAL_USERNAME = "hg.useMercurialUsernameForCommit";
 	public static final String PREF_DEFAULT_REBASE_KEEP_BRANCHES = "hg.defaulRebaseKeepBranches";
 	public static final String PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES = "hg.defaulTransplantFromLocal";
+
+	// clone
+	public static final String PREF_CLONE_UNCOMPRESSED = "hg.cloneUncompressed"; //$NON-NLS-1$
 }
