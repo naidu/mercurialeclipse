@@ -136,6 +136,11 @@ public class HgStatusClient extends AbstractClient {
 			}
 		} catch (IOException e) {
 			MercurialEclipsePlugin.logError(e);
+		} finally {
+			try {
+				br.close();
+			} catch (IOException ex) {
+			}
 		}
 
 		Matcher m = ID_MERGE_AND_BRANCH_PATTERN.matcher((versionIds == null) ? "" : versionIds);
