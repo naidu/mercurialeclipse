@@ -232,8 +232,9 @@ public class CommitDialog extends TitleAreaDialog {
 
 			setErrorMessage(Messages.getString("CommitDialog.commitMessageRequired")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
-		} else if (commitFilesList.getCheckedResources().size() == 0
-				&& !options.allowEmptyCommit && commitFilesList.isSelectable()) {
+		} else if (commitFilesList.getCheckedResources().size() == 0 && !options.allowEmptyCommit
+				&& commitFilesList.isSelectable()
+				&& (amendCheckbox == null || !amendCheckbox.getSelection())) {
 			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
@@ -291,6 +292,7 @@ public class CommitDialog extends TitleAreaDialog {
 				} else {
 					closeSash();
 				}
+				validateControls();
 			}
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
