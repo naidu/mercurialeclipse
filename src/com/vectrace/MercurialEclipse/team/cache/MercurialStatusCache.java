@@ -59,6 +59,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
@@ -1510,6 +1511,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		}
 	}
 
+	/**
+	 * @deprecated Use {@link #isMergeInProgress(HgRoot)}
+	 */
+	@Deprecated
 	public boolean isMergeInProgress(IPath path){
 		return getMergeChangesetId(path) != null;
 	}
@@ -1572,5 +1577,31 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+	/**
+	 * Determine if the given file is currently in conflict because of a workspace update, ie
+	 * not a normal merge or rebase.
+	 *
+	 * @param file
+	 *            The file to check
+	 * @return True if the file is in conflict and neither a rebase or merge is in progress.
+	 */
+	public boolean isWorkspaceUpdateConfict(IFile file) {
+		if (isConflict(file)) {
+			// Ideally we would save more state so we know what mode we are actually in. For now
+			// just check we're not merging or rebasing. Transplant conflicts don't set files in
+			// conflict mode. Are there other modes?
+			try {
+				HgRoot root = AbstractClient.getHgRoot(file);
+				if (root != null && !isMergeInProgress(root) && !HgRebaseClient.isRebasing(root)) {
+					return true;
+				}
+			} catch (HgException e) {
+				return false;
+			}
+		}
+
+		return false;
 	}
 }

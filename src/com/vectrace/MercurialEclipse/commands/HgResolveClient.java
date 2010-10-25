@@ -168,19 +168,24 @@ public class HgResolveClient extends AbstractClient {
 
 	/**
 	 * Executes resolve command to find change sets necessary for merging
+	 * <p>
+	 * WARNING: This method potentially reverts changes!
+	 * <p>
+	 * Future: We should write some python to interface with the Mercurial API directly to get this
+	 * info so we don't have to do operations with side effects or rely on --debug output.
 	 *
-	 * Returns array of changeset ids:
-	 * result[0] - 'my'
-	 * result[1] - 'other'
-	 * result[2] - 'base'
+	 * @param file
+	 *            The file to consider
+	 * @return An array of length 3 of changeset ids: result[0] - 'my' result[1] - 'other' result[2]
+	 *         - 'base'
 	 */
-	public static String[] getChangeSetsForCompare(IFile file) {
+	public static String[] restartMergeAndGetChangeSetsForCompare(IFile file) {
 		String[] results = new String[3];
-
 		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
 				getWorkingDirectory(file), false);
 
-		command.addOptions("--config", "ui.merge=internal:mustfail", "-a", "--debug");
+		command.addOptions("--config", "ui.merge=internal:mustfail", "--debug");
+		command.addFiles(file);
 
 		String stringResult = "";
 		try {
@@ -191,7 +196,6 @@ public class HgResolveClient extends AbstractClient {
 		}
 
 		String filename = file.getName();
-
 		String patternString = "my .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]"
 			+ "other .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]"
 			+ "ancestor .*" + filename + "@?([0-9a-fA-F]*)\\+?[\\s]";
