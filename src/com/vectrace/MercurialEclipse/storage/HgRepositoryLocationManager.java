@@ -126,6 +126,8 @@ public class HgRepositoryLocationManager {
 		return allRepos;
 	}
 
+	// TODO ME doesn't update rootRepos map until workbench restart.
+	// Map should be updated after every clone operation
 	public SortedSet<HgRoot> getAllRepoRoots() {
 		SortedSet<HgRoot> allRoots = new TreeSet<HgRoot>();
 		synchronized (entriesLock) {
