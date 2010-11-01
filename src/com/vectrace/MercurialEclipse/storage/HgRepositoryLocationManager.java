@@ -114,6 +114,7 @@ public class HgRepositoryLocationManager {
 	 */
 	public SortedSet<IHgRepositoryLocation> getAllRepoLocations() {
 		SortedSet<IHgRepositoryLocation> allRepos = new TreeSet<IHgRepositoryLocation>();
+		rootRepos.keySet();
 		synchronized (entriesLock){
 			for (SortedSet<IHgRepositoryLocation> locations : rootRepos.values()) {
 				allRepos.addAll(locations);
@@ -124,6 +125,15 @@ public class HgRepositoryLocationManager {
 		}
 		return allRepos;
 	}
+
+	public SortedSet<HgRoot> getAllRepoRoots() {
+		SortedSet<HgRoot> allRoots = new TreeSet<HgRoot>();
+		synchronized (entriesLock) {
+			allRoots.addAll(rootRepos.keySet());
+		}
+		return allRoots;
+	}
+
 
 	public SortedSet<IHgRepositoryLocation> getAllRepoLocations(HgRoot hgRoot) {
 		if(hgRoot == null){
