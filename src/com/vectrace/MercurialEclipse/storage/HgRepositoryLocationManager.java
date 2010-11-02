@@ -11,6 +11,7 @@
  *     Jerome Negre              - storing in plain text instead of serializing Java Objects
  *     Bastian Doetsch           - support for project specific repository locations
  *     Adam Berkes (Intland)     - bug fixes
+ *     Ilya Ivanov  (Intland)    - bug fixes
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
@@ -21,11 +22,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
