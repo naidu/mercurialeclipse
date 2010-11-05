@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Andrei Loskutov (Intland) - bug fixes
+ * Zsolt Koppany   (Intland)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -56,16 +57,26 @@ public class HgBranchClient extends AbstractClient {
 			if(StringUtils.isEmpty(line)){
 				continue;
 			}
-			Matcher m = GET_BRANCHES_PATTERN.matcher(line);
-			if (m.matches()) {
-				Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m
-						.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
+
+			Branch branch = parseBranch(line);
+			if (branch != null) {
 				branches.add(branch);
 			} else {
-				throw new HgException("Failed to parse branch from: '" + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				HgException ex = new HgException("Failed to parse branch from '" + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				MercurialEclipsePlugin.logWarning("Failed to parse branch", ex); //$NON-NLS-1$
 			}
 		}
 		return branches.toArray(new Branch[branches.size()]);
+	}
+
+	protected static Branch parseBranch(String line) {
+		Matcher m = GET_BRANCHES_PATTERN.matcher(line);
+		if (m.matches()) {
+			Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
+			return branch;
+		}
+
+		return null;
 	}
 
 	/**
@@ -73,8 +84,7 @@ public class HgBranchClient extends AbstractClient {
 	 *            if null, uses the default user
 	 * @throws HgException
 	 */
-	public static String addBranch(HgRoot hgRoot, String name,
-			String user, boolean force) throws HgException {
+	public static String addBranch(HgRoot hgRoot, String name, String user, boolean force) throws HgException {
 		HgCommand command = new HgCommand("branch", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		if (force) {
@@ -152,8 +162,7 @@ public class HgBranchClient extends AbstractClient {
 			// Incoming responds with an exception if there are no incoming changesets...
 			// but exception is different if no branch exists on remote. So trying to
 			// distinguish between "no changesets" and "unknown branch (== unknown revision)"
-			if (message.contains("no changes found") && !message.contains("unknown revision")
-					&& e.getStatus().getCode() == 1) {
+			if (message.contains("no changes found") && !message.contains("unknown revision") && e.getStatus().getCode() == 1) {
 				KNOWN_BRANCHES.put(key, Boolean.TRUE);
 				return true;
 			}
