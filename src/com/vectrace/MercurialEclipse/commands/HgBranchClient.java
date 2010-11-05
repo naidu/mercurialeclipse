@@ -70,7 +70,7 @@ public class HgBranchClient extends AbstractClient {
 	}
 
 	protected static Branch parseBranch(String line) {
-		Matcher m = GET_BRANCHES_PATTERN.matcher(line);
+		Matcher m = GET_BRANCHES_PATTERN.matcher(line.trim());
 		if (m.matches()) {
 			Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
 			return branch;
