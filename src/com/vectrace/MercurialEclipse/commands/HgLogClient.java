@@ -6,6 +6,8 @@
  *
  * Contributors: Bastian Doetsch - implementation
  * Andrei Loskutov (Intland) - bugfixes
+ * Zsolt Koppany (Intland)
+ * Ilya Ivanov (Intland)
  ******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;
@@ -27,14 +29,15 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 
+import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -60,7 +63,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	public static ChangeSet getTip(HgRoot hgRoot) throws HgException {
 		HgCommand command = new HgCommand("log", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		command.addOptions("-r", "tip");
+		command.addOptions("-r", HgRevision.TIP.getChangeset());
 		ChangeSet[] sets = getRevisions(command);
 		if(sets.length != 1){
 			throw new HgException("Unable to get changeset for 'tip' version");
