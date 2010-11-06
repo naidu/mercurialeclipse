@@ -16,9 +16,7 @@ import java.util.List;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
@@ -32,7 +30,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 /**
  * @author Andrei
  */
-public class AddAction extends SynchronizeModelAction {
+public class AddAction extends PathAwareAction {
 
 	private final ISynchronizePageConfiguration configuration;
 
@@ -49,8 +47,7 @@ public class AddAction extends SynchronizeModelAction {
 	protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration config,
 			IDiffElement[] elements) {
 		List<IResource> selectedResources = new ArrayList<IResource>();
-		IStructuredSelection sel = getStructuredSelection();
-		Object[] objects = sel.toArray();
+		Object[] objects = getNormalizedSelection();
 		for (Object object : objects) {
 			if (object instanceof WorkingChangeSet){
 				selectedResources.addAll(((WorkingChangeSet) object).getFiles());
@@ -66,23 +63,12 @@ public class AddAction extends SynchronizeModelAction {
 		return new AddOperation(configuration, elements, resources);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.actions.PathAwareAction#isSupported(java.lang.Object)
+	 */
 	@Override
-	protected final boolean updateSelection(IStructuredSelection selection) {
-		boolean updateSelection = super.updateSelection(selection);
-		if(!updateSelection){
-			Object[] array = selection.toArray();
-			for (Object object : array) {
-				if(!isSupported(object)){
-					return false;
-				}
-			}
-			return true;
-		}
-		return updateSelection;
-	}
-
-	private boolean isSupported(Object object) {
-		IResource adapter = MercurialEclipsePlugin.getAdapter(object,	IResource.class);
+	protected boolean isSupported(Object object) {
+		IResource adapter = MercurialEclipsePlugin.getAdapter(object, IResource.class);
 		if (adapter != null) {
 			return MercurialStatusCache.getInstance().isUnknown(adapter);
 		}

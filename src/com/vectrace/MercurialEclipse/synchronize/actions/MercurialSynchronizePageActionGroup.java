@@ -172,7 +172,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private boolean isSelectionUncommited() {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null) {
+		if (selectedObjects.length == 0) {
 			return false;
 		}
 
@@ -195,7 +195,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private boolean isSelectionOutgoing() {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null) {
+		if (selectedObjects.length == 0) {
 			return false;
 		}
 
@@ -270,8 +270,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private void addMergeViewStyleAction(IMenuManager menu) {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null || selectedObjects.length != 1
-				|| !(selectedObjects[0] instanceof ChangeSet)) {
+		if (selectedObjects.length != 1 || !(selectedObjects[0] instanceof ChangeSet)) {
 			return;
 		}
 
@@ -283,14 +282,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 	}
 
+	/**
+	 * @return Not null.
+	 */
 	private Object[] getSelectedObjects() {
 		ISelection selection = getContext().getSelection();
-		if (!(selection instanceof StructuredSelection)) {
-			return null;
+		Object[] arr = null;
+
+		if (selection instanceof StructuredSelection) {
+			arr = ((StructuredSelection) selection).toArray();
 		}
 
-		StructuredSelection stSelection = (StructuredSelection) selection;
-		return stSelection.toArray();
+		return PathAwareAction.normalize(arr);
 	}
 
 	/**

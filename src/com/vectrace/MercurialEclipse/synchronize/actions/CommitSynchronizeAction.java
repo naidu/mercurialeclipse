@@ -20,9 +20,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionProvider;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -36,7 +34,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * Get action that appears in the synchronize view. It's main purpose is to
  * filter the selection and delegate its execution to the get operation.
  */
-public class CommitSynchronizeAction extends SynchronizeModelAction {
+public class CommitSynchronizeAction extends PathAwareAction {
 
 	public CommitSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
@@ -59,8 +57,7 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		List<IResource> selectedResources = new ArrayList<IResource>();
 
-		IStructuredSelection sel = getStructuredSelection();
-		Object[] objects = sel.toArray();
+		Object[] objects = getNormalizedSelection();
 		for (Object object : objects) {
 			if (object instanceof IResource) {
 				selectedResources.add((IResource) object);
@@ -84,22 +81,11 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 		return new CommitSynchronizeOperation(configuration, elements, resources);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.actions.PathAwareAction#isSupported(java.lang.Object)
+	 */
 	@Override
-	protected final boolean updateSelection(IStructuredSelection selection) {
-		boolean updateSelection = super.updateSelection(selection);
-		if(!updateSelection){
-			Object[] array = selection.toArray();
-			for (Object object : array) {
-				if(!isSupported(object)){
-					return false;
-				}
-			}
-			return true;
-		}
-		return updateSelection;
-	}
-
-	private boolean isSupported(Object object) {
+	protected boolean isSupported(Object object) {
 		if (object instanceof ChangeSet) {
 			return object instanceof WorkingChangeSet
 					&& ((WorkingChangeSet) object).getFiles().size() > 0;
