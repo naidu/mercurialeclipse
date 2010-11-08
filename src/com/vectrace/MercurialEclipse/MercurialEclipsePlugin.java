@@ -109,7 +109,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private ServiceTracker proxyServiceTracker;
 
-	private static final Version LOWEST_WORKING_VERSION = new Version(1, 6, 1);
+	private static final Version LOWEST_WORKING_VERSION = new Version(1, 6, 0);
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
