@@ -81,7 +81,7 @@ public class CompareAction extends SingleFileAction {
 											.openQuestion(
 													getShell(),
 													"Compare",
-													"This file is in conflict. Would you like to use resolve to restart the merge with 3-way differences?"));
+													"This file is in conflict. Would you like to use resolve to *RESTART* the merge with 3-way differences? Warning: if resolve fails this operations can potentially lose changes. If in doubt select 'No'."));
 						}
 					});
 
