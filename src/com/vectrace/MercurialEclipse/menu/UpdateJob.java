@@ -68,9 +68,10 @@ public class UpdateJob extends Job {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
 
-//			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null && handleCrossBranches) {
-			// TODO: What is if pull creates new heads on other branches?
-			if (MergeHandler.getHeadsInCurrentBranch(hgRoot).size() > 1 && handleCrossBranches) {
+			// if revision != null then it's an update operation to particular change set,
+			// don't need to handle cross branches in this case
+			if (MergeHandler.getHeadsInCurrentBranch(hgRoot).size() > 1
+					&& revision == null && handleCrossBranches) {
 				handleMultipleHeads(hgRoot, cleanEnabled);
 			}
 		} catch (HgException e) {
