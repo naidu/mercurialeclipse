@@ -9,7 +9,6 @@
  * bastian	implementation
  *     Adam Berkes (Intland) - repository location handling
  *     Andrei Loskutov (Intland) - bug fixes
- *     Ilya Ivanov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -47,7 +46,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	protected Group optionGroup;
 	private boolean force;
 	private boolean timeout;
-	private boolean newBranch;
 
 	private Button timeoutCheckBox;
 	private ChangesetTable changesetTable;
@@ -56,14 +54,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	private Combo snapFileCombo;
 	private Button snapFileButton;
 	private Button svnCheckBox;
-	private Button newBranchCheckBox;
 
 	private boolean showRevisionTable;
 	private boolean showForce;
 	private boolean showForest;
 	private boolean showSnapFile;
 	private boolean showSvn;
-	private boolean showNewBranch;
 
 	public PushPullPage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
@@ -96,11 +92,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 			forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					getForceCheckBoxLabel());
 		}
-		if (showNewBranch) {
-			newBranchCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, getNewBranchCheckBoxLabel());
-			newBranchCheckBox.setSelection(true);
-		}
-
 		if (showRevisionTable) {
 			createRevisionTable(composite);
 		}
@@ -200,10 +191,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return Messages.getString("PushRepoPage.timeoutCheckBox.text"); //$NON-NLS-1$
 	}
 
-	private String getNewBranchCheckBoxLabel() {
-		return Messages.getString("PushRepoPage.newBranchCheckBox.text"); //$NON-NLS-1$
-	}
-
 	public boolean isForce() {
 		return force;
 	}
@@ -220,21 +207,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return timeoutCheckBox != null && timeoutCheckBox.getSelection();
 	}
 
-	public boolean isNewBranchSelected() {
-		return newBranchCheckBox != null && newBranchCheckBox.getSelection();
-	}
-
-
 	public void setShowRevisionTable(boolean showRevisionTable) {
 		this.showRevisionTable = showRevisionTable;
 	}
 
 	public void setShowForce(boolean showForce) {
 		this.showForce = showForce;
-	}
-
-	public void setShowNewBranch(boolean showNewBranch) {
-		this.showNewBranch = showNewBranch;
 	}
 
 	public boolean isShowForest() {
@@ -277,16 +255,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return isShowSvn() && svnCheckBox != null && svnCheckBox.getSelection();
 	}
 
-	public boolean isNewBranch() {
-		return newBranch;
-	}
-
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
 		this.force = isForceSelected();
 		this.timeout = isTimeoutSelected();
-		this.newBranch = isNewBranchSelected();
 		return super.finish(monitor);
 	}
-
 }

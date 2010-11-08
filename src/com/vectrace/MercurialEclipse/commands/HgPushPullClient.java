@@ -9,7 +9,6 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
  *     Andrei Loskutov (Intland) - bug fixes
- *     Ilya Ivanov (Intland) 	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -25,7 +24,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class HgPushPullClient extends AbstractClient {
 
 	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
-			boolean force, String revision, int timeout, boolean newBranch) throws HgException {
+			boolean force, String revision, int timeout) throws HgException {
 		AbstractShellCommand command = new HgCommand("push", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
@@ -38,9 +37,8 @@ public class HgPushPullClient extends AbstractClient {
 			command.addOptions("-r", revision.trim()); //$NON-NLS-1$
 		}
 
-		if (newBranch) {
-			command.addOptions("--new-branch");
-		}
+		// TODO should we notify user about new remote branch?
+		command.addOptions("--new-branch");
 
 		addRepoToHgCommand(repo, command);
 		return new String(command.executeToBytes(timeout));

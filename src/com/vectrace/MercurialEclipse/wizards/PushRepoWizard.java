@@ -144,7 +144,7 @@ public class PushRepoWizard extends HgWizard {
 						}
 						output = HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
 					} else {
-						output = HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout, pushRepoPage.isNewBranch());
+						output = HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
 					}
 				} catch (CoreException e){
 					throw new InvocationTargetException(e, e.getMessage());

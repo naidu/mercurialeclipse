@@ -79,7 +79,6 @@ public class ClonePage extends PushPullPage {
 		setShowCredentials(true);
 		setShowForce(false);
 		setShowSnapFile(false);
-		setShowNewBranch(false);
 	}
 
 	@Override

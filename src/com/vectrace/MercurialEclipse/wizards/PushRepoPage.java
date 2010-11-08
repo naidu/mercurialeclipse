@@ -33,7 +33,6 @@ public class PushRepoPage extends PushPullPage {
 			ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(hgRoot, pageName, title, titleImage);
 		setShowRevisionTable(false);
-		setShowNewBranch(true);
 	}
 
 	@Override
