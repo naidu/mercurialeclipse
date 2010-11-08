@@ -16,12 +16,14 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.history.IHistoryView;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
 	private final Object input;
@@ -38,14 +40,18 @@ public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
 		monitor.beginTask("Opening History View...", 1);
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				try {
-					IHistoryView view = (IHistoryView) getPart().getSite().getPage()
+				if (input instanceof HgRoot) {
+					TeamUI.getHistoryView().showHistoryFor(input);
+				} else {
+					try {
+						IHistoryView view = (IHistoryView) getPart().getSite().getPage()
 						.showView(IHistoryView.VIEW_ID);
-					if (view != null) {
-						view.showHistoryFor(input);
+						if (view != null) {
+							view.showHistoryFor(input);
+						}
+					} catch (PartInitException e) {
+						MercurialEclipsePlugin.logError(e);
 					}
-				} catch (PartInitException e) {
-					MercurialEclipsePlugin.logError(e);
 				}
 			}
 		});
