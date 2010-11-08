@@ -37,6 +37,9 @@ public class HgPushPullClient extends AbstractClient {
 			command.addOptions("-r", revision.trim()); //$NON-NLS-1$
 		}
 
+		// TODO should we notify user about new remote branch?
+		command.addOptions("--new-branch");
+
 		addRepoToHgCommand(repo, command);
 		return new String(command.executeToBytes(timeout));
 	}
