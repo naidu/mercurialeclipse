@@ -11,6 +11,7 @@
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland)	 - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -170,6 +171,10 @@ IWorkbenchPreferencePage {
 		addField(new BooleanFieldEditor(
 				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
+
+		addField(new BooleanFieldEditor(
+				PREF_PUSH_NEW_BRANCH,
+				Messages.getString("GeneralPreferencePage.pushNewBranches"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new LabelDecoratorRadioGroupFieldEditor(
 				LABELDECORATOR_LOGIC,
