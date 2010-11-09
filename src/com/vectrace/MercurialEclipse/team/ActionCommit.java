@@ -77,7 +77,6 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-
 	/**
 	 * Selection in the workbench has been changed. We can change the state of
 	 * the 'real' action here if we want, but this can only happen after the
