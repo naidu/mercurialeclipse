@@ -83,6 +83,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	private static MercurialEclipsePlugin plugin;
 
 	private static final Charset HGENCODING;
+
 	static {
 		// next in line is HGENCODING in environment
 		String enc = System.getProperty("HGENCODING");
