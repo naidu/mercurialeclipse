@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
@@ -22,12 +24,12 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  *
  */
 public class HgQNewClient extends AbstractClient {
-	public static String createNewPatch(IResource resource,
+	public static String createNewPatch(File workingDir,
 			String commitMessage, boolean force, boolean git, String include,
 			String exclude, String user, String date, String patchName)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qnew", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				workingDir, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -61,5 +63,14 @@ public class HgQNewClient extends AbstractClient {
 		command.addOptions(patchName);
 
 		return command.executeToString();
+	}
+
+	public static String createNewPatch(IResource resource,
+			String commitMessage, boolean force, boolean git, String include,
+			String exclude, String user, String date, String patchName)
+			throws HgException {
+
+		return createNewPatch(getWorkingDirectory(resource), commitMessage, force, git, include, exclude,
+				user, date, patchName);
 	}
 }

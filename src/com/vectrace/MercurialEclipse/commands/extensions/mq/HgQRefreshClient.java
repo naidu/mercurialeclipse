@@ -31,14 +31,25 @@ public class HgQRefreshClient extends AbstractClient {
 				root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-		if (shortFlag) {
-			command.addOptions("-s"); //$NON-NLS-1$
-		}
+//		if (shortFlag) {
+//			command.addOptions("-s"); //$NON-NLS-1$
+//		}
 		if (message != null && message.length() > 0) {
 			command.addOptions("-m", message); //$NON-NLS-1$
 		}
-		command.addFiles(files);
+		includeFiles(command, files);
+//		command.addFiles(files);
 		return command.executeToString();
+	}
+
+	private static void includeFiles(AbstractShellCommand command, List<IResource> files) {
+		if (files == null || files.isEmpty()) {
+			command.addOptions("-X", "**");
+		} else {
+			for (IResource file : files) {
+				command.addOptions("-I", file.getLocation().toOSString());
+			}
+		}
 	}
 
 	public static String refresh(IResource resource, String commitMessage, boolean force,

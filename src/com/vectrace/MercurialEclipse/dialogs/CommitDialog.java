@@ -75,6 +75,7 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFinishClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.SwitchHandler;
@@ -550,7 +551,11 @@ public class CommitDialog extends TitleAreaDialog {
 		if (amendCheckbox != null && amendCheckbox.getSelection() && cs != null) {
 			// refresh patch with added/removed/changed files
 			pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
-			String result = HgQRefreshClient
+
+			// create new patch to preserve previous changes
+			String result = HgQNewClient.createNewPatch(root, null, false, false, null, null, null, null, "");
+
+			result = HgQRefreshClient
 					.refresh(root, true, resourcesToCommit, messageToCommit);
 			pm.worked(1);
 			// remove patch and promote it to a new changeset
