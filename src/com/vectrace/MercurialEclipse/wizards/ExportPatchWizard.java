@@ -173,7 +173,11 @@ public class ExportPatchWizard extends HgWizard {
 			ChangeSet cs = (ChangeSet) sourcePage.getSelectedItems()[0];
 
 			if (location.getLocationType() == LocationType.Clipboard) {
-				ClipboardUtils.copyToClipboard(HgPatchClient.exportPatch(root, cs, null));
+				String sPatch = HgPatchClient.exportPatch(root, cs, null);
+
+				if (sPatch != null && sPatch.length() > 0) {
+					ClipboardUtils.copyToClipboard(sPatch);
+				}
 			} else {
 				HgPatchClient.exportPatch(root, cs, location.getFile(), null);
 			}
