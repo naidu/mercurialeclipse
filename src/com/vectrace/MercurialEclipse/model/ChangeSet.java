@@ -38,7 +38,9 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -678,6 +680,21 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return super.getName();
 	}
 
+	/**
+	 * @return Whether the repository is currently on this revision
+	 */
+	public boolean isCurrent() {
+		if (direction == Direction.OUTGOING && hgRoot != null) {
+			try {
+				return equals(LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot));
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public void remove(IResource resource) {
 		// not supported
@@ -691,7 +708,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private void fireChanged() {
 		if (listenerList != null) {
 			for (Object listener : listenerList.getListeners()) {
-				((Listener)listener).changeSetChanged(this);
+				((Listener) listener).changeSetChanged(this);
 			}
 		}
 	}

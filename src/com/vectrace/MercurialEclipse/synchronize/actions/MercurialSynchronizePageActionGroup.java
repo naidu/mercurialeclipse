@@ -157,10 +157,14 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 					HG_COMMIT_GROUP,
 					new ResolveSynchronizeAction("Mark as Resolved",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
-		} else if (!isSelectionOutgoing()) {
+		} else if (isSelectionOutgoing()) {
 			menu.insertAfter(
 					HG_COMMIT_GROUP,
-					new ResolveSynchronizeAction("Mark as Resolved",
+					new ExportPatchSynchronizeAction("Export as patch...",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new SwitchToSynchronizeAction("Switch to",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
 		}
 
@@ -207,12 +211,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				}
 			} else if (object instanceof ChangeSet) {
 				ChangeSet cs = (ChangeSet) object;
-				if (cs.getDirection() != Direction.OUTGOING) {
-					return false;
-				}
-			} else if (object instanceof FileFromChangeSet) {
-				FileFromChangeSet file = (FileFromChangeSet) object;
-				if (file.getChangeset().getDirection() != Direction.OUTGOING) {
+				if (cs.getDirection() != Direction.OUTGOING || cs instanceof WorkingChangeSet) {
 					return false;
 				}
 			} else {

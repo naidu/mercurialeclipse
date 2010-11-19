@@ -237,7 +237,6 @@ public class CommitFilesChooser extends Composite {
 		return CompareUtils.getCompareInput(left, right, false);
 	}
 
-	@SuppressWarnings("unused")
 	private void makeActions() {
 		getViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
