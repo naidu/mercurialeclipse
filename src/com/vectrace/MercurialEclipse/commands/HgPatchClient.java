@@ -130,13 +130,14 @@ public class HgPatchClient extends AbstractClient {
 
 	private static AbstractShellCommand makeExportPatchCommand(HgRoot root, ChangeSet cs,
 			List<String> options) {
-		AbstractShellCommand command = new HgCommand("diff", root, true);
-
-		command.addOptions("-c", cs.getChangeset());
+		AbstractShellCommand command = new HgCommand("export", root, true);
 
 		if (options != null) {
 			command.addOptions(options.toArray(new String[options.size()]));
 		}
+
+		command.addOptions("--git");
+		command.addOptions("-r", cs.getChangeset());
 
 		return command;
 	}
