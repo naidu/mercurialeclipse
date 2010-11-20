@@ -172,9 +172,14 @@ IWorkbenchPreferencePage {
 				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 
-		addField(new BooleanFieldEditor(
+		BooleanFieldEditor editor = new BooleanFieldEditor(
 				PREF_PUSH_NEW_BRANCH,
-				Messages.getString("GeneralPreferencePage.pushNewBranches"), getFieldEditorParent())); //$NON-NLS-1$
+				Messages.getString("GeneralPreferencePage.pushNewBranches"), getFieldEditorParent());
+		addField(editor);
+		if(MercurialEclipsePlugin.DISABLED_OPTIONS.contains("--new-branch")) {
+			editor.setEnabled(false, getFieldEditorParent());
+			editor.setLabelText(editor.getLabelText() + "\n(Option disabled due the unsupported hg version)");
+		}
 
 		addField(new LabelDecoratorRadioGroupFieldEditor(
 				LABELDECORATOR_LOGIC,
