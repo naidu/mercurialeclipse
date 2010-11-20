@@ -71,7 +71,12 @@ public class ImportPatchOperation extends HgOperation {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
 			}
 		} finally {
-			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
+			int refreshFlags = RefreshRootJob.LOCAL_AND_OUTGOING;
+			if (options != null && options.contains("--no-commit")) {
+				refreshFlags = RefreshRootJob.LOCAL;
+			}
+
+			new RefreshWorkspaceStatusJob(hgRoot, refreshFlags).schedule();
 			monitor.done();
 		}
 	}
