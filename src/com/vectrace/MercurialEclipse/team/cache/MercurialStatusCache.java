@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -799,7 +799,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 				pathMap.put(project, projectLocation);
 				changed.addAll(parseStatus(repo, pathMap, lines, !(res instanceof IProject)));
-				if(!(res instanceof IProject) && !changed.contains(res)){
+				if( !(res instanceof IProject) && !changed.contains(res)){
 					// fix for issue 10155: No status update after reverting changes on .hgignore
 					changed.add(res);
 					if(res instanceof IFolder){
@@ -1105,8 +1105,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 			// should not propagate ignores states to parents
 			// TODO issue 237: "two status feature"
-			childBitSet = Bits.clear(childBitSet, IGNORED_MASK);
 			boolean childIsDirty = Bits.contains(childBitSet, MODIFIED_MASK);
+			childBitSet = Bits.clear(childBitSet, IGNORED_MASK);
 			if(childIsDirty) {
 				childBitSet |= BIT_MODIFIED;
 			} else {
