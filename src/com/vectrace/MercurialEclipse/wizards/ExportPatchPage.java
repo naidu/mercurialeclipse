@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -31,6 +32,8 @@ import org.eclipse.swt.widgets.Table;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.LocationChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -71,7 +74,7 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 1);
 		Group group = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("ExportPatchWizard.PathLocation")); //$NON-NLS-1$
-		locationChooser = new LocationChooser(group, true, getDialogSettings());
+		locationChooser = new LocationChooser(group, true, getDialogSettings(), getFileName());
 		locationChooser.addStateListener(this);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalAlignment = SWT.FILL;
@@ -81,6 +84,11 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 		setControl(composite);
 		validatePage();
 	}
+
+	/**
+	 * @return The file name to use, or null to use most recent
+	 */
+	protected abstract String getFileName();
 
 	protected abstract void createItemChooser(Composite composite);
 
@@ -132,6 +140,14 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 			List<IResource> l = commitFiles.getCheckedResources();
 
 			return l.toArray(new IResource[l.size()]);
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.wizards.ExportPatchPage#getFileName()
+		 */
+		@Override
+		protected String getFileName() {
+			return "UncommittedChanges.patch";
 		}
 	}
 
@@ -206,7 +222,6 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 
 					return super.getText(element);
 				}
-
 			});
 			viewer.setComparator(new ViewerComparator());
 			viewer.setInput(new Object[] { cs });
@@ -215,6 +230,25 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 		@Override
 		public Object[] getSelectedItems() {
 			return new ChangeSet[] { cs };
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.wizards.ExportPatchPage#getFileName()
+		 */
+		@Override
+		protected String getFileName() {
+			HgRoot root = cs.getHgRoot();
+			List<IProject> projects = (root == null) ? null : MercurialTeamProvider.getKnownHgProjects(root);
+			String sFile = cs.getChangeset().substring(0, 10) + ".patch";
+
+			if (projects != null)
+			{
+				for (IProject proj : projects) {
+					sFile = proj.getName() + "-" + sFile;
+				}
+			}
+
+			return sFile;
 		}
 	}
 }
