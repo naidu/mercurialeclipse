@@ -47,9 +47,6 @@ public class ExportPatchWizard extends HgWizard {
 
 	private Location location;
 
-	// operation result returned from another lambda
-	private String result;
-
 	/**
 	 * True for exporting uncommitted changes. False for exporting a changeset.
 	 */
@@ -100,13 +97,20 @@ public class ExportPatchWizard extends HgWizard {
 				}
 			}
 
-			TeamOperation operation = (uncommittedMode) ? new ExportUncomittedOperation(
-					getContainer()) : new ExportChangeSetOperation(getContainer());
+			ExportUncomittedOperation operation = (uncommittedMode) ? new ExportUncomittedOperation(
+					getContainer())
+					: new ExportChangeSetOperation(getContainer());
 
-			result = null;
+			operation.selectedItems = sourcePage.getSelectedItems();
+			operation.options = (optionsPage == null) ? null : optionsPage.getOptions();
+
 			getContainer().run(true, false, operation);
-			if (result != null) {
-				((optionsPage != null) ? optionsPage : sourcePage).setErrorMessage(result);
+
+			if (operation.result != null) {
+				if (optionsPage != null) {
+					optionsPage.setErrorMessage(operation.result);
+				}
+				sourcePage.setErrorMessage(operation.result);
 
 				return false;
 			}
@@ -122,9 +126,15 @@ public class ExportPatchWizard extends HgWizard {
 
 	private class ExportUncomittedOperation extends TeamOperation {
 
+		public Object[] selectedItems;
+		public List<String> options;
+		public String result;
+
 		public ExportUncomittedOperation(IRunnableContext context) {
 			super(context);
 		}
+
+		// operations
 
 		public void run(IProgressMonitor monitor) throws InvocationTargetException,
 				InterruptedException {
@@ -144,11 +154,14 @@ public class ExportPatchWizard extends HgWizard {
 		}
 
 		protected void doExport() throws Exception {
-			List<IResource> resources = Arrays.asList((IResource[]) sourcePage.getSelectedItems());
-			List<String> options = optionsPage.getOptions();
+			List<IResource> resources = Arrays.asList((IResource[]) selectedItems);
 
 			if (location.getLocationType() == LocationType.Clipboard) {
-				ClipboardUtils.copyToClipboard(HgPatchClient.exportPatch(root, resources, options));
+				String sPatch = HgPatchClient.exportPatch(root, resources, options);
+
+				if (sPatch != null && sPatch.length() > 0) {
+					ClipboardUtils.copyToClipboard(sPatch);
+				}
 			} else {
 				Set<IPath> paths = new HashSet<IPath>();
 				for (IResource resource : resources) {
@@ -170,7 +183,7 @@ public class ExportPatchWizard extends HgWizard {
 		 */
 		@Override
 		protected void doExport() throws Exception {
-			ChangeSet cs = (ChangeSet) sourcePage.getSelectedItems()[0];
+			ChangeSet cs = (ChangeSet) selectedItems[0];
 
 			if (location.getLocationType() == LocationType.Clipboard) {
 				String sPatch = HgPatchClient.exportPatch(root, cs, null);
