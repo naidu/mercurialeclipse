@@ -52,7 +52,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
-			"yyyy-MM-dd hh:mm Z");
+			"yyyy-MM-dd HH:mm Z");
 	public static final Date UNKNOWN_DATE = new Date(0);
 
 	public static enum Direction {
