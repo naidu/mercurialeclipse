@@ -11,7 +11,7 @@
  *     StefanC                   - large contribution
  *     Jerome Negre              - fixing folders' state
  *     Bastian Doetsch	         - extraction from DecoratorStatus + additional methods
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -696,7 +696,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				if(monitor.isCanceled()){
 					return;
 				}
-				pathMap.put(project, project.getLocation());
+				IPath location = project.getLocation();
+				if(location == null) {
+					iterator.remove();
+					continue;
+				}
+				pathMap.put(project, location);
 			}
 
 			// for the Root and all its subrepos
@@ -772,6 +777,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
+		if(projectLocation == null) {
+			return;
+		}
 
 		synchronized (statusUpdateLock) {
 			// clear status for files, folders or project
@@ -1304,8 +1312,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 							while(directory != null) {
 								changed.add(directory);
 								IPath parentPath = directory.getLocation();
-								bitMap.remove(parentPath);
-								statusMap.remove(parentPath);
+								if(parentPath != null) {
+									bitMap.remove(parentPath);
+									statusMap.remove(parentPath);
+								}
 								directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
 							}
 							// recursive recalculate parents state
@@ -1316,7 +1326,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
 					String[] lines = NEWLINE.split(output);
 					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-					pathMap.put(project, project.getLocation());
+					IPath projectLocation = project.getLocation();
+					if(projectLocation != null) {
+						pathMap.put(project, projectLocation);
+					}
 					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
 				currentBatch.clear();
@@ -1369,7 +1382,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Set<IResource> members = new HashSet<IResource>();
 		if(resource instanceof IContainer){
 			IContainer container = (IContainer) resource;
-			int segmentCount = container.getLocation().segmentCount();
+			IPath location = container.getLocation();
+			if(location == null) {
+				return members;
+			}
+			int segmentCount = location.segmentCount();
 			Set<IPath> children = getChildrenFromCache(container);
 			for (IPath path : children) {
 				IFile iFile = container.getFile(path.removeFirstSegments(segmentCount));
@@ -1480,7 +1497,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	public void clearMergeStatus(IProject res) {
 		// clear merge status in Eclipse
-		mergeChangesetIds.remove(res.getLocation());
+		IPath location = res.getLocation();
+		if(location != null) {
+			mergeChangesetIds.remove(location);
+		}
 	}
 
 	public void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) {
@@ -1503,11 +1523,15 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private void setMergeStatus(IProject project, String mergeChangesetId) {
 		// set merge status in Eclipse
+		IPath location = project.getLocation();
+		if(location == null) {
+			return;
+		}
 		if(mergeChangesetId != null){
-			mergeChangesetIds.put(project.getLocation(), mergeChangesetId);
+			mergeChangesetIds.put(location, mergeChangesetId);
 		}else{
 			// ConcurrentHashMap doesn't support null values, but removing is the same a putting a null value
-			mergeChangesetIds.remove(project.getLocation());
+			mergeChangesetIds.remove(location);
 		}
 	}
 
@@ -1540,7 +1564,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
 	 */
 	public String getMergeChangesetId(IResource project) {
-		return getMergeChangesetId(project.getLocation());
+		IPath location = project.getLocation();
+		if(location == null) {
+			return null;
+		}
+		return getMergeChangesetId(location);
 	}
 
 	/**
