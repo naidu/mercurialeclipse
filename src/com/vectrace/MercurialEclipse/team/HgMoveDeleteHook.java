@@ -237,6 +237,8 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
 			try {
 				folder.delete(updateFlags, monitor);
+				// say Eclipse it should do the delete of now unmanaged project files for us
+				return false;
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return true;
