@@ -11,7 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - Code reformatting to code style and refreshes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 import java.io.File;
@@ -32,6 +32,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
@@ -227,6 +229,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 					}
 				});
 				if(continueDelete[0]){
+					disconnect(project);
 					// if user committed deleted files, mercurial part is done
 					// now we must say Eclipse please delete the project
 					tree.deletedProject(project);
@@ -237,6 +240,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
 			try {
 				folder.delete(updateFlags, monitor);
+				disconnect(project);
 				// say Eclipse it should do the delete of now unmanaged project files for us
 				return false;
 			} catch (CoreException e) {
@@ -246,6 +250,19 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		}
 		tree.deletedProject(project);
 		return true;
+	}
+
+	/**
+	 * @param project non null
+	 */
+	private void disconnect(final IProject project) {
+		if (RepositoryProvider.isShared(project)) {
+			try {
+				RepositoryProvider.unmap(project);
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 
 	public boolean moveFile(IResourceTree tree, IFile source,
