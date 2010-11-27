@@ -462,7 +462,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		try {
 			if (realDate == null) {
 				if (date != null) {
-					realDate = SIMPLE_DATE_FORMAT.parse(date);
+					// needed because static date format instances are not thread safe
+					synchronized (SIMPLE_DATE_FORMAT) {
+						realDate = SIMPLE_DATE_FORMAT.parse(date);
+					}
 				} else {
 					realDate = UNKNOWN_DATE;
 				}
