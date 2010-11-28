@@ -10,18 +10,20 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - small changes
  *     Adam Berkes (Intland)     - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - Field assistance for revision field and bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
@@ -76,6 +78,17 @@ public class RevisionChooserDialog extends Dialog {
 		panel = new RevisionChooserPanel(composite, dataLoader, opt);
 		panel.addSelectionListener(this);
 		return composite;
+	}
+
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		IDialogSettings dialogSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		String sectionName = getClass().getSimpleName();
+		IDialogSettings section = dialogSettings.getSection(sectionName);
+		if (section == null) {
+			dialogSettings.addNewSection(sectionName);
+		}
+		return section;
 	}
 
 	public void setForceChecked(boolean on){

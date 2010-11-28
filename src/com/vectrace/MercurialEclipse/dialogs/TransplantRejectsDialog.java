@@ -7,6 +7,7 @@
  *
  * Contributors:
  * 		Ilya Ivanov (Intland) - implementation
+ *     Andrei Loskutov        - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -20,6 +21,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -84,6 +86,17 @@ public class TransplantRejectsDialog extends TrayDialog {
 
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		setBlockOnOpen(false);
+	}
+
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		IDialogSettings dialogSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		String sectionName = getClass().getSimpleName();
+		IDialogSettings section = dialogSettings.getSection(sectionName);
+		if (section == null) {
+			dialogSettings.addNewSection(sectionName);
+		}
+		return section;
 	}
 
 	@Override

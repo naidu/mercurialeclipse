@@ -11,7 +11,7 @@
  *     Bastian Doetsch - Added spellchecking and some other stuff
  *     StefanC - many updates
  *     Zingo Andersen - some updates
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Adam Berkes (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
@@ -172,6 +173,17 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public List<IResource> getResourcesToAdd() {
 		return resourcesToAdd;
+	}
+
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		IDialogSettings dialogSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		String sectionName = getClass().getSimpleName();
+		IDialogSettings section = dialogSettings.getSection(sectionName);
+		if (section == null) {
+			dialogSettings.addNewSection(sectionName);
+		}
+		return section;
 	}
 
 	@Override
