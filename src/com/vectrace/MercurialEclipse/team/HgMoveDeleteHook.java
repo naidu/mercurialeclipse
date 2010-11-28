@@ -11,7 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - Code reformatting to code style and refreshes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 import java.io.File;
@@ -32,6 +32,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
@@ -185,65 +187,87 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
 	public boolean deleteProject(IResourceTree tree, final IProject project,
 			int updateFlags, IProgressMonitor monitor) {
-		if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			if(hgRoot == null){
-				return false;
-			}
-			if(!hgRoot.getIPath().equals(project.getLocation())){
-				final Set<IResource> allFiles = ResourceUtils.getMembers(project);
 
-				try {
-					HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
-					MercurialStatusCache.getInstance().refreshStatus(project, monitor);
-				} catch (HgException e1) {
-					MercurialEclipsePlugin.logError(e1);
-					MercurialEclipsePlugin.showError(e1);
-					return true;
-				}
+		if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) == 0) {
+			disconnect(project);
+			tree.deletedProject(project);
+			return true;
+		}
 
-				final boolean [] continueDelete = new boolean[]{ false };
-				Display.getDefault().syncExec(new Runnable(){
-					public void run() {
-						MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(),
-								"Project removed",
-								"All project files are now removed from Mercurial repository.\n"
-								+ "A commit is highly recommended.");
-						CommitHandler ch = new CommitHandler();
-						Options options = new Options();
-						options.defaultCommitMessage = "Removed project '" + project.getName() + "' from repository.";
-						options.filesSelectable = false;
-						options.showAmend = false;
-						options.showCloseBranch = false;
-						options.showDiff = false;
-						options.showRevert = false;
-						ch.setOptions(options);
-						try {
-							ch.run(new ArrayList<IResource>(allFiles));
-						} catch (HgException e) {
-							MercurialEclipsePlugin.logError(e);
-						}
-						continueDelete[0] = ch.getResult() == Window.OK;
-					}
-				});
-				if(continueDelete[0]){
-					// if user committed deleted files, mercurial part is done
-					// now we must say Eclipse please delete the project
-					tree.deletedProject(project);
-				}
-				// delete was NOT done by hg. Anyway, let the files and project there.
-				return true;
-			}
-			IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		if(hgRoot == null){
+			return false;
+		}
+
+		if(!hgRoot.getIPath().equals(project.getLocation())){
+			final Set<IResource> allFiles = ResourceUtils.getMembers(project);
+
 			try {
-				folder.delete(updateFlags, monitor);
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
+				HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
+				MercurialStatusCache.getInstance().refreshStatus(project, monitor);
+			} catch (HgException e1) {
+				MercurialEclipsePlugin.logError(e1);
+				MercurialEclipsePlugin.showError(e1);
 				return true;
+			}
+
+			final boolean [] continueDelete = new boolean[]{ false };
+			Display.getDefault().syncExec(new Runnable(){
+				public void run() {
+					MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(),
+							"Project removed",
+							"All project files are now removed from Mercurial repository.\n"
+							+ "A commit is highly recommended.");
+					CommitHandler ch = new CommitHandler();
+					Options options = new Options();
+					options.defaultCommitMessage = "Removed project '" + project.getName() + "' from repository.";
+					options.filesSelectable = false;
+					options.showAmend = false;
+					options.showCloseBranch = false;
+					options.showDiff = false;
+					options.showRevert = false;
+					ch.setOptions(options);
+					try {
+						ch.run(new ArrayList<IResource>(allFiles));
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+					continueDelete[0] = ch.getResult() == Window.OK;
+				}
+			});
+			if(continueDelete[0]){
+				disconnect(project);
+				// if user committed deleted files, mercurial part is done
+				// now we must say Eclipse please delete the project
+				tree.deletedProject(project);
+			}
+			// delete was NOT done by hg. Anyway, let the files and project there.
+			return true;
+		}
+
+		IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
+		try {
+			folder.delete(updateFlags, monitor);
+			disconnect(project);
+			// say Eclipse it should do the delete of now unmanaged project files for us
+			return false;
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return true;
+		}
+	}
+
+	/**
+	 * @param project non null
+	 */
+	private void disconnect(final IProject project) {
+		if (RepositoryProvider.isShared(project)) {
+			try {
+				RepositoryProvider.unmap(project);
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
 		}
-		tree.deletedProject(project);
-		return true;
 	}
 
 	public boolean moveFile(IResourceTree tree, IFile source,

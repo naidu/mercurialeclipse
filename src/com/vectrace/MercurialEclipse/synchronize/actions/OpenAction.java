@@ -103,7 +103,8 @@ public class OpenAction extends Action {
 		}
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
-			CompareAction compareAction = new CompareAction(file, true);
+			CompareAction compareAction = new CompareAction(file);
+			compareAction.setUncommittedCompare(true);
 			compareAction.setSynchronizePageConfiguration(configuration);
 			compareAction.run(this);
 			return;

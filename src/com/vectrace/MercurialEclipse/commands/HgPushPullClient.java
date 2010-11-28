@@ -9,9 +9,11 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Ilya Ivanov (Intland) 	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -35,6 +37,13 @@ public class HgPushPullClient extends AbstractClient {
 
 		if (revision != null && revision.length() > 0) {
 			command.addOptions("-r", revision.trim()); //$NON-NLS-1$
+		}
+
+		boolean newBranch = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH);
+
+		if (newBranch) {
+			command.addOptions("--new-branch");
 		}
 
 		addRepoToHgCommand(repo, command);

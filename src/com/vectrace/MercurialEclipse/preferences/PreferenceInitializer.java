@@ -135,6 +135,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_USE_EXTERNAL_MERGE, false);
 		store.setDefault(PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES, false);
 		store.setDefault(PREF_CLONE_UNCOMPRESSED, false);
+		if(MercurialEclipsePlugin.DISABLED_OPTIONS.contains("--new-branch")) {
+			store.setDefault(PREF_PUSH_NEW_BRANCH, false);
+			store.setValue(PREF_PUSH_NEW_BRANCH, false);
+		} else {
+			store.setDefault(PREF_PUSH_NEW_BRANCH, true);
+		}
 	}
 
 	private File checkForPossibleHgExecutables() {

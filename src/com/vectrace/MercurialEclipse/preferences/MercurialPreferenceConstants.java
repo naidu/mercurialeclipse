@@ -107,4 +107,8 @@ public final class MercurialPreferenceConstants {
 
 	// clone
 	public static final String PREF_CLONE_UNCOMPRESSED = "hg.cloneUncompressed"; //$NON-NLS-1$
+
+	// push
+	public static final String PREF_PUSH_NEW_BRANCH = "hg.pushNewBranch"; //$NON-NLS-1$
+
 }

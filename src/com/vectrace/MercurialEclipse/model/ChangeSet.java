@@ -38,7 +38,9 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -52,7 +54,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
-			"yyyy-MM-dd hh:mm Z");
+			"yyyy-MM-dd HH:mm Z");
 	public static final Date UNKNOWN_DATE = new Date(0);
 
 	public static enum Direction {
@@ -460,7 +462,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		try {
 			if (realDate == null) {
 				if (date != null) {
-					realDate = SIMPLE_DATE_FORMAT.parse(date);
+					// needed because static date format instances are not thread safe
+					synchronized (SIMPLE_DATE_FORMAT) {
+						realDate = SIMPLE_DATE_FORMAT.parse(date);
+					}
 				} else {
 					realDate = UNKNOWN_DATE;
 				}
@@ -678,6 +683,21 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return super.getName();
 	}
 
+	/**
+	 * @return Whether the repository is currently on this revision
+	 */
+	public boolean isCurrent() {
+		if (direction == Direction.OUTGOING && hgRoot != null) {
+			try {
+				return equals(LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot));
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+
+		return false;
+	}
+
 	@Override
 	public void remove(IResource resource) {
 		// not supported
@@ -691,7 +711,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private void fireChanged() {
 		if (listenerList != null) {
 			for (Object listener : listenerList.getListeners()) {
-				((Listener)listener).changeSetChanged(this);
+				((Listener) listener).changeSetChanged(this);
 			}
 		}
 	}

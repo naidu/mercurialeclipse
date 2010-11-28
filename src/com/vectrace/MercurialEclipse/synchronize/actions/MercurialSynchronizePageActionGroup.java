@@ -157,10 +157,14 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 					HG_COMMIT_GROUP,
 					new ResolveSynchronizeAction("Mark as Resolved",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
-		} else if (!isSelectionOutgoing()) {
+		} else if (isSelectionOutgoing()) {
 			menu.insertAfter(
 					HG_COMMIT_GROUP,
-					new ResolveSynchronizeAction("Mark as Resolved",
+					new ExportPatchSynchronizeAction("Export as patch...",
+							getConfiguration(), getVisibleRootsSelectionProvider()));
+			menu.insertAfter(
+					HG_COMMIT_GROUP,
+					new SwitchToSynchronizeAction("Switch to",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
 		}
 
@@ -172,7 +176,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private boolean isSelectionUncommited() {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null) {
+		if (selectedObjects.length == 0) {
 			return false;
 		}
 
@@ -195,7 +199,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private boolean isSelectionOutgoing() {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null) {
+		if (selectedObjects.length == 0) {
 			return false;
 		}
 
@@ -207,12 +211,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				}
 			} else if (object instanceof ChangeSet) {
 				ChangeSet cs = (ChangeSet) object;
-				if (cs.getDirection() != Direction.OUTGOING) {
-					return false;
-				}
-			} else if (object instanceof FileFromChangeSet) {
-				FileFromChangeSet file = (FileFromChangeSet) object;
-				if (file.getChangeset().getDirection() != Direction.OUTGOING) {
+				if (cs.getDirection() != Direction.OUTGOING || cs instanceof WorkingChangeSet) {
 					return false;
 				}
 			} else {
@@ -270,8 +269,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private void addMergeViewStyleAction(IMenuManager menu) {
 		Object[] selectedObjects = getSelectedObjects();
 
-		if (selectedObjects == null || selectedObjects.length != 1
-				|| !(selectedObjects[0] instanceof ChangeSet)) {
+		if (selectedObjects.length != 1 || !(selectedObjects[0] instanceof ChangeSet)) {
 			return;
 		}
 
@@ -283,14 +281,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 	}
 
+	/**
+	 * @return Not null.
+	 */
 	private Object[] getSelectedObjects() {
 		ISelection selection = getContext().getSelection();
-		if (!(selection instanceof StructuredSelection)) {
-			return null;
+		Object[] arr = null;
+
+		if (selection instanceof StructuredSelection) {
+			arr = ((StructuredSelection) selection).toArray();
 		}
 
-		StructuredSelection stSelection = (StructuredSelection) selection;
-		return stSelection.toArray();
+		return PathAwareAction.normalize(arr);
 	}
 
 	/**

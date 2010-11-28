@@ -34,6 +34,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
@@ -297,5 +298,9 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	public Set<IProject> getRestoredProjects() {
+		return restoredProjects;
 	}
 }

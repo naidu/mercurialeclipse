@@ -34,7 +34,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -45,6 +44,8 @@ public class CompareAction extends SingleFileAction {
 	private boolean mergeEnabled;
 	private ISynchronizePageConfiguration syncConfig;
 	private boolean isUncommittedCompare = false;
+
+	// constructors
 
 	/**
 	 * Empty constructor must be here, otherwise Eclipse wouldn't be able to create the object via reflection
@@ -58,10 +59,7 @@ public class CompareAction extends SingleFileAction {
 		this.selection = file;
 	}
 
-	public CompareAction(IFile file, boolean uncommittedCompare) {
-		this(file);
-		this.isUncommittedCompare = uncommittedCompare;
-	}
+	// operations
 
 	@Override
 	protected void run(final IFile file) throws TeamException {
@@ -69,8 +67,29 @@ public class CompareAction extends SingleFileAction {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				if (mergeEnabled || (isConflict(file) && isUncommittedCompare)) {
-					openMergeEditor(file);
+				boolean workspaceUpdateConflict = isUncommittedCompare
+						&& MercurialStatusCache.getInstance().isWorkspaceUpdateConfict(file);
+
+				if (workspaceUpdateConflict) {
+					// This job shouldn't run in the UI thread despite needing it a lot because it
+					// invokes hg multiple times.
+					final Boolean[] resultRef = { Boolean.FALSE };
+					getShell().getDisplay().syncExec(new Runnable() {
+						public void run() {
+							resultRef[0] = Boolean
+									.valueOf(MessageDialog
+											.openQuestion(
+													getShell(),
+													"Compare",
+													"This file is in conflict. Would you like to use resolve to *RESTART* the merge with 3-way differences? Warning: if resolve fails this operations can potentially lose changes. If in doubt select 'No'."));
+						}
+					});
+
+					workspaceUpdateConflict = resultRef[0].booleanValue();
+				}
+
+				if (mergeEnabled || workspaceUpdateConflict) {
+					openMergeEditor(file, workspaceUpdateConflict);
 					return Status.OK_STATUS;
 				}
 				boolean clean = MercurialStatusCache.getInstance().isClean(file);
@@ -117,14 +136,13 @@ public class CompareAction extends SingleFileAction {
 		CompareUtils.openEditor(leftNode, rightNode, false, true, syncConfig);
 	}
 
-	private void openMergeEditor(IFile file){
-
+	private void openMergeEditor(IFile file, boolean workspaceUpdateConflict){
 		try {
 			RevisionNode ancestorNode;
 			RevisionNode mergeNode;
-			if (isConflict(file) && isUncommittedCompare) {
-				String[] changeSets = HgResolveClient.getChangeSetsForCompare(file);
 
+			if (workspaceUpdateConflict) {
+				String[] changeSets = HgResolveClient.restartMergeAndGetChangeSetsForCompare(file);
 				String otherId = changeSets[1];
 				String ancestorId = changeSets[2];
 
@@ -146,16 +164,12 @@ public class CompareAction extends SingleFileAction {
 			} else {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
 				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-
 				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-
-				int ancestor = HgParentClient
-				.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				int ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
 
 				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, mergeNodeId));
 				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestor));
 			}
-
 
 			final HgCompareEditorInput compareInput = new HgCompareEditorInput(
 					new CompareConfiguration(), file, ancestorNode, mergeNode, true);
@@ -175,14 +189,11 @@ public class CompareAction extends SingleFileAction {
 		mergeEnabled = enable;
 	}
 
+	public void setUncommittedCompare(boolean enable) {
+		isUncommittedCompare = enable;
+	}
+
 	public void setSynchronizePageConfiguration(ISynchronizePageConfiguration syncConfig){
 		this.syncConfig = syncConfig;
 	}
-
-	private boolean isConflict(IFile file) {
-		Integer status = MercurialStatusCache.getInstance().getStatus(file);
-		int sMask = status != null? status.intValue() : 0;
-		return Bits.contains(sMask, MercurialStatusCache.BIT_CONFLICT);
-	}
-
 }

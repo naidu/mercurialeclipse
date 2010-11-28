@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     StefanC - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -16,6 +16,7 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
@@ -28,6 +29,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -58,6 +60,17 @@ public class RevertDialog extends TitleAreaDialog {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.resources = resources;
+	}
+
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		IDialogSettings dialogSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		String sectionName = getClass().getSimpleName();
+		IDialogSettings section = dialogSettings.getSection(sectionName);
+		if (section == null) {
+			dialogSettings.addNewSection(sectionName);
+		}
+		return section;
 	}
 
 	/**

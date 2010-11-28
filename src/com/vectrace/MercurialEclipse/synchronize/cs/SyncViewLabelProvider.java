@@ -87,12 +87,17 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			StringBuilder sb = new StringBuilder();
 			if(!(cset instanceof WorkingChangeSet)){
 				sb.append(cset.getChangesetIndex());
-				sb.append(" [").append(cset.getAuthor()).append("]");
-				sb.append(" (").append(cset.getAgeDate()).append(")");
-				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
-					sb.append(" ").append(cset.getBranch()).append(":");
+
+				if (cset.isCurrent()) {
+					sb.append('*');
 				}
-				sb.append(" ").append(getShortComment(cset));
+
+				sb.append(" [").append(cset.getAuthor()).append(']');
+				sb.append(" (").append(cset.getAgeDate()).append(')');
+				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
+					sb.append(' ').append(cset.getBranch()).append(':');
+				}
+				sb.append(' ').append(getShortComment(cset));
 			} else {
 				sb.append(cset.toString());
 			}
@@ -104,7 +109,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			if(group.getChangesets().isEmpty()){
 				return name + " (empty)";
 			}
-			return name + " (" + group.getChangesets().size() + ")";
+			return name + " (" + group.getChangesets().size() + ')';
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;

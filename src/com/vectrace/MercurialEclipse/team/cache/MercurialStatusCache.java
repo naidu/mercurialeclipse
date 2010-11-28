@@ -11,7 +11,7 @@
  *     StefanC                   - large contribution
  *     Jerome Negre              - fixing folders' state
  *     Bastian Doetsch	         - extraction from DecoratorStatus + additional methods
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -59,6 +59,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
@@ -695,7 +696,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				if(monitor.isCanceled()){
 					return;
 				}
-				pathMap.put(project, project.getLocation());
+				IPath location = project.getLocation();
+				if(location == null) {
+					iterator.remove();
+					continue;
+				}
+				pathMap.put(project, location);
 			}
 
 			// for the Root and all its subrepos
@@ -771,6 +777,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
+		if(projectLocation == null) {
+			return;
+		}
 
 		synchronized (statusUpdateLock) {
 			// clear status for files, folders or project
@@ -798,7 +807,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 				pathMap.put(project, projectLocation);
 				changed.addAll(parseStatus(repo, pathMap, lines, !(res instanceof IProject)));
-				if(!(res instanceof IProject) && !changed.contains(res)){
+				if( !(res instanceof IProject) && !changed.contains(res)){
 					// fix for issue 10155: No status update after reverting changes on .hgignore
 					changed.add(res);
 					if(res instanceof IFolder){
@@ -1104,8 +1113,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 			// should not propagate ignores states to parents
 			// TODO issue 237: "two status feature"
-			childBitSet = Bits.clear(childBitSet, IGNORED_MASK);
 			boolean childIsDirty = Bits.contains(childBitSet, MODIFIED_MASK);
+			childBitSet = Bits.clear(childBitSet, IGNORED_MASK);
 			if(childIsDirty) {
 				childBitSet |= BIT_MODIFIED;
 			} else {
@@ -1233,16 +1242,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				}
 			}
 		}
-		updateJob.schedule();
-
-		// Can't execute update asynchronously, because other classes (at least MercurialSynchronizeSubscriber) suppose
-		// that MercurialStatusCache provides fresh status information
-		// TODO some different optimization needed instead of using Job
-		try {
-			updateJob.join();
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		// schedule async and with delay to avoid multiple refreshes on the same subject
+		// do not join in the resource notification loop
+		updateJob.schedule(300);
 	}
 
 	/**
@@ -1303,8 +1305,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 							while(directory != null) {
 								changed.add(directory);
 								IPath parentPath = directory.getLocation();
-								bitMap.remove(parentPath);
-								statusMap.remove(parentPath);
+								if(parentPath != null) {
+									bitMap.remove(parentPath);
+									statusMap.remove(parentPath);
+								}
 								directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
 							}
 							// recursive recalculate parents state
@@ -1315,7 +1319,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
 					String[] lines = NEWLINE.split(output);
 					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-					pathMap.put(project, project.getLocation());
+					IPath projectLocation = project.getLocation();
+					if(projectLocation != null) {
+						pathMap.put(project, projectLocation);
+					}
 					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
 				currentBatch.clear();
@@ -1368,7 +1375,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Set<IResource> members = new HashSet<IResource>();
 		if(resource instanceof IContainer){
 			IContainer container = (IContainer) resource;
-			int segmentCount = container.getLocation().segmentCount();
+			IPath location = container.getLocation();
+			if(location == null) {
+				return members;
+			}
+			int segmentCount = location.segmentCount();
 			Set<IPath> children = getChildrenFromCache(container);
 			for (IPath path : children) {
 				IFile iFile = container.getFile(path.removeFirstSegments(segmentCount));
@@ -1479,7 +1490,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	public void clearMergeStatus(IProject res) {
 		// clear merge status in Eclipse
-		mergeChangesetIds.remove(res.getLocation());
+		IPath location = res.getLocation();
+		if(location != null) {
+			mergeChangesetIds.remove(location);
+		}
 	}
 
 	public void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) {
@@ -1502,14 +1516,22 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private void setMergeStatus(IProject project, String mergeChangesetId) {
 		// set merge status in Eclipse
+		IPath location = project.getLocation();
+		if(location == null) {
+			return;
+		}
 		if(mergeChangesetId != null){
-			mergeChangesetIds.put(project.getLocation(), mergeChangesetId);
+			mergeChangesetIds.put(location, mergeChangesetId);
 		}else{
 			// ConcurrentHashMap doesn't support null values, but removing is the same a putting a null value
-			mergeChangesetIds.remove(project.getLocation());
+			mergeChangesetIds.remove(location);
 		}
 	}
 
+	/**
+	 * @deprecated Use {@link #isMergeInProgress(HgRoot)}
+	 */
+	@Deprecated
 	public boolean isMergeInProgress(IPath path){
 		return getMergeChangesetId(path) != null;
 	}
@@ -1535,7 +1557,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
 	 */
 	public String getMergeChangesetId(IResource project) {
-		return getMergeChangesetId(project.getLocation());
+		IPath location = project.getLocation();
+		if(location == null) {
+			return null;
+		}
+		return getMergeChangesetId(location);
 	}
 
 	/**
@@ -1572,5 +1598,31 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+	/**
+	 * Determine if the given file is currently in conflict because of a workspace update, ie
+	 * not a normal merge or rebase.
+	 *
+	 * @param file
+	 *            The file to check
+	 * @return True if the file is in conflict and neither a rebase or merge is in progress.
+	 */
+	public boolean isWorkspaceUpdateConfict(IFile file) {
+		if (isConflict(file)) {
+			// Ideally we would save more state so we know what mode we are actually in. For now
+			// just check we're not merging or rebasing. Transplant conflicts don't set files in
+			// conflict mode. Are there other modes?
+			try {
+				HgRoot root = AbstractClient.getHgRoot(file);
+				if (root != null && !isMergeInProgress(root) && !HgRebaseClient.isRebasing(root)) {
+					return true;
+				}
+			} catch (HgException e) {
+				return false;
+			}
+		}
+
+		return false;
 	}
 }

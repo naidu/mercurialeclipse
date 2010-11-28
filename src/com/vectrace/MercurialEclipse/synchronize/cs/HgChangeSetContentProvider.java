@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 	   IBM Corporation - initial API and implementation
- *     Andrei Loskutov (Intland) - adopting to hg
+ *     Andrei Loskutov - adopting to hg
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -26,6 +26,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ITreeContentProvider;
@@ -35,8 +36,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
+import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -51,9 +52,9 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -264,7 +265,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		List<Object> out = new ArrayList<Object>(files.length * 2);
 
 		for (FileFromChangeSet file : files) {
-			out.add(file.getPath().removeLastSegments(1));
+			IPath path = file.getPath();
+			if(path == null) {
+				out.add(Path.EMPTY);
+			} else {
+				out.add(path.removeLastSegments(1));
+			}
 			out.add(file);
 		}
 
@@ -313,7 +319,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		List<Object> out = new ArrayList<Object>();
 
 		for (FileFromChangeSet file : files) {
-			IPath path = file.getPath().removeLastSegments(1);
+			IPath path;
+			if(file.getPath() == null) {
+				path = Path.EMPTY;
+			} else {
+				path = file.getPath().removeLastSegments(1);
+			}
 			List<FileFromChangeSet> l = map.get(path);
 
 			if (l == null) {

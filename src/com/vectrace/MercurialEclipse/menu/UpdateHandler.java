@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
+import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -68,6 +69,10 @@ public class UpdateHandler extends RunnableHandler {
 	 */
 	public void setRevision(String revision) {
 		this.revision = revision;
+	}
+
+	public void setRevision(HgRevision rev) {
+		this.revision = rev.getChangeset();
 	}
 
 	/**

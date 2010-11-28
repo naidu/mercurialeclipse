@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -44,14 +44,18 @@ public class FileFromChangeSet implements IAdaptable{
 		this.fileStatus = fileStatus;
 	}
 
+	/**
+	 * @param changeset non null
+	 * @param file may be null
+	 * @param diffKind
+	 */
 	public FileFromChangeSet(ChangeSet changeset, IFile file, int diffKind) {
 		this.changeset = changeset;
 		this.file = file;
 		this.kind = diffKind;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Object getAdapter(Class adapter) {
+	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
 		// Resource adapter is enabled for "working" changeset only to avoid "dirty"
 		// decorations shown in the tree on changeset files from already commited changesets
 		if(changeset instanceof WorkingChangeSet && adapter == IResource.class){
@@ -74,7 +78,7 @@ public class FileFromChangeSet implements IAdaptable{
 	}
 
 	/**
-	 * @return Path relative to the hg root. Not null.
+	 * @return Path relative to the hg root. May return null if file is not under Eclipse workspace.
 	 */
 	public IPath getPath() {
 		if (fileStatus != null) {
@@ -92,8 +96,6 @@ public class FileFromChangeSet implements IAdaptable{
 				return file.getLocation().makeRelativeTo(new Path(root.getAbsolutePath()));
 			}
 		}
-
-		assert false;
 		return null;
 	}
 

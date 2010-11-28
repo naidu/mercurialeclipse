@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
@@ -64,9 +65,10 @@ public class HgPatchClient extends AbstractClient {
 	 * @param patchFile non null target file for the diff
 	 * @param options non null list of options, may be empty
 	 * @throws HgException
+	 * @return True on success
 	 */
 	public static boolean exportPatch(HgRoot hgRoot, Set<IPath> resources,
-			File patchFile, ArrayList<String> options) throws HgException {
+			File patchFile, List<String> options) throws HgException {
 		AbstractShellCommand command = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
 		if(resources.size() > 0) {
 			command.addFiles(resources);
@@ -82,12 +84,62 @@ public class HgPatchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String exportPatch(File workDir, List<IResource> resources,
-			ArrayList<String> options) throws HgException {
+			List<String> options) throws HgException {
 		AbstractShellCommand command = new HgCommand(
 				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
 		command.addFiles(resources);
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();
+	}
+
+	/**
+	 * Export a changeset to a string
+	 *
+	 * @param root
+	 *            The repository root
+	 * @param cs
+	 *            The changeset
+	 * @param options
+	 *            Options. May be null
+	 * @return The string as a patch
+	 * @throws HgException
+	 */
+	public static String exportPatch(HgRoot root, ChangeSet cs, List<String> options)
+			throws HgException {
+		return makeExportPatchCommand(root, cs, options).executeToString();
+	}
+
+	/**
+	 * Export a changeset to a file
+	 *
+	 * @param root
+	 *            The repository root
+	 * @param cs
+	 *            The changeset
+	 * @param patchFile
+	 *            The file to output to
+	 * @param options
+	 *            Options. May be null
+	 * @return True on success
+	 * @throws HgException
+	 */
+	public static boolean exportPatch(HgRoot root, ChangeSet cs, File patchFile,
+			List<String> options) throws HgException {
+		return makeExportPatchCommand(root, cs, options).executeToFile(patchFile, false);
+	}
+
+	private static AbstractShellCommand makeExportPatchCommand(HgRoot root, ChangeSet cs,
+			List<String> options) {
+		AbstractShellCommand command = new HgCommand("export", root, true);
+
+		if (options != null) {
+			command.addOptions(options.toArray(new String[options.size()]));
+		}
+
+		command.addOptions("--git");
+		command.addOptions("-r", cs.getChangeset());
+
+		return command;
 	}
 
 	public static String getDiff(File workDir) throws HgException {

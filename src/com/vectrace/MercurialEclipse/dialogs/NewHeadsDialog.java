@@ -7,6 +7,7 @@
  *
  * Contributors:
  * 		Ilya Ivanov (Intland) -	implementation
+ * 		Andrei Loskutov       -	bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -15,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IconAndMessageDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -46,13 +49,13 @@ import com.vectrace.MercurialEclipse.wizards.RebaseWizard;
 
 public class NewHeadsDialog extends IconAndMessageDialog  {
 
-	private final int MERGE_ID = IDialogConstants.CLIENT_ID + 1;
-	private final int REBASE_ID = IDialogConstants.CLIENT_ID + 2;
-	private final int SWITCH_ID = IDialogConstants.CLIENT_ID + 3;
+	private final static int MERGE_ID = IDialogConstants.CLIENT_ID + 1;
+	private final static int REBASE_ID = IDialogConstants.CLIENT_ID + 2;
+	private final static int SWITCH_ID = IDialogConstants.CLIENT_ID + 3;
 
 	private final HgRoot hgRoot;
-	private boolean moreThanTwoHeads = false;
-	private boolean cleanUpdateRequested = false;
+	private boolean moreThanTwoHeads;
+	private boolean cleanUpdateRequested;
 
 	public NewHeadsDialog(Shell parentShell, HgRoot hgRoot) throws HgException {
 		super(parentShell);
@@ -151,24 +154,28 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 						HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
 
 						monitor.done();
-					} catch (HgException e) {
+					} catch (final HgException e) {
 						rebaseConflict = HgRebaseClient.isRebaseConflict(e);
 						if (!rebaseConflict) {
-							MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
 							MercurialEclipsePlugin.logError(e);
+							Display.getDefault().asyncExec(new Runnable() {
+								public void run() {
+									MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
+								}
+							});
 						}
 					} finally {
 						RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
-
-						try {
-							job.schedule();
-							job.join();
-							if (rebaseConflict) {
-								showMergeView();
-							}
-						} catch (InterruptedException e) {
-							MercurialEclipsePlugin.logError(e);
+						if (rebaseConflict) {
+							// do not join to avoid any potential deadlocks. listener is enough
+							job.addJobChangeListener(new JobChangeAdapter() {
+								@Override
+								public void done(IJobChangeEvent event) {
+									showMergeView();
+								}
+							});
 						}
+						job.schedule();
 					}
 				}
 			});
@@ -206,9 +213,8 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 	private void showMergeView() {
 		Runnable runnable = new Runnable() {
 			public void run() {
-				MergeView view;
 				try {
-					view = (MergeView) MercurialEclipsePlugin.getActivePage()
+					MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage()
 							.showView(MergeView.ID);
 					view.refresh(hgRoot);
 				} catch (PartInitException e1) {

@@ -1,8 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2007-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Jerome Negre - implementation
+ *     Andrei Loskutov - bug fixes
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -14,6 +26,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -53,6 +67,17 @@ public class IgnoreDialog extends Dialog {
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
 		newShell.setText(Messages.getString("IgnoreDialog.shell.text")); //$NON-NLS-1$
+	}
+
+	@Override
+	protected IDialogSettings getDialogBoundsSettings() {
+		IDialogSettings dialogSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		String sectionName = getClass().getSimpleName();
+		IDialogSettings section = dialogSettings.getSection(sectionName);
+		if (section == null) {
+			dialogSettings.addNewSection(sectionName);
+		}
+		return section;
 	}
 
 	@Override

@@ -200,7 +200,7 @@ public class MergeHandler extends RootHandler {
 	}
 
 	/**
-	 * Returns list of Heads in the same branch as current head. Current head itself is not included.
+	 * Returns list of all Heads in the same branch as current head
 	 * @param hgRoot
 	 * @return
 	 * @throws HgException

@@ -9,6 +9,7 @@
  *     Bastian Doetsch	- implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *     Ilya Ivanov (Intland) - modifications
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -19,7 +20,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.NewHeadsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -68,13 +68,14 @@ public class UpdateJob extends Job {
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
 
-			if (HgLogClient.getHeads(hgRoot).length > 1 && revision == null && handleCrossBranches) {
+			// if revision != null then it's an update operation to particular change set,
+			// don't need to handle cross branches in this case
+			if (MergeHandler.getHeadsInCurrentBranch(hgRoot).size() > 1
+					&& revision == null && handleCrossBranches) {
 				handleMultipleHeads(hgRoot, cleanEnabled);
 			}
 		} catch (HgException e) {
-			if (e.getMessage().contains("abort: crosses branches")
-					&& e.getStatus().getCode() == -1 && handleCrossBranches) {
-
+			if (e.getMessage().contains("abort: crosses branches") && e.getStatus().getCode() == -1 && handleCrossBranches) {
 				// don't log this error because it's a common situation and can be handled
 				handleMultipleHeads(hgRoot, cleanEnabled);
 				return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");
@@ -84,8 +85,7 @@ public class UpdateJob extends Job {
 		} finally {
 			monitor.done();
 		}
-		return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update to revision " + revision
-				+ " succeeded.");
+		return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update to revision " + revision + " succeeded.");
 	}
 
 	public static void handleMultipleHeads(final HgRoot root, final boolean clean) {

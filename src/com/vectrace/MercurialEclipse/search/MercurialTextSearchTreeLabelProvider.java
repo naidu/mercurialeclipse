@@ -18,10 +18,10 @@ package com.vectrace.MercurialEclipse.search;
 import java.util.Comparator;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StyledString;
-import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.StyledString.Styler;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
@@ -100,6 +100,9 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 		if (element instanceof MercurialRevisionStorage) {
 			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
 			ChangeSet cs = mrs.getChangeSet();
+			if(cs == null) {
+				return new StyledString("");
+			}
 			return new StyledString(cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ("
 					+ cs.getAgeDate() + ")");
 		}

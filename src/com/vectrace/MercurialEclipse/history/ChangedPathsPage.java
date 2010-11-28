@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - reference
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Bjoern Stachmann - diff viewer
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -211,17 +211,9 @@ public class ChangedPathsPage {
 	}
 
 	private void disposeExistingViewers() {
-		if (innerSashForm != null) {
+		if (innerSashForm != null && !innerSashForm.isDisposed()) {
+			// disposes ALL child widgets too
 			innerSashForm.dispose();
-		}
-		if (commentTextViewer != null) {
-			commentTextViewer.getControl().dispose();
-		}
-		if (changePathsViewer != null) {
-			changePathsViewer.getControl().dispose();
-		}
-		if (diffTextViewer != null && diffTextViewer.getControl() != null) {
-			diffTextViewer.getControl().dispose();
 		}
 	}
 

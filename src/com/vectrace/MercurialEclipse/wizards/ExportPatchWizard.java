@@ -14,7 +14,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +28,7 @@ import org.eclipse.team.ui.TeamOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
@@ -36,52 +37,81 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 public class ExportPatchWizard extends HgWizard {
 
 	private final ExportPatchPage sourcePage;
-	private List<IResource> resources;
-	private Location location;
-	private final HgRoot root;
-	// operation result returned from another thread
-	private String result;
-	private ArrayList<String> options;
+
+	/**
+	 * May be null
+	 */
 	private final ExportOptionsPage optionsPage;
 
+	private final HgRoot root;
+
+	private Location location;
+
+	/**
+	 * True for exporting uncommitted changes. False for exporting a changeset.
+	 */
+	private boolean uncommittedMode;
+
+	// constructors
+
 	public ExportPatchWizard(List<IResource> resources, HgRoot root) {
+		this(ExportPatchPage.create(resources), new ExportOptionsPage(), root);
+		uncommittedMode = true;
+	}
+
+	public ExportPatchWizard(ChangeSet cs) {
+		this(ExportPatchPage.create(cs), null, cs.getHgRoot());
+		uncommittedMode = false;
+	}
+
+	private ExportPatchWizard(ExportPatchPage sourcePage, ExportOptionsPage optionsPage, HgRoot root) {
 		super(Messages.getString("ExportPatchWizard.WindowTitle")); //$NON-NLS-1$
+
 		setNeedsProgressMonitor(true);
-		sourcePage = new ExportPatchPage(resources);
+		this.sourcePage = sourcePage;
 		addPage(sourcePage);
 		initPage(Messages.getString("ExportPatchWizard.pageDescription"), //$NON-NLS-1$
 				sourcePage);
-		optionsPage = new ExportOptionsPage();
-		addPage(optionsPage);
-		initPage(Messages.getString("ExportPatchWizard.optionsPageDescription"), //$NON-NLS-1$
-				optionsPage);
+
+		this.optionsPage = optionsPage;
+		if (optionsPage != null) {
+			addPage(optionsPage);
+			initPage(Messages.getString("ExportPatchWizard.optionsPageDescription"), //$NON-NLS-1$
+					optionsPage);
+		}
 		this.root = root;
 	}
+
+	// operations
 
 	@Override
 	public boolean performFinish() {
 		sourcePage.finish(null);
 		try {
-			resources = sourcePage.getCheckedResources();
-			options = optionsPage.getOptions();
 			location = sourcePage.getLocation();
-			if (location.getLocationType() != LocationType.Clipboard
-					&& location.getFile().exists()) {
-				if (!MessageDialog
-						.openConfirm(
-								getShell(),
-								Messages
-										.getString("ExportPatchWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
-								Messages
-										.getString("ExportPatchWizard.OverwriteConfirmDescription"))) { //$NON-NLS-1$
+			if (location.getLocationType() != LocationType.Clipboard && location.getFile().exists()) {
+				if (!MessageDialog.openConfirm(getShell(), Messages
+						.getString("ExportPatchWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
+						Messages.getString("ExportPatchWizard.OverwriteConfirmDescription"))) { //$NON-NLS-1$
 					return false;
 				}
 			}
-			ExportOperation operation = new ExportOperation(getContainer());
-			result = null;
+
+			ExportUncomittedOperation operation = (uncommittedMode) ? new ExportUncomittedOperation(
+					getContainer())
+					: new ExportChangeSetOperation(getContainer());
+
+			operation.selectedItems = sourcePage.getSelectedItems();
+			operation.options = (optionsPage == null) ? null : optionsPage.getOptions();
+
 			getContainer().run(true, false, operation);
-			if (result != null) {
-				optionsPage.setErrorMessage(result);
+
+			if (operation.result != null) {
+				if (optionsPage != null) {
+					optionsPage.setErrorMessage(operation.result);
+				}
+				sourcePage.setErrorMessage(operation.result);
+
 				return false;
 			}
 		} catch (Exception e) {
@@ -92,42 +122,78 @@ public class ExportPatchWizard extends HgWizard {
 		return true;
 	}
 
-	class ExportOperation extends TeamOperation {
+	// inner types
 
-		public ExportOperation(IRunnableContext context) {
+	private class ExportUncomittedOperation extends TeamOperation {
+
+		public Object[] selectedItems;
+		public List<String> options;
+		public String result;
+
+		public ExportUncomittedOperation(IRunnableContext context) {
 			super(context);
 		}
 
-		public void run(IProgressMonitor monitor)
-				throws InvocationTargetException, InterruptedException {
+		// operations
+
+		public void run(IProgressMonitor monitor) throws InvocationTargetException,
+				InterruptedException {
 			monitor.beginTask(Messages.getString("ExportPatchWizard.pageTitle"), 1); //$NON-NLS-1$
 			try {
 				doExport();
+				if (location.getLocationType() == LocationType.Workspace) {
+					location.getWorkspaceFile().refreshLocal(0, null);
+				}
 			} catch (Exception e) {
 				result = e.getLocalizedMessage();
-				MercurialEclipsePlugin.logError(Messages
-						.getString("ExportPatchWizard.pageTitle") //$NON-NLS-1$
+				MercurialEclipsePlugin.logError(Messages.getString("ExportPatchWizard.pageTitle") //$NON-NLS-1$
 						+ " failed:", e); //$NON-NLS-1$
 			} finally {
 				monitor.done();
 			}
 		}
 
+		protected void doExport() throws Exception {
+			List<IResource> resources = Arrays.asList((IResource[]) selectedItems);
+
+			if (location.getLocationType() == LocationType.Clipboard) {
+				String sPatch = HgPatchClient.exportPatch(root, resources, options);
+
+				if (sPatch != null && sPatch.length() > 0) {
+					ClipboardUtils.copyToClipboard(sPatch);
+				}
+			} else {
+				Set<IPath> paths = new HashSet<IPath>();
+				for (IResource resource : resources) {
+					paths.add(resource.getLocation());
+				}
+				HgPatchClient.exportPatch(root, paths, location.getFile(), options);
+			}
+		}
 	}
 
-	public void doExport() throws Exception {
-		if (location.getLocationType() == LocationType.Clipboard) {
-			ClipboardUtils.copyToClipboard(HgPatchClient.exportPatch(root,
-					resources, options));
-		} else {
-			Set<IPath> paths = new HashSet<IPath>();
-			for (IResource resource : resources) {
-				paths.add(resource.getLocation());
-			}
-			HgPatchClient.exportPatch(root, paths, location.getFile(),	options);
+	private class ExportChangeSetOperation extends ExportUncomittedOperation {
+
+		public ExportChangeSetOperation(IRunnableContext context) {
+			super(context);
 		}
-		if (location.getLocationType() == LocationType.Workspace) {
-			location.getWorkspaceFile().refreshLocal(0, null);
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.wizards.ExportPatchWizard.ExportUncomittedOperation#doExport()
+		 */
+		@Override
+		protected void doExport() throws Exception {
+			ChangeSet cs = (ChangeSet) selectedItems[0];
+
+			if (location.getLocationType() == LocationType.Clipboard) {
+				String sPatch = HgPatchClient.exportPatch(root, cs, null);
+
+				if (sPatch != null && sPatch.length() > 0) {
+					ClipboardUtils.copyToClipboard(sPatch);
+				}
+			} else {
+				HgPatchClient.exportPatch(root, cs, location.getFile(), null);
+			}
 		}
 	}
 }

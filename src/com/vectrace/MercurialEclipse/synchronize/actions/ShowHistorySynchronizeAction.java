@@ -12,7 +12,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -24,6 +29,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -53,6 +61,13 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 			ChangeSet changeSet = (ChangeSet) object;
 			if(changeSet.getHgRoot() != null) {
 				object = changeSet.getHgRoot();
+			} else if (object instanceof WorkingChangeSet) {
+				Set<IProject> projects = ((MercurialSynchronizeParticipant)configuration.getParticipant()).getRestoredProjects();
+				Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(projects);
+				Set<HgRoot> roots = byRoot.keySet();
+				if (roots.size() == 1) {
+					object = roots.iterator().next();
+				}
 			} else {
 				IResource resource = ResourceUtils.getResource(object);
 				if(resource != null){
