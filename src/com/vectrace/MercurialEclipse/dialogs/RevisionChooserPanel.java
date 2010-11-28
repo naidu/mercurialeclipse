@@ -17,27 +17,12 @@ package com.vectrace.MercurialEclipse.dialogs;
 
 import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.logError;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.regex.Pattern;
-
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
-import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.FocusEvent;
@@ -59,7 +44,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
 import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -75,7 +59,6 @@ import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
-import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -575,260 +558,6 @@ public class RevisionChooserPanel extends Composite {
 	public void update(DataLoader loader){
 		setDataLoader(loader);
 		contentAssist.setContentProposalProvider(new RevisionContentProposalProvider(loader));
-	}
-
-	/**
-	 * Proposal provider for the revision text field.
-	 */
-	private static final class RevisionContentProposalProvider implements IContentProposalProvider {
-
-		private final Future<SortedSet<ChangeSet>> changeSets;
-		private final Future<List<Bookmark>> bookmarks;
-
-		private RevisionContentProposalProvider(final DataLoader dataLoader) {
-
-			ExecutorService executor = Executors.newFixedThreadPool(2);
-			if(dataLoader instanceof EmptyDataLoader){
-				changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
-					public SortedSet<ChangeSet> call() throws Exception {
-						return Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
-					}
-				});
-
-				bookmarks = executor.submit(new Callable<List<Bookmark>>() {
-					public List<Bookmark> call() throws Exception {
-						return Collections.unmodifiableList(new ArrayList<Bookmark>());
-					}
-				});
-			} else {
-				changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
-					public SortedSet<ChangeSet> call() throws Exception {
-						IResource resource = dataLoader.getResource();
-						HgRoot hgRoot = dataLoader.getHgRoot();
-						SortedSet<ChangeSet> result;
-						LocalChangesetCache cache = LocalChangesetCache.getInstance();
-						if(resource != null) {
-							result = cache.getOrFetchChangeSets(resource);
-						} else {
-							result = cache.getOrFetchChangeSets(hgRoot);
-						}
-						if(result.isEmpty() || result.first().getChangesetIndex() > 0) {
-							if(resource != null) {
-								cache.fetchRevisions(resource, false, 0, 0, false);
-								result = cache.getOrFetchChangeSets(resource);
-							} else {
-								cache.fetchRevisions(hgRoot, false, 0, 0, false);
-								result = cache.getOrFetchChangeSets(hgRoot);
-							}
-
-							if(result == null) {
-								// fetching the change sets failed
-								result = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
-							}
-						}
-						return result;
-					}
-				});
-
-				bookmarks = executor.submit(new Callable<List<Bookmark>>() {
-					public List<Bookmark> call() throws Exception {
-						return HgBookmarkClient.getBookmarks(dataLoader.getHgRoot());
-					}
-				});
-			}
-			executor.shutdown();
-		}
-
-		public IContentProposal[] getProposals(String contents, int position) {
-			List<IContentProposal> result = new LinkedList<IContentProposal>();
-			String filter = contents.substring(0, position).toLowerCase();
-			try {
-				for (ChangeSet changeSet : changeSets.get()) {
-					if (changeSet.getName().toLowerCase().startsWith(filter)
-							|| changeSet.getChangeset().startsWith(filter)) {
-						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
-					} else {
-						String value = getTagsStartingWith(filter, changeSet);
-						if (value.length() > 0) {
-							result.add(0, new ChangeSetContentProposal(changeSet, ContentType.TAG, value));
-						} else if (changeSet.getBranch().toLowerCase().startsWith(filter)) {
-							result.add(0, new ChangeSetContentProposal(changeSet, ContentType.BRANCH, changeSet.getBranch()));
-						}
-					}
-				}
-			} catch (InterruptedException e) {
-				logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
-			} catch (ExecutionException e) {
-				logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
-			}
-			try {
-				for (Bookmark bookmark : bookmarks.get()) {
-					if (bookmark.getName().toLowerCase().startsWith(filter)) {
-						result.add(new BookmarkContentProposal(bookmark));
-					}
-				}
-			} catch (InterruptedException e) {
-				logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
-			} catch (ExecutionException e) {
-				logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
-			}
-			return result.toArray(new IContentProposal[result.size()]);
-		}
-
-		private String getTagsStartingWith(String filter, ChangeSet changeSet) {
-			StringBuilder builder = new StringBuilder();
-			for(Tag tag: changeSet.getTags()) {
-				if(tag.getName().toLowerCase().startsWith(filter)) {
-					builder.append(tag.getName()).append(", "); //$NON-NLS-1$
-				}
-			}
-			if(builder.length() > 2) {
-				// truncate the trailing ", "
-				builder.setLength(builder.length() - 2);
-			}
-			return builder.toString();
-		}
-
-		private static enum ContentType {REVISION, TAG, BRANCH}
-
-		private static final class ChangeSetContentProposal implements IContentProposal {
-
-			private static final Pattern LABEL_SPLITTER = Pattern.compile("\\.\\s|[\\n\\r]"); //$NON-NLS-1$
-
-			private final ChangeSet changeSet;
-			private final ContentType type;
-			private final String value;
-			private String label;
-			private String description;
-
-			private ChangeSetContentProposal(ChangeSet changeSet, ContentType type) {
-				this.changeSet = changeSet;
-				this.type = type;
-				value = null;
-			}
-
-			private ChangeSetContentProposal(ChangeSet changeSet, ContentType type, String value) {
-				this.changeSet = changeSet;
-				this.type = type;
-				this.value = value;
-			}
-
-			public String getContent() {
-				return changeSet.getName();
-			}
-
-			public int getCursorPosition() {
-				return getContent().length();
-			}
-
-			public String getDescription() {
-				if(description == null) {
-					description = createDescription();
-				}
-				return description;
-			}
-
-			private String createDescription() {
-				StringBuilder builder = new StringBuilder();
-
-				// summary
-				builder.append(changeSet.getSummary()).append("\n\n"); //$NON-NLS-1$
-
-				// branch (optional)
-				String branch = changeSet.getBranch();
-				if(branch != null && branch.length() > 0) {
-					builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.branch")); //$NON-NLS-1$
-					builder.append(": ").append(branch).append('\n'); //$NON-NLS-1$
-				}
-
-				// tag (optional)
-				String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-				if(tags.length() > 0) {
-					builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.tags")); //$NON-NLS-1$
-					builder.append(": ").append(tags).append('\n'); //$NON-NLS-1$
-				}
-
-				// author
-				builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.author")); //$NON-NLS-1$
-				builder.append(": ").append(changeSet.getAuthor()).append('\n'); //$NON-NLS-1$
-
-				// date
-				builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.date")); //$NON-NLS-1$
-				builder.append(": ").append(changeSet.getDateString()).append('\n'); //$NON-NLS-1$
-
-				// revision
-				builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.revision")); //$NON-NLS-1$
-				builder.append(": ").append(changeSet.getName()); //$NON-NLS-1$
-
-				return builder.toString();
-			}
-
-			public String getLabel() {
-				if(label == null) {
-					label = createLabel();
-				}
-				return label;
-			}
-
-			private String createLabel() {
-				StringBuilder builder = new StringBuilder(String.valueOf(changeSet.getChangesetIndex()));
-				builder.append(": "); //$NON-NLS-1$
-
-				String text;
-				switch(type) {
-					case TAG:
-					case BRANCH:
-						text = "[" + value + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
-						break;
-
-					case REVISION:
-					default:
-						text = changeSet.getSummary();
-						break;
-				}
-
-				// shorten label text if necessary
-				if(text.length() > 50) {
-					// extract first sentence or line
-					text = LABEL_SPLITTER.split(text, 2)[0].trim();
-					// shorten it if still too long
-					if(text.length() > 50) {
-						text = text.substring(0, 43).trim() + "..."; //$NON-NLS-1$
-					}
-					builder.append(text);
-				} else {
-					builder.append(text);
-				}
-
-				return builder.toString();
-			}
-
-		}
-
-		private static final class BookmarkContentProposal implements IContentProposal {
-
-			private final Bookmark bookmark;
-
-			private BookmarkContentProposal(Bookmark bookmark) {
-				this.bookmark = bookmark;
-			}
-
-			public String getContent() {
-				return bookmark.getRevision() + ":" + bookmark.getShortNodeId(); //$NON-NLS-1$
-			}
-
-			public int getCursorPosition() {
-				return getContent().length();
-			}
-
-			public String getDescription() {
-				return bookmark.getRevision() + ":" + bookmark.getShortNodeId() + "\n\n" + bookmark.getName(); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-
-			public String getLabel() {
-				return bookmark.getRevision() + ": " + bookmark.getName(); //$NON-NLS-1$
-			}
-		}
 	}
 
 
