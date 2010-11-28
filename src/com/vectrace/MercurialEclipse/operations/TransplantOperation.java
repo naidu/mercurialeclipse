@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010 Andrei Loskutov (Intland).
+ * Copyright (c) 2010 Andrei Loskutov.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.operations;
 
@@ -110,7 +110,12 @@ public class TransplantOperation extends HgOperation {
 			Matcher matcher;
 
 			matcher = CHANGESET_PATTERN.matcher(message);
-			matcher.find();
+			boolean found = matcher.find() &&  matcher.groupCount() > 0;
+			if(!found) {
+				MercurialEclipsePlugin.logError(e);
+				MercurialEclipsePlugin.showError(e);
+				return false;
+			}
 			final String changeSetId = matcher.group(1);
 
 			final ArrayList<IFile> rejects = new ArrayList<IFile>();
@@ -119,15 +124,11 @@ public class TransplantOperation extends HgOperation {
 			int lastMatchOffset = 0;
 			while (matcher.find(lastMatchOffset) && matcher.groupCount() > 0) {
 				String filename = matcher.group(1);
-				IPath path = new Path(hgRoot.getPath() + "/" + filename);
+				IPath path = new Path(hgRoot.getPath()).append(filename);
 				IFile file = FileBuffers.getWorkspaceFileAtLocation(path);
-
-				if (file == null) {
-					assert false;
-				} else {
+				if (file != null) {
 					rejects.add(file);
 				}
-
 				lastMatchOffset = matcher.end();
 			}
 
