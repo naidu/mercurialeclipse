@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -164,9 +164,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					AbstractParseChangesetClient.getStyleFile(style)
 							.getCanonicalPath());
 
-			addRange(command, startRev, limitNumber);
+			boolean isFile = res.getType() == IResource.FILE;
+			addRange(command, startRev, limitNumber, isFile);
 
-			if (res.getType() == IResource.FILE) {
+			if (isFile) {
 				command.addOptions("-f"); //$NON-NLS-1$
 			}
 
@@ -207,7 +208,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					AbstractParseChangesetClient.getStyleFile(style)
 					.getCanonicalPath());
 
-			addRange(command, startRev, limitNumber);
+			addRange(command, startRev, limitNumber, false);
 
 			String result = command.executeToString();
 			if (result.length() == 0) {
@@ -235,7 +236,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					AbstractParseChangesetClient.getStyleFile(style)
 					.getCanonicalPath());
 
-			addRange(command, startRev, limitNumber);
+			addRange(command, startRev, limitNumber, isFile);
 
 			if (isFile) {
 				command.addOptions("-f"); //$NON-NLS-1$
@@ -256,12 +257,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	private static void addRange(AbstractShellCommand command, int startRev, int limitNumber) {
+	private static void addRange(AbstractShellCommand command, int startRev, int limitNumber, boolean isFile) {
 		if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
 			// always advise to follow until 0 revision: the reason is that log limit
 			// might be bigger then the difference of two consequent revisions on a specific resource
 			command.addOptions("-r"); //$NON-NLS-1$
 			command.addOptions(startRev + ":" + 0); //$NON-NLS-1$
+		}
+		if(isFile && startRev == Integer.MAX_VALUE) {
+			// always start with the tip to get the latest version of a file too
+			// seems that hg log misses some versions if the file working copy is not at the tip
+			command.addOptions("-r"); //$NON-NLS-1$
+			command.addOptions("tip:0"); //$NON-NLS-1$
 		}
 		setLimit(command, limitNumber);
 	}
