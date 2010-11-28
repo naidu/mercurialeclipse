@@ -111,8 +111,7 @@ public class ChangedPathsPage {
 		this.showDiffs = store.getBoolean(PREF_SHOW_DIFFS);
 
 		this.mainSashForm = new SashForm(parent, SWT.VERTICAL);
-		this.mainSashForm.setLayoutData(new GridData(
-				GridData.FILL_BOTH));
+		this.mainSashForm.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		this.toggleAffectedPathsLayoutActions = new ToggleAffectedPathsOptionAction[] {
 				new ToggleAffectedPathsOptionAction(this,
@@ -466,7 +465,6 @@ public class ChangedPathsPage {
 
 		// Create the local tool bar
 		IToolBarManager tbm = actionBars.getToolBarManager();
-		tbm.add(new Separator());
 		tbm.add(toggleShowComments);
 		tbm.add(toggleShowAffectedPathsAction);
 		tbm.add(toggleShowDiffs);
@@ -553,10 +551,7 @@ public class ChangedPathsPage {
 		return page.getTableViewer().getControl().getParent();
 	}
 
-	/**
-	 *
-	 */
-	private void refreshLayout() {
+	public void refreshLayout() {
 		innerSashForm.layout();
 		int[] weights = mainSashForm.getWeights();
 		if (weights != null && weights.length == 2) {

@@ -16,7 +16,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_SHOW_ALL_TAGS;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.util.Iterator;
 
@@ -41,14 +41,20 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.fieldassist.ContentProposalAdapter;
+import org.eclipse.jface.fieldassist.IContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposalListener;
+import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
@@ -60,14 +66,23 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.FocusAdapter;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.KeyAdapter;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
@@ -78,6 +93,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
+import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
@@ -87,6 +103,7 @@ import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.HistoryContentProposalProvider.RevisionContentProposal;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -125,6 +142,11 @@ public class MercurialHistoryPage extends HistoryPage {
 	private final IAction mergeWithCurrentChangesetAction = new MergeWithCurrentChangesetAction(this);
 	private Action stripAction;
 	private Action backoutAction;
+	protected boolean showGoTo;
+	private Text gotoText;
+	private ContentAssistCommandAdapter contentAssist;
+	private Composite rootControl;
+	private Composite gotoPanel;
 
 
 	class RefreshMercurialHistory extends Job {
@@ -329,6 +351,26 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		toggleShowTags.setChecked(showTags);
 		actionBarsMenu.add(toggleShowTags);
+
+		showGoTo = store.getBoolean(PREF_SHOW_GOTO_TEXT);
+		Action toggleGotoText = new Action("Show 'Go To' Panel", //$NON-NLS-1$
+				MercurialEclipsePlugin.getImageDescriptor("actions/goto.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				showGoTo = isChecked();
+				store.setValue(PREF_SHOW_GOTO_TEXT, showGoTo);
+				if(mercurialHistory != null) {
+					GridData gd = (GridData) gotoPanel.getLayoutData();
+					gd.exclude = !showGoTo;
+					gotoPanel.setVisible(showGoTo);
+					rootControl.layout(false);
+					changedPaths.refreshLayout();
+				}
+			}
+		};
+		toggleGotoText.setChecked(showGoTo);
+		actionBarsMenu.add(toggleGotoText);
+
 		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
 			@Override
@@ -364,8 +406,12 @@ public class MercurialHistoryPage extends HistoryPage {
 		tbm.add(new Separator());
 		tbm.add(toggleShowTags);
 		tbm.add(actionShowParentHistory);
+		tbm.add(new Separator());
+		tbm.add(toggleGotoText);
 
-		changedPaths = new ChangedPathsPage(this, parent);
+		rootControl = createComposite(parent);
+		createGotoText(rootControl);
+		changedPaths = new ChangedPathsPage(this, rootControl);
 		createTableHistory(changedPaths.getControl());
 		changedPaths.createControl();
 		getSite().setSelectionProvider(viewer);
@@ -376,6 +422,78 @@ public class MercurialHistoryPage extends HistoryPage {
 			}
 		});
 
+	}
+
+	private static Composite createComposite(Composite parent) {
+		Composite root = new Composite(parent, SWT.NONE);
+		root.setLayout(new GridLayout(1, false));
+		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		gridData.widthHint = SWT.DEFAULT;
+		gridData.heightHint = SWT.DEFAULT;
+		root.setLayoutData(gridData);
+
+		return root;
+	}
+
+	private void createGotoText(Composite parent) {
+		gotoPanel = new Composite(parent, SWT.NONE);
+		gotoPanel.setLayout(new GridLayout(2, false));
+		gotoPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		gotoPanel.setVisible(showGoTo);
+		gotoText = new Text(gotoPanel, SWT.BORDER);
+		gotoText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		gotoText.addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				gotoText.selectAll();
+			}
+		});
+		gotoText.addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if(e.keyCode != SWT.CR) {
+					return;
+				}
+				// TODO try to retrieve right revision and if it's there, select it
+			}
+		});
+		Button fetchEntireHistory = new Button(gotoPanel, SWT.NONE);
+		fetchEntireHistory.setText("Fetch entire History");
+		fetchEntireHistory.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Job gimmeMore = new Job("Retrieving entire history") {
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						int from = mercurialHistory.getLastVersion() - 1;
+						while(from != mercurialHistory.getLastRequestedVersion()
+								&& from >= 0 && !monitor.isCanceled()) {
+							try {
+								mercurialHistory.refresh(monitor, from);
+								from = mercurialHistory.getLastVersion() - 1;
+							} catch (CoreException ex) {
+								MercurialEclipsePlugin.logError(ex);
+							}
+						}
+						final Control ctrl = viewer.getControl();
+						if (ctrl != null && !ctrl.isDisposed()) {
+							ctrl.getDisplay().asyncExec(new Runnable() {
+								public void run() {
+									if (!ctrl.isDisposed()) {
+										viewer.setInput(mercurialHistory);
+										viewer.refresh();
+									}
+								}
+							});
+						}
+						return Status.OK_STATUS;
+					}
+				};
+				gimmeMore.setRule(new ExclusiveHistoryRule());
+				scheduleInPage(gimmeMore);
+			}
+		});
+		setupRevisionFieldAssistance();
 	}
 
 	private void createTableHistory(Composite parent) {
@@ -435,7 +553,47 @@ public class MercurialHistoryPage extends HistoryPage {
 				}
 			}
 		});
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+
+			public void selectionChanged(SelectionChangedEvent event) {
+				if(!gotoText.isVisible()) {
+					return;
+				}
+				IStructuredSelection selection = getSelection();
+				if(selection.isEmpty()) {
+					return;
+				}
+				gotoText.setText(((MercurialRevision) selection.getFirstElement()).getChangeSet()
+						.toString());
+			}
+		});
 		contributeActions();
+	}
+
+	/**
+	 * Adds field assistance to the revision text field.
+	 */
+	private void setupRevisionFieldAssistance() {
+		contentAssist = new ContentAssistCommandAdapter(gotoText,
+				new TextContentAdapter(), new HistoryContentProposalProvider(this), null,
+				null, true);
+		contentAssist.setAutoActivationDelay(300);
+		contentAssist.setPopupSize(new Point(320, 240));
+		contentAssist.setPropagateKeys(true);
+		contentAssist.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+
+		contentAssist.addContentProposalListener(new IContentProposalListener() {
+			public void proposalAccepted(IContentProposal proposal) {
+				if(proposal instanceof RevisionContentProposal) {
+					RevisionContentProposal revProposal = (RevisionContentProposal) proposal;
+					MercurialRevision revision = revProposal.getRevision();
+					viewer.setSelection(new StructuredSelection(revision));
+					viewer.reveal(revision);
+				} else {
+					// TODO parse text and try to find something
+				}
+			}
+		});
 	}
 
 	private void copyToClipboard() {
@@ -784,7 +942,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	@Override
 	public Control getControl() {
-		return changedPaths.getControl();
+		return rootControl;
 	}
 
 	@Override

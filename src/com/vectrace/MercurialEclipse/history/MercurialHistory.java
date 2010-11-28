@@ -37,10 +37,10 @@ import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
-import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -170,6 +170,13 @@ public class MercurialHistory extends FileHistory {
 		return lastReqRevision;
 	}
 
+	public int getLastVersion() {
+		if(revisions.isEmpty()) {
+			return 0;
+		}
+		return revisions.get(revisions.size() - 1).getRevision();
+	}
+
 	public IFileRevision[] getContributors(IFileRevision revision) {
 		return null;
 	}
@@ -192,6 +199,13 @@ public class MercurialHistory extends FileHistory {
 			return revisions.toArray(new MercurialRevision[revisions.size()]);
 		}
 		return new IFileRevision[0];
+	}
+
+	public List<MercurialRevision> getRevisions() {
+		if (!revisions.isEmpty()) {
+			return new ArrayList<MercurialRevision>(revisions);
+		}
+		return Collections.emptyList();
 	}
 
 	public IFileRevision[] getTargets(IFileRevision revision) {

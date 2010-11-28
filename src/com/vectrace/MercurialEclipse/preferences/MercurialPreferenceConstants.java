@@ -96,6 +96,7 @@ public final class MercurialPreferenceConstants {
 	public static  final String PREF_SHOW_ALL_TAGS = "pref_show_alltags"; //$NON-NLS-1$
 	public static final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public static final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
+	public static final String PREF_SHOW_GOTO_TEXT = "pref_show_goto_text"; //$NON-NLS-1$
 	public static final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
 	public static final int LAYOUT_HORIZONTAL = 1;
 	public static final int LAYOUT_VERTICAL = 2;

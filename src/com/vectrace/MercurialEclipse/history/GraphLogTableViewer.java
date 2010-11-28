@@ -30,9 +30,9 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
-import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
 import com.vectrace.MercurialEclipse.model.GChangeSet.EdgeList;
+import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -87,7 +87,7 @@ public class GraphLogTableViewer extends TableViewer {
 		final Table table = tableItem.getParent();
 		int from = rev.getRevision() - 1;
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
-		if (from != lastReqVersion && from >= 0) {
+		if (from != lastReqVersion && from >= 0 && mhp.getMercurialHistory().getLastVersion() > 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
 				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
 						from);
