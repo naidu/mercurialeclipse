@@ -28,12 +28,12 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class HgIgnoreClient extends AbstractClient {
 
 	public static void addExtension(IFile file) throws HgException {
-		HgRoot hgRoot = getHgRoot(file.getProject());
+		HgRoot hgRoot = getHgRoot(file);
 		addPattern(hgRoot, "regexp", escape("." + file.getFileExtension()) + "$"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	public static void addFile(IFile file) throws HgException {
-		HgRoot hgRoot = getHgRoot(file.getProject());
+		HgRoot hgRoot = getHgRoot(file);
 
 		String regexp = "^" + getRelativePath(hgRoot, file) + "$"; //$NON-NLS-1$ //$NON-NLS-2$
 		addPattern(hgRoot, "regexp", regexp); //$NON-NLS-1$
@@ -47,7 +47,7 @@ public class HgIgnoreClient extends AbstractClient {
 	}
 
 	public static void addFolder(IFolder folder) throws HgException {
-		HgRoot hgRoot = getHgRoot(folder.getProject());
+		HgRoot hgRoot = getHgRoot(folder);
 		String regexp = "^" + getRelativePath(hgRoot, folder) + "$"; //$NON-NLS-1$ //$NON-NLS-2$
 		addPattern(hgRoot, "regexp", regexp); //$NON-NLS-1$
 	}

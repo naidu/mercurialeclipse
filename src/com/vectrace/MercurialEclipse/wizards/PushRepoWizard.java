@@ -129,7 +129,9 @@ public class PushRepoWizard extends HgWizard {
 				super(getContainer());
 			}
 
-			@Override
+			/**
+			 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+			 */
 			public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
 				monitor.beginTask("Pushing...", IProgressMonitor.UNKNOWN);
 				try {

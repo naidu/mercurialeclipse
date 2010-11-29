@@ -100,14 +100,6 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString().split("\n"); //$NON-NLS-1$
 	}
 
-	public static boolean isDirty(List<? extends IResource> resources) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-mard"); // modified, added, removed, deleted //$NON-NLS-1$
-		command.addFiles(resources);
-		return command.executeToBytes().length != 0;
-	}
-
 	public static boolean isDirty(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);

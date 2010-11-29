@@ -16,7 +16,6 @@
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -28,14 +27,12 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class AnnotateCommand {
 	private static final Pattern ANNOTATE = Pattern
@@ -44,29 +41,24 @@ public class AnnotateCommand {
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
 			"EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
-	private final File file;
+	private final IResource file;
 
-	public AnnotateCommand(File remoteFile) {
+	public AnnotateCommand(IResource remoteFile) {
 		this.file = remoteFile;
 	}
 
 	public AnnotateBlocks execute() throws HgException {
-		IFile resource = (IFile) ResourceUtils.convert(file);
 
-		if (!MercurialUtilities.hgIsTeamProviderFor(resource, true)) {
+		if (!MercurialUtilities.hgIsTeamProviderFor(file, true)) {
 			return null;
 		}
-		HgRoot root = AbstractClient.getHgRoot(resource);
-		String relPath = root.toRelative(resource.getLocation().toFile());
-		String[] launchCmd = { MercurialUtilities.getHGExecutable(),
-				"annotate", "--follow", "--user", "--number", "--changeset", "--date", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-				"--", relPath }; //$NON-NLS-1$
 
-		String output = MercurialUtilities.executeCommand(launchCmd, root, true);
-		if (output == null) {
-			return null;
-		}
-		return createFromStdOut(new StringReader(output));
+		HgCommand command = new HgCommand("annotate", file, true);
+
+		command.addOptions("--follow", "--user", "--number", "--changeset", "--date");
+		command.addFiles(file);
+
+		return createFromStdOut(new StringReader(command.executeToString()));
 	}
 
 	protected static AnnotateBlocks createFromStdOut(InputStream contents) {

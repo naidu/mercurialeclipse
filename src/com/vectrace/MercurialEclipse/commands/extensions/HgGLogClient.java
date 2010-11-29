@@ -30,9 +30,8 @@ public class HgGLogClient extends HgCommand {
 	private final List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
 	public HgGLogClient(IResource resource, int batchSize, int startRev) throws HgException {
-		super("glog", false);
+		super("glog", resource, false);
 		File fileHandle = ResourceUtils.getFileHandle(resource);
-		workingDir = ResourceUtils.getFirstExistingDirectory(fileHandle);
 
 		if (resource.getType() == IResource.FILE) {
 			addOptions(fileHandle.getAbsolutePath());
@@ -41,7 +40,7 @@ public class HgGLogClient extends HgCommand {
 				// glog doesn't follow directories
 				return;
 			}
-			HgRoot hgRoot = getHgRoot();
+
 			if(!hgRoot.equals(fileHandle)){
 				// multiple projects under same hg root handled by glog as directories
 				return;
@@ -72,8 +71,8 @@ public class HgGLogClient extends HgCommand {
 	}
 
 	public HgGLogClient(HgRoot hgRoot, int batchSize, int startRev) throws HgException {
-		super("glog", false);
-		workingDir = hgRoot;
+		super("glog", hgRoot, false);
+
 		configureOptions(batchSize, startRev);
 		load(executeToString());
 	}

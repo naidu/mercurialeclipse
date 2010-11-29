@@ -53,7 +53,9 @@ public class ShelveOperation extends HgOperation {
 		return Messages.getString("ShelveOperation.shelvingChanges"); //$NON-NLS-1$
 	}
 
-	@Override
+	/**
+	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		File shelveDir = new File(hgRoot, ".hg" + File.separator //$NON-NLS-1$

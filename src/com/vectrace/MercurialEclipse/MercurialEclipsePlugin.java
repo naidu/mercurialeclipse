@@ -21,7 +21,6 @@ package com.vectrace.MercurialEclipse;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -62,8 +61,8 @@ import org.osgi.util.tracker.ServiceTracker;
 
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
+import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -219,7 +218,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	private void checkHgVersion() throws HgException {
-		AbstractShellCommand command = new HgCommand("version", (File) null, true); //$NON-NLS-1$
+		AbstractShellCommand command = new RootlessHgCommand("version", true); //$NON-NLS-1$
 		command.setShowOnConsole(false);
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$

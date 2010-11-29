@@ -10,9 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
-
-import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan
@@ -37,7 +34,4 @@ public interface IConfiguration {
 	 * @return
 	 */
 	String getPreference(String preferenceConstant, String defaultIfNotSet);
-
-	HgRoot getHgRoot(File file);
-
 }

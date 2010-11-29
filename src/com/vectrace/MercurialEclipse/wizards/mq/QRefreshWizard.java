@@ -44,7 +44,9 @@ public class QRefreshWizard extends HgWizard {
 			return Messages.getString("QRefreshWizard.actionDescription"); //$NON-NLS-1$
 		}
 
-		@Override
+		/**
+		 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
 			monitor

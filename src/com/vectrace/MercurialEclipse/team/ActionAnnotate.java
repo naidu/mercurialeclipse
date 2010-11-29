@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -61,9 +59,8 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
 		if (selection.getFirstElement() instanceof IResource) {
 			IResource firstElement = (IResource) selection.getFirstElement();
-			File file = firstElement.getLocation().toFile();
 			try {
-				new ShowAnnotationOperation(part, file).run();
+				new ShowAnnotationOperation(part, firstElement).run();
 			} catch (Exception e) {
 				MessageDialog.openError(part.getSite().getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
 						+ Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$

@@ -12,8 +12,8 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.model;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.SortedSet;
 
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -51,9 +51,8 @@ public class AllRootsElement implements IWorkbenchAdapter, IAdaptable {
 	 */
 	public IHgRepositoryLocation[] getChildren(Object o) {
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-		SortedSet<IHgRepositoryLocation> repoLocations = repoManager.getAllRepoLocations();
-
-		SortedSet<HgRoot> hgRoots = MercurialTeamProvider.getKnownHgRoots();
+		Collection<IHgRepositoryLocation> repoLocations = repoManager.getAllRepoLocations();
+		Collection<HgRoot> hgRoots = MercurialTeamProvider.getKnownHgRoots();
 
 		// remove local repos which are known as hg roots
 		for (IHgRepositoryLocation hgRoot : hgRoots) {

@@ -149,7 +149,7 @@ public class HgCommitClient extends AbstractClient {
 		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private static File saveMessage(String message, HgCommand command) throws HgException {
+	private static File saveMessage(String message, HgCommand command) {
 		Writer writer = null;
 		try {
 			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
