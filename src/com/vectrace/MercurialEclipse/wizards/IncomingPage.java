@@ -80,7 +80,9 @@ public class IncomingPage extends HgWizardPage {
 			return Messages.getString("IncomingPage.getIncomingOperation.description"); //$NON-NLS-1$
 		}
 
-		@Override
+		/**
+		 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
 			monitor.beginTask(Messages.getString("IncomingPage.getIncomingOperation.beginTask"), 1); //$NON-NLS-1$

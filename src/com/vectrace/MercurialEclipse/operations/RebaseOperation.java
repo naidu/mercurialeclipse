@@ -75,7 +75,9 @@ public class RebaseOperation extends HgOperation {
 		this.keepBranches = keepBranches;
 	}
 
-	@Override
+	/**
+	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		monitor.beginTask(getActionDescription(), 2);

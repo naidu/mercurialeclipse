@@ -14,21 +14,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-
 public abstract class HgOperation extends TeamOperation {
 
 	protected String result;
+
+	// constructors
 
 	public HgOperation(IWorkbenchPart part) {
 		super(part);
@@ -42,30 +36,7 @@ public abstract class HgOperation extends TeamOperation {
 		super(part, context);
 	}
 
-	public void run(IProgressMonitor monitor) throws InvocationTargetException,
-			InterruptedException {
-		// TODO: Would be nice to have something that indicates progress
-		// but that would require that functionality from the utilities.
-		monitor.beginTask(getActionDescription(), 1);
-
-		try {
-			result = MercurialUtilities.executeCommand(getHgCommand(), getHgWorkingDir(), true);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(
-					getActionDescription() + Messages.getString("HgOperation.failed"), e); //$NON-NLS-1$
-		} finally {
-			monitor.done();
-		}
-	}
-
-	protected String[] getHgCommand() {
-		return null;
-	}
-
-	@SuppressWarnings("unused")
-	protected File getHgWorkingDir() throws HgException {
-		return null;
-	}
+	// operations
 
 	public String getResult() {
 		return result;

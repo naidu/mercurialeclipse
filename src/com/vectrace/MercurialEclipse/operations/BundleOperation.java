@@ -46,7 +46,9 @@ public class BundleOperation extends HgOperation {
 		return "Create bundle of repository " + root;
 	}
 
-	@Override
+	/**
+	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		try {

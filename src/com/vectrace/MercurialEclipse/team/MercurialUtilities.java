@@ -52,7 +52,6 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -368,49 +367,6 @@ public final class MercurialUtilities {
 			username = null;
 		}
 		return username;
-	}
-
-	/**
-	 * Execute a command via the shell. Can throw HgException if the command does not execute
-	 * correctly. Exception will contain the error stream from the command execution.
-	 *
-	 * @returns String containing the successful output
-	 *
-	 *          TODO: Should log failure. TODO: Should not return null for failure.
-	 */
-	public static String executeCommand(String[] cmd, File workingDir, boolean consoleOutput)
-			throws HgException {
-		return execute(cmd, workingDir).executeToString();
-	}
-
-	private static LegacyAdaptor execute(String[] cmd, File workingDir) {
-		String[] copy = new String[cmd.length - 2];
-		System.arraycopy(cmd, 2, copy, 0, cmd.length - 2);
-		LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
-		legacyAdaptor.args(copy);
-		return legacyAdaptor;
-	}
-
-	private static class LegacyAdaptor extends RootlessHgCommand {
-
-		protected LegacyAdaptor(String command, File workingDir, boolean escapeFiles) {
-			super(command, workingDir, escapeFiles);
-		}
-
-		LegacyAdaptor args(String... arguments) {
-			this.addOptions(arguments);
-			return this;
-		}
-
-		@Override
-		public String executeToString() throws HgException {
-			return super.executeToString();
-		}
-
-		@Override
-		public byte[] executeToBytes() throws HgException {
-			return super.executeToBytes();
-		}
 	}
 
 	public static boolean isCommandAvailable(String command, QualifiedName sessionPropertyName,
