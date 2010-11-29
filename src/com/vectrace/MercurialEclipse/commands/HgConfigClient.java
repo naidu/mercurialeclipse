@@ -27,8 +27,7 @@ public class HgConfigClient extends AbstractClient {
 
 	private static String[] getHgConfigLines(IResource root, String key)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("showconfig", root, //$NON-NLS-1$
-				false);
+		AbstractShellCommand cmd = new RootlessHgCommand("showconfig", false);
 		cmd.addOptions(key);
 		String[] lines = cmd.executeToString().split("\n"); //$NON-NLS-1$
 		return lines;

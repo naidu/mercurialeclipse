@@ -51,6 +51,8 @@ public class HgCommand extends AbstractShellCommand {
 	public HgCommand(String command, HgRoot root, boolean escapeFiles) {
 		super(root, root, escapeFiles);
 		this.command = command;
+
+		Assert.isNotNull(hgRoot);
 	}
 
 	/**

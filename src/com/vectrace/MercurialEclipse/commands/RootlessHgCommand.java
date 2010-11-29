@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * john	implementation
+ * John Peberdy	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -14,17 +14,19 @@ import java.io.File;
 
 /**
  * A command to invoke hg definitely outside of an hg root.
- *
- * @author john
  */
 public class RootlessHgCommand extends AbstractShellCommand {
 
 	public RootlessHgCommand(String command, boolean escapeFiles) {
 		super(null, null, escapeFiles);
+
+		this.command = command;
 	}
 
-	public RootlessHgCommand(String string, File workingDir, boolean escapeFiles) {
+	public RootlessHgCommand(String command, File workingDir, boolean escapeFiles) {
 		super(null, workingDir, escapeFiles);
+
+		this.command = command;
 	}
 
 	// operations
