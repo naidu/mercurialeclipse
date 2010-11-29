@@ -193,8 +193,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	public void deconfigure() throws CoreException {
 		IProject project = getProject();
 		Assert.isNotNull(project);
+
 		// cleanup
-		MercurialRootCache.getInstance().evict(project);
 		MercurialStatusCache.getInstance().clearMergeStatus(project);
 	}
 
@@ -206,7 +206,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
 		Assert.isNotNull(project);
-		HgRoot result = MercurialRootCache.getInstance().hasHgRoot(project);
+		HgRoot result = MercurialRootCache.getInstance().getHgRoot(project);
 		if(result == null){
 			return RepositoryProvider.getProvider(project, ID) != null;
 		}
@@ -299,11 +299,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * @return the {@link java.io.File} referencing the hg root directory
 	 */
 	public static HgRoot getHgRoot(IProject project) {
-		try{
-			return MercurialRootCache.getInstance().getHgRoot(project);
-		}catch(HgException hge){
-			return null;
-		}
+		return MercurialRootCache.getInstance().getHgRoot(project);
 	}
 
 	/**
@@ -319,7 +315,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return null;
 		}
 
-		return MercurialRootCache.getInstance().hasHgRoot(resource);
+		return MercurialRootCache.getInstance().getHgRoot(resource);
 	}
 
 	/**

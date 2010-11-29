@@ -78,7 +78,7 @@ public class HgTagClient extends AbstractClient {
 	}
 
 	public static String removeTag(HgRoot hgRoot, Tag tag, String user) throws HgException {
-		HgCommand command = new HgCommand("tag", getWorkingDirectory(hgRoot), false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("tag", hgRoot, false); //$NON-NLS-1$
 		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());

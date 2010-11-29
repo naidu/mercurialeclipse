@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
@@ -25,7 +24,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
 
@@ -83,10 +81,9 @@ public class HgPatchClient extends AbstractClient {
 	 * @param resources
 	 * @throws HgException
 	 */
-	public static String exportPatch(File workDir, List<IResource> resources,
+	public static String exportPatch(HgRoot root, List<IResource> resources,
 			List<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand( "diff", root, true); //$NON-NLS-1$
 		command.addFiles(resources);
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();
@@ -142,15 +139,13 @@ public class HgPatchClient extends AbstractClient {
 		return command;
 	}
 
-	public static String getDiff(File workDir) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
+	public static String getDiff(HgRoot workDir) throws HgException {
+		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
 		return command.executeToString();
 	}
 
-	public static String getDiff(File workDir, File file) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
+	public static String getDiff(HgRoot workDir, File file) throws HgException {
+		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
 		command.addOptions(file.getAbsolutePath());
 		return command.executeToString();
 	}
@@ -177,15 +172,4 @@ public class HgPatchClient extends AbstractClient {
 		diffCommand.addOptions("--git");
 		return diffCommand.executeToString();
 	}
-
-
-
-	public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(getWorkingDirectory(file)), true); //$NON-NLS-1$
-		String patchString = command.executeToString();
-		return PatchUtils.getFilePatches(patchString);
-	}
-
-
 }

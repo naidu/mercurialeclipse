@@ -20,8 +20,8 @@ import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -35,7 +35,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
 			String revision, int timeout, File snapFile) throws CoreException {
 
-		AbstractShellCommand command = new HgCommand("fpush", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpush", forestRoot, true);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		if (snapFile != null) {
 			try {
@@ -70,7 +70,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 		} else {
 			pullSource = repo.getLocation();
 		}
-		AbstractShellCommand command = new HgCommand("fpull", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpull", forestRoot, true);
 
 		if (update) {
 			command.addOptions("--update");

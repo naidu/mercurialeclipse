@@ -14,8 +14,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -39,15 +37,8 @@ public class HgRootRule implements ISchedulingRule {
 				return false;
 			}
 			if(rule instanceof IResource){
-				IResource resource = (IResource) rule;
+				HgRoot resourceRoot = MercurialRootCache.getInstance().getHgRoot((IResource) rule);
 
-				HgRoot resourceRoot;
-				try {
-					resourceRoot = MercurialRootCache.getInstance().getHgRoot(resource);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-					resourceRoot = null;
-				}
 				return getHgRoot().equals(resourceRoot);
 			}
 			return false;

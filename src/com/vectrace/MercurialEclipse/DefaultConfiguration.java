@@ -12,21 +12,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
-import java.io.File;
-
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
-import com.vectrace.MercurialEclipse.exception.HgCoreException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
@@ -75,14 +69,6 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 					+ Messages.getString("DefaultConfiguration.notCorrectlyConfigured"), e); //$NON-NLS-1$
 		}
 		return timeout;
-	}
-
-	public HgRoot getHgRoot(File file) throws HgCoreException {
-		try {
-			return MercurialRootCache.getInstance().getHgRoot(file);
-		} catch (CoreException e) {
-			throw new HgCoreException(e);
-		}
 	}
 
 	/*

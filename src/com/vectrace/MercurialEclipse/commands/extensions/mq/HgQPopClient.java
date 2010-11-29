@@ -27,7 +27,7 @@ public class HgQPopClient extends AbstractClient {
 			throws HgException {
 		Assert.isNotNull(resource);
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -41,7 +41,7 @@ public class HgQPopClient extends AbstractClient {
 	public static String pop(IResource resource, boolean force, String patchName)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

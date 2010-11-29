@@ -40,7 +40,7 @@ public final class HgBisectClient extends AbstractClient {
 	 * @return a message from the command
 	 * @throws HgException
 	 */
-	public static String markGood(File repository, ChangeSet good)
+	public static String markGood(HgRoot repository, ChangeSet good)
 			throws HgException {
 		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
 		cmd.addOptions("-g"); //$NON-NLS-1$
@@ -59,7 +59,7 @@ public final class HgBisectClient extends AbstractClient {
 	 * @return a message from the command
 	 * @throws HgException
 	 */
-	public static String markBad(File repository, ChangeSet bad)
+	public static String markBad(HgRoot repository, ChangeSet bad)
 			throws HgException {
 		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
 		cmd.addOptions("-b"); //$NON-NLS-1$
@@ -76,7 +76,7 @@ public final class HgBisectClient extends AbstractClient {
 	 * @return
 	 * @throws HgException
 	 */
-	public static String reset(File repository) throws HgException {
+	public static String reset(HgRoot repository) throws HgException {
 		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
 		cmd.addOptions("-r"); //$NON-NLS-1$
 		return cmd.executeToString();

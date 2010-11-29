@@ -11,11 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgCoreException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan
@@ -69,9 +65,5 @@ public final class HgClients {
 	public static String getPreference(String preferenceConstant,
 			String defaultIfNotSet) {
 		return config.getPreference(preferenceConstant, defaultIfNotSet);
-	}
-
-	public static HgRoot getHgRoot(File file) throws HgCoreException {
-		return config.getHgRoot(file);
 	}
 }

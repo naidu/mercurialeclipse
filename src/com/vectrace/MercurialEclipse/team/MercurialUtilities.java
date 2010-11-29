@@ -50,9 +50,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -102,7 +102,9 @@ public final class MercurialUtilities {
 	 * returned as default.
 	 *
 	 * @return the path to the executable or, if not defined "hg"
+	 * @deprecated Use {@link com.vectrace.MercurialEclipse.commands.HgClients#getExecutable()}
 	 */
+	@Deprecated
 	public static String getHGExecutable() {
 		return HgClients.getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 	}
@@ -323,8 +325,7 @@ public final class MercurialUtilities {
 		// try to read username via hg showconfig
 		if (StringUtils.isEmpty(username)) {
 			try {
-				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
-						.getLocation().toFile(), "ui.username");
+				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot(), "ui.username");
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -390,7 +391,7 @@ public final class MercurialUtilities {
 		return legacyAdaptor;
 	}
 
-	private static class LegacyAdaptor extends HgCommand {
+	private static class LegacyAdaptor extends RootlessHgCommand {
 
 		protected LegacyAdaptor(String command, File workingDir, boolean escapeFiles) {
 			super(command, workingDir, escapeFiles);

@@ -32,7 +32,7 @@ public class HgQDeleteClient extends AbstractClient {
 		Assert.isNotNull(patches);
 		Assert.isNotNull(resource);
 		AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				resource, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (keep) {

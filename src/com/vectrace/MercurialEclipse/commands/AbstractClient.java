@@ -24,15 +24,13 @@ import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * Base client class
@@ -70,19 +68,6 @@ public abstract class AbstractClient {
 		return myLine;
 	}
 
-	protected static File getWorkingDirectory(IResource resource) {
-		File file = ResourceUtils.getFileHandle(resource);
-		return getWorkingDirectory(file);
-	}
-
-	protected static File getWorkingDirectory(IPath path) {
-		return getWorkingDirectory(path.toFile());
-	}
-
-	protected static File getWorkingDirectory(File file) {
-		return ResourceUtils.getFirstExistingDirectory(file);
-	}
-
 	/**
 	 * @param resource
 	 * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
@@ -91,11 +76,6 @@ public abstract class AbstractClient {
 	public static HgRoot getHgRoot(IResource resource) throws HgException {
 		Assert.isNotNull(resource);
 		return MercurialRootCache.getInstance().getHgRoot(resource);
-	}
-
-	public static HgRoot getHgRoot(File file) throws HgException {
-		Assert.isNotNull(file);
-		return MercurialRootCache.getInstance().getHgRoot(file);
 	}
 
 	/**
@@ -147,7 +127,7 @@ public abstract class AbstractClient {
 		// see bug http://bitbucket.org/mercurialeclipse/main/issue/224/
 		// If hg command uses non-null directory, which is NOT under the hg control,
 		// MercurialTeamProvider.getAndStoreHgRoot() throws an exception
-		AbstractShellCommand command = new HgCommand("help", (File) null, false);
+		AbstractShellCommand command = new RootlessHgCommand("help", false);
 		if (extensionEnabler != null && extensionEnabler.length() != 0) {
 			command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
 		}

@@ -7,16 +7,14 @@
  *
  * Contributors:
  * npiguet	implementation
+ * John Peberdy refactoring
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.core.resources.IFile;
@@ -28,15 +26,16 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
-import com.vectrace.MercurialEclipse.commands.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * @author npiguet
+ * This handles the known roots cache. The caching for an individual resources is handled as a
+ * session property on the resource.
  *
+ * @author npiguet
  */
 public class MercurialRootCache extends AbstractCache {
 
@@ -48,81 +47,49 @@ public class MercurialRootCache extends AbstractCache {
 
 	// associations
 
-	/**
-	 * We use an HgRoot[] of size 1 for values because null values are not allowed in ConcurrentHashMaps.
-	 *
-	 * TODO: Can we eliminate this map? It is currently leaking.
-	 * @deprecated
-	 */
-	@Deprecated
-	private final Map<File, HgRoot[]> byFile = new ConcurrentHashMap<File, HgRoot[]>();
-
 	private final Set<HgRoot> knownRoots = new CopyOnWriteArraySet<HgRoot>();
 
 	// constructor
 
 	private MercurialRootCache(){
-		// do we need to listen to resource changes?
-		// ResourcesPlugin.getWorkspace().addResourceChangeListener(this, IResourceChangeEvent.POST_CHANGE);
 	}
 
 	// operations
 
-	/**
-	 * @deprecated Use {@link #getHgRoot(IResource)}
-	 */
-	@Deprecated
-	public HgRoot getHgRoot(File file) throws HgException {
+	private HgRoot calculateHgRoot(File file) {
 		if (file instanceof HgRoot) {
 			return (HgRoot) file;
 		}
 
 		// TODO: possible optimization: try to look for the parent in the cache, or load the whole hierarchy in cache
 		//       or something else like that, so we don't need to call HgRootClient for each file in a directory
+		HgRoot root;
 
-		// get the root from the cache
-		HgRoot[] root = byFile.get(file);
-		if(root != null){
-			return root[0];
-		}
-
-		// not in the cache, try again with canonical version of the file
-		File canonical = null;
 		try {
-			canonical = file.getCanonicalFile();
-		} catch (IOException e) {
-			throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName());
-		}
-		root = byFile.get(canonical);
-		if(root != null){
-			// root found, cache it also for the non canonical file
-			byFile.put(file, root);
-			return root[0];
-		}
-
-		// not in the cache at all, get it from the HgRootClient
-		try{
-			root = new HgRoot[]{HgRootClient.getHgRoot(canonical)};
-		}catch(HgException hge){
+			root = HgRootClient.getHgRoot(file);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
 			// no root found at all
-			root = new HgRoot[1];
+			root = null;
 		}
 
-		// store it in the cache whether the result is null or not. Negative results are also good to cache
-		byFile.put(file, root);
-		byFile.put(canonical, root);
-		if(root[0] != null){
-			knownRoots.add(root[0]);
+		if (root != null) {
+			knownRoots.add(root);
 		}
 
-		return root[0];
+		return root;
 	}
 
-	public HgRoot getHgRoot(IResource resource) throws HgException {
+	/**
+	 * Find the hgroot for the given resource.
+	 *
+	 * @param resource The resource, not null.
+	 * @return The hgroot, or null if an error occurred or not found
+	 */
+	public HgRoot getHgRoot(IResource resource) {
 		if (resource instanceof HgRootContainer) {
 			// special case for HgRootContainers, they already know their HgRoot
-			HgRootContainer rootContainer = (HgRootContainer) resource;
-			return rootContainer.getHgRoot();
+			return ((HgRootContainer) resource).getHgRoot();
 		}
 
 		// As an optimization only cache for containers not files
@@ -149,7 +116,7 @@ public class MercurialRootCache extends AbstractCache {
 		if (result == NO_ROOT) {
 			root = null;
 		} else if (result == null) {
-			root = getHgRoot(ResourceUtils.getFileHandle(resource));
+			root = calculateHgRoot(ResourceUtils.getFileHandle(resource));
 
 			if (cacheResult) {
 				try {
@@ -169,32 +136,6 @@ public class MercurialRootCache extends AbstractCache {
 		return root;
 	}
 
-	/**
-	 * Calls {@link #getHgRoot(IResource)} but returns null rather than throwing an exception.
-	 *
-	 * @param resource The resource to get the root for
-	 * @return The root, or null if an error occurred
-	 */
-	public HgRoot hasHgRoot(IResource resource) {
-		try{
-			return getHgRoot(resource);
-		}catch(HgException hge){
-			return null;
-		}
-	}
-
-	public void evict(IResource resource){
-		// remove both the simple file and the canonical file
-		File file = resource.getLocation().toFile();
-		byFile.remove(file);
-		try{
-			File canonical = file.getCanonicalFile();
-			byFile.remove(canonical);
-		}catch(IOException ioe){
-			// if that happens now, it is unlikely that the canonical file was in the cache to begin with...
-		}
-	}
-
 	public SortedSet<HgRoot> getKnownHgRoots(){
 		return new TreeSet<HgRoot>(this.knownRoots);
 	}
@@ -206,9 +147,6 @@ public class MercurialRootCache extends AbstractCache {
 	}
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
-		this.evict(project);
-		// TODO: maybe we need to clear all the paths inside the project
-		// TODO: maybe not...
 	}
 
 	public static MercurialRootCache getInstance(){

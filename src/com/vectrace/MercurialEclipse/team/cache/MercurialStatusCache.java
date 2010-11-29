@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -1526,14 +1526,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// ConcurrentHashMap doesn't support null values, but removing is the same a putting a null value
 			mergeChangesetIds.remove(location);
 		}
-	}
-
-	/**
-	 * @deprecated Use {@link #isMergeInProgress(HgRoot)}
-	 */
-	@Deprecated
-	public boolean isMergeInProgress(IPath path){
-		return getMergeChangesetId(path) != null;
 	}
 
 	public boolean isMergeInProgress(IResource res) {
