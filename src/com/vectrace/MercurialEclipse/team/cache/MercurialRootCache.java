@@ -12,10 +12,9 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -47,7 +46,7 @@ public class MercurialRootCache extends AbstractCache {
 
 	// associations
 
-	private final Set<HgRoot> knownRoots = new CopyOnWriteArraySet<HgRoot>();
+	private final ConcurrentHashMap<HgRoot, HgRoot> knownRoots = new ConcurrentHashMap<HgRoot, HgRoot>(16, 0.75f, 4);
 
 	// constructor
 
@@ -74,7 +73,7 @@ public class MercurialRootCache extends AbstractCache {
 		}
 
 		if (root != null) {
-			knownRoots.add(root);
+			root = knownRoots.putIfAbsent(root, root);
 		}
 
 		return root;
@@ -136,8 +135,8 @@ public class MercurialRootCache extends AbstractCache {
 		return root;
 	}
 
-	public SortedSet<HgRoot> getKnownHgRoots(){
-		return new TreeSet<HgRoot>(this.knownRoots);
+	public Collection<HgRoot> getKnownHgRoots(){
+		return new ArrayList<HgRoot>(this.knownRoots.values());
 	}
 
 	@Override

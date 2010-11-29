@@ -17,9 +17,9 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -76,7 +76,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		super();
 	}
 
-	public static SortedSet<HgRoot> getKnownHgRoots(){
+	public static Collection<HgRoot> getKnownHgRoots(){
 		return MercurialRootCache.getInstance().getKnownHgRoots();
 	}
 
