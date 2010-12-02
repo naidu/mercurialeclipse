@@ -21,7 +21,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -380,26 +379,42 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	private String constructAge(Date creationDate) {
-		Calendar now = Calendar.getInstance();
-		Calendar created = Calendar.getInstance();
-		created.setTime(creationDate);
-		if (!created.before(now)) {
-			return "0 seconds ago";
-		}
+		long delta = System.currentTimeMillis() - creationDate.getTime();
 
-		if (now.get(Calendar.YEAR) - created.get(Calendar.YEAR) > 0) {
-			return now.get(Calendar.YEAR) - created.get(Calendar.YEAR) + " years ago";
-		} else if (now.get(Calendar.MONTH) - created.get(Calendar.MONTH) > 0) {
-			return now.get(Calendar.MONTH) - created.get(Calendar.MONTH) + " months ago";
-		} else if (now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) > 0) {
-			return now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) + " days ago";
-		} else if (now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) > 0) {
-			return now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) + " hours ago";
-		} else if (now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) > 0) {
-			return now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) + " minutes ago";
-		} else {
+		delta /= 1000 * 60; // units is minutes
+
+		if (delta <= 0) {
 			return "less than a minute ago";
 		}
+
+		if (delta <= 60) {
+			return delta + " minutes ago";
+		}
+
+		delta /= 60;
+		if (delta <= 24) {
+			return delta + " hours ago";
+		}
+
+		// 1 day to 31 days
+		delta /= 24; // units is days
+		if (delta <= 31) {
+			return delta + " days ago";
+		}
+
+		// 4 weeks - 3 months
+		if (delta / 7 <= 12) {
+			return delta/7 + " weeks ago";
+		}
+
+		// 3 months - 1 year
+		if (delta / 30 <= 12) {
+			return delta/30 + " months ago";
+		}
+
+		delta /= 365;
+
+		return delta + " years ago";
 	}
 
 	/**
