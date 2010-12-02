@@ -19,6 +19,7 @@ import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import com.vectrace.MercurialEclipse.dialogs.RevisionContentProposalProvider.ChangeSetContentProposal;
 import com.vectrace.MercurialEclipse.dialogs.RevisionContentProposalProvider.ContentType;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 
 /**
@@ -36,17 +37,46 @@ public class HistoryContentProposalProvider implements IContentProposalProvider 
 	}
 
 	public IContentProposal[] getProposals(String contents, int position) {
+		contents = contents.trim();
+		if(position > contents.length()) {
+			position = contents.length();
+		}
 		List<IContentProposal> result = new LinkedList<IContentProposal>();
 		List<MercurialRevision> revisions = page.getMercurialHistory().getRevisions();
 		String filter = contents.substring(0, position).toLowerCase();
 		for (MercurialRevision revision : revisions) {
 			ChangeSet changeSet = revision.getChangeSet();
-			if (changeSet.getName().toLowerCase().startsWith(filter)
+			if (changeSet.getName().startsWith(filter)
 					|| changeSet.getChangeset().startsWith(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.REVISION));
+				result.add(0, new RevisionContentProposal(revision, ContentType.REVISION, null));
+				continue;
+			}
+			String author = revision.getAuthor();
+			if(author != null && author.toLowerCase().contains(filter)) {
+				result.add(0, new RevisionContentProposal(revision, ContentType.AUTHOR, author));
+				continue;
+			}
+			String comment = revision.getComment();
+			if(comment != null && comment.toLowerCase().contains(filter)) {
+				result.add(0, new RevisionContentProposal(revision, ContentType.SUMMARY, null));
+				continue;
+			}
+			String tags = ChangeSetUtils.getPrintableTagsString(revision.getChangeSet());
+			if(tags.toLowerCase().contains(filter)) {
+				result.add(0, new RevisionContentProposal(revision, ContentType.TAG, tags));
+				continue;
+			}
+			String branch = revision.getChangeSet().getBranch();
+			if(branch != null && branch.toLowerCase().contains(filter)) {
+				result.add(0, new RevisionContentProposal(revision, ContentType.BRANCH, branch));
+				continue;
+			}
+			String date = revision.getChangeSet().getDateString();
+			if(date != null && date.startsWith(filter)) {
+				result.add(0, new RevisionContentProposal(revision, ContentType.DATE, date));
+				continue;
 			}
 		}
-		// TODO expand proposals to tags/branches/comments etc
 		return result.toArray(new IContentProposal[result.size()]);
 	}
 
@@ -59,8 +89,8 @@ public class HistoryContentProposalProvider implements IContentProposalProvider 
 		 * @param revision non null
 		 * @param type non null
 		 */
-		public RevisionContentProposal(MercurialRevision revision, ContentType type) {
-			super(revision.getChangeSet(), type);
+		public RevisionContentProposal(MercurialRevision revision, ContentType type, String value) {
+			super(revision.getChangeSet(), type, value);
 			this.revision = revision;
 		}
 
@@ -71,5 +101,15 @@ public class HistoryContentProposalProvider implements IContentProposalProvider 
 			return revision;
 		}
 
+		@Override
+		public String getContent() {
+			return value == null? changeSet.getName() : value;
+		}
+
+		@Override
+		protected int getMaxLineLength() {
+			return 500;
+		}
 	}
+
 }

@@ -11,7 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Subclipse project committers - reference
  *     Charles O'Farrell         - comparison diff
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Ilya Ivanov (Intland)     - modifications
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -44,6 +44,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
+import org.eclipse.jface.fieldassist.IContentProposalListener2;
 import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnWeightData;
@@ -70,15 +71,13 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -144,10 +143,57 @@ public class MercurialHistoryPage extends HistoryPage {
 	private Action backoutAction;
 	protected boolean showGoTo;
 	private Text gotoText;
-	private ContentAssistCommandAdapter contentAssist;
 	private Composite rootControl;
 	private Composite gotoPanel;
+	private HistoryContentProposalProvider proposalProvider;
+	private Job fetchAllJob;
 
+
+	private final class FetchEntireHistoryJob extends Job {
+
+		private FetchEntireHistoryJob(String name) {
+			super(name);
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			int from = mercurialHistory.getLastVersion() - 1;
+			while(from != mercurialHistory.getLastRequestedVersion()
+					&& from >= 0 && !monitor.isCanceled()) {
+				try {
+					mercurialHistory.refresh(monitor, from);
+					updateUI();
+					from = mercurialHistory.getLastVersion() - 1;
+				} catch (CoreException ex) {
+					MercurialEclipsePlugin.logError(ex);
+				}
+			}
+			return Status.OK_STATUS;
+		}
+
+		private void updateUI() {
+			final Control ctrl = viewer.getControl();
+			if (ctrl != null && !ctrl.isDisposed()) {
+				ctrl.getDisplay().syncExec(new Runnable() {
+					public void run() {
+						if (!ctrl.isDisposed()) {
+							viewer.setInput(mercurialHistory);
+							viewer.refresh();
+							// refresh the proposal list with new data
+							Listener[] listeners2 = gotoText.getListeners(SWT.KeyDown);
+							for (Listener listener : listeners2) {
+								Event event = new Event();
+								event.type = SWT.KeyDown;
+								event.keyCode = SWT.ARROW_RIGHT;
+								event.widget = gotoText;
+								listener.handleEvent(event);
+							}
+						}
+					}
+				});
+			}
+		}
+	}
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -436,63 +482,50 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	private void createGotoText(Composite parent) {
+		String tooltipForGoTo = "Type version, tag, branch, author or date \n" +
+		"+ <Enter> to jump directly to the right version.\n" +
+		"Use <Ctrl + Space> to get list of proposals.\n" +
+		"Use <Esc> to stop retrieving history for big repositories.";
 		gotoPanel = new Composite(parent, SWT.NONE);
-		gotoPanel.setLayout(new GridLayout(2, false));
+		gotoPanel.setToolTipText(tooltipForGoTo);
+		gotoPanel.setLayout(new GridLayout(1, false));
 		gotoPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
 		gotoPanel.setVisible(showGoTo);
-		gotoText = new Text(gotoPanel, SWT.BORDER);
+		gotoText = new Text(gotoPanel, SWT.SINGLE | SWT.BORDER | SWT.SEARCH
+				| SWT.ICON_CANCEL);
 		gotoText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		gotoText.setToolTipText(tooltipForGoTo);
 		gotoText.addFocusListener(new FocusAdapter() {
 			@Override
 			public void focusGained(FocusEvent e) {
-				gotoText.selectAll();
+				fetchEntireHistory(true);
+			}
+
+			@Override
+			public void focusLost(FocusEvent e) {
+				fetchEntireHistory(false);
 			}
 		});
+
 		gotoText.addKeyListener(new KeyAdapter() {
 			@Override
 			public void keyReleased(KeyEvent e) {
+				if(e.keyCode == SWT.ESC) {
+					fetchEntireHistory(false);
+					return;
+				}
 				if(e.keyCode != SWT.CR) {
 					return;
 				}
-				// TODO try to retrieve right revision and if it's there, select it
+				// try to retrieve right revision and if it's there, select it
+				String text = gotoText.getText();
+				guessAndSelectVersion(text);
 			}
 		});
-		Button fetchEntireHistory = new Button(gotoPanel, SWT.NONE);
-		fetchEntireHistory.setText("Fetch entire History");
-		fetchEntireHistory.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				Job gimmeMore = new Job("Retrieving entire history") {
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						int from = mercurialHistory.getLastVersion() - 1;
-						while(from != mercurialHistory.getLastRequestedVersion()
-								&& from >= 0 && !monitor.isCanceled()) {
-							try {
-								mercurialHistory.refresh(monitor, from);
-								from = mercurialHistory.getLastVersion() - 1;
-							} catch (CoreException ex) {
-								MercurialEclipsePlugin.logError(ex);
-							}
-						}
-						final Control ctrl = viewer.getControl();
-						if (ctrl != null && !ctrl.isDisposed()) {
-							ctrl.getDisplay().asyncExec(new Runnable() {
-								public void run() {
-									if (!ctrl.isDisposed()) {
-										viewer.setInput(mercurialHistory);
-										viewer.refresh();
-									}
-								}
-							});
-						}
-						return Status.OK_STATUS;
-					}
-				};
-				gimmeMore.setRule(new ExclusiveHistoryRule());
-				scheduleInPage(gimmeMore);
-			}
-		});
+
+		// hack is needed to make the text widget content lengt > 0, which allows us
+		// to trigger the history retrieving as soon as content assist opens
+		gotoText.setText(" ");
 		setupRevisionFieldAssistance();
 	}
 
@@ -565,6 +598,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				}
 				gotoText.setText(((MercurialRevision) selection.getFirstElement()).getChangeSet()
 						.toString());
+				gotoText.selectAll();
 			}
 		});
 		contributeActions();
@@ -574,23 +608,31 @@ public class MercurialHistoryPage extends HistoryPage {
 	 * Adds field assistance to the revision text field.
 	 */
 	private void setupRevisionFieldAssistance() {
-		contentAssist = new ContentAssistCommandAdapter(gotoText,
-				new TextContentAdapter(), new HistoryContentProposalProvider(this), null,
+		proposalProvider = new HistoryContentProposalProvider(this);
+		ContentAssistCommandAdapter contentAssist = new ContentAssistCommandAdapter(gotoText,
+				new TextContentAdapter(), proposalProvider, null,
 				null, true);
+
+		// uncomment to open popup immediately on typing first character into the text field
+		// contentAssist.setAutoActivationCharacters(null);
 		contentAssist.setAutoActivationDelay(300);
-		contentAssist.setPopupSize(new Point(320, 240));
 		contentAssist.setPropagateKeys(true);
 		contentAssist.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
-
+		contentAssist.addContentProposalListener(new IContentProposalListener2() {
+			public void proposalPopupOpened(ContentProposalAdapter adapter) {
+				fetchEntireHistory(true);
+			}
+			public void proposalPopupClosed(ContentProposalAdapter adapter) {
+				fetchEntireHistory(false);
+			}
+		});
 		contentAssist.addContentProposalListener(new IContentProposalListener() {
 			public void proposalAccepted(IContentProposal proposal) {
 				if(proposal instanceof RevisionContentProposal) {
-					RevisionContentProposal revProposal = (RevisionContentProposal) proposal;
-					MercurialRevision revision = revProposal.getRevision();
-					viewer.setSelection(new StructuredSelection(revision));
-					viewer.reveal(revision);
+					selectProposal(proposal);
 				} else {
-					// TODO parse text and try to find something
+					// try to find something
+					guessAndSelectVersion(proposal.getContent());
 				}
 			}
 		});
@@ -974,6 +1016,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 		if (refreshFileHistoryJob.getState() != Job.NONE) {
 			refreshFileHistoryJob.cancel();
+			fetchEntireHistory(false);
 		}
 		scheduleInPage(refreshFileHistoryJob);
 	}
@@ -997,8 +1040,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		return progressService;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Object getAdapter(Class adapter) {
+	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
 		return null;
 	}
 
@@ -1071,4 +1113,40 @@ public class MercurialHistoryPage extends HistoryPage {
 	public void setCurrentWorkdirChangeset(ChangeSet currentWorkdirChangeset) {
 		this.currentWorkdirChangeset = currentWorkdirChangeset;
 	}
+
+	protected synchronized void fetchEntireHistory(boolean on) {
+		if(!on) {
+			if(fetchAllJob != null) {
+				fetchAllJob.cancel();
+			}
+		} else {
+			if(fetchAllJob == null) {
+				fetchAllJob = new FetchEntireHistoryJob("Retrieving entire history");
+				fetchAllJob.setRule(new ExclusiveHistoryRule());
+			}
+			scheduleInPage(fetchAllJob);
+		}
+	}
+
+	/**
+	 * @param proposal non null
+	 */
+	private void selectProposal(IContentProposal proposal) {
+		RevisionContentProposal revProposal = (RevisionContentProposal) proposal;
+		MercurialRevision revision = revProposal.getRevision();
+		viewer.getControl().setFocus();
+		viewer.setSelection(new StructuredSelection(revision));
+		viewer.reveal(revision);
+	}
+
+	/**
+	 * @param text non null
+	 */
+	private void guessAndSelectVersion(String text) {
+		IContentProposal[] proposals = proposalProvider.getProposals(text, text.length());
+		if(proposals.length == 1) {
+			selectProposal(proposals[0]);
+		}
+	}
+
 }

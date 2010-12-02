@@ -152,15 +152,15 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		return builder.toString();
 	}
 
-	public static enum ContentType {REVISION, TAG, BRANCH}
+	public static enum ContentType {REVISION, TAG, BRANCH, AUTHOR, DATE, SUMMARY}
 
 	public static class ChangeSetContentProposal implements IContentProposal {
 
 		private static final Pattern LABEL_SPLITTER = Pattern.compile("\\.\\s|[\\n\\r]"); //$NON-NLS-1$
 
-		private final ChangeSet changeSet;
+		protected final ChangeSet changeSet;
 		private final RevisionContentProposalProvider.ContentType type;
-		private final String value;
+		protected final String value;
 		private String label;
 		private String description;
 
@@ -174,7 +174,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 			value = null;
 		}
 
-		private ChangeSetContentProposal(ChangeSet changeSet, RevisionContentProposalProvider.ContentType type, String value) {
+		public ChangeSetContentProposal(ChangeSet changeSet, RevisionContentProposalProvider.ContentType type, String value) {
 			this.changeSet = changeSet;
 			this.type = type;
 			this.value = value;
@@ -217,7 +217,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 
 			// author
 			builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.author")); //$NON-NLS-1$
-			builder.append(": ").append(changeSet.getAuthor()).append('\n'); //$NON-NLS-1$
+			builder.append(": ").append(changeSet.getAuthor()).append("\n"); //$NON-NLS-1$
 
 			// date
 			builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.date")); //$NON-NLS-1$
@@ -245,9 +245,12 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 			switch(type) {
 				case TAG:
 				case BRANCH:
+				case AUTHOR:
+				case DATE:
 					text = "[" + value + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
 					break;
 
+				case SUMMARY:
 				case REVISION:
 				default:
 					text = changeSet.getSummary();
@@ -255,12 +258,13 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 			}
 
 			// shorten label text if necessary
-			if(text.length() > 50) {
+			int maxLineLength = getMaxLineLength();
+			if(text.length() > maxLineLength) {
 				// extract first sentence or line
 				text = LABEL_SPLITTER.split(text, 2)[0].trim();
 				// shorten it if still too long
-				if(text.length() > 50) {
-					text = text.substring(0, 43).trim() + "..."; //$NON-NLS-1$
+				if(text.length() > maxLineLength) {
+					text = text.substring(0, maxLineLength - 7).trim() + "..."; //$NON-NLS-1$
 				}
 				builder.append(text);
 			} else {
@@ -268,6 +272,10 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 			}
 
 			return builder.toString();
+		}
+
+		protected int getMaxLineLength() {
+			return 50;
 		}
 
 	}
