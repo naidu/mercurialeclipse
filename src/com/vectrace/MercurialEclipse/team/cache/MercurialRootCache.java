@@ -14,12 +14,14 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.preference.IPreferenceStore;
 
@@ -147,10 +149,22 @@ public class MercurialRootCache extends AbstractCache {
 	@Override
 	protected void configureFromPreferences(IPreferenceStore store) {
 		// nothing to do
-
 	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.team.cache.AbstractCache#projectDeletedOrClosed(org.eclipse.core.resources.IProject)
+	 */
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
+		IPath projPath = project.getLocation();
+
+		if (projPath != null) {
+			for (Iterator<HgRoot> it = knownRoots.values().iterator(); it.hasNext();) {
+				if (projPath.isPrefixOf(it.next().getIPath())) {
+					it.remove();
+				}
+			}
+		}
 	}
 
 	public static MercurialRootCache getInstance(){
