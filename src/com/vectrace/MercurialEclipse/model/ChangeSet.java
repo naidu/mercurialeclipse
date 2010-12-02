@@ -404,12 +404,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 		// 4 weeks - 3 months
 		if (delta / 7 <= 12) {
-			return delta/7 + " weeks ago";
+			return delta / 7 + " weeks ago";
 		}
 
 		// 3 months - 1 year
 		if (delta / 30 <= 12) {
-			return delta/30 + " months ago";
+			return delta / 30 + " months ago";
 		}
 
 		delta /= 365;
@@ -445,18 +445,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
-			if (getChangeset().equals(other.getChangeset())) {
+			if (getChangeset().equals(other.getChangeset())
+					&& getChangesetIndex() == other.getChangesetIndex()) {
 				return true;
 			}
-			// The question is: why changesets with different id's should be
-			// equal if they dates/indexes are equal???
-			// if (date != null && date.equals(other.getDateString())) {
-			// return true;
-			// }
-
-			// changeset indices are not equal in different repos, e.g. incoming
-			// so we can't do a check solely based on indexes.
-			// return getChangesetIndex() == other.getChangesetIndex();
 		}
 		return false;
 	}
