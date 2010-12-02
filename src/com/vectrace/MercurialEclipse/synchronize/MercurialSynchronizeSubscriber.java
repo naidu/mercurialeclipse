@@ -53,6 +53,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -481,8 +482,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.beginTask(getName(), 4);
 			// clear caches in any case, but refresh them only if project exists
 			boolean forceRefresh = project.exists();
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			String syncBranch = getSyncBranch(MercurialTeamProvider.getHgRoot(project));
 
 			try {
 				CACHE_SEMA.acquire();
@@ -493,13 +493,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return;
 				}
 				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, syncBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
 				}
 				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, syncBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
@@ -654,6 +654,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	public HgChangesetsCollector getCollector() {
 		return collector;
+	}
+
+	/**
+	 * @return The branch name to synchronize, or null to synchronize all branches
+	 */
+	public static String getSyncBranch(HgRoot hgRoot) {
+		boolean syncCurBranch = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH);
+
+		return syncCurBranch ? MercurialTeamProvider.getCurrentBranch(hgRoot) : null;
 	}
 
 	@Override
