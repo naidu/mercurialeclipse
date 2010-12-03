@@ -489,7 +489,9 @@ public class MercurialHistoryPage extends HistoryPage {
 		gotoPanel = new Composite(parent, SWT.NONE);
 		gotoPanel.setToolTipText(tooltipForGoTo);
 		gotoPanel.setLayout(new GridLayout(1, false));
-		gotoPanel.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
+		gd.exclude = !showGoTo;
+		gotoPanel.setLayoutData(gd);
 		gotoPanel.setVisible(showGoTo);
 		gotoText = new Text(gotoPanel, SWT.SINGLE | SWT.BORDER | SWT.SEARCH
 				| SWT.ICON_CANCEL);
