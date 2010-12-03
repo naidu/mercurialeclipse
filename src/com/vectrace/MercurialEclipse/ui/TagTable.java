@@ -13,7 +13,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,11 +30,11 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -52,6 +54,7 @@ public class TagTable extends Composite {
 	private boolean showTip;
 
 	private HgRoot hgRoot;
+	private ItemMediator[] data;
 
 	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
@@ -61,19 +64,32 @@ public class TagTable extends Composite {
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
 
-		table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
+		table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+				| SWT.H_SCROLL | SWT.VIRTUAL);
+		table.setItemCount(0);
 		table.setLinesVisible(true);
 		table.setHeaderVisible(true);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		table.setLayoutData(data);
+		table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		String[] titles = { Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-		int[] widths = { 60, 150, 200, 70, 300};
+		String[] titles = {
+				Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+		int[] widths = { 60, 150, 200, 70, 300 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
 		}
+
+		table.addListener(SWT.SetData, new Listener() {
+			public void handleEvent(org.eclipse.swt.widgets.Event event) {
+				TableItem item = (TableItem) event.item;
+				int index = table.indexOf(item);
+
+				if (data != null && 0 <= index && index < data.length) {
+					data[index].setTableItem(item);
+				}
+			}
+		});
 	}
 
 	public void hideTip() {
@@ -90,26 +106,27 @@ public class TagTable extends Composite {
 	}
 
 	public void setTags(Tag[] tags) {
-		table.removeAll();
+		List<ItemMediator> filtered = new ArrayList<ItemMediator>(tags.length);
 
 		for (Tag tag : tags) {
-			if (showTip || !HgRevision.TIP.getChangeset().equals(tag.getName())) {
-				TableItem row = new TableItem(table, SWT.NONE);
-				if (parents != null && isParent(tag.getRevision())) {
-					row.setFont(PARENT_FONT);
-				}
-				row.setText(0, Integer.toString(tag.getRevision()));
-				row.setText(1, tag.getGlobalId());
-				row.setText(2, tag.getName());
-				row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal")  //$NON-NLS-1$
-						: Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$
-				row.setData(tag);
+			if (showTip || !tag.isTip()) {
+				filtered.add(new ItemMediator(tag));
 			}
 		}
-		fetchChangesetInfo(tags);
+
+		data = filtered.toArray(new ItemMediator[filtered.size()]);
+		table.clearAll();
+		table.setItemCount(data.length);
+
+		fetchChangesetInfo(data);
 	}
 
-	void fetchChangesetInfo(final Tag[] tags) {
+	/**
+	 * Fetch changeset comments.
+	 *
+	 * @param tags That tags for which to get comments
+	 */
+	void fetchChangesetInfo(final ItemMediator[] tags) {
 		final LocalChangesetCache cache = LocalChangesetCache.getInstance();
 		Job fetchJob = new Job("Fetching hg changesets info") {
 			@Override
@@ -131,13 +148,13 @@ public class TagTable extends Composite {
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}
-				final Map<Tag, ChangeSet> tagToCs = new HashMap<Tag, ChangeSet>();
-				for (Tag tag : tags) {
+				final Map<ItemMediator, ChangeSet> tagToCs = new HashMap<ItemMediator, ChangeSet>();
+				for (ItemMediator tag : tags) {
 					if(monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					if (showTip || !tag.isTip()) {
-						ChangeSet changeSet = tagged.get(tag.getName());
+					if (showTip || !tag.tag.isTip()) {
+						ChangeSet changeSet = tagged.get(tag.tag.getName());
 						if(changeSet != null) {
 							tagToCs.put(tag, changeSet);
 						}
@@ -146,14 +163,9 @@ public class TagTable extends Composite {
 
 				Runnable updateTable = new Runnable() {
 					public void run() {
-						if(table.isDisposed()) {
-							return;
-						}
-						TableItem[] items = table.getItems();
-						for (TableItem item : items) {
-							Object tag = item.getData();
-							if (tag instanceof Tag && tagToCs.get(tag) != null) {
-								item.setText(4, tagToCs.get(tag).getSummary());
+						for (ItemMediator item : data) {
+							if (tagToCs.get(item) != null) {
+								item.setSummary(tagToCs.get(item).getSummary());
 							}
 						}
 					}
@@ -178,6 +190,9 @@ public class TagTable extends Composite {
 	}
 
 	private boolean isParent(int r) {
+		if (parents == null) {
+			return false;
+		}
 		switch (parents.length) {
 		case 2:
 			if (r == parents[1]) {
@@ -194,4 +209,61 @@ public class TagTable extends Composite {
 		}
 	}
 
+	// inner types
+
+	/**
+	 * This would require synchronization, but it's only being called from the UI thread.
+	 */
+	private class ItemMediator
+	{
+		public final Tag tag;
+
+		private TableItem item;
+
+		private String summary;
+
+		// constructor
+
+		public ItemMediator(Tag tag) {
+			this.tag = tag;
+		}
+
+		// operations
+
+		/**
+		 * Set the summary. Must be called from the UI thread.
+		 * @param summary The summary to set
+		 */
+		public void setSummary(String summary) {
+			this.summary = summary;
+
+			if (item != null && !item.isDisposed()) {
+				item.setText(4, summary);
+			}
+		}
+
+		/**
+		 * Apply the tag information to the row. Must be called from the UI thread.
+		 *
+		 * @param curItem
+		 *            The table row
+		 */
+		public void setTableItem(TableItem curItem) {
+			if (isParent(tag.getRevision())) {
+				curItem.setFont(PARENT_FONT);
+			}
+			curItem.setText(0, Integer.toString(tag.getRevision()));
+			curItem.setText(1, tag.getGlobalId());
+			curItem.setText(2, tag.getName());
+			curItem.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") //$NON-NLS-1$
+					: Messages.getString("TagTable.stateGlobal"));
+			curItem.setData(tag);
+
+			this.item = curItem;
+
+			if (summary != null) {
+				item.setText(4, summary);
+			}
+		}
+	}
 }
