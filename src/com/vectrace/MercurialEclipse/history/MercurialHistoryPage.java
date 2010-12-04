@@ -71,9 +71,12 @@ import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.KeyAdapter;
 import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -488,7 +491,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		"Use <Esc> to stop retrieving history for big repositories.";
 		gotoPanel = new Composite(parent, SWT.NONE);
 		gotoPanel.setToolTipText(tooltipForGoTo);
-		gotoPanel.setLayout(new GridLayout(1, false));
+		gotoPanel.setLayout(new GridLayout(2, false));
 		GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
 		gd.exclude = !showGoTo;
 		gotoPanel.setLayoutData(gd);
@@ -528,6 +531,20 @@ public class MercurialHistoryPage extends HistoryPage {
 		// hack is needed to make the text widget content lengt > 0, which allows us
 		// to trigger the history retrieving as soon as content assist opens
 		gotoText.setText(" ");
+
+		Button gotoButton = new Button(gotoPanel, 0);
+		gotoButton.setImage(MercurialEclipsePlugin.getImage("actions/goto.gif"));
+		gotoButton.setToolTipText(tooltipForGoTo);
+		gotoButton.addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+
+			public void widgetSelected(SelectionEvent e) {
+				fetchEntireHistory(true);
+				guessAndSelectVersion(gotoText.getText());
+			}
+		});
+
 		setupRevisionFieldAssistance();
 	}
 
@@ -1146,9 +1163,15 @@ public class MercurialHistoryPage extends HistoryPage {
 	 */
 	private void guessAndSelectVersion(String text) {
 		IContentProposal[] proposals = proposalProvider.getProposals(text, text.length());
-		if(proposals.length == 1) {
+
+		if (proposals.length == 0) {
+			getHistoryPageSite().getWorkbenchPageSite().getActionBars().getStatusLineManager()
+					.setErrorMessage("No matches found");
+		} else if (proposals.length == 1) {
 			selectProposal(proposals[0]);
+		} else {
+			getHistoryPageSite().getWorkbenchPageSite().getActionBars().getStatusLineManager()
+					.setErrorMessage("Multiple matches found");
 		}
 	}
-
 }
