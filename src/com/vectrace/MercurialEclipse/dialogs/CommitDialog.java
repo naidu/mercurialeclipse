@@ -186,6 +186,21 @@ public class CommitDialog extends TitleAreaDialog {
 		return section;
 	}
 
+	/**
+	 * @see org.eclipse.jface.dialogs.Dialog#getDialogBoundsStrategy()
+	 */
+	@Override
+	protected int getDialogBoundsStrategy() {
+		int strategy = super.getDialogBoundsStrategy();
+
+		// When amend is set it changes the dialog size
+		if (trayControl != null) {
+			strategy &= ~DIALOG_PERSISTSIZE;
+		}
+
+		return strategy;
+	}
+
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = SWTWidgetHelper.createComposite(parent, 1);
