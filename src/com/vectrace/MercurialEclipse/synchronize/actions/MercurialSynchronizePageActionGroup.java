@@ -44,6 +44,8 @@ import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
@@ -58,9 +60,16 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=54581
 	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
+
 	private final IAction expandAction;
+
+	private final PreferenceAction allBranchesAction;
+
+	private final ArrayList<PresentationModeAction> presentationModeActions;
+
 	private OpenAction openAction;
-	private ArrayList<PresentationModeAction> presentationModeActions;
+
+	// constructor
 
 	public MercurialSynchronizePageActionGroup() {
 		super();
@@ -74,7 +83,35 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				}
 			}
 		};
+
+		presentationModeActions = new ArrayList<PresentationModeAction>();
+
+		for (PresentationMode mode : PresentationMode.values()) {
+			presentationModeActions.add(new PresentationModeAction(mode, MercurialEclipsePlugin
+					.getDefault().getPreferenceStore()));
+		}
+
+		allBranchesAction = new PreferenceAction("Synchronize all branches", IAction.AS_CHECK_BOX, MercurialEclipsePlugin
+				.getDefault().getPreferenceStore(), MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH) {
+			@Override
+			public void run() {
+				prefStore.setValue(prefKey, !isChecked());
+				MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant)getConfiguration().getParticipant();
+
+				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant
+						.getContext().getScope().getMappings());
+			}
+
+			@Override
+			protected void update() {
+				setChecked(!prefStore.getBoolean(prefKey));
+			}
+		};
+		allBranchesAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/branch.gif"));
+		allBranchesAction.update();
 	}
+
+	// operations
 
 	@Override
 	public void initialize(ISynchronizePageConfiguration configuration) {
@@ -112,13 +149,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
-
-		presentationModeActions = new ArrayList<PresentationModeAction>();
-
-		for (PresentationMode mode : PresentationMode.values()) {
-			presentationModeActions.add(new PresentationModeAction(mode, MercurialEclipsePlugin
-					.getDefault().getPreferenceStore()));
-		}
 	}
 
 	@Override
@@ -338,6 +368,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		super.fillActionBars(actionBars);
 		IToolBarManager manager = actionBars.getToolBarManager();
 		appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, allBranchesAction);
 
 		IMenuManager menu = actionBars.getMenuManager();
 		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
@@ -360,28 +391,52 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		for (PresentationModeAction action : presentationModeActions) {
 			action.dispose();
 		}
+		allBranchesAction.dispose();
 		super.dispose();
 	}
 
 	// inner types
 
-	private static class PresentationModeAction extends Action implements IPropertyChangeListener {
-		private final PresentationMode mode;
-		private final IPreferenceStore configuration;
+	/**
+	 * Listens to a preference store. Must be disposed.
+	 */
+	private static abstract class PreferenceAction extends Action implements
+			IPropertyChangeListener {
+		protected final IPreferenceStore prefStore;
+		protected final String prefKey;
 
-		protected PresentationModeAction(PresentationMode mode,
-				IPreferenceStore configuration) {
-			super(mode.toString(), IAction.AS_RADIO_BUTTON);
+		protected PreferenceAction(String name, int style, IPreferenceStore configuration,
+				String prefKey) {
+			super(name, style);
 
-			this.mode = mode;
-			this.configuration = configuration;
+			this.prefStore = configuration;
+			this.prefKey = prefKey;
 
-			update();
 			configuration.addPropertyChangeListener(this);
 		}
 
+		protected abstract void update();
+
 		public void dispose() {
-			configuration.removePropertyChangeListener(this);
+			prefStore.removePropertyChangeListener(this);
+		}
+
+		public void propertyChange(PropertyChangeEvent event) {
+			if (event.getProperty().equals(prefKey)) {
+				update();
+			}
+		}
+	}
+
+	private static class PresentationModeAction extends PreferenceAction {
+		private final PresentationMode mode;
+
+		protected PresentationModeAction(PresentationMode mode, IPreferenceStore configuration) {
+			super(mode.toString(), IAction.AS_RADIO_BUTTON, configuration,
+					PresentationMode.PREFERENCE_KEY);
+
+			this.mode = mode;
+			update();
 		}
 
 		@Override
@@ -389,14 +444,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			mode.set();
 		}
 
+		@Override
 		public void update() {
 			setChecked(mode.isSet());
-		}
-
-		public void propertyChange(PropertyChangeEvent event) {
-			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)) {
-				update();
-			}
 		}
 	}
 
