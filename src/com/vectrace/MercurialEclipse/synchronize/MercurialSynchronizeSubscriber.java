@@ -475,8 +475,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		for (IProject project : projects) {
 			IHgRepositoryLocation repositoryLocation = null;
-			Set<? extends IHgRepositoryLocation> repositoryLocations = getRepos();
-			Iterator<? extends IHgRepositoryLocation> ite = repositoryLocations.iterator();
+			Iterator<? extends IHgRepositoryLocation> ite = getRepos().iterator();
 			boolean found = false;
 			while (ite.hasNext()) {
 				IHgRepositoryLocation next = ite.next();
