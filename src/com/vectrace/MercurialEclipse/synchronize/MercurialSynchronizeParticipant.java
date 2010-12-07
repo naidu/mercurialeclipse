@@ -68,8 +68,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		super();
 	}
 
-	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx,
-			IHgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
+	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx, IHgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
 		this.repositoryLocation = repositoryLocation;
 		secondaryId = computeSecondaryId(scope, repositoryLocation);
