@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -64,7 +65,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	private SelectProjectsToSyncPage selectionPage;
 	private IProject [] projects;
 
-	private List<MercurialSynchronizeParticipant> createdParticipant;
+	private MercurialSynchronizeParticipant createdParticipant;
 
 	public MercurialParticipantSynchronizeWizard() {
 		projects = new IProject[0];
@@ -216,16 +217,14 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	private void startSync() {
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(createdParticipant.toArray(new ISynchronizeParticipant[]{}));
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{createdParticipant});
 //				new ISynchronizeParticipant[] { createdParticipant });
 		// We don't know in which site to show progress because a participant could actually be
 		// shown in multiple sites.
-		for(ISynchronizeParticipant part : createdParticipant) {
-			part.run(null /* no site */);
-		}
+			createdParticipant.run(null /* no site */);
 	}
 
-	protected List<MercurialSynchronizeParticipant> createParticipant(List<Properties> properties, IProject[] selectedProjects) {
+	protected MercurialSynchronizeParticipant createParticipant(List<Properties> properties, IProject[] selectedProjects) {
 
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 
@@ -247,7 +246,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 //					new Exception(roots.size() + " hg roots"));
 //		}
 
-		List<IHgRepositoryLocation> repos = new ArrayList<IHgRepositoryLocation>();
+		Set<IHgRepositoryLocation> repos = new TreeSet<IHgRepositoryLocation>();
 		for (Properties prop : properties) {
 			String url = prop.getProperty(ConfigurationWizardMainPage.PROP_URL);
 			String user = prop.getProperty(ConfigurationWizardMainPage.PROP_USER);
@@ -284,7 +283,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
+		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "schantz");
 
 		// do not reuse participants which may already existing, but dispose them
 		// not doing this would lead to the state where many sync. participants would listen
@@ -313,9 +312,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
 		HgSubscriberMergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx,
-				repo, scope);
+		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx,	repos, scope);
 		subscriber.setParticipant(participant2);
+		return participant2;
 	}
 
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
