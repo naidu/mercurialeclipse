@@ -226,52 +226,65 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	protected List<MercurialSynchronizeParticipant> createParticipant(List<Properties> properties, IProject[] selectedProjects) {
-		String url = prop.getProperty(ConfigurationWizardMainPage.PROP_URL);
-		String user = prop.getProperty(ConfigurationWizardMainPage.PROP_USER);
-		String pass = prop.getProperty(ConfigurationWizardMainPage.PROP_PASSWORD);
+
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays
 				.asList(selectedProjects));
 		Set<HgRoot> roots = byRoot.keySet();
 
-		// XXX what if there are zero or more then one root???
-		HgRoot hgRoot = null;
-		for (HgRoot hgRoot1 : roots) {
-			if (hgRoot1.getDefaultUrl().equals(url)) {
-				hgRoot = hgRoot1;
-				break;
-			}
-		}
+//		// XXX what if there are zero or more then one root???
+//		HgRoot hgRoot = null;
+//		for (HgRoot hgRoot1 : roots) {
+//			if (hgRoot1.getDefaultUrl().equals(url)) {
+//				hgRoot = hgRoot1;
+//				break;
+//			}
+//		}
+//
+//		if (hgRoot == null) {
+//			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ",
+//					new Exception(roots.size() + " hg roots"));
+//		}
 
-		if (hgRoot == null) {
-			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ",
-					new Exception(roots.size() + " hg roots"));
-		}
+		List<IHgRepositoryLocation> repos = new ArrayList<IHgRepositoryLocation>();
+		for (Properties prop : properties) {
+			String url = prop.getProperty(ConfigurationWizardMainPage.PROP_URL);
+			String user = prop.getProperty(ConfigurationWizardMainPage.PROP_USER);
+			String pass = prop.getProperty(ConfigurationWizardMainPage.PROP_PASSWORD);
 
-		IHgRepositoryLocation repo;
-		try {
-			repo = repoManager.getRepoLocation(url, user, pass);
-			if (pass != null && user != null) {
-				if (!pass.equals(repo.getPassword())) {
-					// At least 1 project exists, update location for that project
-					repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
+			IHgRepositoryLocation repo;
+			try {
+				HgRoot hgRoot = null;
+				for (HgRoot hgRoot1 : roots) {
+					if (hgRoot1.getDefaultUrl().equals(url)) {
+						hgRoot = hgRoot1;
+						break;
+					}
 				}
+				repo = repoManager.getRepoLocation(url, user, pass);
+				if (pass != null && user != null) {
+					if (!pass.equals(repo.getPassword())) {
+						// At least 1 project exists, update location for that project
+						repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
+					}
+				}
+				repos.add(repo);
+				try {
+					repoManager.addRepoLocation(hgRoot, repo);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				repoPage.setErrorMessage(e.getLocalizedMessage());
+				return null;
 			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			repoPage.setErrorMessage(e.getLocalizedMessage());
-			return null;
 		}
 
-		try {
-			repoManager.addRepoLocation(hgRoot, repo);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
-				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
+
+		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
 
 		// do not reuse participants which may already existing, but dispose them
 		// not doing this would lead to the state where many sync. participants would listen
@@ -281,8 +294,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		if (participant != null) {
 			try {
 				ISynchronizeParticipant participant2 = participant.getParticipant();
-				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(
-						new ISynchronizeParticipant[] { participant2 });
+				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
 				while (Display.getCurrent().readAndDispatch()) {
 					// give Team UI a chance to dispose the sync page, if any
 				}
@@ -292,16 +304,14 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 
 		// Create a new participant for given repo/project pair
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots,
-				selectedProjects);
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		ResourceMapping[] selectedMappings = new ResourceMapping[selectedProjects.length];
 		for (int i = 0; i < selectedProjects.length; i++) {
 			selectedMappings[i] = (ResourceMapping) selectedProjects[i]
 					.getAdapter(ResourceMapping.class);
 		}
-		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings,
-				subscriber);
+		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
 		HgSubscriberMergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
 		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx,
 				repo, scope);
