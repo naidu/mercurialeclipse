@@ -1,0 +1,7 @@
+[repository]
+native = LF
+[patterns]
+**.java = LF
+**.xml = LF
+**.properties = LF
+**.txt = LF
