@@ -175,7 +175,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 
 		@Override
 		protected IStatus run(IProgressMonitor moni) {
-			IHgRepositoryLocation location = participant.getRepositoryLocation().iterator().next(); //TODO schantz
+			IHgRepositoryLocation location = participant.getRepositoryLocation(hgRoot); //TODO schantz
 			if(location == null){
 				return Status.OK_STATUS;
 			}
