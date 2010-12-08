@@ -261,7 +261,8 @@ public class CommitDialog extends TitleAreaDialog {
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else if (commitFilesList.getCheckedResources().size() == 0 && !options.allowEmptyCommit
 				&& commitFilesList.isSelectable()
-				&& (amendCheckbox == null || !amendCheckbox.getSelection())) {
+				&& (amendCheckbox == null || !amendCheckbox.getSelection())
+				&& !isCloseBranchSelected()) {
 			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
@@ -474,7 +475,7 @@ public class CommitDialog extends TitleAreaDialog {
 				updateChangeset(pm);
 
 				// only proceed if files are present
-				if (currentChangeset.getChangedFiles() == null) {
+				if (currentChangeset.getChangedFiles().isEmpty()) {
 					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend"));
 					return;
 				}

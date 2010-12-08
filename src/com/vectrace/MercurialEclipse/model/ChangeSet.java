@@ -52,7 +52,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		Collections.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private final IFile[] EMPTY_FILES = new IFile[0];
-	private final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
+	private static final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm Z");
 
 	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
@@ -280,7 +280,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public String getDateString() {
 		Date d = getRealDate();
 		if (d != null) {
-			return DISPLAY_DATE_FORMAT.format(d);
+			// needed because static date format instances are not thread safe
+			synchronized (DISPLAY_DATE_FORMAT) {
+				return DISPLAY_DATE_FORMAT.format(d);
+			}
 		}
 		return date;
 	}
@@ -463,7 +466,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		try {
 			if (realDate == null) {
 				if (date != null) {
-					realDate = INPUT_DATE_FORMAT.parse(date);
+					// needed because static date format instances are not thread safe
+					synchronized (INPUT_DATE_FORMAT) {
+						realDate = INPUT_DATE_FORMAT.parse(date);
+					}
 				} else {
 					realDate = UNKNOWN_DATE;
 				}
