@@ -56,7 +56,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			"yyyy-MM-dd HH:mm Z");
 
 	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
-			"yyyy-MM-dd hh:mm");
+			"yyyy-MM-dd HH:mm");
 
 	public static final Date UNKNOWN_DATE = new Date(0);
 
