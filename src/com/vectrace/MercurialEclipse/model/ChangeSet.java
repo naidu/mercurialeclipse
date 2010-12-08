@@ -51,8 +51,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private static final List<FileStatus> EMPTY_STATUS =
 		Collections.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
-	private static final IFile[] EMPTY_FILES = new IFile[0];
-	private static final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
+	private final IFile[] EMPTY_FILES = new IFile[0];
+	private final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm Z");
 
 	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
@@ -463,10 +463,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		try {
 			if (realDate == null) {
 				if (date != null) {
-					// needed because static date format instances are not thread safe
-					synchronized (INPUT_DATE_FORMAT) {
-						realDate = INPUT_DATE_FORMAT.parse(date);
-					}
+					realDate = INPUT_DATE_FORMAT.parse(date);
 				} else {
 					realDate = UNKNOWN_DATE;
 				}
