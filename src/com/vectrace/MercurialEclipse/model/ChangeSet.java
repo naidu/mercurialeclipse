@@ -51,8 +51,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		Collections.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
-	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
+	private static final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
 			"yyyy-MM-dd hh:mm Z");
+
+	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
+			"yyyy-MM-dd hh:mm");
+
 	public static final Date UNKNOWN_DATE = new Date(0);
 
 	public static enum Direction {
@@ -273,21 +277,11 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	public String getDateString() {
-		// return date;
-		String dt = date;
-		if (dt != null) {
-			// Return date without extra time-zone.
-			int off = dt.lastIndexOf(' ');
-			if (off != -1 && off < dt.length() - 1) {
-				switch (dt.charAt(off + 1)) {
-				case '+':
-				case '-':
-					dt = dt.substring(0, off);
-					break;
-				}
-			}
+		Date d = getRealDate();
+		if (d != null) {
+			return DISPLAY_DATE_FORMAT.format(d);
 		}
-		return dt;
+		return date;
 	}
 
 	@Override
@@ -460,7 +454,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		try {
 			if (realDate == null) {
 				if (date != null) {
-					realDate = SIMPLE_DATE_FORMAT.parse(date);
+					realDate = INPUT_DATE_FORMAT.parse(date);
 				} else {
 					realDate = UNKNOWN_DATE;
 				}
