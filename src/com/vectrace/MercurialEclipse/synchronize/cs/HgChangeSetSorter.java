@@ -20,8 +20,8 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * @author Andrei
@@ -37,17 +37,20 @@ public class HgChangeSetSorter extends ViewerSorter {
 
 	@Override
 	public int category(Object element) {
-		if(element instanceof WorkingChangeSet){
+		if(element instanceof SuperChangesetGroup){
 			return 0;
 		}
-		if(element instanceof ChangesetGroup){
+		if(element instanceof WorkingChangeSet){
 			return 1;
 		}
-		if(element instanceof ChangeSet){
+		if(element instanceof ChangesetGroup){
 			return 2;
 		}
-		if(element instanceof IResource){
+		if(element instanceof ChangeSet){
 			return 3;
+		}
+		if(element instanceof IResource){
+			return 4;
 		}
 		return super.category(element);
 	}
@@ -56,6 +59,7 @@ public class HgChangeSetSorter extends ViewerSorter {
 		// not used yet
 	}
 
+	//TODO schantz need sorting of super groups
 	@Override
 	public int compare(Viewer viewer, Object e1, Object e2) {
 		int cat1 = category(e1);

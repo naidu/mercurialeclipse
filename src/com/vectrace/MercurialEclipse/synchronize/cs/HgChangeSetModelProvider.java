@@ -48,8 +48,7 @@ public class HgChangeSetModelProvider extends ModelProvider {
 
 		}
 
-		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1,
-				ISynchronizationScope scope) {
+		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1, ISynchronizationScope scope) {
 			HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider) provider1;
 			RepositorySynchronizationScope rscope = (RepositorySynchronizationScope) scope;
 			MercurialSynchronizeSubscriber subscriber = rscope.getSubscriber();
