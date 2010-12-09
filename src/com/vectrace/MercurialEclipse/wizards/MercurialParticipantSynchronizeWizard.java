@@ -283,7 +283,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "schantz");
+		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "Mercurial"); //TODO Better name
 
 		// do not reuse participants which may already existing, but dispose them
 		// not doing this would lead to the state where many sync. participants would listen
@@ -340,7 +340,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	protected void createParticipant() {
-//		createdParticipant = createParticipant(repoPage.getProperties(), selectionPage.getSelectedProjects());
 		createdParticipant = createParticipant(prepareSettings(), selectionPage.getSelectedProjects());
 	}
 

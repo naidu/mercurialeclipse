@@ -75,7 +75,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx, Set<IHgRepositoryLocation> repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
 		this.repositoryLocation = repositoryLocation;
-		secondaryId = computeSecondaryId(scope, repositoryLocation);
+		secondaryId = "Mercurial"; //computeSecondaryId(scope, repositoryLocation);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(getId());
 			setInitializationData(descriptor);
@@ -84,7 +84,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 	}
 
-	private String computeSecondaryId(RepositorySynchronizationScope scope, Set<IHgRepositoryLocation> repos) {
+	public static String computeSecondaryId(RepositorySynchronizationScope scope, Set<IHgRepositoryLocation> repos) {
 		IProject[] projects = scope.getProjects();
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){

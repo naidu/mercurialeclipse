@@ -179,11 +179,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// noop
 	}
 
+	ChangesetsCollectorJob job;
+
 	@Override
 	protected void initializeSets() {
-		Job job = new ChangesetsCollectorJob("Initializing changesets");
-		job.setRule(new ExclusiveRule());
-		job.schedule(100);
+		if(job == null) {
+			job = new ChangesetsCollectorJob("Initializing changesets");
+			job.setRule(new ExclusiveRule());
+			job.schedule(100);
+		}
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
@@ -283,9 +287,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// fireDefaultChangedEvent(null, null);
 
 		// TODO not sure if this is a too big hammer, but right now it seems to fix the update issue #10985
-		initializeSets();
+		if(!initializing) {
+			synchronized (this) {
+				initializing = true;
+				initializeSets();
+				initializing = false;
+			}
+		}
 	}
-
+	boolean initializing;
 
 	@Override
 	public String toString() {

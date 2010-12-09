@@ -522,7 +522,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} finally {
 				CACHE_SEMA.release();
 			}
-		}
+
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
@@ -539,6 +539,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
+		}
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -641,6 +642,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		};
 		job.schedule(100);
 	}
+
 
 	/**
 	 * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}
