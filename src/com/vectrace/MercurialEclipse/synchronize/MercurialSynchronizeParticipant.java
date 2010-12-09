@@ -75,7 +75,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx, Set<IHgRepositoryLocation> repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
 		this.repositoryLocation = repositoryLocation;
-		secondaryId = "schantz"; // computeSecondaryId(scope, repositoryLocation);
+		secondaryId = computeSecondaryId(scope, repositoryLocation);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(getId());
 			setInitializationData(descriptor);
@@ -84,18 +84,25 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 	}
 
-	private String computeSecondaryId(RepositorySynchronizationScope scope, IHgRepositoryLocation repo) {
+	private String computeSecondaryId(RepositorySynchronizationScope scope, Set<IHgRepositoryLocation> repos) {
 		IProject[] projects = scope.getProjects();
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
 			sb.append("[");
 			for (IProject project : projects) {
-				sb.append(project.getName()).append(',');
+				for(IHgRepositoryLocation repo : repos) {
+					Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
+					for (HgRoot hgRoot : hgRoots) {
+						if(hgRoot.getIPath().toString().equals(project.getLocation().toString())) {
+							sb.append(project.getName()).append(" ("+repo.getLocation()+") ").append(',');
+						}
+					}
+				}
+
 			}
 			sb.deleteCharAt(sb.length() - 1);
 			sb.append("] ");
 		}
-		sb.append(repo.getLocation());
 		if(sb.charAt(sb.length() - 1) == '/'){
 			sb.deleteCharAt(sb.length() - 1);
 		}
@@ -112,8 +119,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		try {
 			repositoryLocation = new HashSet<IHgRepositoryLocation>();
 			String[] split = uri.split(",");
-			for (String string : split) {
-				repositoryLocation.add(MercurialEclipsePlugin.getRepoManager().getRepoLocation(string)); // URI WRONG
+			for (String url : split) {
+				repositoryLocation.add(MercurialEclipsePlugin.getRepoManager().getRepoLocation(url));
 			}
 		} catch (HgException e) {
 			throw new PartInitException(e.getLocalizedMessage(), e);
