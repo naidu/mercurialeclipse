@@ -8,6 +8,8 @@
  * Contributors:
  * 	   IBM Corporation - initial API and implementation
  *     Andrei Loskutov - adopting to hg
+ *     Soren Mathiasen - implemented multiple repositories
+ *     Martin Olsen    - implemented multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
