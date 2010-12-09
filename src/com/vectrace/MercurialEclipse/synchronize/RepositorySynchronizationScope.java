@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     Andrei Loskutov (Intland) - implementation
+ *     Martin Olsen (Schantz) 	 - Synchronization of Multiple repositories
+
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -34,7 +36,6 @@ import org.eclipse.team.internal.ui.Utils;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
@@ -207,17 +208,8 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		Iterator<? extends IHgRepositoryLocation> iterator = repo.iterator();
 		while (iterator.hasNext()) {
 			IHgRepositoryLocation next = iterator.next();
-			if (next instanceof HgRoot) {
-				HgRoot repos = (HgRoot) next;
-				if (repos.getDefaultUrl().equals(root.getDefaultUrl())) {
-					return repos;
-				}
-			}
-			if (next instanceof HgRepositoryLocation) {
-				HgRepositoryLocation repos = (HgRepositoryLocation) next;
-				if (repos.toString().equals(root.getDefaultUrl())) {
-					return repos;
-				}
+			if(root.isDefaultLocation(next)) {
+				return next;
 			}
 		}
 		return null;
