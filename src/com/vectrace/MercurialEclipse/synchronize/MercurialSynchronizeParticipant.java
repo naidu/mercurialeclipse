@@ -8,6 +8,7 @@
  * Contributors:
  *     Bastian Doetsch				- implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -46,7 +47,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
@@ -233,18 +233,9 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
 		Iterator<? extends IHgRepositoryLocation> iterator = repositoryLocation.iterator();
 		while (iterator.hasNext()) {
-			IHgRepositoryLocation next = iterator.next();
-			if (next instanceof HgRoot) {
-				HgRoot repos = (HgRoot) next;
-				if (repos.getDefaultUrl().equals(root.getDefaultUrl())) {
-					return repos;
-				}
-			}
-			if (next instanceof HgRepositoryLocation) {
-				HgRepositoryLocation repos = (HgRepositoryLocation) next;
-				if (repos.toString().equals(root.getDefaultUrl())) {
-					return repos;
-				}
+			IHgRepositoryLocation loc = iterator.next();
+			if(root.isDefaultLocation(loc)) {
+				return loc;
 			}
 		}
 		return null;

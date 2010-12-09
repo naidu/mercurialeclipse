@@ -8,6 +8,7 @@
  * Contributors:
  * bastian	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -22,6 +23,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -193,5 +195,26 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	public boolean isLocal() {
 		return true;
+	}
+
+	public boolean isDefaultLocation(IHgRepositoryLocation location) {
+		if (location instanceof HgRoot) {
+			HgRoot repos = (HgRoot) location;
+			if (repos.getDefaultUrl().equals(getDefaultUrl())) {
+				return true;
+			}
+		}
+		if (location instanceof HgRepositoryLocation) {
+			HgRepositoryLocation repos = (HgRepositoryLocation) location;
+			String defaultLocaction = getDefaultUrl();
+			if(defaultLocaction.contains("@")) {
+				String[] parts = defaultLocaction.split("://");
+				defaultLocaction = parts[0] + "://" + parts[1].substring(parts[1].indexOf("@") + 1);
+			}
+			if (repos.toString().equals(defaultLocaction)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
