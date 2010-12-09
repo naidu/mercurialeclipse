@@ -120,11 +120,11 @@ public final class HgSignClient {
 		}
 	}
 
-	public static String getPrivateKeyList() throws HgException {
+	public static String getPrivateKeyList(HgRoot hgRoot) throws HgException {
 		List<String> getKeysCmd = new ArrayList<String>();
 		getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
 		getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
-		GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
+		GpgCommand command = new GpgCommand(hgRoot, getKeysCmd, ResourcesPlugin
 				.getWorkspace().getRoot().getLocation().toFile(), false);
 		return new String(command.executeToBytes());
 	}

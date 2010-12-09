@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import java.io.File;
-
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
@@ -36,8 +34,7 @@ public class HgQHeaderClient extends AbstractClient {
 	 *             Thrown when the Hg command cannot be executed.
 	 */
 	public static String getHeader(IResource resource) throws HgException {
-		File workingDir = getWorkingDirectory(resource);
-		AbstractShellCommand command = new HgCommand("qheader", workingDir, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("qheader", resource, false); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		return command.executeToString().trim();
 	}

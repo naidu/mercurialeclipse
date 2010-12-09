@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +31,7 @@ public class HgDebugInstallClient extends AbstractClient {
 	}
 
 	private static AbstractShellCommand getDebugInstallCommand() {
-		return new HgCommand("debuginstall", (File) null, true);
+		return new RootlessHgCommand("debuginstall", true);
 	}
 
 	/**

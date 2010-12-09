@@ -45,7 +45,7 @@ public class HgQRefreshClient extends AbstractClient {
 			boolean git, String include, String exclude, String user, String date)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

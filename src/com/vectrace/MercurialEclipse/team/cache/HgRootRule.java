@@ -15,7 +15,6 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author Andrei
@@ -38,8 +37,9 @@ public class HgRootRule implements ISchedulingRule {
 				return false;
 			}
 			if(rule instanceof IResource){
-				IResource resource = (IResource) rule;
-				return getHgRoot().equals(MercurialTeamProvider.getHgRoot(resource.getProject()));
+				HgRoot resourceRoot = MercurialRootCache.getInstance().getHgRoot((IResource) rule);
+
+				return getHgRoot().equals(resourceRoot);
 			}
 			return false;
 		}

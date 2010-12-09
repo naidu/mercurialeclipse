@@ -32,8 +32,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -232,7 +232,7 @@ public class MercurialRevisionStorage implements IStorage {
 			try {
 				result = HgCatClient.getContentFromBundle(file,
 						changeSet.getRevision().getChangeset(),
-						changeSet.getBundleFile().getCanonicalPath());
+						changeSet.getBundleFile());
 			} catch (IOException e) {
 				throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
 			}

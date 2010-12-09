@@ -28,8 +28,7 @@ import com.vectrace.MercurialEclipse.model.Patch;
 public class HgQAppliedClient extends AbstractClient {
 	public static List<Patch> getAppliedPatches(IResource resource) throws HgException {
 		Assert.isNotNull(resource);
-		AbstractShellCommand command = new HgCommand(
-				"qapplied", getWorkingDirectory(resource), true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("qapplied", resource, true); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$
@@ -38,8 +37,7 @@ public class HgQAppliedClient extends AbstractClient {
 
 	public static List<Patch> getUnappliedPatches(IResource resource) throws HgException{
 		Assert.isNotNull(resource);
-		AbstractShellCommand command = new HgCommand(
-				"qunapplied", getWorkingDirectory(resource), true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("qunapplied", resource, true); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$

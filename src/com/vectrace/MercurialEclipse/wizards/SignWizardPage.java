@@ -134,7 +134,7 @@ public class SignWizardPage extends HgWizardPage {
 
 	private void populateKeyCombo(Combo combo) {
 		try {
-			String keys = HgSignClient.getPrivateKeyList();
+			String keys = HgSignClient.getPrivateKeyList(hgRoot);
 			if (keys.indexOf("\n") == -1) { //$NON-NLS-1$
 				combo.add(keys);
 			} else {

@@ -39,7 +39,7 @@ public class HgIdentClient extends AbstractClient {
 	public static String getCurrentRevision(IResource resource)
 	throws HgException {
 		AbstractShellCommand command = new HgCommand("identify", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				resource, true);
 		command
 		.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-nibt"); //$NON-NLS-1$

@@ -53,7 +53,9 @@ public class TransplantOperation extends HgOperation {
 		this.repo = repo;
 	}
 
-	@Override
+	/**
+	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public void run(final IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 

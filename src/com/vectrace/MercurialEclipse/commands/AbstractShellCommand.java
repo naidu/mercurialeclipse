@@ -11,6 +11,7 @@
  *     Adam Berkes (Intland)     - bug fixes/restructure
  *     Zsolt Koppany (Intland)   - enhancements
  *     Philip Graf               - use default timeout from preferences
+ *     John Peberdy              - refactoring
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -45,7 +46,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -228,9 +228,20 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected String command;
 	protected List<String> commands;
-	protected boolean escapeFiles;
+
+	/**
+	 * Whether files should be preceded by "--" on the command line.
+	 * @see #files
+	 */
+	protected final boolean escapeFiles;
+
 	protected List<String> options;
-	protected File workingDir;
+
+	/**
+	 * The working directory. May be null for default working directory.
+	 */
+	protected final File workingDir;
+
 	protected final List<String> files;
 	private String timeoutConstant;
 	private ProzessWrapper processWrapper;
@@ -239,12 +250,26 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private final boolean isDebugging;
 	private final boolean debugExecTime;
 
-	private HgRoot hgRoot;
+	/**
+	 * Though this command might not invoke hg, it might get encoding information from it. May be
+	 * null.
+	 */
+	protected final HgRoot hgRoot;
 
 	private DefaultExecutionRule executionRule;
 
-	protected AbstractShellCommand() {
+	// constructors
+
+	/**
+	 * @param hgRoot
+	 *            Though this command might not invoke hg, it might get encoding information from
+	 *            it. May be null.
+	 */
+	protected AbstractShellCommand(HgRoot hgRoot, File workingDir, boolean escapeFiles) {
 		super();
+		this.hgRoot = hgRoot;
+		this.workingDir = workingDir;
+		this.escapeFiles = escapeFiles;
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
@@ -254,12 +279,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
 	}
 
-	protected AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
-		this();
-		this.escapeFiles = escapeFiles;
-		this.workingDir = workingDir;
+	protected AbstractShellCommand(HgRoot hgRoot, List<String> commands, File workingDir, boolean escapeFiles) {
+		this(hgRoot, workingDir, escapeFiles);
+
 		this.commands = commands;
 	}
+
+	// operations
 
 	/**
 	 * Per default, a non-exclusive rule is created
@@ -306,8 +332,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
 			throws HgException {
-
-		hgRoot = setupHgRoot();
 
 		List<String> cmd = getCommands();
 
@@ -415,18 +439,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
 		cmd.add(1, "--config"); //$NON-NLS-1$
 		return charset;
-	}
-
-	private HgRoot setupHgRoot() {
-		if (workingDir == null) {
-			return null;
-		}
-		try {
-			return HgClients.getHgRoot(workingDir);
-		} catch (HgCoreException e) {
-			// no hg root found
-			return null;
-		}
 	}
 
 	private void waitForConsumer(int timeout) throws InterruptedException {

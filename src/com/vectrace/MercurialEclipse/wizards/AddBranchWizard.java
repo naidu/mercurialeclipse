@@ -53,7 +53,9 @@ public class AddBranchWizard extends HgWizard {
 			return Messages.getString("AddBranchWizard.AddBranchOperation.actionDescription"); //$NON-NLS-1$
 		}
 
-		@Override
+		/**
+		 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
 
