@@ -40,6 +40,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	private Charset fallbackencoding;
 	private File config;
 	private String user;
+	private String defaultURL;
 
 	public HgRoot(String pathname) throws IOException {
 		super(pathname);
@@ -150,6 +151,18 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 			}
 		}
 		return StringUtils.isEmpty(user)? null : user;
+	}
+
+	public String getDefaultUrl() {
+		if(defaultURL == null){
+			String configItem = getConfigItem("paths", "default");
+			if(StringUtils.isEmpty(configItem)){
+				defaultURL = "";
+			} else {
+				defaultURL = configItem.trim();
+			}
+		}
+		return StringUtils.isEmpty(defaultURL)? null : defaultURL;
 	}
 
 	@Override

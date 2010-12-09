@@ -281,6 +281,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * Returns the shared instance.
 	 */
 	public static MercurialEclipsePlugin getDefault() {
+		plugin.setDebugging(true);
 		return plugin;
 	}
 

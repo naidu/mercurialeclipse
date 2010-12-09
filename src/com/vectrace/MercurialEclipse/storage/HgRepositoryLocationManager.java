@@ -22,11 +22,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -164,9 +164,13 @@ public class HgRepositoryLocationManager {
 
 		Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
 		for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
-			SortedSet<IHgRepositoryLocation> set = entry.getValue();
-			if (set != null && set.contains(repo)) {
-				projects.addAll(ResourceUtils.getProjects(entry.getKey()));
+			Set<IHgRepositoryLocation> set = entry.getValue();
+			Iterator<IHgRepositoryLocation> ite = set.iterator();
+			while (ite.hasNext()) {
+				IHgRepositoryLocation obj = ite.next();
+				if (obj.equals(repo)) {
+					projects.addAll(ResourceUtils.getProjects(entry.getKey()));
+				}
 			}
 		}
 		return projects;
