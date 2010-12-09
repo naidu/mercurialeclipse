@@ -117,7 +117,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
 				return name + " (empty)";
 			}
-			return name + "incoming(" + group.getIncoming().getChangesets().size() + "), outgoing("+group.getIncoming().getChangesets().size()+")";
+			return name + " incoming(" + group.getIncoming().getChangesets().size() + "), outgoing("+group.getIncoming().getChangesets().size()+")";
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;
