@@ -54,11 +54,14 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 @SuppressWarnings("restriction")
@@ -242,8 +245,17 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				HgChangeSetModelProvider provider = (HgChangeSetModelProvider) parent;
 				if (provider.getSubscriber() != null) {
 					Set<IHgRepositoryLocation> repositoryLocations = provider.getSubscriber().getParticipant().getRepositoryLocation();
+					MercurialSynchronizeSubscriber subscriber = provider.getSubscriber();
+					RepositorySynchronizationScope scope = subscriber.getScope();
+					IProject[] roots = scope.getRoots();
+
 					for (IHgRepositoryLocation repoLocation : repositoryLocations) {
-						SuperChangesetGroup scg = new SuperChangesetGroup(repoLocation.getLocation(), repoLocation);
+						Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
+						String projectName = " "+repoLocation.getLocation();
+						if(hgRoots.size() == 1) {
+							projectName = " "+hgRoots.iterator().next().getName();
+						}
+						SuperChangesetGroup scg = new SuperChangesetGroup(projectName, repoLocation);
 						scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 						scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
 						projectThing.add(scg);

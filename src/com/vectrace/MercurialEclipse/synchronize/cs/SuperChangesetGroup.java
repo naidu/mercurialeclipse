@@ -17,6 +17,7 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 /**
  * @author Soren Mathiasen
  */
+@SuppressWarnings("restriction")
 public class SuperChangesetGroup {
 
 	private final String name;
