@@ -24,6 +24,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -339,12 +340,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if (path.isEmpty()) {
 				out.addAll(data);
 			} else {
-				out.add(new PathFromChangeSet(parent, path.toString()) {
-					@Override
-					public Object[] getChildren() {
-						return data.toArray(new FileFromChangeSet[data.size()]);
-					}
-				});
+				out.add(new CompressedTreePathFromChangeSet(parent, path.toString(), data));
 			}
 		}
 
@@ -704,4 +700,35 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		public abstract Object[] getChildren();
 	}
+
+	/**
+	 * Made public for object contributions
+	 */
+	public class CompressedTreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+
+		private final List<FileFromChangeSet> data;
+		private IResource resource;
+
+		public CompressedTreePathFromChangeSet(Object prnt, String seg, List<FileFromChangeSet> data) {
+			super(prnt, seg);
+			this.data = data;
+
+			if (data != null && data.size() > 0) {
+				this.resource = data.get(0).getFile().getParent();
+			}
+		}
+
+		@Override
+		public Object[] getChildren() {
+			return data.toArray(new FileFromChangeSet[data.size()]);
+		}
+
+		public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+			if (IResource.class.equals(adapter)) {
+				return resource;
+			}
+			return null;
+		}
+	}
+
 }

@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -33,6 +34,7 @@ import org.eclipse.ui.navigator.ICommonViewerSite;
 import org.eclipse.ui.navigator.ICommonViewerWorkbenchSite;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
@@ -101,7 +103,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 			return;
 		}
 		IResource resource = ResourceUtils.getResource(element);
-		if (!(resource instanceof IFile) || !resource.exists()) {
+		if ((!(resource instanceof IFile) && !(resource instanceof IFolder)) || !resource.exists()) {
 			return;
 		}
 
