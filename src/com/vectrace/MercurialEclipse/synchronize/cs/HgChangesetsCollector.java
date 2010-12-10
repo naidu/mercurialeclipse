@@ -179,15 +179,11 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// noop
 	}
 
-	ChangesetsCollectorJob job;
-
 	@Override
 	protected void initializeSets() {
-		if(job == null) {
-			job = new ChangesetsCollectorJob("Initializing changesets");
-			job.setRule(new ExclusiveRule());
-			job.schedule(100);
-		}
+		ChangesetsCollectorJob job = new ChangesetsCollectorJob("Initializing changesets");
+		job.setRule(new ExclusiveRule());
+		job.schedule(100);
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {

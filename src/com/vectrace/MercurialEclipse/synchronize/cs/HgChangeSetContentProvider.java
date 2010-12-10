@@ -121,7 +121,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);
-				if (toRefresh != null) {
+//				if (toRefresh != null) {
 					boolean added = toRefresh.getChangesets().add(set);
 					if (added) {
 						Utils.asyncExec(new Runnable() {
@@ -130,7 +130,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 							}
 						}, getTreeViewer());
 					}
-				}
+//				}
 			}
 		}
 
