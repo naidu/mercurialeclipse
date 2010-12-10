@@ -8,6 +8,8 @@
  * Contributors:
  * 	   IBM Corporation - initial API and implementation
  *     Andrei Loskutov - adopting to hg
+ *     Soren Mathiasen - implemented multiple repositories
+ *     Martin Olsen    - implemented multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -54,6 +56,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
@@ -92,15 +96,16 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final class PreferenceListener implements IPropertyChangeListener {
 		public void propertyChange(PropertyChangeEvent event) {
 			Object input = getTreeViewer().getInput();
-			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)
-					&& input instanceof HgChangeSetModelProvider) {
+			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)	&& input instanceof HgChangeSetModelProvider) {
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
-						treeViewer.refresh(outgoing, true);
-						treeViewer.refresh(incoming, true);
+						for(SuperChangesetGroup sg : projectGroup) {
+							treeViewer.refresh(sg.getOutgoing(), true);
+							treeViewer.refresh(sg.getIncoming(), true);
+						}
 						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());
@@ -111,19 +116,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final class CollectorListener implements IChangeSetChangeListener, BatchingChangeSetManager.IChangeSetCollectorChangeListener {
 
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
-			ChangeSet set = (ChangeSet)cs;
+			ChangeSet set = (ChangeSet) cs;
 
 			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
-				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
-						: outgoing;
-				boolean added = toRefresh.getChangesets().add(set);
-				if(added) {
-					Utils.asyncExec(new Runnable() {
-						public void run() {
-							getTreeViewer().refresh(toRefresh, true);
-						}
-					}, getTreeViewer());
+				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);
+				if (toRefresh != null) {
+					boolean added = toRefresh.getChangesets().add(set);
+					if (added) {
+						Utils.asyncExec(new Runnable() {
+							public void run() {
+								getTreeViewer().refresh(toRefresh, true);
+							}
+						}, getTreeViewer());
+					}
 				}
 			}
 		}
@@ -133,8 +139,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 			set.removeListener(changeSetListener);
 			if (isVisibleInMode(set)) {
-				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
-						: outgoing;
+				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);// = set.getDirection() == Direction.INCOMING ? incoming : outgoing;
 				boolean removed = toRefresh.getChangesets().remove(set);
 				if(removed) {
 					Utils.asyncExec(new Runnable() {
@@ -146,8 +151,28 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 		}
 
-		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
-				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
+		/**
+		 * @param cs
+		 * @param toRefresh
+		 * @return
+		 */
+		private ChangesetGroup findChangeSetInProjects(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
+			ChangeSet set = (ChangeSet) cs;
+			for (SuperChangesetGroup sg : projectGroup) {
+				if (set.getRepository().equals(sg.getLocation())) {
+
+					if (set.getDirection() == Direction.INCOMING) {
+						return sg.getIncoming();
+					}
+					if (set.getDirection() == Direction.OUTGOING) {
+						return sg.getOutgoing();
+					}
+				}
+			}
+			return null;
+		}
+
+		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault, final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
 			// user has requested a manual refresh: simply refresh root elements
 			getRootElements();
 		}
@@ -165,21 +190,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 	}
 
-	private HgChangesetsCollector csCollector;
+	private static HgChangesetsCollector csCollector;
 	private boolean collectorInitialized;
 	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
 	private final IPropertyChangeListener uncommittedSetListener;
 	private final IPropertyChangeListener preferenceListener;
-	private final ChangesetGroup incoming;
-	private final ChangesetGroup outgoing;
+	private final List<SuperChangesetGroup> projectGroup;
 	private WorkbenchContentProvider provider;
+	boolean initialized;
 
 	public HgChangeSetContentProvider() {
 		super();
 		uncommittedSet = new WorkingChangeSet("Uncommitted");
-		incoming = new ChangesetGroup("Incoming", Direction.INCOMING);
-		outgoing = new ChangesetGroup("Outgoing", Direction.OUTGOING);
+		projectGroup = new ArrayList<SuperChangesetGroup>();
 		collectorListener = new CollectorListener();
 		uncommittedSetListener = new UcommittedSetListener();
 		preferenceListener = new PreferenceListener();
@@ -212,6 +236,28 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	@Override
 	public Object[] getElements(Object parent) {
+
+		if (!initialized) {
+			if (parent instanceof HgChangeSetModelProvider) {
+				HgChangeSetModelProvider provider = (HgChangeSetModelProvider) parent;
+				if (provider.getSubscriber() != null) {
+					Set<IHgRepositoryLocation> repositoryLocations = provider.getSubscriber().getParticipant().getRepositoryLocation();
+					for (IHgRepositoryLocation repoLocation : repositoryLocations) {
+						Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
+						String projectName = repoLocation.getLocation();
+						if(hgRoots.size() == 1) {
+							projectName = hgRoots.iterator().next().getName();
+						}
+						SuperChangesetGroup scg = new SuperChangesetGroup(projectName, repoLocation);
+						scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
+						scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
+						projectGroup.add(scg);
+					}
+				}
+
+				initialized = true;
+			}
+		}
 		if (parent instanceof ISynchronizationContext) {
 			// Do not show change sets when all models are visible because
 			// model providers that override the resource content may cause
@@ -241,6 +287,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return group.getChangesets().toArray();
 			}
+		} else if (parent instanceof SuperChangesetGroup) {
+			SuperChangesetGroup supergroup = (SuperChangesetGroup) parent;
+			ArrayList<ChangesetGroup> groups =new ArrayList<ChangesetGroup>();
+			groups.add(supergroup.getIncoming());
+			groups.add(supergroup.getOutgoing());
+			return groups.toArray();
 		} else if (parent instanceof ChangeSet) {
 			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
 
@@ -359,6 +411,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 	}
 
+	// traverse throgh elements and add them to the correct group
 	private Object[] getRootElements() {
 		initCollector();
 		List<ChangeSet> result = new ArrayList<ChangeSet>();
@@ -371,16 +424,29 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		boolean showOutgoing = isOutgoingVisible();
 		boolean showIncoming = isIncomingVisible();
 		for (ChangeSet set : result) {
-			Direction direction = set.getDirection();
-			if(showOutgoing && (isOutgoing(direction))){
-				outgoing.getChangesets().add(set);
-			}
-			if(showIncoming && direction == Direction.INCOMING){
-				incoming.getChangesets().add(set);
+			for (SuperChangesetGroup group : projectGroup) {
+				if (set.getRepository().equals(group.getLocation())) {
+					Direction direction = set.getDirection();
+					if (showOutgoing && (isOutgoing(direction))) {
+						group.getOutgoing().getChangesets().add(set);
+					}
+					if (showIncoming && direction == Direction.INCOMING) {
+						group.getIncoming().getChangesets().add(set);
+					}
+				}
 			}
 		}
+//		projectThing.getChangesets().add(outgoing);
+//		projectThing.getChangesets().add(incoming);
+
 		addAllUnassignedToUnassignedSet();
-		return new Object[]{uncommittedSet, outgoing, incoming};
+		ArrayList itemsToShow = new ArrayList();
+		itemsToShow.add(uncommittedSet);
+		for(SuperChangesetGroup group : projectGroup) {
+			itemsToShow.add(group);
+		}
+
+		return itemsToShow.toArray();
 	}
 
 	private synchronized void initCollector() {
@@ -396,8 +462,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 
 	@Override
-	protected ResourceTraversal[] getTraversals(
-			ISynchronizationContext context, Object object) {
+	protected ResourceTraversal[] getTraversals(ISynchronizationContext context, Object object) {
 		if (object instanceof ChangeSet) {
 			ChangeSet set = (ChangeSet) object;
 			IResource[] resources = set.getResources();
@@ -416,6 +481,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 			IResource[] resources = all.toArray(new IResource[0]);
 			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
+		}
+		if(object instanceof SuperChangesetGroup){
+			SuperChangesetGroup supergroup = (SuperChangesetGroup) object;
+			Set<IFile> all = new HashSet<IFile>();
+				Set<ChangeSet> changesets = supergroup.getIncoming().getChangesets();
+				for (ChangeSet changeSet : changesets) {
+					all.addAll(changeSet.getFiles());
+				}
+				changesets = supergroup.getOutgoing().getChangesets();
+				for (ChangeSet changeSet : changesets) {
+					all.addAll(changeSet.getFiles());
+				}
+			IResource[] resources = all.toArray(new IResource[0]);
+			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO,	IResource.NONE) };
 		}
 		return new ResourceTraversal[0];
 	}
@@ -437,6 +516,15 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return true;
 			}
+		} else if (element instanceof SuperChangesetGroup) {
+//			SuperChangesetGroup supergroup = (SuperChangesetGroup) element;
+//				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
+//					return true;
+//				}
+//				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
+//					return true;
+//				}
+			return true;
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
@@ -509,8 +597,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		INavigatorSorterService sortingService = contentService.getSorterService();
 		INavigatorContentExtension extension = getExtensionSite().getExtension();
 		if (extension != null) {
-			ViewerSorter sorter = sortingService.findSorter(extension.getDescriptor(),
-					getModelProvider(), incoming, incoming);
+			ViewerSorter sorter = sortingService.findSorter(extension.getDescriptor(), getModelProvider(), null, null); // incoming, incoming
 			if (sorter instanceof HgChangeSetSorter) {
 				return (HgChangeSetSorter) sorter;
 			}
@@ -539,8 +626,12 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		uncommittedSet.removeListener(uncommittedSetListener);
 		STATUS_CACHE.deleteObserver(uncommittedSet);
 		uncommittedSet.dispose();
-		outgoing.getChangesets().clear();
-		incoming.getChangesets().clear();
+
+		for(SuperChangesetGroup sg : projectGroup) {
+			sg.getOutgoing().getChangesets().clear();
+			sg.getIncoming().getChangesets().clear();
+
+		}
 		super.dispose();
 	}
 
@@ -618,10 +709,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		if(changeset == null || changeset instanceof WorkingChangeSet){
 			return null;
 		}
-		if(changeset.getDirection() == Direction.INCOMING){
-			return incoming;
-		}
-		return outgoing;
+		return null;
+//		if(changeset.getDirection() == Direction.INCOMING){
+//			return incoming;
+//		}
+//		return outgoing;
 	}
 
 	@Override
@@ -640,16 +732,16 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			builder.append(provider);
 			builder.append(", ");
 		}
-		if (incoming != null) {
-			builder.append("incoming=");
-			builder.append(incoming);
-			builder.append(", ");
-		}
-		if (outgoing != null) {
-			builder.append("outgoing=");
-			builder.append(outgoing);
-			builder.append(", ");
-		}
+//		if (incoming != null) {
+//			builder.append("incoming=");
+//			builder.append(incoming);
+//			builder.append(", ");
+//		}
+//		if (outgoing != null) {
+//			builder.append("outgoing=");
+//			builder.append(outgoing);
+//			builder.append(", ");
+//		}
 		if (uncommittedSet != null) {
 			builder.append("uncommittedSet=");
 			builder.append(uncommittedSet);

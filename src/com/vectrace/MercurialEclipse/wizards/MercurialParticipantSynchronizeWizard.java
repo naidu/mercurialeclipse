@@ -11,12 +11,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -116,7 +119,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	public IWizardPage getStartingPage() {
-		return  getRootResources().length > 0? selectionPage : importWizard.getStartingPage();
+		return  /*getRootResources().length > 0 ?*/ selectionPage; // : importWizard.getStartingPage();
 	}
 
 	private ConfigurationWizardMainPage createrepositoryConfigPage() {
@@ -141,26 +144,28 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	/**
-	 * @return properties object if all information needed to synchronize is available,
-	 * 	null if some settings are missing
+	 * @return properties object if all information needed to synchronize is available, null if some
+	 *         settings are missing
 	 */
-	public Properties prepareSettings() {
+	public List<Properties> prepareSettings() {
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
-		if(roots.size() == 1){
-			Properties pageProperties = initProperties(roots.iterator().next());
-			if(isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
+		ArrayList<Properties> result = new ArrayList<Properties>();
+		Iterator<HgRoot> ite = roots.iterator();
+		while (ite.hasNext()) {
+			Properties pageProperties = initProperties(ite.next());
+			if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
-						return pageProperties;
+						result.add(pageProperties);
 					}
 				} else {
-					return pageProperties;
+					result.add(pageProperties);
 				}
 			}
 		}
-		return null;
+		return result;
 	}
 
 	private static boolean isValid(Properties pageProperties, String key){
@@ -174,8 +179,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 * root (may be empty)
 	 */
 	static Properties initProperties(HgRoot hgRoot) {
-		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultRepoLocation(hgRoot);
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
 		Properties properties = new Properties();
 		if(repoLocation != null){
 			if(repoLocation.getLocation() != null) {
@@ -199,8 +203,8 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			performFinish = super.performFinish();
 		} else {
 			// UI was not created, so we just need to continue with synchronization
-			Properties properties = prepareSettings();
-			if(properties != null) {
+			List<Properties> properties = prepareSettings();
+			if(properties != null && properties.size() > 0) {
 				createdParticipant = createParticipant(properties, getInitialSelection());
 			} else {
 				performFinish = false;
@@ -213,64 +217,84 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	private void startSync() {
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(
-				new ISynchronizeParticipant[] { createdParticipant });
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{createdParticipant});
+//				new ISynchronizeParticipant[] { createdParticipant });
 		// We don't know in which site to show progress because a participant could actually be
 		// shown in multiple sites.
-		createdParticipant.run(null /* no site */);
+			createdParticipant.run(null /* no site */);
 	}
 
-	protected MercurialSynchronizeParticipant createParticipant(Properties properties, IProject[] selectedProjects) {
-		String url = properties.getProperty(ConfigurationWizardMainPage.PROP_URL);
-		String user = properties.getProperty(ConfigurationWizardMainPage.PROP_USER);
-		String pass = properties.getProperty(ConfigurationWizardMainPage.PROP_PASSWORD);
+	protected MercurialSynchronizeParticipant createParticipant(List<Properties> properties, IProject[] selectedProjects) {
+
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 
-
-		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays
+				.asList(selectedProjects));
 		Set<HgRoot> roots = byRoot.keySet();
 
-		// XXX what if there are zero or more then one root???
-		if(roots.size() != 1){
-			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ", new Exception(
-					roots.size() + " hg roots"));
-		}
+//		// XXX what if there are zero or more then one root???
+//		HgRoot hgRoot = null;
+//		for (HgRoot hgRoot1 : roots) {
+//			if (hgRoot1.getDefaultUrl().equals(url)) {
+//				hgRoot = hgRoot1;
+//				break;
+//			}
+//		}
+//
+//		if (hgRoot == null) {
+//			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ",
+//					new Exception(roots.size() + " hg roots"));
+//		}
 
-		HgRoot hgRoot = roots.iterator().next();
-		IHgRepositoryLocation repo;
-		try {
-			repo = repoManager.getRepoLocation(url, user, pass);
-			if(pass != null && user != null){
-				if(!pass.equals(repo.getPassword())){
-					// At least 1 project exists, update location for that project
-					repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
+		Set<IHgRepositoryLocation> repos = new TreeSet<IHgRepositoryLocation>();
+		for (Properties prop : properties) {
+			String url = prop.getProperty(ConfigurationWizardMainPage.PROP_URL);
+			String user = prop.getProperty(ConfigurationWizardMainPage.PROP_USER);
+			String pass = prop.getProperty(ConfigurationWizardMainPage.PROP_PASSWORD);
+
+			IHgRepositoryLocation repo;
+			try {
+				HgRoot hgRoot = null;
+				for (HgRoot hgRoot1 : roots) {
+					if (hgRoot1.getDefaultUrl().equals(url)) {
+						hgRoot = hgRoot1;
+						break;
+					}
 				}
+				repo = repoManager.getRepoLocation(url, user, pass);
+				if (pass != null && user != null) {
+					if (!pass.equals(repo.getPassword())) {
+						// At least 1 project exists, update location for that project
+						repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
+					}
+				}
+				repos.add(repo);
+				try {
+					repoManager.addRepoLocation(hgRoot, repo);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				repoPage.setErrorMessage(e.getLocalizedMessage());
+				return null;
 			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			repoPage.setErrorMessage(e.getLocalizedMessage());
-			return null;
 		}
 
-		try {
-			repoManager.addRepoLocation(hgRoot, repo);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
-				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
+
+		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "Mercurial"); //TODO Better name
 
 		// do not reuse participants which may already existing, but dispose them
 		// not doing this would lead to the state where many sync. participants would listen
 		// to resource changes and update/request same data/cashes many times
 		// we can not reuse participants because their scope can be different (if there are
 		// more then one project under same repository)
-		if(participant != null){
+		if (participant != null) {
 			try {
 				ISynchronizeParticipant participant2 = participant.getParticipant();
-				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[]{participant2});
-				while(Display.getCurrent().readAndDispatch()){
+				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
+				while (Display.getCurrent().readAndDispatch()) {
 					// give Team UI a chance to dispose the sync page, if any
 				}
 			} catch (TeamException e) {
@@ -279,15 +303,16 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 
 		// Create a new participant for given repo/project pair
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repo, selectedProjects);
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		ResourceMapping[] selectedMappings = new ResourceMapping[selectedProjects.length];
 		for (int i = 0; i < selectedProjects.length; i++) {
-			selectedMappings[i] = (ResourceMapping) selectedProjects[i].getAdapter(ResourceMapping.class);
+			selectedMappings[i] = (ResourceMapping) selectedProjects[i]
+					.getAdapter(ResourceMapping.class);
 		}
 		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
 		HgSubscriberMergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx, repo, scope);
+		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx,	repos, scope);
 		subscriber.setParticipant(participant2);
 		return participant2;
 	}
@@ -315,7 +340,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	protected void createParticipant() {
-		createdParticipant = createParticipant(repoPage.getProperties(), selectionPage.getSelectedProjects());
+		createdParticipant = createParticipant(prepareSettings(), selectionPage.getSelectedProjects());
 	}
 
 	@Override

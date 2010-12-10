@@ -216,7 +216,14 @@ public class TagDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.removeTag")); //$NON-NLS-1$
 		Composite composite = SWTWidgetHelper.createComposite(folder, 1);
+
 		final TagTable tt = new TagTable(composite, hgRoot);
+		tt.hideTip();
+
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.heightHint = 150;
+		tt.setLayoutData(data);
+
 		try {
 			tt.setTags(HgTagClient.getTags(hgRoot));
 		} catch (HgException e2) {

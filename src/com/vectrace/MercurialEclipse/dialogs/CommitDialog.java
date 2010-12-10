@@ -186,6 +186,21 @@ public class CommitDialog extends TitleAreaDialog {
 		return section;
 	}
 
+	/**
+	 * @see org.eclipse.jface.dialogs.Dialog#getDialogBoundsStrategy()
+	 */
+	@Override
+	protected int getDialogBoundsStrategy() {
+		int strategy = super.getDialogBoundsStrategy();
+
+		// When amend is set it changes the dialog size
+		if (trayControl != null) {
+			strategy &= ~DIALOG_PERSISTSIZE;
+		}
+
+		return strategy;
+	}
+
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = SWTWidgetHelper.createComposite(parent, 1);
@@ -246,7 +261,8 @@ public class CommitDialog extends TitleAreaDialog {
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else if (commitFilesList.getCheckedResources().size() == 0 && !options.allowEmptyCommit
 				&& commitFilesList.isSelectable()
-				&& (amendCheckbox == null || !amendCheckbox.getSelection())) {
+				&& (amendCheckbox == null || !amendCheckbox.getSelection())
+				&& !isCloseBranchSelected()) {
 			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
@@ -459,7 +475,7 @@ public class CommitDialog extends TitleAreaDialog {
 				updateChangeset(pm);
 
 				// only proceed if files are present
-				if (currentChangeset.getChangedFiles() == null) {
+				if (currentChangeset.getChangedFiles().isEmpty()) {
 					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend"));
 					return;
 				}

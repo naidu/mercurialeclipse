@@ -21,7 +21,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -52,9 +51,13 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private static final List<FileStatus> EMPTY_STATUS =
 		Collections.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
-	private static final IFile[] EMPTY_FILES = new IFile[0];
-	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
+	private final IFile[] EMPTY_FILES = new IFile[0];
+	private static final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
 			"yyyy-MM-dd HH:mm Z");
+
+	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm");
+
 	public static final Date UNKNOWN_DATE = new Date(0);
 
 	public static enum Direction {
@@ -275,21 +278,14 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	public String getDateString() {
-		// return date;
-		String dt = date;
-		if (dt != null) {
-			// Return date without extra time-zone.
-			int off = dt.lastIndexOf(' ');
-			if (off != -1 && off < dt.length() - 1) {
-				switch (dt.charAt(off + 1)) {
-				case '+':
-				case '-':
-					dt = dt.substring(0, off);
-					break;
-				}
+		Date d = getRealDate();
+		if (d != null) {
+			// needed because static date format instances are not thread safe
+			synchronized (DISPLAY_DATE_FORMAT) {
+				return DISPLAY_DATE_FORMAT.format(d);
 			}
 		}
-		return dt;
+		return date;
 	}
 
 	@Override
@@ -380,26 +376,42 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	private String constructAge(Date creationDate) {
-		Calendar now = Calendar.getInstance();
-		Calendar created = Calendar.getInstance();
-		created.setTime(creationDate);
-		if (!created.before(now)) {
-			return "0 seconds ago";
-		}
+		long delta = System.currentTimeMillis() - creationDate.getTime();
 
-		if (now.get(Calendar.YEAR) - created.get(Calendar.YEAR) > 0) {
-			return now.get(Calendar.YEAR) - created.get(Calendar.YEAR) + " years ago";
-		} else if (now.get(Calendar.MONTH) - created.get(Calendar.MONTH) > 0) {
-			return now.get(Calendar.MONTH) - created.get(Calendar.MONTH) + " months ago";
-		} else if (now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) > 0) {
-			return now.get(Calendar.DAY_OF_MONTH) - created.get(Calendar.DAY_OF_MONTH) + " days ago";
-		} else if (now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) > 0) {
-			return now.get(Calendar.HOUR_OF_DAY) - created.get(Calendar.HOUR_OF_DAY) + " hours ago";
-		} else if (now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) > 0) {
-			return now.get(Calendar.MINUTE) - created.get(Calendar.MINUTE) + " minutes ago";
-		} else {
+		delta /= 1000 * 60; // units is minutes
+
+		if (delta <= 0) {
 			return "less than a minute ago";
 		}
+
+		if (delta <= 60) {
+			return delta + " minutes ago";
+		}
+
+		delta /= 60;
+		if (delta <= 24) {
+			return delta + " hours ago";
+		}
+
+		// 1 day to 31 days
+		delta /= 24; // units is days
+		if (delta <= 31) {
+			return delta + " days ago";
+		}
+
+		// 4 weeks - 3 months
+		if (delta / 7 <= 12) {
+			return delta / 7 + " weeks ago";
+		}
+
+		// 3 months - 1 year
+		if (delta / 30 <= 12) {
+			return delta / 30 + " months ago";
+		}
+
+		delta /= 365;
+
+		return delta + " years ago";
 	}
 
 	/**
@@ -430,18 +442,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
-			if (getChangeset().equals(other.getChangeset())) {
+			if (getChangeset().equals(other.getChangeset())
+					&& getChangesetIndex() == other.getChangesetIndex()) {
 				return true;
 			}
-			// The question is: why changesets with different id's should be
-			// equal if they dates/indexes are equal???
-			// if (date != null && date.equals(other.getDateString())) {
-			// return true;
-			// }
-
-			// changeset indices are not equal in different repos, e.g. incoming
-			// so we can't do a check solely based on indexes.
-			// return getChangesetIndex() == other.getChangesetIndex();
 		}
 		return false;
 	}
@@ -463,8 +467,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			if (realDate == null) {
 				if (date != null) {
 					// needed because static date format instances are not thread safe
-					synchronized (SIMPLE_DATE_FORMAT) {
-						realDate = SIMPLE_DATE_FORMAT.parse(date);
+					synchronized (INPUT_DATE_FORMAT) {
+						realDate = INPUT_DATE_FORMAT.parse(date);
 					}
 				} else {
 					realDate = UNKNOWN_DATE;

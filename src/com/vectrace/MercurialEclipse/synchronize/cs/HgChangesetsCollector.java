@@ -33,10 +33,9 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -180,11 +179,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// noop
 	}
 
+	ChangesetsCollectorJob job;
+
 	@Override
 	protected void initializeSets() {
-		Job job = new ChangesetsCollectorJob("Initializing changesets");
-		job.setRule(new ExclusiveRule());
-		job.schedule(100);
+		if(job == null) {
+			job = new ChangesetsCollectorJob("Initializing changesets");
+			job.setRule(new ExclusiveRule());
+			job.schedule(100);
+		}
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
@@ -199,9 +202,8 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			return EMPTY_SET;
 		}
 
-		final IHgRepositoryLocation repo = participant.getRepositoryLocation();
+
 		final Set<ChangeSet> result = new HashSet<ChangeSet>();
-		final boolean syncCurBranch = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH);
 
 		Runnable runnable = new Runnable() {
 			public void run() {
@@ -210,18 +212,20 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					if(hgRoot == null){
 						continue;
 					}
-					String currentBranch = syncCurBranch ? MercurialTeamProvider.getCurrentBranch(hgRoot) : null;
+					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
-						result.addAll(cache.getChangeSets(project, repo, currentBranch));
+						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						result.addAll(cache.getChangeSets(project, repo, syncBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
 				}
 				Set<HgRoot> roots = ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet();
 				for (HgRoot hgRoot : roots) {
-					String currentBranch = syncCurBranch ? MercurialTeamProvider.getCurrentBranch(hgRoot) : null;
+					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
-						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, currentBranch, result));
+						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, syncBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
@@ -283,9 +287,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// fireDefaultChangedEvent(null, null);
 
 		// TODO not sure if this is a too big hammer, but right now it seems to fix the update issue #10985
-		initializeSets();
+		if(!initializing) {
+			synchronized (this) {
+				initializing = true;
+				initializeSets();
+				initializing = false;
+			}
+		}
 	}
-
+	boolean initializing;
 
 	@Override
 	public String toString() {

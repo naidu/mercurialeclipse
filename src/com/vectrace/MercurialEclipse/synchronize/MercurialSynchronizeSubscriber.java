@@ -17,6 +17,7 @@ import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConst
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +54,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -126,7 +128,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		String currentBranch = MercurialTeamProvider.getCurrentBranch(root);
 
-		IHgRepositoryLocation repo = getRepo();
+		IHgRepositoryLocation repo = getRepo(root);
 		if(computeFullState) {
 			return getSyncInfo(file, root, currentBranch, repo);
 		}
@@ -439,9 +441,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			resourcesToRefresh = null;
 		}
 
-		IHgRepositoryLocation repositoryLocation = getRepo();
-		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocationProjects(repositoryLocation);
 
 		Set<HgRoot> roots = byRoot.keySet();
 		try {
@@ -475,14 +474,25 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		for (IProject project : projects) {
-			if (!repoLocationProjects.contains(project)) {
+			IHgRepositoryLocation repositoryLocation = null;
+			Iterator<? extends IHgRepositoryLocation> ite = getRepos().iterator();
+			boolean found = false;
+			while (ite.hasNext()) {
+				IHgRepositoryLocation next = ite.next();
+				Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(next);
+				if (repoLocationProjects.contains(project)) {
+					found = true;
+					repositoryLocation = next;
+					break;
+				}
+			}
+			if (!found) {
 				continue;
 			}
 			monitor.beginTask(getName(), 4);
 			// clear caches in any case, but refresh them only if project exists
 			boolean forceRefresh = project.exists();
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			String syncBranch = getSyncBranch(MercurialTeamProvider.getHgRoot(project));
 
 			try {
 				CACHE_SEMA.acquire();
@@ -493,13 +503,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return;
 				}
 				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, syncBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
 				}
 				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, syncBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
@@ -512,7 +522,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} finally {
 				CACHE_SEMA.release();
 			}
-		}
+
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
@@ -529,6 +539,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
+		}
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -590,8 +601,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope;
 	}
 
-	protected IHgRepositoryLocation getRepo(){
-		return scope.getRepositoryLocation();
+	protected IHgRepositoryLocation getRepo(HgRoot root){
+		return scope.getRepositoryLocation(root);
+	}
+
+	protected Set<? extends IHgRepositoryLocation> getRepos(){
+		return scope.getRepositoryLocations();
 	}
 
 	public IProject[] getProjects() {
@@ -628,6 +643,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		job.schedule(100);
 	}
 
+
 	/**
 	 * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}
 	 * {@inheritDoc}
@@ -654,6 +670,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	public HgChangesetsCollector getCollector() {
 		return collector;
+	}
+
+	/**
+	 * @return The branch name to synchronize, or null to synchronize all branches
+	 */
+	public static String getSyncBranch(HgRoot hgRoot) {
+		boolean syncCurBranch = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH);
+
+		return syncCurBranch ? MercurialTeamProvider.getCurrentBranch(hgRoot) : null;
 	}
 
 	@Override
