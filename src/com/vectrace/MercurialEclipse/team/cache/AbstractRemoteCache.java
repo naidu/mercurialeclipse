@@ -177,8 +177,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> getChangeSets(IResource resource,
-			IHgRepositoryLocation repository, String branch) throws HgException {
+	public SortedSet<ChangeSet> getChangeSets(IResource resource, IHgRepositoryLocation repository, String branch) throws HgException {
 		IProject project = resource.getProject();
 		// check if mercurial is team provider and if we're working on an open project
 		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
