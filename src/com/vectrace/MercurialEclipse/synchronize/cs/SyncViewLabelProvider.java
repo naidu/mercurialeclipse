@@ -55,7 +55,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		} else if (element instanceof PathFromChangeSet) {
 			image = PlatformUI.getWorkbench().getSharedImages().getImage(
 					ISharedImages.IMG_OBJ_FOLDER);
-		} else if (element instanceof SuperChangesetGroup) {
+		} else if (element instanceof RepositoryChangesetGroup) {
 			image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER);
 		} else {
 			try {
@@ -113,8 +113,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 			return name + " (" + group.getChangesets().size() + ')';
 		}
-		if(elementOrPath instanceof SuperChangesetGroup){
-			SuperChangesetGroup group = (SuperChangesetGroup) elementOrPath;
+		if(elementOrPath instanceof RepositoryChangesetGroup){
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) elementOrPath;
 			String name = group.getName();
 			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
 				return name + " (empty)";

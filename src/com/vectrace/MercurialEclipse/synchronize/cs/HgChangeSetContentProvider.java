@@ -102,7 +102,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
-						for(SuperChangesetGroup sg : projectGroup) {
+						for(RepositoryChangesetGroup sg : projectGroup) {
 							treeViewer.refresh(sg.getOutgoing(), true);
 							treeViewer.refresh(sg.getIncoming(), true);
 						}
@@ -158,7 +158,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		 */
 		private ChangesetGroup findChangeSetInProjects(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
 			ChangeSet set = (ChangeSet) cs;
-			for (SuperChangesetGroup sg : projectGroup) {
+			for (RepositoryChangesetGroup sg : projectGroup) {
 				if (set.getRepository().equals(sg.getLocation())) {
 
 					if (set.getDirection() == Direction.INCOMING) {
@@ -190,20 +190,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 	}
 
-	private static HgChangesetsCollector csCollector;
+	private HgChangesetsCollector csCollector;
 	private boolean collectorInitialized;
 	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
 	private final IPropertyChangeListener uncommittedSetListener;
 	private final IPropertyChangeListener preferenceListener;
-	private final List<SuperChangesetGroup> projectGroup;
+	private final List<RepositoryChangesetGroup> projectGroup;
 	private WorkbenchContentProvider provider;
 	boolean initialized;
 
 	public HgChangeSetContentProvider() {
 		super();
 		uncommittedSet = new WorkingChangeSet("Uncommitted");
-		projectGroup = new ArrayList<SuperChangesetGroup>();
+		projectGroup = new ArrayList<RepositoryChangesetGroup>();
 		collectorListener = new CollectorListener();
 		uncommittedSetListener = new UcommittedSetListener();
 		preferenceListener = new PreferenceListener();
@@ -248,7 +248,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 						if(hgRoots.size() == 1) {
 							projectName = hgRoots.iterator().next().getName();
 						}
-						SuperChangesetGroup scg = new SuperChangesetGroup(projectName, repoLocation);
+						RepositoryChangesetGroup scg = new RepositoryChangesetGroup(projectName, repoLocation);
 						scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 						scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
 						projectGroup.add(scg);
@@ -287,8 +287,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return group.getChangesets().toArray();
 			}
-		} else if (parent instanceof SuperChangesetGroup) {
-			SuperChangesetGroup supergroup = (SuperChangesetGroup) parent;
+		} else if (parent instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) parent;
 			ArrayList<ChangesetGroup> groups =new ArrayList<ChangesetGroup>();
 			groups.add(supergroup.getIncoming());
 			groups.add(supergroup.getOutgoing());
@@ -424,7 +424,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		boolean showOutgoing = isOutgoingVisible();
 		boolean showIncoming = isIncomingVisible();
 		for (ChangeSet set : result) {
-			for (SuperChangesetGroup group : projectGroup) {
+			for (RepositoryChangesetGroup group : projectGroup) {
 				if (set.getRepository().equals(group.getLocation())) {
 					Direction direction = set.getDirection();
 					if (showOutgoing && (isOutgoing(direction))) {
@@ -442,7 +442,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		addAllUnassignedToUnassignedSet();
 		ArrayList itemsToShow = new ArrayList();
 		itemsToShow.add(uncommittedSet);
-		for(SuperChangesetGroup group : projectGroup) {
+		for(RepositoryChangesetGroup group : projectGroup) {
 			itemsToShow.add(group);
 		}
 
@@ -482,8 +482,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			IResource[] resources = all.toArray(new IResource[0]);
 			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
 		}
-		if(object instanceof SuperChangesetGroup){
-			SuperChangesetGroup supergroup = (SuperChangesetGroup) object;
+		if(object instanceof RepositoryChangesetGroup){
+			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) object;
 			Set<IFile> all = new HashSet<IFile>();
 				Set<ChangeSet> changesets = supergroup.getIncoming().getChangesets();
 				for (ChangeSet changeSet : changesets) {
@@ -516,7 +516,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if(isIncomingVisible() && direction == Direction.INCOMING){
 				return true;
 			}
-		} else if (element instanceof SuperChangesetGroup) {
+		} else if (element instanceof RepositoryChangesetGroup) {
 //			SuperChangesetGroup supergroup = (SuperChangesetGroup) element;
 //				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
 //					return true;
@@ -627,7 +627,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		STATUS_CACHE.deleteObserver(uncommittedSet);
 		uncommittedSet.dispose();
 
-		for(SuperChangesetGroup sg : projectGroup) {
+		for(RepositoryChangesetGroup sg : projectGroup) {
 			sg.getOutgoing().getChangesets().clear();
 			sg.getIncoming().getChangesets().clear();
 

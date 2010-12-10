@@ -18,14 +18,14 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
  * @author Soren Mathiasen
  */
 @SuppressWarnings("restriction")
-public class SuperChangesetGroup {
+public class RepositoryChangesetGroup {
 
 	private final String name;
 	private ChangesetGroup incoming;
 	private ChangesetGroup outgoing;
 	private final IHgRepositoryLocation location;
 
-	public SuperChangesetGroup(String name, IHgRepositoryLocation location) {
+	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location) {
 		this.name = name;
 		this.location = location;
 	}

@@ -37,7 +37,7 @@ public class HgChangeSetSorter extends ViewerSorter {
 
 	@Override
 	public int category(Object element) {
-		if(element instanceof SuperChangesetGroup){
+		if(element instanceof RepositoryChangesetGroup){
 			return 0;
 		}
 		if(element instanceof WorkingChangeSet){
