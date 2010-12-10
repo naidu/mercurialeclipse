@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,8 +63,8 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 			if(changeSet.getHgRoot() != null) {
 				object = changeSet.getHgRoot();
 			} else if (object instanceof WorkingChangeSet) {
-				Set<IProject> projects = ((MercurialSynchronizeParticipant)configuration.getParticipant()).getRestoredProjects();
-				Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(projects);
+				IProject[] projects = ((MercurialSynchronizeParticipant)configuration.getParticipant()).getContext().getScope().getProjects();
+				Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(projects));
 				Set<HgRoot> roots = byRoot.keySet();
 				if (roots.size() == 1) {
 					object = roots.iterator().next();
