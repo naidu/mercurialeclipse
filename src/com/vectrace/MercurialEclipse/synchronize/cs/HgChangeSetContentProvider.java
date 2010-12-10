@@ -116,18 +116,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final class CollectorListener implements IChangeSetChangeListener, BatchingChangeSetManager.IChangeSetCollectorChangeListener {
 
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
-			ChangeSet set = (ChangeSet)cs;
+			ChangeSet set = (ChangeSet) cs;
 
 			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);
-				boolean added = toRefresh.getChangesets().add(set);
-				if(added) {
-					Utils.asyncExec(new Runnable() {
-						public void run() {
-							getTreeViewer().refresh(toRefresh, true);
-						}
-					}, getTreeViewer());
+				if (toRefresh != null) {
+					boolean added = toRefresh.getChangesets().add(set);
+					if (added) {
+						Utils.asyncExec(new Runnable() {
+							public void run() {
+								getTreeViewer().refresh(toRefresh, true);
+							}
+						}, getTreeViewer());
+					}
 				}
 			}
 		}
@@ -189,7 +191,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private static HgChangesetsCollector csCollector;
-	private static  boolean collectorInitialized;
+	private boolean collectorInitialized;
 	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
 	private final IPropertyChangeListener uncommittedSetListener;
@@ -515,13 +517,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				return true;
 			}
 		} else if (element instanceof SuperChangesetGroup) {
-			SuperChangesetGroup supergroup = (SuperChangesetGroup) element;
-				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
-					return true;
-				}
-				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
-					return true;
-				}
+//			SuperChangesetGroup supergroup = (SuperChangesetGroup) element;
+//				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
+//					return true;
+//				}
+//				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
+//					return true;
+//				}
+			return true;
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
