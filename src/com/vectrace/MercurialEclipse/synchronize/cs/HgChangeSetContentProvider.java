@@ -52,6 +52,7 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -60,6 +61,7 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 @SuppressWarnings("restriction")
 public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
@@ -304,15 +306,35 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		for (String seg : map.keySet()) {
 			final List<Object> data = map.get(seg);
 
-			out.add(new PathFromChangeSet(parent, seg) {
-				@Override
-				public Object[] getChildren() {
-					return collectTree(this, data);
-				}
-			});
+			IResource segmentResource = resolveCurrentSegment(data);
+
+			out.add(new TreePathFromChangeSet(parent, seg, data, segmentResource));
 		}
 
 		return out.toArray(new Object[out.size()]);
+	}
+
+	private IResource resolveCurrentSegment(List<Object> data) {
+		IResource result = null;
+		if (data.size() > 1) {
+			// first object must be an IPath
+			Object o1 = data.get(0);
+			// and second must be FileFromChangeSet
+			Object o2 = data.get(1);
+			if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
+				IResource childResource = ResourceUtils.getResource(o2);
+				IPath childPath = (IPath) o1;
+
+				IPath folderPath = childResource.getLocation().removeLastSegments(childPath.segmentCount() + 1);
+				try {
+					result = ResourceUtils.convert(folderPath.toFile());
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		}
+
+		return result;
 	}
 
 	private Object[] collectCompressedTree(Object parent, FileFromChangeSet[] files) {
@@ -721,6 +743,33 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		@Override
 		public Object[] getChildren() {
 			return data.toArray(new FileFromChangeSet[data.size()]);
+		}
+
+		public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+			if (IResource.class.equals(adapter)) {
+				return resource;
+			}
+			return null;
+		}
+	}
+
+	/**
+	 * Made public for object contributions
+	 */
+	public class TreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+
+		private final List<Object> data;
+		private final IResource resource;
+
+		public TreePathFromChangeSet(Object prnt, String seg, List<Object> data, IResource res) {
+			super(prnt, seg);
+			this.data = data;
+			this.resource = res;
+		}
+
+		@Override
+		public Object[] getChildren() {
+			return collectTree(HgChangeSetContentProvider.this, data);
 		}
 
 		public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
