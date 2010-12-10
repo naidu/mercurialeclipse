@@ -37,6 +37,7 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -83,7 +84,20 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 				hgRoot = changeSet.getHgRoot();
 			}
 		}
-
+		if (target instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) target;
+			checkChangesets(monitor, group);
+			if(monitor.isCanceled()){
+				return;
+			}
+			if(isPull){
+				changeSet = null;
+				hgRoot = group.getIncoming().getChangesets().iterator().next().getHgRoot();
+			} else {
+				changeSet = Collections.min(group.getOutgoing().getChangesets(), new ChangeSetComparator());
+				hgRoot = changeSet.getHgRoot();
+			}
+		}
 		if(hgRoot == null){
 			String message = "No hg root found for: " + target + ". Operation cancelled.";
 			Status status = new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, message);
@@ -142,6 +156,39 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		});
 	}
 
+	@SuppressWarnings("boxing")
+	private void checkChangesets(final IProgressMonitor monitor, RepositoryChangesetGroup group) {
+		Integer csCount = null;
+		if(isPull) {
+			csCount = group.getIncoming().getChangesets().size();
+		} else {
+			csCount = group.getOutgoing().getChangesets().size();
+		}
+
+		if(csCount == null || csCount < 1){
+			// paranoia...
+			monitor.setCanceled(true);
+			return;
+		}
+		final String title;
+		final String message;
+		if(isPull){
+			title = "Hg Pull";
+			message = "Pulling " + csCount + " changesets (or more) from the remote repository.\n"
+					+ "The pull will fetch the *latest* version available remote.\n" + "Continue?";
+		} else {
+			if(csCount == 1){
+				return;
+			}
+			title = "Hg Push";
+			message = "Pushing " + csCount + " changesets to the remote repository. Continue?";
+		}
+		getShell().getDisplay().syncExec(new Runnable(){
+			public void run() {
+				monitor.setCanceled(!MessageDialog.openConfirm(getShell(), title, message));
+			}
+		});
+	}
 	private void checkProjects(final IProgressMonitor monitor, HgRoot hgRoot) {
 		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		if(!isPull || projects.size() <= 1) {
