@@ -107,6 +107,15 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 */
 	public static final String METADATA_FOLDER = ".metadata"; //$NON-NLS-1$
 
+	/**
+	 * Enable the possibility of checking both main project and
+	 * subprojects. If that property is false the main project
+	 * and the subproject are mutually exclusive.
+	 * Very untested feature!.
+	 * TODO: Eliminate this constant and related logic?
+	 */
+	private static final boolean ENABLE_NESTED_CHECK = false;
+
 	private final class ProjectLabelProvider extends LabelProvider implements IColorProvider {
 
 		@Override
@@ -257,10 +266,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 	private boolean destinationSelectionEnabled;
 
-	private boolean enableNestedCheck = false;
-
-	private boolean tryToUseMainProject = true;
-
 	/**
 	 * Creates a new project creation wizard page.
 	 */
@@ -276,29 +281,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		this.destinationSelectionEnabled = enabled;
 	}
 
-	/**
-	 * Enable the possibility of checking both main project and
-	 * subprojects. If that property is false the main project
-	 * and the subproject are mutually exclusive.
-	 * Very untested feature!.
-	 *
-	 * @param enabled
-	 */
-	public void setEnableNestedCheck(boolean enabled){
-		this.enableNestedCheck = enabled;
-	}
-
-	/**
-	 * If the root does not contain a project you can generate the
-	 * main project even if the there are some projects in the
-	 * subdirectories.
-	 *
-	 * @param enabled
-	 */
-	public void setTryToUseMainProject(boolean enabled){
-		this.tryToUseMainProject = enabled;
-	}
-
 	private boolean isMainProjectActive(){
 		/* The main project element could be used if and only if
 		 *   1) tryToUseMainProject is set
@@ -310,7 +292,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		 * or
 		 * 3) There is just one project: the main project
 		 */
-		return (this.tryToUseMainProject && !this.destinationSelectionEnabled) || (selectedProjects.length < 2);
+		return !this.destinationSelectionEnabled || selectedProjects.length < 2;
 	}
 
 	public void createControl(Composite parent) {
@@ -623,7 +605,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 						}
 						Iterator<File> filesIterator = files.iterator();
 						List<ProjectRecord> prj = new ArrayList<ProjectRecord>();
-						
+
 						monitor.worked(50);
 						monitor.subTask("Processing results");
 
@@ -1038,7 +1020,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	private void enableProject(ProjectRecord record){
 		if (!record.hasConflicts){
 			projectsList.setChecked(record, true);
-			if (!enableNestedCheck){
+			if (!ENABLE_NESTED_CHECK){
 				if (record == selectedProjects[0]){
 					disableAllSubProjects();
 				}else{
@@ -1079,7 +1061,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	}
 
 	private void enableAllProjects() {
-		if (enableNestedCheck){
+		if (ENABLE_NESTED_CHECK){
 			enableMainProject();
 		}
 		enableAllSubProjects();
@@ -1091,7 +1073,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	}
 
 	private void defaultEnableProjects(){
-		if (enableNestedCheck){
+		if (ENABLE_NESTED_CHECK){
 			enableAllProjects();
 		}else{
 			if (selectedProjects.length > 1){
