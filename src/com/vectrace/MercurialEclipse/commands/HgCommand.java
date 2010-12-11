@@ -47,8 +47,8 @@ public class HgCommand extends AbstractShellCommand {
 
 	// constructors
 
-	public HgCommand(String command, HgRoot root, boolean escapeFiles) {
-		super(root, root, escapeFiles);
+	public HgCommand(String command, String uiName, HgRoot root, boolean escapeFiles) {
+		super(uiName, root, root, escapeFiles);
 		this.command = command;
 
 		Assert.isNotNull(command);
@@ -59,12 +59,13 @@ public class HgCommand extends AbstractShellCommand {
 	 * Invoke a hg command in the directory of the given resource using the resource to find the HgRoot.
 	 *
 	 * @param command The command to execute
+	 * @param uiName Human readable name for this command
 	 * @param resource The resource to use for working directory
 	 * @param escapeFiles Whether to escape files
 	 * @throws HgException
 	 */
-	public HgCommand(String command, IResource resource, boolean escapeFiles) throws HgException {
-		super(AbstractClient.getHgRoot(resource), ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), escapeFiles);
+	public HgCommand(String command, String uiName, IResource resource, boolean escapeFiles) throws HgException {
+		super(uiName, AbstractClient.getHgRoot(resource), ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), escapeFiles);
 		this.command = command;
 
 		Assert.isNotNull(command);

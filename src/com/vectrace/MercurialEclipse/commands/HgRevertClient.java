@@ -42,7 +42,8 @@ public class HgRevertClient extends AbstractClient {
 		int delta = AbstractShellCommand.MAX_PARAMS - 1;
 		for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
 			// the last argument will be replaced with a path
-			HgCommand command = new HgCommand("revert", hgRoot, true); //$NON-NLS-1$
+			HgCommand command = new HgCommand("revert", //$NON-NLS-1$
+					"Reverting resource " + i + " of " + size, hgRoot, true);
 			command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 			command.addOptions("--no-backup");
@@ -60,7 +61,7 @@ public class HgRevertClient extends AbstractClient {
 	public static void performRevertAll(IProgressMonitor monitor, HgRoot hgRoot) throws HgException {
 		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 
-		HgCommand command = new HgCommand("revert", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("revert", "Reverting all resources", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addOptions("--all");

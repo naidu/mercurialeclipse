@@ -20,12 +20,12 @@ import org.eclipse.core.runtime.Assert;
  */
 public class RootlessHgCommand extends AbstractShellCommand {
 
-	public RootlessHgCommand(String command) {
-		this(command, null);
+	public RootlessHgCommand(String command, String uiName) {
+		this(command, uiName, null);
 	}
 
-	public RootlessHgCommand(String command, File workingDir) {
-		super(null, workingDir, false);
+	public RootlessHgCommand(String command, String uiName, File workingDir) {
+		super(uiName, null, workingDir, false);
 
 		Assert.isNotNull(command);
 		this.command = command;

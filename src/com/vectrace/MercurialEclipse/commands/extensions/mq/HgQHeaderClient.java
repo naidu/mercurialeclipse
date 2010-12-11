@@ -34,7 +34,7 @@ public class HgQHeaderClient extends AbstractClient {
 	 *             Thrown when the Hg command cannot be executed.
 	 */
 	public static String getHeader(IResource resource) throws HgException {
-		AbstractShellCommand command = new HgCommand("qheader", resource, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("qheader", "Invoking qheader", resource, false); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		return command.executeToString().trim();
 	}

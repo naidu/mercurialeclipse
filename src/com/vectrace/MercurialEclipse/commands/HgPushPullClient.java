@@ -32,7 +32,8 @@ public class HgPushPullClient extends AbstractClient {
 
 	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout, String branch) throws HgException {
-		AbstractShellCommand command = new HgCommand("push", hgRoot, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("push", //$NON-NLS-1$
+				makeDescription("Pushing", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
@@ -67,7 +68,8 @@ public class HgPushPullClient extends AbstractClient {
 			IHgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout, boolean merge, String branch) throws HgException {
 
-		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("pull", //$NON-NLS-1$
+				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
 		if (update) {
@@ -111,6 +113,14 @@ public class HgPushPullClient extends AbstractClient {
 			refreshProjects(update, hgRoot);
 		}
 		return result;
+	}
+
+	private static String makeDescription(String op, ChangeSet changeset, String branch) {
+		if (changeset == null) {
+			return op + " all changes" + ((branch == null) ? "" : " in " + branch);
+		}
+
+		return op + " up to " + changeset.getChangeset();
 	}
 
 	protected static void applyChangeset(AbstractShellCommand command, ChangeSet changeset) {

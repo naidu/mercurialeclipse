@@ -262,18 +262,26 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private DefaultExecutionRule executionRule;
 
+	/**
+	 * Human readable name for this operation
+	 */
+	private final String uiName;
+
 	// constructors
 
 	/**
+	 * @param uiName
+	 *            Human readable name for this command
 	 * @param hgRoot
 	 *            Though this command might not invoke hg, it might get encoding information from
 	 *            it. May be null.
 	 */
-	protected AbstractShellCommand(HgRoot hgRoot, File workingDir, boolean escapeFiles) {
+	protected AbstractShellCommand(String uiName, HgRoot hgRoot, File workingDir, boolean escapeFiles) {
 		super();
 		this.hgRoot = hgRoot;
 		this.workingDir = workingDir;
 		this.escapeFiles = escapeFiles;
+		this.uiName = uiName;
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
@@ -281,10 +289,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
+
+		Assert.isNotNull(uiName);
 	}
 
-	protected AbstractShellCommand(HgRoot hgRoot, List<String> commands, File workingDir, boolean escapeFiles) {
-		this(hgRoot, workingDir, escapeFiles);
+	protected AbstractShellCommand(String uiName, HgRoot hgRoot, List<String> commands, File workingDir, boolean escapeFiles) {
+		this(uiName, hgRoot, workingDir, escapeFiles);
 
 		this.commands = commands;
 	}
@@ -345,7 +355,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// I see sometimes that hg has errors if it runs in parallel
 		// using a job with exclusive rule here serializes all hg access from plugin.
-		processWrapper = createProcessWrapper(output, jobName, builder);
+		processWrapper = createProcessWrapper(output, uiName, builder);
 
 		logConsoleCommandInvoked(jobName);
 

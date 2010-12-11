@@ -66,7 +66,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 
 	private static AbstractShellCommand getCommand(RemoteKey key) {
 		HgRoot hgRoot = key.getRoot();
-		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("outgoing", "Calculating outgoing changesets", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 

@@ -24,7 +24,7 @@ public class HgAtticClient extends AbstractClient {
 
 	public static String shelve(HgRoot hgRoot, String commitMessage,
 			boolean git, String user, String name) throws HgException {
-		HgCommand cmd = new HgCommand("attic-shelve", hgRoot, false);
+		HgCommand cmd = new HgCommand("attic-shelve", "Invoking attic-shelve", hgRoot, false);
 
 		if (commitMessage != null && commitMessage.length() > 0) {
 			cmd.addOptions("-m", commitMessage); // $NON-NLS-1$
@@ -44,7 +44,7 @@ public class HgAtticClient extends AbstractClient {
 
 	public static String unshelve(HgRoot hgRoot, boolean guessRenamedFiles,
 			boolean delete, String name) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("attic-unshelve", hgRoot, false);
+		AbstractShellCommand cmd = new HgCommand("attic-unshelve", "Invoking attic-unshelve", hgRoot, false);
 
 		if (guessRenamedFiles) {
 			cmd.addOptions("--similarity"); // $NON-NLS-1$

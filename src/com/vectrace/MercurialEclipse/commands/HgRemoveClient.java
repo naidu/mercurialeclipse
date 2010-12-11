@@ -34,7 +34,7 @@ public class HgRemoveClient extends AbstractClient {
 					+ Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
 		}
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
-		HgCommand command = new HgCommand("remove", root, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("remove", "Removing resource", root, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
 		command.addOptions("--force"); //$NON-NLS-1$
 		command.addFiles(resource);
@@ -52,7 +52,7 @@ public class HgRemoveClient extends AbstractClient {
 			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
-				AbstractShellCommand command = new HgCommand("remove", hgRoot, true); //$NON-NLS-1$
+				AbstractShellCommand command = new HgCommand("remove", "Removing resource", hgRoot, true); //$NON-NLS-1$
 				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
 				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
@@ -68,11 +68,13 @@ public class HgRemoveClient extends AbstractClient {
 			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
-				AbstractShellCommand command = new HgCommand("remove", hgRoot, true); //$NON-NLS-1$
+				final int j = Math.min(i + delta, size);
+				AbstractShellCommand command = new HgCommand("remove", //$NON-NLS-1$
+						"Removing " + (j - i) + " resources", hgRoot, true);
 				command.addOptions("-Af");
 				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
+				command.addFiles(mapEntry.getValue().subList(i, j));
 				command.executeToBytes();
 			}
 		}

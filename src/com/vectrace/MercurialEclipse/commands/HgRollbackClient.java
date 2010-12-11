@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class HgRollbackClient  extends AbstractClient {
 
 	public static String rollback(final HgRoot hgRoot) throws CoreException {
-		HgCommand command = new HgCommand("rollback", hgRoot, true);
+		HgCommand command = new HgCommand("rollback", "Rolling back last transaction", hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		String result = command.executeToString();
 		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();

@@ -20,7 +20,7 @@ public class HgMergeClient extends AbstractClient {
 
 	public static String merge(HgRoot hgRoot, String revision, boolean forced)
 			throws HgException {
-		HgCommand command = new HgCommand("merge", hgRoot, false);
+		HgCommand command = new HgCommand("merge", "Merging", hgRoot, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		addMergeToolPreference(command);

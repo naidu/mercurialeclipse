@@ -29,7 +29,7 @@ public class HgQSeriesClient extends AbstractClient {
 	public static List<Patch> getPatchesInSeries(IResource resource)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-				resource, true);
+				"Invoking qseries", resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -69,7 +69,7 @@ public class HgQSeriesClient extends AbstractClient {
 	public static List<Patch> getPatchesNotInSeries(IResource resource)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-				resource, true);
+				"Invoking qseries", resource, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		command.addOptions("--summary", "--missing"); //$NON-NLS-1$ //$NON-NLS-2$

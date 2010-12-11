@@ -53,7 +53,7 @@ public class AnnotateCommand {
 			return null;
 		}
 
-		HgCommand command = new HgCommand("annotate", file, true);
+		HgCommand command = new HgCommand("annotate", "Fetching annotations for resource", file, true);
 
 		command.addOptions("--follow", "--user", "--number", "--changeset", "--date");
 		command.addFiles(file);

@@ -324,7 +324,7 @@ public final class MercurialUtilities {
 		// try to read username via hg showconfig
 		if (StringUtils.isEmpty(username)) {
 			try {
-				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot(), "ui.username");
+				username = HgConfigClient.getHgConfigLine("ui.username");
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}

@@ -24,7 +24,7 @@ public class HgUpdateClient extends AbstractClient {
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
 
-		HgCommand command = new HgCommand("update", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("update", makeDescription(revision, clean), hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
 		if (revision != null && revision.trim().length() > 0) {
@@ -52,5 +52,15 @@ public class HgUpdateClient extends AbstractClient {
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
 		}
+	}
+
+	private static String makeDescription(String revision, boolean clean) {
+		revision = (revision == null || revision.trim().length() == 0) ? null : revision.trim();
+
+		if (revision != null) {
+			return ((clean) ? "Clean update" : "Updating") +  " to " + revision;
+		}
+
+		return (clean) ? "Clean update" : "Updating working directory";
 	}
 }

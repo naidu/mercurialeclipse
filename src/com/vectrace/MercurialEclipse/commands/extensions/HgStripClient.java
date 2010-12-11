@@ -36,7 +36,8 @@ public final class HgStripClient {
 	public static String strip(final HgRoot hgRoot, boolean saveUnrelated,
 			boolean backup, boolean stripHeads, ChangeSet changeset)
 			throws HgException {
-		HgCommand command = new HgCommand("strip", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("strip", "Stripping revision " + changeset.getChangeset(), hgRoot, true); //$NON-NLS-1$
+
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

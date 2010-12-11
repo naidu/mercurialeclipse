@@ -18,7 +18,7 @@ public class HgBundleClient extends AbstractClient {
 	public static String bundle(HgRoot root, ChangeSet rev, String targetRepo,
 			String file, boolean all, String base) throws HgException {
 
-		AbstractShellCommand cmd = new HgCommand("bundle", root, true);
+		AbstractShellCommand cmd = new HgCommand("bundle", "Exporting revisions to bundle", root, true);
 		cmd.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(
 				root));
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
@@ -43,7 +43,7 @@ public class HgBundleClient extends AbstractClient {
 
 	public static String unbundle(HgRoot root, boolean update, String file)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("unbundle", root, true);
+		AbstractShellCommand cmd = new HgCommand("unbundle", "Importing revisions from bundle", root, true);
 		cmd.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(
 				root));
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);

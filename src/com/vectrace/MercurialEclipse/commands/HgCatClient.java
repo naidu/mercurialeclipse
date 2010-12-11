@@ -27,7 +27,7 @@ public class HgCatClient extends AbstractClient {
 	public static String getContent(IFile resource, String revision) throws HgException {
 		HgRoot hgRoot = getHgRoot(resource);
 		File file = ResourceUtils.getFileHandle(resource);
-		AbstractShellCommand command = new HgCommand("cat", hgRoot, true);
+		AbstractShellCommand command = new HgCommand("cat", "Fetching file contents", hgRoot, true);
 
 		if (revision != null && revision.length() != 0) {
 			command.addOptions("-r", revision); //$NON-NLS-1$
@@ -45,7 +45,7 @@ public class HgCatClient extends AbstractClient {
 		Assert.isNotNull(overlayBundle);
 		HgRoot hgRoot = getHgRoot(resource);
 		File file = ResourceUtils.getFileHandle(resource);
-		HgCommand hgCommand = new HgCommand("cat", hgRoot, true);
+		HgCommand hgCommand = new HgCommand("cat", "Fetching file contents from bundle", hgRoot, true);
 
 		hgCommand.setBundleOverlay(overlayBundle);
 

@@ -49,7 +49,7 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("branches", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("branches", "Listing branches", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		List<Branch> branches = new ArrayList<Branch>();
@@ -85,7 +85,7 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String addBranch(HgRoot hgRoot, String name, String user, boolean force) throws HgException {
-		HgCommand command = new HgCommand("branch", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("branch", "Creating branch " + name, hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
@@ -104,7 +104,7 @@ public class HgBranchClient extends AbstractClient {
 	 *             if a hg error occurred
 	 */
 	public static String getActiveBranch(HgRoot workingDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("branch", workingDir, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("branch", "Fetching current branch name", workingDir, false); //$NON-NLS-1$
 		return command.executeToString().replaceAll("\n", "");
 	}
 
@@ -126,8 +126,8 @@ public class HgBranchClient extends AbstractClient {
 		// we are using "hg incoming" to check if remote repository knows the given branch
 		// unfortunately I didn't found more elegant way to get this infor from hg for
 		// REMOTE repository, because neither "hg branch" nor "hg branches" works then
-		AbstractShellCommand command = new HgCommand("incoming", key.getRoot(), //$NON-NLS-1$
-				false);
+		AbstractShellCommand command = new HgCommand("incoming", //$NON-NLS-1$
+				"Querying remote branch existence", key.getRoot(), false);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 
 		// limit to one version
