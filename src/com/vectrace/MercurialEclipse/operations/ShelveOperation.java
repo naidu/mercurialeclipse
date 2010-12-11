@@ -15,6 +15,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
@@ -92,7 +93,11 @@ public class ShelveOperation extends HgOperation {
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
 				Set<IPath> resources = new HashSet<IPath>(); // getDirtyFiles(hgRoot);
-				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, new ArrayList<String>(0));
+				List<String> options = new ArrayList<String>(1);
+
+				options.add("--git");
+
+				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, options);
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
 				String currRev = HgIdentClient.getCurrentChangesetId(hgRoot);
