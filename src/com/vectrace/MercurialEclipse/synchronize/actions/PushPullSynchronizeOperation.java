@@ -12,7 +12,6 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
 import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
@@ -29,12 +28,12 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.menu.PushHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -73,15 +72,11 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 			if(monitor.isCanceled()){
 				return;
 			}
-			if(isPull){
-				// see issue #10802: if we run "pull" on the changesets group, pull latest
-				// version, which mean: do NOT specify the range for pull
-				changeSet = null;
-				hgRoot = group.getChangesets().iterator().next().getHgRoot();
-			} else {
-				changeSet = Collections.min(group.getChangesets(),	new ChangeSetComparator());
-				hgRoot = changeSet.getHgRoot();
-			}
+
+			// Alternative: Find all the heads and push/pull them individually (without doing
+			// workspace refreshes in between)
+			changeSet = null;
+			hgRoot = group.getChangesets().iterator().next().getHgRoot();
 		}
 
 		if(hgRoot == null){
@@ -100,7 +95,14 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		monitor.beginTask(getTaskName(hgRoot), 1);
 		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
 				: Messages.getString("PushPullSynchronizeOperation.PushJob");
-		new PushPullJob(jobName, hgRoot, changeSet, monitor).schedule();
+		PushPullJob job = new PushPullJob(jobName, hgRoot, changeSet, monitor);
+
+		if (changeSet == null)
+		{
+			job.setBranch(MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
+		}
+
+		job.schedule();
 	}
 
 	private String getTaskName(HgRoot hgRoot) {
@@ -165,12 +167,26 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		private final IProgressMonitor opMonitor;
 		private final HgRoot hgRoot;
 		private final ChangeSet changeSet;
+		private String branch;
 
+		/**
+		 * @param name Human readable name
+		 * @param hgRoot The hg root
+		 * @param changeSet The changeset, may be null to push/pull everything
+		 * @param opMonitor The progress monitor
+		 */
 		private PushPullJob(String name, HgRoot hgRoot, ChangeSet changeSet, IProgressMonitor opMonitor) {
 			super(name);
 			this.hgRoot = hgRoot;
 			this.changeSet = changeSet;
 			this.opMonitor = opMonitor;
+		}
+
+		/**
+		 * @param branch The branch name, or null for all/any
+		 */
+		public void setBranch(String branch) {
+			this.branch = branch;
 		}
 
 		@Override
@@ -194,10 +210,10 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					boolean rebase = false;
 					boolean force = false;
 					boolean timeout = true;
-					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false);
+					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false, branch);
 					// pull client does the refresh automatically, no extra job required here
 				} else {
-					HgPushPullClient.push(hgRoot, location, false, changeSet.getChangeset(), Integer.MAX_VALUE);
+					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch);
 					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
 				}
 			} catch (final HgException ex) {
