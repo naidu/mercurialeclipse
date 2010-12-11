@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * A command to invoke hg definitely outside of an hg root.
@@ -30,6 +31,14 @@ public class RootlessHgCommand extends AbstractShellCommand {
 	}
 
 	// operations
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#customizeCommands(java.util.List)
+	 */
+	@Override
+	protected void customizeCommands(List<String> cmd) {
+		cmd.add(1, "-y");
+	}
 
 	/**
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#getExecutable()

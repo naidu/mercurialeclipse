@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -154,12 +153,11 @@ public class HgCommand extends AbstractShellCommand {
 		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#customizeCommands(java.util.List)
+	 */
 	@Override
-	protected boolean executeToStream(OutputStream output, int timeout,
-			boolean expectPositiveReturnValue) throws HgException {
-
-		// Request non-interactivity flag
-		List<String> cmd = getCommands();
+	protected void customizeCommands(List<String> cmd) {
 
 		if (bundleFile != null) {
 			// Add -R <bundleFile>
@@ -168,9 +166,6 @@ public class HgCommand extends AbstractShellCommand {
 		}
 
 		cmd.add(1, "-y");
-		commands = cmd;
-		// delegate to superclass
-		return super.executeToStream(output, timeout, expectPositiveReturnValue);
 	}
 
 	/**

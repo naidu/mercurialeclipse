@@ -227,7 +227,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	protected String command;
-	protected List<String> commands;
+
+	/**
+	 * Calculated commands. See {@link #getCommands()}
+	 */
+	private List<String> commands;
 
 	/**
 	 * Whether files should be preceded by "--" on the command line.
@@ -330,7 +334,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return null;
 	}
 
-	protected boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+	protected final boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
 			throws HgException {
 
 		List<String> cmd = getCommands();
@@ -560,7 +564,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	protected List<String> getCommands() {
+	private List<String> getCommands() {
 		if (commands != null) {
 			return commands;
 		}
@@ -572,8 +576,18 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			result.add("--"); //$NON-NLS-1$
 		}
 		result.addAll(files);
+
+		customizeCommands(result);
+
 		// TODO check that length <= MAX_PARAMS
-		return result;
+		return commands = result;
+	}
+
+	/**
+	 * Template method to customize the commands to execute
+	 * @param cmd The list of commands to execute.
+	 */
+	protected void customizeCommands(List<String> cmd) {
 	}
 
 	protected abstract String getExecutable();
