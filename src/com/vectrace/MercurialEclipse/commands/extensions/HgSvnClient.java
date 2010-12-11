@@ -65,7 +65,7 @@ public class HgSvnClient extends AbstractClient {
 			IHgRepositoryLocation repo, boolean timeout, String cloneName)
 			throws HgException {
 		AbstractShellCommand cmd = new RootlessHgCommand("svnclone", //$NON-NLS-1$
-				ResourceUtils.getFirstExistingDirectory(currentWorkingDirectory), false);
+				ResourceUtils.getFirstExistingDirectory(currentWorkingDirectory));
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
 		addRepoToHgCommand(repo, cmd);
 		if (cloneName != null) {

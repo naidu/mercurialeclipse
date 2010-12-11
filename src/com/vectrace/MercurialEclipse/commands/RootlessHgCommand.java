@@ -13,20 +13,21 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.util.List;
 
+import org.eclipse.core.runtime.Assert;
+
 /**
  * A command to invoke hg definitely outside of an hg root.
  */
 public class RootlessHgCommand extends AbstractShellCommand {
 
-	public RootlessHgCommand(String command, boolean escapeFiles) {
-		super(null, null, escapeFiles);
-
-		this.command = command;
+	public RootlessHgCommand(String command) {
+		this(command, null);
 	}
 
-	public RootlessHgCommand(String command, File workingDir, boolean escapeFiles) {
-		super(null, workingDir, escapeFiles);
+	public RootlessHgCommand(String command, File workingDir) {
+		super(null, workingDir, false);
 
+		Assert.isNotNull(command);
 		this.command = command;
 	}
 

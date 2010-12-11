@@ -35,7 +35,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
 			ChangeSet changeset, int timeout, File snapFile) throws CoreException {
 
-		AbstractShellCommand command = new RootlessHgCommand("fpush", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpush", forestRoot);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		if (snapFile != null) {
 			try {
@@ -68,7 +68,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 		} else {
 			pullSource = repo.getLocation();
 		}
-		AbstractShellCommand command = new RootlessHgCommand("fpull", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpull", forestRoot);
 
 		if (update) {
 			command.addOptions("--update");

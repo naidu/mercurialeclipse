@@ -237,7 +237,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * Whether files should be preceded by "--" on the command line.
 	 * @see #files
 	 */
-	protected final boolean escapeFiles;
+	private final boolean escapeFiles;
 
 	protected List<String> options;
 

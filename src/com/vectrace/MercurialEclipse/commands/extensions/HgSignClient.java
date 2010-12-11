@@ -125,7 +125,7 @@ public final class HgSignClient {
 		getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
 		getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
 		GpgCommand command = new GpgCommand(hgRoot, getKeysCmd, ResourcesPlugin
-				.getWorkspace().getRoot().getLocation().toFile(), false);
+				.getWorkspace().getRoot().getLocation().toFile());
 		return new String(command.executeToBytes());
 	}
 }

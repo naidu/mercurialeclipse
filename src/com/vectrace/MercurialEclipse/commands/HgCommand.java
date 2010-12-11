@@ -51,6 +51,7 @@ public class HgCommand extends AbstractShellCommand {
 		super(root, root, escapeFiles);
 		this.command = command;
 
+		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
 
@@ -66,6 +67,7 @@ public class HgCommand extends AbstractShellCommand {
 		super(AbstractClient.getHgRoot(resource), ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), escapeFiles);
 		this.command = command;
 
+		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
 
