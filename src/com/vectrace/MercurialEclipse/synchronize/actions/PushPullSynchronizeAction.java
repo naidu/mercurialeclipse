@@ -23,9 +23,10 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -83,6 +84,15 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		if(object instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) object;
 			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
+		}
+		if(object instanceof RepositoryChangesetGroup){
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) object;
+			if(isPull && group.getIncoming().getChangesets().size() > 0) {
+				return true;
+			}
+			if(!isPull && group.getOutgoing().getChangesets().size() > 0) {
+				return true;
+			}
 		}
 		if (object instanceof ChangeSet) {
 			ChangeSet changeSet = (ChangeSet) object;

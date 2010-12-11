@@ -7,11 +7,14 @@
  *
  * Contributors:
  *     Andrei Loskutov (Intland) - implementation
+ *     Martin Olsen (Schantz) 	 - Synchronization of Multiple repositories
+
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
@@ -31,6 +34,7 @@ import org.eclipse.team.internal.core.mapping.AbstractResourceMappingScope;
 import org.eclipse.team.internal.ui.Utils;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
@@ -41,19 +45,19 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 
 	private final IProject[] roots;
 	private final ListenerList listeners;
-	private final IHgRepositoryLocation repo;
+	private final Set<? extends IHgRepositoryLocation> repo;
 	private MercurialSynchronizeSubscriber subscriber;
 	private HgChangeSetModelProvider provider;
 
-	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
+	public RepositorySynchronizationScope(Set<? extends IHgRepositoryLocation> repo, IProject[] roots) {
 		Assert.isNotNull(repo);
 		this.repo = repo;
-		if(roots != null) {
+//		if(roots != null) {
 			this.roots = roots;
-		} else {
-			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-			this.roots = projects.toArray(new IProject[projects.size()]);
-		}
+//		} else {
+//			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+//			this.roots = projects.toArray(new IProject[projects.size()]);
+//		}
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
@@ -200,7 +204,18 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		listeners.remove(listener);
 	}
 
-	public IHgRepositoryLocation getRepositoryLocation() {
+	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
+		Iterator<? extends IHgRepositoryLocation> iterator = repo.iterator();
+		while (iterator.hasNext()) {
+			IHgRepositoryLocation next = iterator.next();
+			if(root.isDefaultLocation(next)) {
+				return next;
+			}
+		}
+		return null;
+	}
+
+	public Set<? extends IHgRepositoryLocation> getRepositoryLocations() {
 		return repo;
 	}
 

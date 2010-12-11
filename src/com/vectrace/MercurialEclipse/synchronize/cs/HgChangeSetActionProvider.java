@@ -66,8 +66,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 			final IWorkbenchPartSite wps = cvws.getSite();
 			if (wps instanceof IViewSite) {
 				openFileAction = new OpenFileInSystemEditorAction(wps.getPage());
-				deleteAction = new DeleteAction("Delete",
-						configuration, wps.getSelectionProvider());
+				deleteAction = new DeleteAction("Delete", configuration, wps.getSelectionProvider());
 				deleteAction.setActionDefinitionId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
 				deleteAction.setId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
 			}
@@ -78,17 +77,14 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
 		if(menu.find(DeleteAction.HG_DELETE_GROUP) == null){
-			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
-					DeleteAction.HG_DELETE_GROUP));
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(DeleteAction.HG_DELETE_GROUP));
 		}
 		ISelection selection = getSite().getSelectionProvider().getSelection();
 		if (selection instanceof IStructuredSelection && !hasFileMenu(menu)) {
-			fillOpenWithMenu(menu, ISynchronizePageConfiguration.FILE_GROUP,
-					(IStructuredSelection) selection);
+			fillOpenWithMenu(menu, ISynchronizePageConfiguration.FILE_GROUP, (IStructuredSelection) selection);
 		}
 		if (selection instanceof IStructuredSelection && !hasDeleteMenu(menu)) {
-			fillDeleteMenu(menu, ISynchronizePageConfiguration.FILE_GROUP,
-					(IStructuredSelection) selection);
+			fillDeleteMenu(menu, ISynchronizePageConfiguration.FILE_GROUP, (IStructuredSelection) selection);
 		}
 	}
 
