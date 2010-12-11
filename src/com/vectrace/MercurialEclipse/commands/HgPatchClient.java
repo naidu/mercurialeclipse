@@ -139,17 +139,6 @@ public class HgPatchClient extends AbstractClient {
 		return command;
 	}
 
-	public static String getDiff(HgRoot workDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
-		return command.executeToString();
-	}
-
-	public static String getDiff(HgRoot workDir, File file) throws HgException {
-		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
-		command.addOptions(file.getAbsolutePath());
-		return command.executeToString();
-	}
-
 	/**
 	 * Get a diff for a single changeSet or a rage for revisions.
 	 *
