@@ -112,7 +112,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 * subprojects. If that property is false the main project
 	 * and the subproject are mutually exclusive.
 	 * Very untested feature!.
-	 * TODO: Eliminate this constant and related logic?
+	 * TODO: Set to true and test so that if there is a .project in root
+	 * there is still the option of importing sub-projects (with the
+	 * constraint that ancestors can't both be imported(?))
 	 */
 	private static final boolean ENABLE_NESTED_CHECK = false;
 
