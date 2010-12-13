@@ -56,7 +56,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			image = PlatformUI.getWorkbench().getSharedImages().getImage(
 					ISharedImages.IMG_OBJ_FOLDER);
 		} else if (element instanceof RepositoryChangesetGroup) {
-			image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FOLDER);
+			image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_PROJECT);
 		} else {
 			try {
 				image = super.getDelegateImage(element);

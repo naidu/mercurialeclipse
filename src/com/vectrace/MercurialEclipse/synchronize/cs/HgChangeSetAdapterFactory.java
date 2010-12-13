@@ -18,7 +18,6 @@ import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 
 public class HgChangeSetAdapterFactory implements IAdapterFactory {
 
-	@SuppressWarnings("unchecked")
 	public Object getAdapter(Object adaptableObject, Class adapterType) {
 		if (adaptableObject instanceof ChangeSet && adapterType == ResourceMapping.class) {
 			ChangeSet cs = (ChangeSet) adaptableObject;
@@ -31,8 +30,7 @@ public class HgChangeSetAdapterFactory implements IAdapterFactory {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
-	public Class[] getAdapterList() {
+	public Class<?>[] getAdapterList() {
 		return new Class[] { ResourceMapping.class };
 	}
 

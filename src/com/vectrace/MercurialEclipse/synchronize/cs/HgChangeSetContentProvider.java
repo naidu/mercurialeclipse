@@ -235,8 +235,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	@Override
+	@SuppressWarnings("hiding")
 	public Object[] getElements(Object parent) {
-
 		if (!initialized) {
 			if (parent instanceof HgChangeSetModelProvider) {
 				HgChangeSetModelProvider provider = (HgChangeSetModelProvider) parent;
@@ -436,8 +436,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				}
 			}
 		}
-//		projectThing.getChangesets().add(outgoing);
-//		projectThing.getChangesets().add(incoming);
 
 		addAllUnassignedToUnassignedSet();
 		ArrayList itemsToShow = new ArrayList();

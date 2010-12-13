@@ -40,10 +40,10 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -97,9 +97,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			public void run() {
 				prefStore.setValue(prefKey, !isChecked());
 				MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant)getConfiguration().getParticipant();
-
-				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant
-						.getContext().getScope().getMappings());
+				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant.getContext().getScope().getMappings());
 			}
 
 			@Override

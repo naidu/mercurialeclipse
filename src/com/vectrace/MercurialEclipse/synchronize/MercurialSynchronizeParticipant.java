@@ -25,13 +25,20 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
+import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
+import org.eclipse.team.internal.ui.synchronize.RefreshModelParticipantJob;
+import org.eclipse.team.internal.ui.synchronize.RefreshParticipantJob;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
@@ -41,6 +48,7 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.progress.IProgressConstants2;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -293,8 +301,25 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	@Override
 	public void run(IWorkbenchPart part) {
-		super.run(part);
+//		super.run(part);
+		IRefreshSubscriberListener listener = new MercurialRefreshUserNotificationPolicy(this);
+
+		ResourceMapping[] mappings = getContext().getScope().getMappings();
+		String jobName = null;
+		String taskName = null;
+			jobName = getShortTaskName();
+			taskName = getLongTaskName(mappings);
+		Job.getJobManager().cancel(this);
+		RefreshParticipantJob job = new RefreshModelParticipantJob(this, jobName, taskName, mappings, listener);
+		job.setUser(true);
+		job.setProperty(IProgressConstants2.SHOW_IN_TASKBAR_ICON_PROPERTY, Boolean.TRUE);
+		Utils.schedule(job, null);
+
+		// Remember the last participant synchronized
+		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT, getId());
+		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT_SEC_ID, getSecondaryId());
 	}
+
 
 	public ChangeSetCapability getChangeSetCapability() {
 		if(changeSetCapability == null) {
