@@ -86,6 +86,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
+						for(RepositoryChangesetGroup sg : projectGroup) {
+							treeViewer.refresh(sg.getOutgoing(), true);
+							treeViewer.refresh(sg.getIncoming(), true);
+							treeViewer.refresh(sg, true);
+						}
 						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());
@@ -632,6 +637,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			sg.getIncoming().getChangesets().clear();
 
 		}
+//		initialized=false;
 		super.dispose();
 	}
 
