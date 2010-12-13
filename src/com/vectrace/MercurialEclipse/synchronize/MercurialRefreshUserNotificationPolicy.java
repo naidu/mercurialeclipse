@@ -15,7 +15,7 @@ import org.eclipse.team.internal.ui.synchronize.RefreshUserNotificationPolicy;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 
 /**
- * @author soren
+ * @author Soren Mathiasen
  *
  */
 @SuppressWarnings("restriction")
@@ -32,7 +32,8 @@ public class MercurialRefreshUserNotificationPolicy extends RefreshUserNotificat
 	 */
 	@Override
 	protected boolean handleRefreshDone(IRefreshEvent event, boolean prompt) {
-		// TODO Auto-generated method stub
+		// set prompt to false in order to disable on changes found dialog.
+		// TODO There must be a better way of doing this !
 		return super.handleRefreshDone(event, false);
 	}
 
