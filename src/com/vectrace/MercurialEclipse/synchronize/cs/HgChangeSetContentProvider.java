@@ -441,7 +441,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		ArrayList itemsToShow = new ArrayList();
 		itemsToShow.add(uncommittedSet);
 		for(RepositoryChangesetGroup group : projectGroup) {
-			itemsToShow.add(group);
+			if(group.getIncoming().getChangesets().size() > 0 || group.getOutgoing().getChangesets().size() > 0) {
+				itemsToShow.add(group);
+			}
 		}
 
 		return itemsToShow.toArray();
