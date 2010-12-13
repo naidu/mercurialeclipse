@@ -38,32 +38,34 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		Image image = null;
 		if (element instanceof ChangeSet) {
 			image = MercurialEclipsePlugin.getImage("elcl16/changeset_obj.gif");
-		} else if (element instanceof ChangesetGroup){
+		} else if (element instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) element;
-			if(group.getDirection() == Direction.OUTGOING){
+			if (group.getDirection() == Direction.OUTGOING) {
 				image = MercurialEclipsePlugin.getImage("actions/commit.gif");
 			} else {
 				image = MercurialEclipsePlugin.getImage("actions/update.gif");
 			}
-		} else if(element instanceof FileFromChangeSet){
-			FileFromChangeSet file = (FileFromChangeSet) element;
-			if(file.getFile() != null){
-				image = getDelegateLabelProvider().getImage(file.getFile());
-			} else {
-				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
-			}
-		} else if (element instanceof PathFromChangeSet) {
-			image = PlatformUI.getWorkbench().getSharedImages().getImage(
-					ISharedImages.IMG_OBJ_FOLDER);
-		} else if (element instanceof RepositoryChangesetGroup) {
-			image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_PROJECT);
 		} else {
-			try {
-				image = super.getDelegateImage(element);
-			} catch (NullPointerException npex) {
-				// if element is invalid or not yet fully handled
-				// NPE is possible
-				MercurialEclipsePlugin.logError(npex);
+			ISharedImages sharedImages = PlatformUI.getWorkbench().getSharedImages();
+			if (element instanceof FileFromChangeSet) {
+				FileFromChangeSet file = (FileFromChangeSet) element;
+				if (file.getFile() != null) {
+					image = getDelegateLabelProvider().getImage(file.getFile());
+				} else {
+					image = sharedImages.getImage(ISharedImages.IMG_OBJ_FILE);
+				}
+			} else if (element instanceof PathFromChangeSet) {
+				image = sharedImages.getImage(ISharedImages.IMG_OBJ_FOLDER);
+			} else if (element instanceof RepositoryChangesetGroup) {
+				image = sharedImages.getImage(org.eclipse.ui.ide.IDE.SharedImages.IMG_OBJ_PROJECT);
+			} else {
+				try {
+					image = super.getDelegateImage(element);
+				} catch (NullPointerException npex) {
+					// if element is invalid or not yet fully handled
+					// NPE is possible
+					MercurialEclipsePlugin.logError(npex);
+				}
 			}
 		}
 		return image;
