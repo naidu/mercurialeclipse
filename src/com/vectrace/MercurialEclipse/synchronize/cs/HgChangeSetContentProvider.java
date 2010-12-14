@@ -39,8 +39,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
+import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -56,11 +56,11 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -437,9 +437,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		ArrayList itemsToShow = new ArrayList();
 		itemsToShow.add(uncommittedSet);
 		for(RepositoryChangesetGroup group : projectGroup) {
-			if(group.getIncoming().getChangesets().size() > 0 || group.getOutgoing().getChangesets().size() > 0) {
+//			if(group.getIncoming().getChangesets().size() > 0 || group.getOutgoing().getChangesets().size() > 0) {
 				itemsToShow.add(group);
-			}
+//			}
 		}
 
 		return itemsToShow.toArray();

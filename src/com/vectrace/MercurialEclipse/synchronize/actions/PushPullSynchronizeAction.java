@@ -12,11 +12,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
@@ -24,7 +29,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -55,8 +62,29 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		IStructuredSelection sel = getStructuredSelection();
+
+//		Object input = configuration.getPage().getViewer().getInput();
+//		if(input instanceof HgChangeSetModelProvider) {
+//			HgChangeSetModelProvider provider = (HgChangeSetModelProvider) input;
+//			provider.getSubscriber().getCollector().get
+//		}
+		ISynchronizeParticipant part = getConfiguration().getParticipant();
+		if(part instanceof MercurialSynchronizeParticipant) {
+			List<Object> result = new ArrayList<Object>();
+			MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
+			Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
+			for (IHgRepositoryLocation repos : repositoryLocation) {
+				Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repos);
+				for (IProject proj : projects) {
+					result.add(proj);
+				}
+				System.out.println(repos);
+			}
+			PushPullSynchronizeOperation pullupdate = new PushPullSynchronizeOperation(configuration, elements, result, isPull, update);
+			return pullupdate;
+		}
 		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
-		Object object = sel.getFirstElement();
+		List<Object> object = sel.toList();
 		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
 	}
 
