@@ -124,7 +124,6 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 				job.addBranch(hgRoot, MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
 			}
 		}
-
 		job.schedule();
 	}
 
@@ -275,7 +274,8 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 						// pull client does the refresh automatically, no extra job required here
 					} else {
 						HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branches.get(hgRoot));
-						new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
+						//TODO Why does OUTGOING alone not work !!
+						new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 					}
 				} catch (final HgException ex) {
 					MercurialEclipsePlugin.logError(ex);
