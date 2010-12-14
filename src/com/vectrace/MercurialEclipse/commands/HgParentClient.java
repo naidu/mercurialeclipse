@@ -30,7 +30,8 @@ public class HgParentClient extends AbstractClient {
 	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
 	public static int[] getParents(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
+				"Finding parent revisions", hgRoot, false);
 		command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
 		int[] parents = new int[lines.length];
@@ -42,7 +43,8 @@ public class HgParentClient extends AbstractClient {
 
 	public static String[] getParentNodeIds(HgRoot hgRoot)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", hgRoot, false);
+		AbstractShellCommand command = new HgCommand("parents", "Finding parent revisions", hgRoot,
+				false);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];
@@ -55,7 +57,7 @@ public class HgParentClient extends AbstractClient {
 	public static String[] getParentNodeIds(IResource file)
 	throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				file, false);
+				"Finding parent revisions", file, false);
 		if(file instanceof IFile) {
 			command.addFiles(file);
 		}
@@ -71,7 +73,7 @@ public class HgParentClient extends AbstractClient {
 	public static String[] getParentNodeIds(IResource resource, ChangeSet cs)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				resource, false);
+				"Finding parent revisions", resource, false);
 		command
 				.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						.getChangeset());
@@ -86,7 +88,7 @@ public class HgParentClient extends AbstractClient {
 	public static int findCommonAncestor(HgRoot hgRoot, String node1, String node2)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
-				hgRoot, false);
+				"Finding common ancestor", hgRoot, false);
 		command.addOptions(node1, node2);
 		String result = command.executeToString().trim();
 		Matcher m = ANCESTOR_PATTERN.matcher(result);
@@ -114,7 +116,8 @@ public class HgParentClient extends AbstractClient {
 			throws HgException {
 		String result;
 		try {
-			HgCommand command = new HgCommand("debugancestor", hgRoot, false);
+			HgCommand command = new HgCommand("debugancestor", "Finding common ancestor", hgRoot,
+					false);
 
 			if (cs1.getBundleFile() != null || cs2.getBundleFile() != null) {
 				if (cs1.getBundleFile() != null) {

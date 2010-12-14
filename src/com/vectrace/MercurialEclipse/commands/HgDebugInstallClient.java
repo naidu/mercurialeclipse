@@ -31,7 +31,7 @@ public class HgDebugInstallClient extends AbstractClient {
 	}
 
 	private static AbstractShellCommand getDebugInstallCommand() {
-		return new RootlessHgCommand("debuginstall", true);
+		return new RootlessHgCommand("debuginstall", "Checking Mercurial installation");
 	}
 
 	/**

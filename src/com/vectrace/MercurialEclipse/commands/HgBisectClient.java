@@ -42,7 +42,7 @@ public final class HgBisectClient extends AbstractClient {
 	 */
 	public static String markGood(HgRoot repository, ChangeSet good)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+		AbstractShellCommand cmd = new HgCommand("bisect", "Bisect: marking revision as good", repository, true); //$NON-NLS-1$
 		cmd.addOptions("-g"); //$NON-NLS-1$
 		if(good != null) {
 			cmd.addOptions(getRevision(good));
@@ -51,7 +51,7 @@ public final class HgBisectClient extends AbstractClient {
 	}
 
 	/**
-	 * Marks the specified changeset as a bad revivision. If no changeset is specified
+	 * Marks the specified changeset as a bad revision. If no changeset is specified
 	 * bisect will use teh "current" changeset.
 	 *
 	 * @param repository the repository to bisect
@@ -61,7 +61,8 @@ public final class HgBisectClient extends AbstractClient {
 	 */
 	public static String markBad(HgRoot repository, ChangeSet bad)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+		AbstractShellCommand cmd = new HgCommand("bisect", //$NON-NLS-1$
+				"Bisect: marking revision as bad", repository, true);
 		cmd.addOptions("-b"); //$NON-NLS-1$
 		if(bad != null) {
 			cmd.addOptions(getRevision(bad));
@@ -77,7 +78,8 @@ public final class HgBisectClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String reset(HgRoot repository) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+		AbstractShellCommand cmd = new HgCommand("bisect", //$NON-NLS-1$
+				"Reseting bisect", repository, true);
 		cmd.addOptions("-r"); //$NON-NLS-1$
 		return cmd.executeToString();
 	}

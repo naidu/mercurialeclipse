@@ -107,6 +107,17 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 */
 	public static final String METADATA_FOLDER = ".metadata"; //$NON-NLS-1$
 
+	/**
+	 * Enable the possibility of checking both main project and
+	 * subprojects. If that property is false the main project
+	 * and the subproject are mutually exclusive.
+	 * Very untested feature!.
+	 * TODO: Set to true and test so that if there is a .project in root
+	 * there is still the option of importing sub-projects (with the
+	 * constraint that ancestors can't both be imported(?))
+	 */
+	private static final boolean ENABLE_NESTED_CHECK = false;
+
 	private final class ProjectLabelProvider extends LabelProvider implements IColorProvider {
 
 		@Override
@@ -272,6 +283,20 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		this.destinationSelectionEnabled = enabled;
 	}
 
+	private boolean isMainProjectActive(){
+		/* The main project element could be used if and only if
+		 *   1) tryToUseMainProject is set
+		 * and
+		 *   2) no destination selection is enabled:
+		 * 		the main project is available just when  cloning the remote repository;
+		 *      otherwise is possible create a project with a nested project in his root,
+		 *      in these cases the behavior is unpredictable and undocumented.
+		 * or
+		 * 3) There is just one project: the main project
+		 */
+		return !this.destinationSelectionEnabled || selectedProjects.length < 2;
+	}
+
 	public void createControl(Composite parent) {
 
 		initializeDialogUnits(parent);
@@ -327,6 +352,10 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		});
 	}
 
+	private void fixFinishState(){
+		setPageComplete(projectsList.getCheckedElements().length > 0);
+	}
+
 	private void createWorkingSetGroup(Composite workArea) {
 		String[] workingSetIds = new String[] {"org.eclipse.ui.resourceWorkingSetPage",  //$NON-NLS-1$
 		"org.eclipse.jdt.ui.JavaWorkingSetPage"};  //$NON-NLS-1$
@@ -356,16 +385,27 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		projectsList.getControl().setLayoutData(gridData);
 		projectsList.setContentProvider(new ITreeContentProvider() {
 			public Object[] getChildren(Object parentElement) {
+				if (hasChildren(parentElement)){
+					return getSubProjectRecords();
+				}
 				return null;
 			}
 			public Object[] getElements(Object inputElement) {
-				return getProjectRecords();
+				if (selectedProjects.length == 0){
+					return new Object[0];
+				}
+				if (isMainProjectActive()){
+					Object[] root = new Object[1];
+					root[0] = selectedProjects[0];
+					return root;
+				}
+				return getSubProjectRecords();
 			}
 			public boolean hasChildren(Object element) {
-				return false;
+				return isMainProjectActive() && (element == selectedProjects[0]) && (selectedProjects.length > 1);
 			}
 			public Object getParent(Object element) {
-				return null;
+				return (isMainProjectActive() && (element != selectedProjects[0]))?selectedProjects[0]:null;
 			}
 			public void dispose() {
 			}
@@ -380,10 +420,11 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		projectsList.addCheckStateListener(new ICheckStateListener() {
 			public void checkStateChanged(CheckStateChangedEvent event) {
 				ProjectRecord element = (ProjectRecord) event.getElement();
-				if(element.hasConflicts) {
-					projectsList.setChecked(element, false);
+				if (!element.hasConflicts && event.getChecked()){
+					enableProject(element);
+				}else{
+					disableProject(element);
 				}
-				setPageComplete(projectsList.getCheckedElements().length > 0);
 			}
 		});
 
@@ -422,6 +463,12 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 					record.hasConflicts = isProjectInWorkspace(record.projectName);
 				}
 				validateSelectedProjects();
+				if (!record.hasConflicts){
+					enableProject(record);
+				}else{
+					disableProject(record);
+				}
+				fixFinishState();
 				projectsList.refresh(true);
 			}
 		});
@@ -451,8 +498,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		selectAll.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				validateSelectedProjects();
-				projectsList.refresh(true);
+				enableAllProjects();
 			}
 		});
 		Dialog.applyDialogFont(selectAll);
@@ -464,8 +510,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				projectsList.setCheckedElements(new Object[0]);
-				setPageComplete(false);
+				disableAllProjects();
 			}
 		});
 		Dialog.applyDialogFont(deselectAll);
@@ -529,7 +574,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 			selectedProjects = new ProjectRecord[0];
 			projectsList.refresh(true);
 			projectsList.setCheckedElements(selectedProjects);
-			setPageComplete(projectsList.getCheckedElements().length > 0);
+			fixFinishState();
 			lastPath = path;
 			return;
 		}
@@ -561,20 +606,30 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 							return;
 						}
 						Iterator<File> filesIterator = files.iterator();
-						selectedProjects = new ProjectRecord[files.size()];
-						int index = 0;
+						List<ProjectRecord> prj = new ArrayList<ProjectRecord>();
+
 						monitor.worked(50);
 						monitor.subTask("Processing results");
-						if(files.isEmpty()){
-							selectedProjects = new ProjectRecord[1];
-							selectedProjects[0] = new ProjectRecord(destinationDir);
-						} else {
-							while (filesIterator.hasNext()) {
-								File file = filesIterator.next();
-								selectedProjects[index] = new ProjectRecord(file);
-								index++;
+
+						if (filesIterator.hasNext()){
+							/* Check if the first project is the root */
+							File file = filesIterator.next();
+							File dir = file.getParentFile();
+							if (dir.isDirectory() && dir.equals(destinationDir)){
+								prj.add(new ProjectRecord(file));
+							}else{
+								filesIterator = files.iterator(); /* reset iterator */
 							}
 						}
+						if (prj.isEmpty()){
+							prj.add(new ProjectRecord(destinationDir));
+						}
+						while (filesIterator.hasNext()) {
+							File file = filesIterator.next();
+							prj.add(new ProjectRecord(file));
+						}
+						selectedProjects = prj.toArray(new ProjectRecord[prj.size()]);
+
 					} else {
 						monitor.worked(60);
 					}
@@ -590,6 +645,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 		projectsList.refresh(false);
 		validateSelectedProjects();
+		defaultEnableProjects();
+		projectsList.setExpandedElements(selectedProjects);
 		projectsList.refresh(true);
 	}
 
@@ -901,9 +958,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 * @return ProjectRecord[] array of projects that can be imported into the
 	 * 	workspace
 	 */
-	private ProjectRecord[] getProjectRecords() {
+	private ProjectRecord[] getSubProjectRecords() {
 		List<ProjectRecord> projectRecords = new ArrayList<ProjectRecord>();
-		for (int i = 0; i < selectedProjects.length; i++) {
+		for (int i = 1; i < selectedProjects.length; i++) {
 			projectRecords.add(selectedProjects[i]);
 		}
 		return projectRecords.toArray(new ProjectRecord[projectRecords.size()]);
@@ -962,6 +1019,82 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		updateProjectsList(destinationDir.getAbsolutePath());
 	}
 
+	private void enableProject(ProjectRecord record){
+		if (!record.hasConflicts){
+			projectsList.setChecked(record, true);
+			if (!ENABLE_NESTED_CHECK){
+				if (record == selectedProjects[0]){
+					disableAllSubProjects();
+				}else{
+					disableMainProject();
+				}
+			}
+		}else{
+			projectsList.setChecked(record, false);
+		}
+		fixFinishState();
+	}
+
+	private void disableProject(ProjectRecord record){
+		projectsList.setChecked(record, false);
+		fixFinishState();
+	}
+
+	private void enableAllSubProjects() {
+		for (int i = 1; i < selectedProjects.length; i++) {
+			enableProject(selectedProjects[i]);
+		}
+	}
+
+	private void disableAllSubProjects() {
+		for (int i = 1; i < selectedProjects.length; i++) {
+			disableProject(selectedProjects[i]);
+		}
+	}
+
+	private void enableMainProject() {
+		if (isMainProjectActive()){
+			enableProject(selectedProjects[0]);
+		}
+	}
+
+	private void disableMainProject() {
+		disableProject(selectedProjects[0]);
+	}
+
+	private void enableAllProjects() {
+		if (ENABLE_NESTED_CHECK){
+			enableMainProject();
+		}
+		enableAllSubProjects();
+	}
+
+	private void disableAllProjects() {
+		disableMainProject();
+		disableAllSubProjects();
+	}
+
+	private void defaultEnableProjects(){
+		if (ENABLE_NESTED_CHECK){
+			enableAllProjects();
+		}else{
+			if (selectedProjects.length > 1){
+				enableAllSubProjects();
+			}else if (selectedProjects.length == 1){
+				enableMainProject();
+			}
+		}
+	}
+
+	private void validateProject(ProjectRecord record, boolean value){
+		if (!value) {
+			record.hasConflicts = true;
+			projectsList.setGrayed(record, true);
+		} else {
+			record.hasConflicts = false;
+			projectsList.setGrayed(record, false);
+		}
+	}
 	/**
 	 * If a project with the
 	 * same name exists in both the source workspace and the current workspace,
@@ -969,18 +1102,12 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 */
 	private void validateSelectedProjects() {
 		boolean hasConflict = false;
+
 		for (int i = 0; i < selectedProjects.length; i++) {
 			ProjectRecord record = selectedProjects[i];
-			if (isProjectInWorkspace(record.getProjectName())) {
-				record.hasConflicts = true;
-				projectsList.setGrayed(record, true);
-				projectsList.setChecked(record, false);
-				hasConflict = true;
-			} else {
-				record.hasConflicts = false;
-				projectsList.setChecked(record, true);
-				projectsList.setGrayed(record, false);
-			}
+			boolean v = isProjectInWorkspace(record.getProjectName());
+			validateProject(record,!v);
+			hasConflict = hasConflict && v;
 		}
 		if(!hasConflict) {
 			setMessage(null, WARNING);
@@ -993,7 +1120,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		if(selectedProjects.length == 0) {
 			setMessage("No projects are selected to import", WARNING);
 		}
-		setPageComplete(selectedProjects.length > 0);
 	}
 
 }

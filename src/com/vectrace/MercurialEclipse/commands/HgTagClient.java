@@ -28,7 +28,7 @@ public class HgTagClient extends AbstractClient {
 	private static final Pattern GET_TAGS_PATTERN = Pattern.compile("^(.*) ([-0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
 
 	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("tags", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("tags", "Fetching tags", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 
@@ -61,7 +61,8 @@ public class HgTagClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static void addTag(HgRoot hgRoot, String name, String rev, String user, boolean local, boolean force) throws HgException {
-		HgCommand command = new HgCommand("tag", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand(
+				"tag", "Tagging revision " + ((rev == null) ? "" : rev + " ") + "as " + name, hgRoot, false); //$NON-NLS-1$
 		if (local) {
 			command.addOptions("-l");
 		}
@@ -78,7 +79,7 @@ public class HgTagClient extends AbstractClient {
 	}
 
 	public static String removeTag(HgRoot hgRoot, Tag tag, String user) throws HgException {
-		HgCommand command = new HgCommand("tag", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("tag", "Removing tag " + tag, hgRoot, false); //$NON-NLS-1$
 		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());

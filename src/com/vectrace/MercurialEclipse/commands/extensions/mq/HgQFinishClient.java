@@ -27,7 +27,7 @@ public class HgQFinishClient extends AbstractClient {
 		Assert.isNotNull(rev);
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qfinish", //$NON-NLS-1$
-				root, true);
+				"Invoking qfinish", root, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions(rev);
 		return command.executeToString();

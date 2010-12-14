@@ -127,7 +127,8 @@ public abstract class AbstractClient {
 		// see bug http://bitbucket.org/mercurialeclipse/main/issue/224/
 		// If hg command uses non-null directory, which is NOT under the hg control,
 		// MercurialTeamProvider.getAndStoreHgRoot() throws an exception
-		AbstractShellCommand command = new RootlessHgCommand("help", false);
+		AbstractShellCommand command = new RootlessHgCommand("help", "Checking availablility of "
+				+ commandName);
 		if (extensionEnabler != null && extensionEnabler.length() != 0) {
 			command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
 		}

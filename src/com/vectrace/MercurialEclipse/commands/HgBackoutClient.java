@@ -38,7 +38,8 @@ public class HgBackoutClient extends AbstractClient {
 	public static String backout(final HgRoot hgRoot, ChangeSet backoutRevision,
 			boolean merge, String msg, String user) throws CoreException {
 
-		HgCommand command = new HgCommand("backout", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("backout", //$NON-NLS-1$
+				"Backing out changeset " + backoutRevision.getChangeset(), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
 		addMergeToolPreference(command);

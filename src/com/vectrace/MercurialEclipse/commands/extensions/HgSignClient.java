@@ -64,12 +64,11 @@ public final class HgSignClient {
 	 * @param passphrase
 	 *            the passphrase or null
 	 * @author Bastian Doetsch
-	 *
 	 */
 	public static String sign(HgRoot hgRoot, ChangeSet cs, String key,
 			String message, String user, boolean local, boolean force,
 			boolean noCommit, String passphrase) throws HgException {
-		HgCommand command = new HgCommand("sign", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("sign", "Signing revision", hgRoot, true); //$NON-NLS-1$
 		File file = new File("me.gpg.tmp"); //$NON-NLS-1$
 		String cmd = "gpg.cmd=" + //$NON-NLS-1$
 				MercurialUtilities.getGpgExecutable(true) + " --batch --no-tty --armor"; //$NON-NLS-1$
@@ -124,8 +123,8 @@ public final class HgSignClient {
 		List<String> getKeysCmd = new ArrayList<String>();
 		getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
 		getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
-		GpgCommand command = new GpgCommand(hgRoot, getKeysCmd, ResourcesPlugin
-				.getWorkspace().getRoot().getLocation().toFile(), false);
+		GpgCommand command = new GpgCommand(hgRoot, "Fetching GPG key list", getKeysCmd, ResourcesPlugin
+				.getWorkspace().getRoot().getLocation().toFile());
 		return new String(command.executeToBytes());
 	}
 }

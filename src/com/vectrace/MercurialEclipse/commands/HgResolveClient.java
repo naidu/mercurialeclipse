@@ -39,8 +39,8 @@ public class HgResolveClient extends AbstractClient {
 	 * List merge state of files after merge
 	 */
 	public static List<FlaggedAdaptable> list(IResource res) throws HgException {
-		AbstractShellCommand command = new HgCommand("resolve", res, //$NON-NLS-1$
-				false);
+		AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
+				"Fetching conflict status for resource", res, false);
 		command
 				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		command.addOptions("-l"); //$NON-NLS-1$
@@ -68,7 +68,7 @@ public class HgResolveClient extends AbstractClient {
 	 * List merge state of files after merge
 	 */
 	public static List<FlaggedAdaptable> list(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("resolve", hgRoot, false);
+		AbstractShellCommand command = new HgCommand("resolve", "Listing conflict status", hgRoot, false);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		command.addOptions("-l"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
@@ -95,7 +95,7 @@ public class HgResolveClient extends AbstractClient {
 	public static String markResolved(IFile ifile) throws HgException {
 		File file = ResourceUtils.getFileHandle(ifile);
 		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
-				ifile, false);
+				"Marking resource as resolved", ifile, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command
 				.getHgRoot()));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -125,28 +125,12 @@ public class HgResolveClient extends AbstractClient {
 	}
 
 	/**
-	 * Try to resolve all unresolved files
-	 */
-	public static String resolveAll(IResource root) throws HgException {
-		HgCommand command = new HgCommand("resolve", root, //$NON-NLS-1$
-				false);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
-		addMergeToolPreference(command);
-		command
-				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-		String result = command.executeToString();
-		refreshStatus(root);
-		return result;
-
-	}
-
-	/**
 	 * Mark a resource as unresolved ("U")
 	 */
 	public static String markUnresolved(IFile ifile) throws HgException {
 		File file = ifile.getLocation().toFile();
 		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
-				ifile, false);
+				"Marking resource as unresolved", ifile, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command
 				.getHgRoot()));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -181,7 +165,7 @@ public class HgResolveClient extends AbstractClient {
 	 */
 	public static String[] restartMergeAndGetChangeSetsForCompare(IFile file) throws HgException {
 		String[] results = new String[3];
-		HgCommand command = new HgCommand("resolve", file, false);
+		HgCommand command = new HgCommand("resolve", "Invoking resolve to find parent information", file, false);
 
 		command.addOptions("--config", "ui.merge=internal:mustfail", "--debug");
 		command.addFiles(file);

@@ -30,7 +30,7 @@ public class HgBookmarkClient extends AbstractClient {
 	 * @return a List of bookmarks
 	 */
 	public static List<Bookmark> getBookmarks(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", hgRoot, true);
+		AbstractShellCommand cmd = new HgCommand("bookmarks", "Listing bookmarks", hgRoot, true);
 		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
 		String result = cmd.executeToString();
 		return convert(result);
@@ -49,7 +49,7 @@ public class HgBookmarkClient extends AbstractClient {
 
 	public static String create(HgRoot hgRoot, String name, String targetChangeset)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", hgRoot, true);
+		AbstractShellCommand cmd = new HgCommand("bookmarks", "Adding bookmark", hgRoot, true);
 		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("--rev", targetChangeset, name); //$NON-NLS-1$
 		return cmd.executeToString();
@@ -57,7 +57,7 @@ public class HgBookmarkClient extends AbstractClient {
 
 	public static String rename(HgRoot hgRoot, String name, String newName)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", hgRoot, true);
+		AbstractShellCommand cmd = new HgCommand("bookmarks", "Renaming bookmark", hgRoot, true);
 		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("--rename", name, newName); //$NON-NLS-1$
 		return cmd.executeToString();
@@ -65,7 +65,7 @@ public class HgBookmarkClient extends AbstractClient {
 
 	public static String delete(HgRoot hgRoot, String name)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", hgRoot, true);
+		AbstractShellCommand cmd = new HgCommand("bookmarks", "Deleting bookmark", hgRoot, true);
 		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("--delete", name); //$NON-NLS-1$
 		return cmd.executeToString();

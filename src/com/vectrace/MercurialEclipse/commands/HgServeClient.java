@@ -129,7 +129,7 @@ public class HgServeClient extends AbstractClient {
 			final int port, String prefixPath, String name, String webdirConf, boolean stdio,
 			boolean ipv6) {
 
-		final AbstractShellCommand command = new HgCommand("serve", hgRoot, true){
+		final AbstractShellCommand command = new HgCommand("serve", "Serving repository", hgRoot, true){
 			@Override
 			protected ProzessWrapper createProcessWrapper(OutputStream output, String jobName,
 					ProcessBuilder builder) {

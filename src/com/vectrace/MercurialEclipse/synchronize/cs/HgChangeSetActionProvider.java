@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -98,7 +99,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 			return;
 		}
 		IResource resource = ResourceUtils.getResource(element);
-		if (!(resource instanceof IFile) || !resource.exists()) {
+		if ((!(resource instanceof IFile) && !(resource instanceof IFolder)) || !resource.exists()) {
 			return;
 		}
 

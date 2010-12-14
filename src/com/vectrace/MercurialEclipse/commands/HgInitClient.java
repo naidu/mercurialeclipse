@@ -28,8 +28,8 @@ public class HgInitClient extends AbstractClient {
 	 * @param file non null directory (which may not exist yet)
 	 */
 	public static String init(File file) throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("init", ResourceUtils
-				.getFirstExistingDirectory(file), false);
+		AbstractShellCommand command = new RootlessHgCommand("init", "Initializing repository", ResourceUtils
+				.getFirstExistingDirectory(file));
 		command.addOptions(file.getAbsolutePath());
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 		return command.executeToString();
@@ -40,7 +40,7 @@ public class HgInitClient extends AbstractClient {
 	 * @param repo non null repository (which may not exist yet)
 	 */
 	public static String init(IHgRepositoryLocation repo) throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("init", false);
+		AbstractShellCommand command = new RootlessHgCommand("init", "Initializing repository");
 		if(repo.isLocal()) {
 			command.addOptions(repo.getLocation());
 		} else {

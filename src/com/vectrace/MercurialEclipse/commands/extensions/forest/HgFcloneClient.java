@@ -30,8 +30,7 @@ public class HgFcloneClient extends AbstractClient {
 			boolean noUpdate, boolean pull, boolean uncompressed,
 			boolean timeout, String rev, String cloneName)
 			throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("fclone", parentDirectory, //$NON-NLS-1$
-				false);
+		AbstractShellCommand command = new RootlessHgCommand("fclone", "Invoking fclone", parentDirectory); //$NON-NLS-1$
 
 		//        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
 

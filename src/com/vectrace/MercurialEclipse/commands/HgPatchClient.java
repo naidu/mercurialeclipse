@@ -38,7 +38,7 @@ public class HgPatchClient extends AbstractClient {
 	 */
 	public static String importPatch(HgRoot hgRoot, File patchLocation,
 			ArrayList<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand("import", hgRoot, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("import", "Importing patch", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.addFiles(patchLocation.getAbsolutePath());
 		command.addOptions(options.toArray(new String[options.size()]));
@@ -67,11 +67,10 @@ public class HgPatchClient extends AbstractClient {
 	 */
 	public static boolean exportPatch(HgRoot hgRoot, Set<IPath> resources,
 			File patchFile, List<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
-		if(resources.size() > 0) {
-			command.addFiles(resources);
-		}
-		command.addOptions(options.toArray(new String[options.size()]));
+		AbstractShellCommand command = makeExportUncommittedCommand(hgRoot, options);
+
+		command.addFiles(resources);
+
 		return command.executeToFile(patchFile, false);
 	}
 
@@ -83,10 +82,19 @@ public class HgPatchClient extends AbstractClient {
 	 */
 	public static String exportPatch(HgRoot root, List<IResource> resources,
 			List<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand( "diff", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = makeExportUncommittedCommand(root, options);
+
 		command.addFiles(resources);
-		command.addOptions(options.toArray(new String[options.size()]));
+
 		return command.executeToString();
+	}
+
+	private static AbstractShellCommand makeExportUncommittedCommand(HgRoot root, List<String> options) {
+		AbstractShellCommand command = new HgCommand( "diff", "Exporting patch of uncommitted changes", root, true); //$NON-NLS-1$
+
+		command.addOptions(options.toArray(new String[options.size()]));
+
+		return command;
 	}
 
 	/**
@@ -127,7 +135,8 @@ public class HgPatchClient extends AbstractClient {
 
 	private static AbstractShellCommand makeExportPatchCommand(HgRoot root, ChangeSet cs,
 			List<String> options) {
-		AbstractShellCommand command = new HgCommand("export", root, true);
+		AbstractShellCommand command = new HgCommand("export", "Exporting changeset "
+				+ cs.getChangeset(), root, true);
 
 		if (options != null) {
 			command.addOptions(options.toArray(new String[options.size()]));
@@ -139,19 +148,8 @@ public class HgPatchClient extends AbstractClient {
 		return command;
 	}
 
-	public static String getDiff(HgRoot workDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
-		return command.executeToString();
-	}
-
-	public static String getDiff(HgRoot workDir, File file) throws HgException {
-		AbstractShellCommand command = new HgCommand("diff", workDir, true); //$NON-NLS-1$
-		command.addOptions(file.getAbsolutePath());
-		return command.executeToString();
-	}
-
 	/**
-	 * Get a diff for a single changeSet or a rage for revisions.
+	 * Get a diff for a single changeSet or a range for revisions.
 	 *
 	 * Use the extended diff format (--git) that shows renames and file attributes.
 	 *
@@ -162,7 +160,8 @@ public class HgPatchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String getDiff(HgRoot hgRoot, MercurialRevision entry, MercurialRevision secondEntry) throws HgException {
-		HgCommand diffCommand = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
+		HgCommand diffCommand = new HgCommand("diff", //$NON-NLS-1$
+				"Calculating diff between revisions", hgRoot, true);
 		if( secondEntry == null ){
 			diffCommand.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
 		} else {

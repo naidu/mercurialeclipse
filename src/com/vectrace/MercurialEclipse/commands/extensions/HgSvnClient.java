@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class HgSvnClient extends AbstractClient {
 
 	public static String pull(HgRoot hgRoot) throws HgException {
-		HgCommand cmd = new HgCommand("svn", hgRoot, false);
+		HgCommand cmd = new HgCommand("svn", "Invoking svn pull", hgRoot, false);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		cmd.addOptions("pull"); //$NON-NLS-1$
 		String result = cmd.executeToString();
@@ -44,7 +44,7 @@ public class HgSvnClient extends AbstractClient {
 
 	public static String push(HgRoot currentWorkingDirectory) throws HgException {
 		AbstractShellCommand cmd = new HgCommand("svn", //$NON-NLS-1$
-				currentWorkingDirectory, false);
+				"Invoking svn push", currentWorkingDirectory, false);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		cmd.addOptions("push"); //$NON-NLS-1$
 		return cmd.executeToString();
@@ -52,7 +52,7 @@ public class HgSvnClient extends AbstractClient {
 
 	public static String rebase(HgRoot hgRoot)
 			throws HgException {
-		HgCommand cmd = new HgCommand("svn", hgRoot, false);
+		HgCommand cmd = new HgCommand("svn", "Invoking svn rebase", hgRoot, false);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		cmd.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("rebase"); //$NON-NLS-1$
@@ -65,7 +65,7 @@ public class HgSvnClient extends AbstractClient {
 			IHgRepositoryLocation repo, boolean timeout, String cloneName)
 			throws HgException {
 		AbstractShellCommand cmd = new RootlessHgCommand("svnclone", //$NON-NLS-1$
-				ResourceUtils.getFirstExistingDirectory(currentWorkingDirectory), false);
+				"Invoking svnclone", ResourceUtils.getFirstExistingDirectory(currentWorkingDirectory));
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
 		addRepoToHgCommand(repo, cmd);
 		if (cloneName != null) {

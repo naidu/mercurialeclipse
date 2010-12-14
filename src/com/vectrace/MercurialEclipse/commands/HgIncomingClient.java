@@ -39,7 +39,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 */
 	public static RemoteData getHgIncoming(RemoteKey key) throws HgException {
 		HgRoot hgRoot = key.getRoot();
-		HgCommand command = new HgCommand("incoming", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("incoming", "Calculating incoming changesets", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		String branch = key.getBranch();

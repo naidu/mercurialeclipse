@@ -106,14 +106,9 @@ public class PushRepoWizard extends HgWizard {
 			timeout = HgClients.getTimeOut(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		}
 
-		final String changeset;
+		final ChangeSet changeset;
 		if (outgoingPage.isRevisionSelected()) {
-			ChangeSet cs = outgoingPage.getRevision();
-			if (cs != null) {
-				changeset = cs.getChangeset();
-			} else {
-				changeset = null;
-			}
+			changeset = outgoingPage.getRevision();
 		} else {
 			changeset = null;
 		}

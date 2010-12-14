@@ -81,7 +81,7 @@ public class HgCommitClient extends AbstractClient {
 	 */
 	protected static String commit(HgRoot hgRoot, List<File> files, String user, String message,
 			boolean closeBranch) throws HgException {
-		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("commit", "Committing resources", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(user);
@@ -121,7 +121,7 @@ public class HgCommitClient extends AbstractClient {
 	 * Implementation note: after merge, no files should be specified.
 	 */
 	public static String commit(HgRoot hgRoot, String user, String message) throws HgException {
-		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("commit", "Committing all changes", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(user);

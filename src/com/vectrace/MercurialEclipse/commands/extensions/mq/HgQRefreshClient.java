@@ -28,7 +28,7 @@ public class HgQRefreshClient extends AbstractClient {
 	public static String refresh(HgRoot root, boolean shortFlag, List<IResource> files,
 			String message) throws HgException {
 		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				root, true);
+				"Invoking qrefresh", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		if (shortFlag) {
@@ -45,7 +45,7 @@ public class HgQRefreshClient extends AbstractClient {
 			boolean git, String include, String exclude, String user, String date)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				resource, true);
+				"Invoking qrefresh", resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

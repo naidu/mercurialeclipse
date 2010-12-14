@@ -38,7 +38,7 @@ public class HgGrepClient extends AbstractClient {
 	 */
 	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern, List<IResource> files, boolean all)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("grep", root, true);
+		AbstractShellCommand cmd = new HgCommand("grep", "Searching repository", root, true);
 		cmd.addOptions("-nuf");
 		if (all) {
 			cmd.addOptions("--all");

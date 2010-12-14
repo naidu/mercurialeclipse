@@ -31,7 +31,7 @@ public class HgQFoldClient extends AbstractClient {
 		Assert.isNotNull(patches);
 		Assert.isNotNull(resource);
 		AbstractShellCommand command = new HgCommand("qfold", //$NON-NLS-1$
-				resource, true);
+				"Invoking qfold", resource, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (keep) {

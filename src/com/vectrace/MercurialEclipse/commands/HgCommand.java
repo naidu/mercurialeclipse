@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -48,10 +47,11 @@ public class HgCommand extends AbstractShellCommand {
 
 	// constructors
 
-	public HgCommand(String command, HgRoot root, boolean escapeFiles) {
-		super(root, root, escapeFiles);
+	public HgCommand(String command, String uiName, HgRoot root, boolean escapeFiles) {
+		super(uiName, root, root, escapeFiles);
 		this.command = command;
 
+		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
 
@@ -59,14 +59,16 @@ public class HgCommand extends AbstractShellCommand {
 	 * Invoke a hg command in the directory of the given resource using the resource to find the HgRoot.
 	 *
 	 * @param command The command to execute
+	 * @param uiName Human readable name for this command
 	 * @param resource The resource to use for working directory
 	 * @param escapeFiles Whether to escape files
 	 * @throws HgException
 	 */
-	public HgCommand(String command, IResource resource, boolean escapeFiles) throws HgException {
-		super(AbstractClient.getHgRoot(resource), ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), escapeFiles);
+	public HgCommand(String command, String uiName, IResource resource, boolean escapeFiles) throws HgException {
+		super(uiName, AbstractClient.getHgRoot(resource), ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), escapeFiles);
 		this.command = command;
 
+		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
 
@@ -154,12 +156,11 @@ public class HgCommand extends AbstractShellCommand {
 		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#customizeCommands(java.util.List)
+	 */
 	@Override
-	protected boolean executeToStream(OutputStream output, int timeout,
-			boolean expectPositiveReturnValue) throws HgException {
-
-		// Request non-interactivity flag
-		List<String> cmd = getCommands();
+	protected void customizeCommands(List<String> cmd) {
 
 		if (bundleFile != null) {
 			// Add -R <bundleFile>
@@ -168,9 +169,6 @@ public class HgCommand extends AbstractShellCommand {
 		}
 
 		cmd.add(1, "-y");
-		commands = cmd;
-		// delegate to superclass
-		return super.executeToStream(output, timeout, expectPositiveReturnValue);
 	}
 
 	/**

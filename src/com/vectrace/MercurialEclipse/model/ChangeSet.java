@@ -372,46 +372,46 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 * @return the ageDate
 	 */
 	public String getAgeDate() {
-		return constructAge(getRealDate());
-	}
-
-	private String constructAge(Date creationDate) {
-		long delta = System.currentTimeMillis() - creationDate.getTime();
+		double delta = (System.currentTimeMillis() - getRealDate().getTime());
 
 		delta /= 1000 * 60; // units is minutes
 
-		if (delta <= 0) {
+		if (delta <= 1) {
 			return "less than a minute ago";
 		}
 
 		if (delta <= 60) {
-			return delta + " minutes ago";
+			return makeAgeString(delta, "minute");
 		}
 
 		delta /= 60;
 		if (delta <= 24) {
-			return delta + " hours ago";
+			return makeAgeString(delta, "hour");
 		}
 
 		// 1 day to 31 days
 		delta /= 24; // units is days
 		if (delta <= 31) {
-			return delta + " days ago";
+			return makeAgeString(delta, "day");
 		}
 
 		// 4 weeks - 3 months
 		if (delta / 7 <= 12) {
-			return delta / 7 + " weeks ago";
+			return makeAgeString(delta / 7, "week");
 		}
 
 		// 3 months - 1 year
 		if (delta / 30 <= 12) {
-			return delta / 30 + " months ago";
+			return makeAgeString(delta / 30, "month");
 		}
 
-		delta /= 365;
+		return makeAgeString(delta / 365, "year");
+	}
 
-		return delta + " years ago";
+	private static String makeAgeString(double d, String unit) {
+		int i = (int) Math.max(1, Math.round(d));
+
+		return i + " " + unit + ((i == 1) ? "" : "s") + " ago";
 	}
 
 	/**

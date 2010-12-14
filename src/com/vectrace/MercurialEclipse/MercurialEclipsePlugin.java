@@ -119,7 +119,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * Please document new requirements here.
 	 * See also http://mercurial.selenic.com/wiki/WhatsNew.
 	 * --new-branch for push requires 1.6.0, but this is optional feature
-	 * --branch for incoming/outgoing requires 1.5.0 (must have)
+	 * --branch for incoming/outgoing/pull/push requires 1.5.0 (must have)
 	 */
 	private static final Version LOWEST_WORKING_VERSION = new Version(1, 5, 0);
 	private static final Version PREFERRED_VERSION = new Version(1, 6, 0);
@@ -218,7 +218,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	private void checkHgVersion() throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("version", true); //$NON-NLS-1$
+		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version"); //$NON-NLS-1$
 		command.setShowOnConsole(false);
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$

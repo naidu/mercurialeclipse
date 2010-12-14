@@ -16,35 +16,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgIdentClient extends AbstractClient {
 
 	public static final String VERSION_ZERO = "0000000000000000000000000000000000000000";
-
-	public static String getCurrentRevision(IContainer root) throws HgException {
-		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
-		command.addOptions("-n", "-i"); //$NON-NLS-1$ //$NON-NLS-2$
-		command
-		.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		return command.executeToString().trim();
-	}
-
-	public static String getCurrentRevision(IResource resource)
-	throws HgException {
-		AbstractShellCommand command = new HgCommand("identify", //$NON-NLS-1$
-				resource, true);
-		command
-		.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-nibt"); //$NON-NLS-1$
-		return command.executeToString().trim();
-	}
 
 	/**
 	 * @param b
@@ -82,7 +60,6 @@ public class HgIdentClient extends AbstractClient {
 		}
 		return id.toString();
 	}
-
 
 	/**
 	 * Returns the current node-id as a String

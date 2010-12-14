@@ -227,13 +227,17 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	protected String command;
-	protected List<String> commands;
+
+	/**
+	 * Calculated commands. See {@link #getCommands()}
+	 */
+	private List<String> commands;
 
 	/**
 	 * Whether files should be preceded by "--" on the command line.
 	 * @see #files
 	 */
-	protected final boolean escapeFiles;
+	private final boolean escapeFiles;
 
 	protected List<String> options;
 
@@ -258,18 +262,26 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private DefaultExecutionRule executionRule;
 
+	/**
+	 * Human readable name for this operation
+	 */
+	private final String uiName;
+
 	// constructors
 
 	/**
+	 * @param uiName
+	 *            Human readable name for this command
 	 * @param hgRoot
 	 *            Though this command might not invoke hg, it might get encoding information from
 	 *            it. May be null.
 	 */
-	protected AbstractShellCommand(HgRoot hgRoot, File workingDir, boolean escapeFiles) {
+	protected AbstractShellCommand(String uiName, HgRoot hgRoot, File workingDir, boolean escapeFiles) {
 		super();
 		this.hgRoot = hgRoot;
 		this.workingDir = workingDir;
 		this.escapeFiles = escapeFiles;
+		this.uiName = uiName;
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
 		showOnConsole = true;
@@ -277,10 +289,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
+
+		Assert.isNotNull(uiName);
 	}
 
-	protected AbstractShellCommand(HgRoot hgRoot, List<String> commands, File workingDir, boolean escapeFiles) {
-		this(hgRoot, workingDir, escapeFiles);
+	protected AbstractShellCommand(String uiName, HgRoot hgRoot, List<String> commands, File workingDir, boolean escapeFiles) {
+		this(uiName, hgRoot, workingDir, escapeFiles);
 
 		this.commands = commands;
 	}
@@ -330,7 +344,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return null;
 	}
 
-	protected boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+	protected final boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
 			throws HgException {
 
 		List<String> cmd = getCommands();
@@ -341,7 +355,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// I see sometimes that hg has errors if it runs in parallel
 		// using a job with exclusive rule here serializes all hg access from plugin.
-		processWrapper = createProcessWrapper(output, jobName, builder);
+		processWrapper = createProcessWrapper(output, uiName, builder);
 
 		logConsoleCommandInvoked(jobName);
 
@@ -560,7 +574,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	protected List<String> getCommands() {
+	private List<String> getCommands() {
 		if (commands != null) {
 			return commands;
 		}
@@ -572,8 +586,18 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			result.add("--"); //$NON-NLS-1$
 		}
 		result.addAll(files);
+
+		customizeCommands(result);
+
 		// TODO check that length <= MAX_PARAMS
-		return result;
+		return commands = result;
+	}
+
+	/**
+	 * Template method to customize the commands to execute
+	 * @param cmd The list of commands to execute.
+	 */
+	protected void customizeCommands(List<String> cmd) {
 	}
 
 	protected abstract String getExecutable();

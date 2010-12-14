@@ -27,7 +27,7 @@ public class HgQNewClient extends AbstractClient {
 			String exclude, String user, String date, String patchName)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qnew", //$NON-NLS-1$
-				resource, true);
+				"Invoking qnew", resource, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

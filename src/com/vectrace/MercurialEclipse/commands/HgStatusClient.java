@@ -60,7 +60,7 @@ public class HgStatusClient extends AbstractClient {
 	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$");
 
 	public static String getStatus(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduic"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -68,7 +68,7 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Fetching resource status", root, true); //$NON-NLS-1$
 
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
@@ -80,7 +80,7 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Fetching resource status", root, true); //$NON-NLS-1$
 
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
@@ -94,14 +94,14 @@ public class HgStatusClient extends AbstractClient {
 	 * files under the given root, which are untracked by hg
 	 */
 	public static String[] getUntrackedFiles(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", hgRoot, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating untracked files", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-u", "-n"); //$NON-NLS-1$ //$NON-NLS-2$
 		return command.executeToString().split("\n"); //$NON-NLS-1$
 	}
 
 	public static boolean isDirty(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating dirty state", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-mard"); // modified, added, removed, deleted //$NON-NLS-1$
 		return command.executeToBytes().length != 0;
@@ -113,7 +113,7 @@ public class HgStatusClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String[] getIdMergeAndBranch(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("id", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("id", "Identifying status", root, true); //$NON-NLS-1$
 		// Full global IDs + branch name
 		command.addOptions("-ib", "--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -152,7 +152,8 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", //$NON-NLS-1$
+				"Fetching status for " + files.size() + " resources", root, true);
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		// modified, added, removed, deleted, unknown, ignored, clean
@@ -173,12 +174,13 @@ public class HgStatusClient extends AbstractClient {
 		int size = files.size();
 		int delta = AbstractShellCommand.MAX_PARAMS - 1;
 		for (int i = 0; i < size; i += delta) {
-			AbstractShellCommand command = new HgCommand("status", hgRoot, //$NON-NLS-1$
-					true);
+			final int j = Math.min(i + delta, size);
+			AbstractShellCommand command = new HgCommand("status", "Fetching status for " + (j - i) + " resources", //$NON-NLS-1$
+					hgRoot, true);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 			// modified, added, removed, deleted, unknown
 			command.addOptions("-mardu"); //$NON-NLS-1$
-			command.addFiles(files.subList(i, Math.min(i + delta, size)));
+			command.addFiles(files.subList(i, j));
 			output.append(command.executeToString());
 		}
 
@@ -189,7 +191,7 @@ public class HgStatusClient extends AbstractClient {
 	 * @return root relative paths of changed files, never null
 	 */
 	public static String[] getDirtyFiles(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Finding dirty resources", root, true); //$NON-NLS-1$
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-mard"); //$NON-NLS-1$
@@ -269,7 +271,7 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	private static File getPossibleSourcePath(HgRoot root, File file, int firstRev, String secondRev) throws HgException{
-		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Finding resource status", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-arC"); //$NON-NLS-1$
 		command.addOptions("--rev"); //$NON-NLS-1$
@@ -311,7 +313,10 @@ public class HgStatusClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String getStatusForChangeset(ChangeSet cs) throws HgException {
-		HgCommand command = new HgCommand("status", cs.getHgRoot(), true); //$NON-NLS-1$
+		HgCommand command = new HgCommand(
+				"status", //$NON-NLS-1$
+				"Calcuting resources changes in changeset " + cs.getChangeset(), cs.getHgRoot(),
+				true);
 
 		if (cs.getBundleFile() != null) {
 			try {

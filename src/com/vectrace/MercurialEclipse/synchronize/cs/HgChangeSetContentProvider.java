@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -38,8 +39,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
+import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -53,16 +54,18 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 @SuppressWarnings("restriction")
 public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
@@ -358,14 +361,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 
 		for (String seg : map.keySet()) {
-			final List<Object> data = map.get(seg);
-
-			out.add(new PathFromChangeSet(parent, seg) {
-				@Override
-				public Object[] getChildren() {
-					return collectTree(this, data);
-				}
-			});
+			out.add(new TreePathFromChangeSet(parent, seg, map.get(seg)));
 		}
 
 		return out.toArray(new Object[out.size()]);
@@ -396,12 +392,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			if (path.isEmpty()) {
 				out.addAll(data);
 			} else {
-				out.add(new PathFromChangeSet(parent, path.toString()) {
-					@Override
-					public Object[] getChildren() {
-						return data.toArray(new FileFromChangeSet[data.size()]);
-					}
-				});
+				out.add(new CompressedTreePathFromChangeSet(parent, path.toString(), data));
 			}
 		}
 
@@ -764,13 +755,15 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		private final String display;
 
+		protected IResource resource;
+
 		/**
 		 * Constructor for tree mode
 		 *
 		 * @param seg
 		 *            The leading segment
 		 */
-		public PathFromChangeSet(Object prnt, String seg) {
+		protected PathFromChangeSet(Object prnt, String seg) {
 			parent = prnt;
 			display = seg;
 		}
@@ -787,7 +780,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public boolean equals(Object other) {
 			if (other instanceof PathFromChangeSet) {
 				PathFromChangeSet o = (PathFromChangeSet)other;
-				return o.display.equals(display) && o.parent.equals(parent);
+
+				if (o.display.equals(display) && o.parent.equals(parent))
+				{
+					if (o.resource == null) {
+						return resource == null;
+					}
+					return o.resource.equals(resource);
+				}
 			}
 			return false;
 		}
@@ -800,6 +800,71 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return 73 ^ display.hashCode() + parent.hashCode();
 		}
 
+		public final Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+			if (IResource.class.equals(adapter)) {
+				return resource;
+			}
+			return null;
+		}
+
 		public abstract Object[] getChildren();
+	}
+
+	private class CompressedTreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+
+		protected final List<FileFromChangeSet> data;
+
+		public CompressedTreePathFromChangeSet(Object prnt, String seg, List<FileFromChangeSet> data) {
+			super(prnt, seg);
+			this.data = data;
+
+			if (data != null && data.size() > 0) {
+				this.resource = data.get(0).getFile().getParent();
+			}
+		}
+
+		@Override
+		public Object[] getChildren() {
+			return data.toArray(new FileFromChangeSet[data.size()]);
+		}
+	}
+
+	private class TreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+
+		protected final List<Object> data;
+
+		public TreePathFromChangeSet(Object prnt, String seg, List<Object> data) {
+			super(prnt, seg);
+			this.data = data;
+			this.resource = getResource();
+		}
+
+		@Override
+		public Object[] getChildren() {
+			return collectTree(HgChangeSetContentProvider.this, data);
+		}
+
+		private IResource getResource() {
+			IResource result = null;
+			if (data.size() > 1) {
+				// first object must be an IPath
+				Object o1 = data.get(0);
+				// and second must be FileFromChangeSet
+				Object o2 = data.get(1);
+				if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
+					IResource childResource = ResourceUtils.getResource(o2);
+					IPath childPath = (IPath) o1;
+
+					IPath folderPath = childResource.getLocation().removeLastSegments(childPath.segmentCount() + 1);
+					try {
+						result = ResourceUtils.convert(folderPath.toFile());
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			}
+
+			return result;
+		}
 	}
 }

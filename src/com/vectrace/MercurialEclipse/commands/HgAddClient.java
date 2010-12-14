@@ -35,12 +35,12 @@ public class HgAddClient extends AbstractClient {
 			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
-				AbstractShellCommand command = new HgCommand("add", hgRoot, //$NON-NLS-1$
-						true);
+				final int j = Math.min(i + delta, size);
+				AbstractShellCommand command = new HgCommand("add", //$NON-NLS-1$
+						"Adding " + j + " resources", hgRoot, true);
 				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
-				command.addFiles(mapEntry.getValue().subList(i,
-						Math.min(i + delta, size)));
+				command.addFiles(mapEntry.getValue().subList(i, j));
 				command.executeToBytes();
 			}
 		}

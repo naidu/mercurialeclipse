@@ -33,9 +33,9 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class HgFpushPullClient extends HgPushPullClient {
 
 	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
-			String revision, int timeout, File snapFile) throws CoreException {
+			ChangeSet changeset, int timeout, File snapFile) throws CoreException {
 
-		AbstractShellCommand command = new RootlessHgCommand("fpush", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpush", "Invoking fpush", forestRoot);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		if (snapFile != null) {
 			try {
@@ -45,9 +45,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 			}
 		}
 
-		if (revision != null && revision.length() > 0) {
-			command.addOptions("-r", revision.trim());
-		}
+		HgPushPullClient.applyChangeset(command, changeset);
 
 		URI uri = repo.getUri();
 		if (uri != null) {
@@ -70,14 +68,13 @@ public class HgFpushPullClient extends HgPushPullClient {
 		} else {
 			pullSource = repo.getLocation();
 		}
-		AbstractShellCommand command = new RootlessHgCommand("fpull", forestRoot, true);
+		AbstractShellCommand command = new RootlessHgCommand("fpull", "Invoking fpull", forestRoot);
 
 		if (update) {
 			command.addOptions("--update");
 		}
-		if (changeset != null) {
-			command.addOptions("--rev", changeset.getChangeset());
-		}
+
+		applyChangeset(command, changeset);
 
 		if (snapFile != null) {
 			try {

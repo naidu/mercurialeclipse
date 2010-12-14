@@ -37,6 +37,23 @@ public final class HgTransplantClient {
 		public String pruneNodeId;
 		/** changesets sorted in the ascending revision order */
 		public SortedSet<ChangeSet> nodes;
+
+		/**
+		 * @return Human readable description
+		 */
+		public String getDescription() {
+			if (continueLastTransplant) {
+				return "Continuing transplant";
+			} else if (all) {
+				return "Transplanting all revisions from source";
+			} else if (nodes == null) {
+				return "Transplanting";
+			} else if (nodes.size() > 1) {
+				return "Transplanting " + nodes.size() + " revisions";
+			}
+
+			return "Transplanting revision " + nodes.first().getChangeset();
+		}
 	}
 
 	private HgTransplantClient() {
@@ -49,7 +66,7 @@ public final class HgTransplantClient {
 	public static String transplant(HgRoot hgRoot,
 			IHgRepositoryLocation repo, TransplantOptions options) throws HgException {
 
-		AbstractShellCommand command = new HgCommand("transplant", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("transplant", options.getDescription(), hgRoot, false); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("--log"); //$NON-NLS-1$

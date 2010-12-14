@@ -57,7 +57,7 @@ public class HgRebaseClient extends AbstractClient {
 	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev, int destRev,
 			boolean collapse, boolean cont, boolean abort, boolean keepBranches, boolean keep,
 			boolean useExternalMergeTool, String user) throws HgException {
-		AbstractShellCommand c = new HgCommand("rebase", hgRoot, false);//$NON-NLS-1$
+		AbstractShellCommand c = new HgCommand("rebase", "Rebasing", hgRoot, false);//$NON-NLS-1$
 		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (!useExternalMergeTool) {
