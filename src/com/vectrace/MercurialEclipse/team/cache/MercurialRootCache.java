@@ -44,7 +44,7 @@ public class MercurialRootCache extends AbstractCache {
 
 	private static final QualifiedName SESSION_KEY = new QualifiedName(MercurialEclipsePlugin.ID, "MercurialRootCacheKey");
 
-	private static final Object NO_ROOT = new String("No Mercurial root");
+	private static final Object NO_ROOT = "No Mercurial root";
 
 	// associations
 
@@ -77,8 +77,7 @@ public class MercurialRootCache extends AbstractCache {
 		if (root != null) {
 			HgRoot prev = knownRoots.putIfAbsent(root, root);
 
-			if (prev != null)
-			{
+			if (prev != null) {
 				root = prev;
 			}
 		}
@@ -97,11 +96,16 @@ public class MercurialRootCache extends AbstractCache {
 			// special case for HgRootContainers, they already know their HgRoot
 			return ((HgRootContainer) resource).getHgRoot();
 		}
+		if (resource instanceof IProject) {
+			IProject project = (IProject) resource;
+			if(!project.isAccessible()) {
+				return null;
+			}
+		}
 
 		// As an optimization only cache for containers not files
-		if (resource instanceof IFile)
-		{
-			IResource parent = ((IFile)resource).getParent();
+		if (resource instanceof IFile) {
+			IResource parent = ((IFile) resource).getParent();
 			resource = (parent == null) ? resource : parent;
 		}
 
