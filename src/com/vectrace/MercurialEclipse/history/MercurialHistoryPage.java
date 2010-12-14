@@ -161,20 +161,25 @@ public class MercurialHistoryPage extends HistoryPage {
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
 			int from = mercurialHistory.getLastVersion() - 1;
-			while(from != mercurialHistory.getLastRequestedVersion()
-					&& from >= 0 && !monitor.isCanceled()) {
+			boolean gotEverything = historyFetched(from);
+			while(!gotEverything && !monitor.isCanceled()) {
 				try {
 					mercurialHistory.refresh(monitor, from);
-					updateUI();
-					from = mercurialHistory.getLastVersion() - 1;
 				} catch (CoreException ex) {
 					MercurialEclipsePlugin.logError(ex);
 				}
+				from = mercurialHistory.getLastVersion() - 1;
+				gotEverything = historyFetched(from);
+				updateUI(gotEverything);
 			}
 			return Status.OK_STATUS;
 		}
 
-		private void updateUI() {
+		private boolean historyFetched(int from) {
+			return from == mercurialHistory.getLastRequestedVersion() || from < 0;
+		}
+
+		private void updateUI(final boolean gotEverything) {
 			final Control ctrl = viewer.getControl();
 			if (ctrl != null && !ctrl.isDisposed()) {
 				ctrl.getDisplay().syncExec(new Runnable() {
@@ -182,7 +187,8 @@ public class MercurialHistoryPage extends HistoryPage {
 						if (!ctrl.isDisposed()) {
 							viewer.setInput(mercurialHistory);
 							viewer.refresh();
-							// refresh the proposal list with new data
+							// refresh the proposal list with new data.
+							// code below works only if the gotoText is not empty
 							Listener[] listeners2 = gotoText.getListeners(SWT.KeyDown);
 							for (Listener listener : listeners2) {
 								Event event = new Event();
@@ -190,6 +196,10 @@ public class MercurialHistoryPage extends HistoryPage {
 								event.keyCode = SWT.ARROW_RIGHT;
 								event.widget = gotoText;
 								listener.handleEvent(event);
+							}
+							// remove the workaround after we've sent the event
+							if(gotEverything && gotoText.getText().equals(" ")) {
+								gotoText.setText("");
 							}
 						}
 					}
@@ -475,7 +485,15 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	private static Composite createComposite(Composite parent) {
 		Composite root = new Composite(parent, SWT.NONE);
-		root.setLayout(new GridLayout(1, false));
+		GridLayout gridLayout = new GridLayout(1, false);
+		gridLayout.marginLeft = 0;
+		gridLayout.marginBottom = 0;
+		gridLayout.marginHeight = 0;
+		gridLayout.marginTop = 0;
+		gridLayout.marginWidth = 0;
+		gridLayout.horizontalSpacing = 1;
+		gridLayout.verticalSpacing = 1;
+		root.setLayout(gridLayout);
 		GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
 		gridData.widthHint = SWT.DEFAULT;
 		gridData.heightHint = SWT.DEFAULT;
@@ -491,7 +509,15 @@ public class MercurialHistoryPage extends HistoryPage {
 		"Use <Esc> to stop retrieving history for big repositories.";
 		gotoPanel = new Composite(parent, SWT.NONE);
 		gotoPanel.setToolTipText(tooltipForGoTo);
-		gotoPanel.setLayout(new GridLayout(2, false));
+		GridLayout gridLayout = new GridLayout(2, false);
+		gridLayout.marginLeft = 0;
+		gridLayout.marginBottom = 0;
+		gridLayout.marginHeight = 0;
+		gridLayout.marginTop = 0;
+		gridLayout.marginWidth = 0;
+		gridLayout.horizontalSpacing = 1;
+		gridLayout.verticalSpacing = 1;
+		gotoPanel.setLayout(gridLayout);
 		GridData gd = new GridData(SWT.FILL, SWT.FILL, true, false);
 		gd.exclude = !showGoTo;
 		gotoPanel.setLayoutData(gd);
@@ -528,7 +554,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			}
 		});
 
-		// hack is needed to make the text widget content lengt > 0, which allows us
+		// hack is needed to make the text widget content length > 0, which allows us
 		// to trigger the history retrieving as soon as content assist opens
 		gotoText.setText(" ");
 
