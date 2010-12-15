@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -59,6 +61,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class MercurialParticipantSynchronizeWizard extends ParticipantSynchronizeWizard implements IWorkbenchWizard {
 
 	private static final String SECTION_NAME = "MercurialParticipantSynchronizeWizard";
+
+	private static final String PROP_HGROOT = "MercurialParticipantSynchronizeWizard.PROP_HG_ROOT";
 
 	private final IWizard importWizard;
 	private ConfigurationWizardMainPage repoPage;
@@ -147,14 +151,14 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 * @return properties object if all information needed to synchronize is available, null if some
 	 *         settings are missing
 	 */
-	public List<Properties> prepareSettings() {
+	public List<Map<String, Object>> prepareSettings() {
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
-		ArrayList<Properties> result = new ArrayList<Properties>();
+		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		Iterator<HgRoot> ite = roots.iterator();
 		while (ite.hasNext()) {
-			Properties pageProperties = initProperties(ite.next());
+			Map<String, Object> pageProperties = initPropertiesInternal(ite.next());
 			if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
@@ -168,30 +172,51 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		return result;
 	}
 
-	private static boolean isValid(Properties pageProperties, String key){
-		String value = pageProperties.getProperty(key);
-		return value != null && value.trim().length() > 0;
+	private static boolean isValid(Map<String, Object> pageProperties, String key){
+		Object value = pageProperties.get(key);
+		return value instanceof String && ((String) value).trim().length() > 0;
 	}
 
 	/**
 	 * @param hgRoot non null
-	 * @return non null proeprties with possible repository data initialized from given
+	 * @return non null properties with possible repository data initialized from given
 	 * root (may be empty)
 	 */
-	static Properties initProperties(HgRoot hgRoot) {
-		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
-		Properties properties = new Properties();
+	private static Map<String, Object> initPropertiesInternal(HgRoot hgRoot) {
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+				.getDefaultRepoLocation(hgRoot);
+		Map<String, Object> properties = new Hashtable<String, Object>();
 		if(repoLocation != null){
 			if(repoLocation.getLocation() != null) {
-				properties.setProperty(ConfigurationWizardMainPage.PROP_URL, repoLocation.getLocation());
+				properties.put(ConfigurationWizardMainPage.PROP_URL, repoLocation.getLocation());
 				if(repoLocation.getUser() != null) {
-					properties.setProperty(ConfigurationWizardMainPage.PROP_USER, repoLocation.getUser());
+					properties.put(ConfigurationWizardMainPage.PROP_USER, repoLocation.getUser());
 					if(repoLocation.getPassword() != null) {
-						properties.setProperty(ConfigurationWizardMainPage.PROP_PASSWORD, repoLocation.getPassword());
+						properties.put(ConfigurationWizardMainPage.PROP_PASSWORD, repoLocation.getPassword());
 					}
 				}
 			}
 		}
+		properties.put(PROP_HGROOT, hgRoot);
+		return properties;
+	}
+
+	static Properties initProperties(HgRoot hgRoot) {
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+				.getDefaultRepoLocation(hgRoot);
+		Properties properties = new Properties();
+		if(repoLocation != null){
+			if(repoLocation.getLocation() != null) {
+				properties.put(ConfigurationWizardMainPage.PROP_URL, repoLocation.getLocation());
+				if(repoLocation.getUser() != null) {
+					properties.put(ConfigurationWizardMainPage.PROP_USER, repoLocation.getUser());
+					if(repoLocation.getPassword() != null) {
+						properties.put(ConfigurationWizardMainPage.PROP_PASSWORD, repoLocation.getPassword());
+					}
+				}
+			}
+		}
+		properties.put(PROP_HGROOT, hgRoot);
 		return properties;
 	}
 
@@ -203,7 +228,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			performFinish = super.performFinish();
 		} else {
 			// UI was not created, so we just need to continue with synchronization
-			List<Properties> properties = prepareSettings();
+			List<Map<String, Object>> properties = prepareSettings();
 			if(properties != null && properties.size() > 0) {
 				createdParticipant = createParticipant(properties, getInitialSelection());
 			} else {
@@ -217,50 +242,30 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	private void startSync() {
-		TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{createdParticipant});
-//				new ISynchronizeParticipant[] { createdParticipant });
+		TeamUI.getSynchronizeManager().addSynchronizeParticipants(
+				new ISynchronizeParticipant[] { createdParticipant });
 		// We don't know in which site to show progress because a participant could actually be
 		// shown in multiple sites.
-			createdParticipant.run(null /* no site */);
+		createdParticipant.run(null /* no site */);
 	}
 
-	protected MercurialSynchronizeParticipant createParticipant(List<Properties> properties, IProject[] selectedProjects) {
+	protected MercurialSynchronizeParticipant createParticipant(List<Map<String, Object>> properties, IProject[] selectedProjects) {
 
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-
-		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays
-				.asList(selectedProjects));
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
 		Set<HgRoot> roots = byRoot.keySet();
 
-//		// XXX what if there are zero or more then one root???
-//		HgRoot hgRoot = null;
-//		for (HgRoot hgRoot1 : roots) {
-//			if (hgRoot1.getDefaultUrl().equals(url)) {
-//				hgRoot = hgRoot1;
-//				break;
-//			}
-//		}
-//
-//		if (hgRoot == null) {
-//			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ",
-//					new Exception(roots.size() + " hg roots"));
-//		}
-
 		Set<IHgRepositoryLocation> repos = new TreeSet<IHgRepositoryLocation>();
-		for (Properties prop : properties) {
-			String url = prop.getProperty(ConfigurationWizardMainPage.PROP_URL);
-			String user = prop.getProperty(ConfigurationWizardMainPage.PROP_USER);
-			String pass = prop.getProperty(ConfigurationWizardMainPage.PROP_PASSWORD);
+		for (Map<String, Object> prop : properties) {
+			String url = (String) prop.get(ConfigurationWizardMainPage.PROP_URL);
+			String user = (String) prop.get(ConfigurationWizardMainPage.PROP_USER);
+			String pass = (String) prop.get(ConfigurationWizardMainPage.PROP_PASSWORD);
 
 			IHgRepositoryLocation repo;
 			try {
-				HgRoot hgRoot = null;
-				for (HgRoot hgRoot1 : roots) {
-					if (hgRoot1.getDefaultUrl().equals(url)) {
-						hgRoot = hgRoot1;
-						break;
-					}
-				}
+				HgRoot hgRoot = (HgRoot) prop.get(PROP_HGROOT);
+				Assert.isNotNull(hgRoot);
+
 				repo = repoManager.getRepoLocation(url, user, pass);
 				if (pass != null && user != null) {
 					if (!pass.equals(repo.getPassword())) {
@@ -280,8 +285,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 				return null;
 			}
 		}
-
-
 
 		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "Mercurial"); //TODO Better name
 

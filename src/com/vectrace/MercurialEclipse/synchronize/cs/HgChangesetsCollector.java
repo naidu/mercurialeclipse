@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -33,9 +34,9 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -217,6 +218,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						Assert.isNotNull(repo);
 						result.addAll(cache.getChangeSets(project, repo, syncBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -227,6 +229,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						Assert.isNotNull(repo);
 						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, syncBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);

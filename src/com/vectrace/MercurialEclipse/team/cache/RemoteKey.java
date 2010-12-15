@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -35,11 +36,17 @@ public class RemoteKey {
 	private final String branch;
 
 	/**
+	 * @param root Not null
+	 * @param repo Not null
 	 * @param branch can be null (means all branches)
 	 */
 	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch) {
 		this.root = root;
 		this.repo = repo;
+
+		Assert.isNotNull(repo);
+		Assert.isNotNull(root);
+
 		this.branch = branch != null && Branch.isDefault(branch)? Branch.DEFAULT : branch;
 	}
 

@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.synchronize;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
@@ -46,13 +45,13 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 
 	private final IProject[] roots;
 	private final ListenerList listeners;
-	private final Set<? extends IHgRepositoryLocation> repo;
+	private final Set<? extends IHgRepositoryLocation> repositoryLocationSet;
 	private MercurialSynchronizeSubscriber subscriber;
 	private HgChangeSetModelProvider provider;
 
 	public RepositorySynchronizationScope(Set<? extends IHgRepositoryLocation> repo, IProject[] roots) {
 		Assert.isNotNull(repo);
-		this.repo = repo;
+		this.repositoryLocationSet = repo;
 //		if(roots != null) {
 			this.roots = roots;
 //		} else {
@@ -206,18 +205,11 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	}
 
 	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
-		Iterator<? extends IHgRepositoryLocation> iterator = repo.iterator();
-		while (iterator.hasNext()) {
-			IHgRepositoryLocation next = iterator.next();
-			if(root.isDefaultLocation(next)) {
-				return next;
-			}
-		}
-		return null;
+		return MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(root);
 	}
 
 	public Set<? extends IHgRepositoryLocation> getRepositoryLocations() {
-		return repo;
+		return repositoryLocationSet;
 	}
 
 	public void setSubscriber(MercurialSynchronizeSubscriber mercurialSynchronizeSubscriber) {
@@ -232,9 +224,9 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RepositorySynchronizationScope [");
-		if (repo != null) {
+		if (repositoryLocationSet != null) {
 			builder.append("repo=");
-			builder.append(repo);
+			builder.append(repositoryLocationSet);
 			builder.append(", ");
 		}
 		if (roots != null) {

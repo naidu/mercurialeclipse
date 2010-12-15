@@ -71,7 +71,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	private static final String PROJECTS = "PROJECTS";
 
 	private String secondaryId;
-	private Set<IHgRepositoryLocation> repositoryLocation;
+	private Set<IHgRepositoryLocation> repositoryLocationSet;
 	private Set<IProject> restoredProjects;
 	private HgChangeSetCapability changeSetCapability;
 
@@ -81,8 +81,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx, Set<IHgRepositoryLocation> repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
-		this.repositoryLocation = repositoryLocation;
-		secondaryId = "Mercurial"; //computeSecondaryId(scope, repositoryLocation);
+		this.repositoryLocationSet = repositoryLocation;
+		secondaryId = computeSecondaryId(scope, repositoryLocation);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI.getSynchronizeManager().getParticipantDescriptor(getId());
 			setInitializationData(descriptor);
@@ -124,10 +124,10 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		String uri = myMemento.getString(REPOSITORY_LOCATION);
 
 		try {
-			repositoryLocation = new HashSet<IHgRepositoryLocation>();
+			repositoryLocationSet = new HashSet<IHgRepositoryLocation>();
 			String[] split = uri.split(",");
 			for (String url : split) {
-				repositoryLocation.add(MercurialEclipsePlugin.getRepoManager().getRepoLocation(url));
+				repositoryLocationSet.add(MercurialEclipsePlugin.getRepoManager().getRepoLocation(url));
 			}
 		} catch (HgException e) {
 			throw new PartInitException(e.getLocalizedMessage(), e);
@@ -161,7 +161,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	 */
 	private Set<IProject> getRepoProjects() {
 		Set<IProject> repoProjects = new HashSet<IProject>();
-		for(IHgRepositoryLocation repos : repositoryLocation) {
+		for(IHgRepositoryLocation repos : repositoryLocationSet) {
 			 repoProjects.addAll(MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repos));
 		}
 		return repoProjects;
@@ -194,14 +194,14 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			repoProjects = restoredProjects;
 		} else {
 			repoProjects = new TreeSet<IProject>();
-			if (repositoryLocation != null) {
-				for (IHgRepositoryLocation repo : repositoryLocation) {
+			if (repositoryLocationSet != null) {
+				for (IHgRepositoryLocation repo : repositoryLocationSet) {
 					Set<IProject> locationProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
 					repoProjects.addAll(locationProjects);
 				}
 			}
 		}
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation, repoProjects.toArray(new IProject[0]));
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocationSet, repoProjects.toArray(new IProject[0]));
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);
 		subscriber.setParticipant(this);
@@ -241,17 +241,25 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	 * @return the repositoryLocation
 	 */
 	public Set<IHgRepositoryLocation> getRepositoryLocation() {
-		return repositoryLocation;
+		return repositoryLocationSet;
 	}
 
 	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
-		Iterator<? extends IHgRepositoryLocation> iterator = repositoryLocation.iterator();
-		while (iterator.hasNext()) {
-			IHgRepositoryLocation loc = iterator.next();
-			if(root.isDefaultLocation(loc)) {
-				return loc;
+		// TODO: this is wrong - Eg repos could sync with each other or share remote. why is this not known already?
+		Set<IHgRepositoryLocation> locs = new HashSet<IHgRepositoryLocation>(MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(root));
+
+		for (Iterator<IHgRepositoryLocation> it = locs.iterator(); it.hasNext();) {
+			IHgRepositoryLocation repoLoc = it.next();
+
+			for (Iterator<? extends IHgRepositoryLocation> it2 = repositoryLocationSet.iterator(); it2.hasNext();) {
+				IHgRepositoryLocation scopeLoc = it2.next();
+
+				if (scopeLoc.compareTo(repoLoc) == 0) {
+					return scopeLoc;
+				}
 			}
 		}
+
 		return null;
 	}
 
@@ -341,7 +349,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	private String repositoryLocationToString() {
 		StringBuilder sb = new StringBuilder();
-		IHgRepositoryLocation[] array = repositoryLocation.toArray(new IHgRepositoryLocation[]{});
+		IHgRepositoryLocation[] array = repositoryLocationSet.toArray(new IHgRepositoryLocation[]{});
 		for(int i=0; i < array.length; i++) {
 			sb.append(array[i].toString());
 			if(i >= 0 && i != array.length-1) {
@@ -355,9 +363,9 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("MercurialSynchronizeParticipant [");
-		if (repositoryLocation != null) {
+		if (repositoryLocationSet != null) {
 			builder.append("repositoryLocation=");
-			builder.append(repositoryLocation);
+			builder.append(repositoryLocationSet);
 			builder.append(", ");
 		}
 		if (restoredProjects != null) {

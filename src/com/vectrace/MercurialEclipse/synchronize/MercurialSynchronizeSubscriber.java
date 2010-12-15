@@ -602,7 +602,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	protected IHgRepositoryLocation getRepo(HgRoot root){
-		return scope.getRepositoryLocation(root);
+		IHgRepositoryLocation ret = scope.getRepositoryLocation(root);
+
+		Assert.isNotNull(ret);
+
+		return ret;
 	}
 
 	protected Set<? extends IHgRepositoryLocation> getRepos(){
