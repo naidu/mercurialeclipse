@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.QualifiedName;
@@ -197,6 +198,32 @@ public class MercurialRootCache extends AbstractCache {
 					it.remove();
 				}
 			}
+		}
+	}
+
+	/**
+	 * When there are changes done outside of eclipse the root of a resource may go away or change.
+	 *
+	 * @param resource
+	 *            The resource to evict.
+	 */
+	public void uncache(IResource resource) {
+		// A different more efficient approach would be to mark all contained hgroots (or just all
+		// known root) as obsolete and then when a resource is queried we can detect this and
+		// discard the cached result thereby making the invalidation lazy. But that would make
+		// things more complex so use brute force for now:
+		try {
+			resource.accept(new IResourceVisitor() {
+				public boolean visit(IResource res) throws CoreException {
+					res.setSessionProperty(SESSION_KEY, null);
+					return true;
+				}
+			});
+		} catch (CoreException e) {
+			// CoreException - if this method fails. Reasons include:
+			// - This resource does not exist.
+			// - The visitor failed with this exception.
+			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
