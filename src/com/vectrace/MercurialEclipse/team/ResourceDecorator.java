@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *     Zsolt Kopany (Intland)    - bug fixes
  *     Philip Graf               - bug fix
@@ -57,8 +57,6 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author zingo
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
  */
 public class ResourceDecorator extends LabelProvider implements ILightweightLabelDecorator, Observer {
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
@@ -105,6 +103,9 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private boolean showChangeset;
 	private boolean showIncomingChangeset;
 	private boolean enableSubrepos;
+	private boolean disposed;
+	private IPropertyChangeListener themeListener;
+	private IPropertyChangeListener prefsListener;
 
 	public ResourceDecorator() {
 		configureFromPreferences();
@@ -113,7 +114,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
 		ensureFontAndColorsCreated(FONTS, COLORS);
 
-		PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(new IPropertyChangeListener() {
+		themeListener = new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if(!IThemeManager.CHANGE_CURRENT_THEME.equals(event.getProperty())){
 					return;
@@ -121,16 +122,18 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
 				ensureFontAndColorsCreated(FONTS, COLORS);
 			}
-		});
+		};
+		PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(themeListener);
 
-		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
+		prefsListener = new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if(INTERESTING_PREFS.contains(event.getProperty())){
 					configureFromPreferences();
 					fireLabelProviderChanged(new LabelProviderChangedEvent(ResourceDecorator.this));
 				}
 			}
-		});
+		};
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(prefsListener);
 	}
 
 
@@ -159,8 +162,14 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 	@Override
 	public void dispose() {
+		if(disposed) {
+			return;
+		}
+		disposed = true;
 		STATUS_CACHE.deleteObserver(this);
 		INCOMING_CACHE.deleteObserver(this);
+		PlatformUI.getWorkbench().getThemeManager().removePropertyChangeListener(themeListener);
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().removePropertyChangeListener(prefsListener);
 		super.dispose();
 	}
 
@@ -227,7 +236,6 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
-
 
 	private boolean shouldCheckSubrepo(IResource resource) throws HgException {
 		return enableSubrepos && resource.getType() == IResource.FOLDER
