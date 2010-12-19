@@ -10,7 +10,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - some updates
  *     Bastian Doetsch           - new qualified name for project sets
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Adam Berkes (Intland)     - Fix encoding
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
@@ -206,7 +206,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
 		Assert.isNotNull(project);
-		HgRoot result = MercurialRootCache.getInstance().getHgRoot(project);
+		HgRoot result = MercurialRootCache.getInstance().hasHgRoot(project);
 		if(result == null){
 			return RepositoryProvider.getProvider(project, ID) != null;
 		}
@@ -315,7 +315,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return null;
 		}
 
-		return MercurialRootCache.getInstance().getHgRoot(resource);
+		return MercurialRootCache.getInstance().hasHgRoot(resource);
 	}
 
 	/**

@@ -6,8 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * npiguet	implementation
- * John Peberdy refactoring
+ * 		npiguet				- implementation
+ *		John Peberdy 		- refactoring
+ *		Andrei Loskutov     - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -57,7 +58,7 @@ public class MercurialRootCache extends AbstractCache {
 
 	// operations
 
-	private HgRoot calculateHgRoot(File file) {
+	private HgRoot calculateHgRoot(File file, boolean reportNotFoundRoot) {
 		if (file instanceof HgRoot) {
 			return (HgRoot) file;
 		}
@@ -69,7 +70,9 @@ public class MercurialRootCache extends AbstractCache {
 		try {
 			root = HgRootClient.getHgRoot(file);
 		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+			if(reportNotFoundRoot) {
+				MercurialEclipsePlugin.logError(e);
+			}
 			// no root found at all
 			root = null;
 		}
@@ -86,12 +89,23 @@ public class MercurialRootCache extends AbstractCache {
 	}
 
 	/**
+	 * Find the hgroot for the given resource. If the root could not be found,
+	 * no error would be reported.
+	 *
+	 * @param resource The resource, not null.
+	 * @return The hgroot, or null if an error occurred or root was not found.
+	 */
+	public HgRoot hasHgRoot(IResource resource) {
+		return getHgRoot(resource, false);
+	}
+
+	/**
 	 * Find the hgroot for the given resource.
 	 *
 	 * @param resource The resource, not null.
 	 * @return The hgroot, or null if an error occurred or not found
 	 */
-	public HgRoot getHgRoot(IResource resource) {
+	public HgRoot getHgRoot(IResource resource, boolean reportNotFoundRoot) {
 		if (resource instanceof HgRootContainer) {
 			// special case for HgRootContainers, they already know their HgRoot
 			return ((HgRootContainer) resource).getHgRoot();
@@ -123,10 +137,10 @@ public class MercurialRootCache extends AbstractCache {
 			cacheResult = false;
 		}
 
-		if (result == NO_ROOT) {
+		if (NO_ROOT.equals(result)) {
 			root = null;
 		} else if (result == null) {
-			root = calculateHgRoot(ResourceUtils.getFileHandle(resource));
+			root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
 
 			if (cacheResult) {
 				try {
@@ -144,6 +158,17 @@ public class MercurialRootCache extends AbstractCache {
 		}
 
 		return root;
+	}
+
+
+	/**
+	 * Find the hgroot for the given resource.
+	 *
+	 * @param resource The resource, not null.
+	 * @return The hgroot, or null if an error occurred or not found
+	 */
+	public HgRoot getHgRoot(IResource resource) {
+		return getHgRoot(resource, true);
 	}
 
 	public Collection<HgRoot> getKnownHgRoots(){
