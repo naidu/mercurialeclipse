@@ -25,12 +25,14 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -41,22 +43,16 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class MercurialRootCache extends AbstractCache {
 
-	// constants
-
-	private static final QualifiedName SESSION_KEY = new QualifiedName(MercurialEclipsePlugin.ID, "MercurialRootCacheKey");
+	private static final QualifiedName SESSION_KEY = new QualifiedName(MercurialEclipsePlugin.ID,
+			"MercurialRootCacheKey");
 
 	private static final Object NO_ROOT = "No Mercurial root";
 
-	// associations
+	private final ConcurrentHashMap<HgRoot, HgRoot> knownRoots = new ConcurrentHashMap<HgRoot, HgRoot>(
+			16, 0.75f, 4);
 
-	private final ConcurrentHashMap<HgRoot, HgRoot> knownRoots = new ConcurrentHashMap<HgRoot, HgRoot>(16, 0.75f, 4);
-
-	// constructor
-
-	private MercurialRootCache(){
+	private MercurialRootCache() {
 	}
-
-	// operations
 
 	private HgRoot calculateHgRoot(File file, boolean reportNotFoundRoot) {
 		if (file instanceof HgRoot) {
@@ -110,8 +106,9 @@ public class MercurialRootCache extends AbstractCache {
 			// special case for HgRootContainers, they already know their HgRoot
 			return ((HgRootContainer) resource).getHgRoot();
 		}
+		IProject project = null;
 		if (resource instanceof IProject) {
-			IProject project = (IProject) resource;
+			project = (IProject) resource;
 			if(!project.isAccessible()) {
 				return null;
 			}
@@ -141,7 +138,17 @@ public class MercurialRootCache extends AbstractCache {
 			root = null;
 		} else if (result == null) {
 			root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
-
+			if (project != null && root != null) {
+				// The call to RepositoryProvider is needed to trigger configure(project) on
+				// MercurialTeamProvider if it doesn't happen before. Additionally, we avoid the
+				// case if the hg root is there but project is NOT configured for MercurialEclipse
+				// as team provider. See issue 13448.
+				RepositoryProvider provider = RepositoryProvider.getProvider(project,
+						MercurialTeamProvider.ID);
+				if (!(provider instanceof MercurialTeamProvider)) {
+					root = null;
+				}
+			}
 			if (cacheResult) {
 				try {
 					resource.setSessionProperty(SESSION_KEY, root == null ? NO_ROOT : root);
@@ -180,11 +187,8 @@ public class MercurialRootCache extends AbstractCache {
 		// nothing to do
 	}
 
-	/**
-	 * @see com.vectrace.MercurialEclipse.team.cache.AbstractCache#projectDeletedOrClosed(org.eclipse.core.resources.IProject)
-	 */
 	@Override
-	protected void projectDeletedOrClosed(IProject project) {
+	public void projectDeletedOrClosed(IProject project) {
 		IPath projPath = project.getLocation();
 
 		if (projPath != null) {

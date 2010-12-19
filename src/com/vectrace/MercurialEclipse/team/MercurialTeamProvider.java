@@ -195,7 +195,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Assert.isNotNull(project);
 
 		// cleanup
-		MercurialStatusCache.getInstance().clearMergeStatus(project);
+		MercurialStatusCache.getInstance().clear(project, false);
+		MercurialRootCache.getInstance().projectDeletedOrClosed(project);
 	}
 
 	/**
