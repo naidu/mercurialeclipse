@@ -47,7 +47,10 @@ public class MercurialRootCache extends AbstractCache {
 	private static final QualifiedName SESSION_KEY = new QualifiedName(MercurialEclipsePlugin.ID,
 			"MercurialRootCacheKey");
 
-	private static final Object NO_ROOT = "No Mercurial root";
+	/**
+	 * The current sentinel for no root
+	 */
+	private String noRoot = "No Mercurial root";
 
 	private final ConcurrentHashMap<HgRoot, HgRoot> knownRoots = new ConcurrentHashMap<HgRoot, HgRoot>(
 			16, 0.75f, 4);
@@ -135,9 +138,10 @@ public class MercurialRootCache extends AbstractCache {
 			cacheResult = false;
 		}
 
-		if (NO_ROOT.equals(result)) {
+		if (noRoot == result) {
 			root = null;
-		} else if (result == null) {
+		} else if (result == null || noRoot.equals(result)) {
+			// result is null or an obsolete negative result
 			root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
 			if (project != null && root != null) {
 				// The call to RepositoryProvider is needed to trigger configure(project) on
@@ -150,9 +154,10 @@ public class MercurialRootCache extends AbstractCache {
 					root = null;
 				}
 			}
+
 			if (cacheResult) {
 				try {
-					resource.setSessionProperty(SESSION_KEY, root == null ? NO_ROOT : root);
+					resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
 				} catch (CoreException e) {
 					// Possible reasons:
 					// - 3 reasons above, or
@@ -225,6 +230,13 @@ public class MercurialRootCache extends AbstractCache {
 			// - The visitor failed with this exception.
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+	/**
+	 * When a new repository is created previous negative cached results should be discarded.
+	 */
+	public void uncacheAllNegative() {
+		noRoot = new String(noRoot); // equals but not ==
 	}
 
 	public static MercurialRootCache getInstance(){
