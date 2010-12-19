@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -1401,8 +1401,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	public void clear(HgRoot root, boolean notify) {
 		Set<IProject> projects = ResourceUtils.getProjects(root);
+		clearMergeStatus(root.getIPath());
 		for (IProject project : projects) {
-			clearStatusCache(project, false);
+			clear(project, false);
 			if(notify) {
 				notifyChanged(project, false);
 			}
@@ -1410,6 +1411,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	public void clear(IProject project, boolean notify) {
+		clearMergeStatus(project);
 		clearStatusCache(project, false);
 		if(notify) {
 			notifyChanged(project, false);
@@ -1472,16 +1474,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			statusBatchSize = STATUS_BATCH_SIZE;
 			MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
 		}
-	}
-
-
-
-	public void clearMergeStatus(HgRoot hgRoot) {
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		for (IProject project : projects) {
-			clearMergeStatus(project);
-		}
-		clearMergeStatus(hgRoot.getIPath());
 	}
 
 	private void clearMergeStatus(IPath path) {
