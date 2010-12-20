@@ -239,6 +239,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 	private static String cleanControlChars(String str) {
 		final StringBuilder buf = new StringBuilder();
 		final int len = str.length();
+		boolean inString=false;
 		for (int i = 0; i < len; i++) {
 			final int ch = str.codePointAt(i);
 			if (ch == '\r' || ch == '\n' || ch == '\t') {
@@ -249,6 +250,11 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 				buf.append("&amp;");
 			} else if (ch == '"') {
 				buf.append("\"");
+				inString = !inString;
+			} else if ((ch == '<') && inString) {
+				buf.append("&lt;");
+			} else if ((ch == '>') && inString) {
+				buf.append("&gt;");
 			} else {
 				buf.appendCodePoint(ch);
 			}
