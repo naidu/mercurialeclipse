@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Charles O'Farrell         - HgRevision
  *     Bastian Doetsch			 - some more info fields
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)   - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *     Philip Graf               - bug fix
@@ -93,10 +93,26 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private ListenerList listenerList;
 
 	/**
+	 * A "dummy" changeset containing no additional information except given data
+	 */
+	public static class ShallowChangeSet extends ChangeSet {
+
+		/**
+		 * Creates a shallow changeset containing only provided data
+		 * @param changesetIndex
+		 * @param changeSet non null
+		 * @param root non null
+		 */
+		public ShallowChangeSet(int changesetIndex, String changeSet, HgRoot root) {
+			super(changesetIndex, changeSet, null, null, null, null, "", null, root);
+		}
+	}
+
+	/**
 	 * A more or less dummy changeset containing only index and global id. Such changeset is useful
 	 * and can be constructed from the other changesets "parent" ids
 	 */
-	public static class ParentChangeSet extends ChangeSet {
+	public static class ParentChangeSet extends ShallowChangeSet {
 
 		/**
 		 * @param indexAndId
@@ -105,8 +121,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		 *            this changeset's child from which we are constructing the parent
 		 */
 		public ParentChangeSet(String indexAndId, ChangeSet child) {
-			super(getIndex(indexAndId), getChangeset(indexAndId), null, null, null, null,
-					"", null, child.getHgRoot()); //$NON-NLS-1$
+			super(getIndex(indexAndId), getChangeset(indexAndId), child.getHgRoot());
 			this.bundleFile = child.getBundleFile();
 			this.direction = child.direction;
 		}
@@ -255,7 +270,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 					if (StringUtils.isEmpty(ctag)) {
 						continue;
 					}
-					Tag tag = new Tag(ctag, getChangesetIndex(), getChangeset(), false);
+					Tag tag = new Tag(hgRoot, ctag, this, false);
 					tagList.add(tag);
 				}
 				if (!tagList.isEmpty()) {

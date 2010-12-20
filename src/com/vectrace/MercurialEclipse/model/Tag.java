@@ -7,21 +7,27 @@
  *
  * Contributors:
  * 	   Bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)   - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import java.util.Set;
+
 import org.eclipse.team.core.history.ITag;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet.ShallowChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
+ * @author Bastian
  */
 public class Tag implements ITag, Comparable<Tag> {
 	private static final String TIP = HgRevision.TIP.getChangeset();
+
 
 	/** name of the tag, unique in the repository */
 	private final String name;
@@ -29,12 +35,56 @@ public class Tag implements ITag, Comparable<Tag> {
 	private final String globalId;
 	private final boolean local;
 
-	public Tag(String name, int revision, String globalId, boolean local) {
+	private ChangeSet changeSet;
+
+
+	private final HgRoot hgRoot;
+
+	public Tag(HgRoot hgRoot, String name, int revision, String globalId, boolean local) {
 		super();
+		this.hgRoot = hgRoot;
 		this.name = name;
 		this.revision = revision;
 		this.globalId = globalId;
 		this.local = local;
+	}
+
+	public Tag(HgRoot hgRoot, String name, ChangeSet changeSet, boolean local) {
+		this(hgRoot, name, changeSet.getChangesetIndex(), changeSet.getChangeset(), local);
+		this.changeSet = changeSet;
+	}
+
+	/**
+	 * <b>Note: this method may trigger Mercurial call</b> to retrieve the changeset info, if
+	 * the tag was created with {@link #Tag(HgRoot, String, int, String, boolean)} constructor
+	 * and the local changeset cache doesn't contain the tag version!
+	 * @return never null
+	 */
+	public ChangeSet getChangeSet() {
+		if(changeSet != null) {
+			return changeSet;
+		}
+		LocalChangesetCache cache = LocalChangesetCache.getInstance();
+		try {
+			changeSet = cache.getOrFetchChangeSetById(hgRoot,
+					revision + ":" + globalId);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		if(changeSet == null) {
+			try {
+				Set<ChangeSet> revisions = cache.fetchRevisions(hgRoot, true, 1, revision, false);
+				if(revisions.size() == 1) {
+					changeSet = revisions.iterator().next();
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			if(changeSet == null) {
+				changeSet = new ShallowChangeSet(revision, globalId, hgRoot);
+			}
+		}
+		return changeSet;
 	}
 
 	public String getName() {
