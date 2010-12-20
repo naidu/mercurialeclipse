@@ -366,7 +366,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		if(resource == null || (resource != null && !resource.equals(old))){
 			if(resource != null) {
 				mercurialHistory = new MercurialHistory(resource);
-				actionShowParentHistory.setEnabled(true);
+				actionShowParentHistory.setEnabled(!mercurialHistory.isRootHistory());
 			} else {
 				mercurialHistory = null;
 			}
