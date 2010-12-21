@@ -131,6 +131,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private ChangeSet currentWorkdirChangeset;
 	private OpenMercurialRevisionAction openAction;
 	private BaseSelectionListenerAction openEditorAction;
+	private BaseSelectionListenerAction focusOnSelectedFileAction;
 	private boolean showTags;
 	private CompareRevisionAction compareWithCurrAction;
 	private CompareRevisionAction compareWithPrevAction;
@@ -151,6 +152,47 @@ public class MercurialHistoryPage extends HistoryPage {
 	private HistoryContentProposalProvider proposalProvider;
 	private Job fetchAllJob;
 
+
+	/**
+	 * Action which is related to the selected file
+	 */
+	private abstract class BaseFileHistoryAction extends BaseSelectionListenerAction {
+		protected IFile file;
+
+		private BaseFileHistoryAction(String text) {
+			super(text);
+		}
+
+		@Override
+		protected boolean updateSelection(IStructuredSelection selection) {
+			Object element = selection.getFirstElement();
+			if(element instanceof MercurialHistory){
+				MercurialHistory history = (MercurialHistory) element;
+				IFileRevision[] revisions = history.getFileRevisions();
+				if(revisions.length != 1 || !(revisions[0] instanceof MercurialRevision)){
+					file = null;
+					return false;
+				}
+				MercurialRevision rev = (MercurialRevision) revisions[0];
+				if(rev.getResource() instanceof IFile){
+					file = (IFile) rev.getResource();
+					return file.exists();
+				}
+			} else if (element instanceof MercurialRevision){
+				MercurialRevision rev = (MercurialRevision) element;
+				if(rev.getResource() instanceof IFile){
+					file = (IFile) rev.getResource();
+					return file.exists();
+				}
+			}
+			if(resource instanceof IFile){
+				file = (IFile) resource;
+				return file.exists();
+			}
+			file = null;
+			return false;
+		}
+	}
 
 	private final class FetchEntireHistoryJob extends Job {
 
@@ -963,9 +1005,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			return openEditorAction;
 		}
 
-		openEditorAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.openCurrentVersion")) { //$NON-NLS-1$
-			private IFile file;
-
+		openEditorAction = new BaseFileHistoryAction(Messages.getString("MercurialHistoryPage.openCurrentVersion")) {
 			@Override
 			public void run() {
 				if(file == null){
@@ -977,38 +1017,39 @@ public class MercurialHistoryPage extends HistoryPage {
 					MercurialEclipsePlugin.logError(e);
 				}
 			}
+		};
+		return openEditorAction;
+	}
+
+	BaseSelectionListenerAction getFocusOnSelectedFileAction() {
+		if(focusOnSelectedFileAction != null){
+			return focusOnSelectedFileAction;
+		}
+
+		focusOnSelectedFileAction = new BaseFileHistoryAction(Messages.getString("MercurialHistoryPage.showSelectedFileHistory")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				if(file == null){
+					return;
+				}
+				getHistoryView().showHistoryFor(file, true);
+			}
 
 			@Override
 			protected boolean updateSelection(IStructuredSelection selection) {
-				Object element = selection.getFirstElement();
-				if(element instanceof MercurialHistory){
-					MercurialHistory history = (MercurialHistory) element;
-					IFileRevision[] revisions = history.getFileRevisions();
-					if(revisions.length != 1 || !(revisions[0] instanceof MercurialRevision)){
+				boolean result = super.updateSelection(selection);
+				if(result) {
+					// disable "focus on" for the already focused file
+					if(file != null && file.equals(resource)) {
 						file = null;
 						return false;
 					}
-					MercurialRevision rev = (MercurialRevision) revisions[0];
-					if(rev.getResource() instanceof IFile){
-						file = (IFile) rev.getResource();
-						return file.exists();
-					}
-				} else if (element instanceof MercurialRevision){
-					MercurialRevision rev = (MercurialRevision) element;
-					if(rev.getResource() instanceof IFile){
-						file = (IFile) rev.getResource();
-						return file.exists();
-					}
 				}
-				if(resource instanceof IFile){
-					file = (IFile) resource;
-					return file.exists();
-				}
-				file = null;
-				return false;
+				return result;
 			}
 		};
-		return openEditorAction;
+		focusOnSelectedFileAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/goto.gif"));
+		return focusOnSelectedFileAction;
 	}
 
 	CompareRevisionAction getCompareWithCurrentAction() {
