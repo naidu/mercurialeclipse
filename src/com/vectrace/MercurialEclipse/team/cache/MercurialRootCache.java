@@ -110,66 +110,56 @@ public class MercurialRootCache extends AbstractCache {
 			// special case for HgRootContainers, they already know their HgRoot
 			return ((HgRootContainer) resource).getHgRoot();
 		}
-		IProject project = null;
-		if (resource instanceof IProject) {
-			project = (IProject) resource;
-			if(!project.isAccessible()) {
-				return null;
-			}
+
+		IProject project = resource.getProject();
+		if(!project.isAccessible()) {
+			return null;
+		}
+
+		// The call to RepositoryProvider is needed to trigger configure(project) on
+		// MercurialTeamProvider if it doesn't happen before. Additionally, we avoid the
+		// case if the hg root is there but project is NOT configured for MercurialEclipse
+		// as team provider. See issue 13448.
+		RepositoryProvider provider = RepositoryProvider.getProvider(project,
+				MercurialTeamProvider.ID);
+		if (!(provider instanceof MercurialTeamProvider)) {
+			return null;
 		}
 
 		// As an optimization only cache for containers not files
 		if (resource instanceof IFile) {
-			IResource parent = ((IFile) resource).getParent();
-			resource = (parent == null) ? resource : parent;
+			resource = resource.getParent();
 		}
 
 		boolean cacheResult = true;
-		Object result = null;
-		HgRoot root;
-
 		try {
-			result = resource.getSessionProperty(SESSION_KEY);
+			Object cachedRoot = resource.getSessionProperty(SESSION_KEY);
+			if(cachedRoot instanceof HgRoot) {
+				return (HgRoot) cachedRoot;
+			}
+			if (cachedRoot == noRoot) {
+				return null;
+			}
 		} catch (CoreException e) {
 			// Possible reasons:
 			// - This resource does not exist.
 			// - This resource is not local.
-			// - This resource is a project that is not open.
 			cacheResult = false;
 		}
 
-		if (noRoot == result) {
-			root = null;
-		} else if (result == null || noRoot.equals(result)) {
-			// result is null or an obsolete negative result
-			root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
-			if (project != null && root != null) {
-				// The call to RepositoryProvider is needed to trigger configure(project) on
-				// MercurialTeamProvider if it doesn't happen before. Additionally, we avoid the
-				// case if the hg root is there but project is NOT configured for MercurialEclipse
-				// as team provider. See issue 13448.
-				RepositoryProvider provider = RepositoryProvider.getProvider(project,
-						MercurialTeamProvider.ID);
-				if (!(provider instanceof MercurialTeamProvider)) {
-					root = null;
-				}
+		// cachedRoot can be only null or an obsolete noRoot object
+		HgRoot root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
+		if (cacheResult) {
+			try {
+				resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
+			} catch (CoreException e) {
+				// Possible reasons:
+				// - 2 reasons above, or
+				// - Resource changes are disallowed during certain types of resource change event
+				// notification. See IResourceChangeEvent for more details.
+				MercurialEclipsePlugin.logError(e);
 			}
-
-			if (cacheResult) {
-				try {
-					resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
-				} catch (CoreException e) {
-					// Possible reasons:
-					// - 3 reasons above, or
-					// - Resource changes are disallowed during certain types of resource change event
-					// notification. See IResourceChangeEvent for more details.
-					MercurialEclipsePlugin.logError(e);
-				}
-			}
-		} else {
-			root = (HgRoot) result;
 		}
-
 		return root;
 	}
 

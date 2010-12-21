@@ -37,8 +37,10 @@ public class HgRootRule implements ISchedulingRule {
 				return false;
 			}
 			if(rule instanceof IResource){
-				HgRoot resourceRoot = MercurialRootCache.getInstance().getHgRoot((IResource) rule);
-
+				HgRoot resourceRoot = MercurialRootCache.getInstance().hasHgRoot((IResource) rule);
+				if(resourceRoot == null) {
+					return false;
+				}
 				return getHgRoot().equals(resourceRoot);
 			}
 			return false;
