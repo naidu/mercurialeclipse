@@ -5,7 +5,7 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors: Bastian Doetsch - implementation
- * Andrei Loskutov (Intland) - bugfixes
+ * Andrei Loskutov - bugfixes
  * Zsolt Koppany (Intland)
  * Ilya Ivanov (Intland)
  ******************************************************************************/
@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -122,7 +122,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 */
 	public static Map<IPath, Set<ChangeSet>> getCompleteProjectLog(
 			IResource res, boolean withFiles) throws HgException {
-		return getProjectLog(res, -1, -1, withFiles);
+		return getProjectLog(res, -1, Integer.MAX_VALUE, withFiles);
 	}
 
 	/**
@@ -130,7 +130,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 */
 	public static Map<IPath, Set<ChangeSet>> getCompleteRootLog(
 			HgRoot hgRoot, boolean withFiles) throws HgException {
-		return getRootLog(hgRoot, -1, -1, withFiles);
+		return getRootLog(hgRoot, -1, Integer.MAX_VALUE, withFiles);
 	}
 
 	/**
