@@ -40,6 +40,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -104,6 +105,7 @@ import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.HistoryContentProposalProvider.RevisionContentProposal;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
@@ -135,6 +137,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private boolean showTags;
 	private CompareRevisionAction compareWithCurrAction;
 	private CompareRevisionAction compareWithPrevAction;
+	private CompareRevisionAction compareWithOtherAction;
 	private CompareRevisionAction compareTwo;
 	private BaseSelectionListenerAction revertAction;
 	private Action actionShowParentHistory;
@@ -942,6 +945,7 @@ public class MercurialHistoryPage extends HistoryPage {
 					} else {
 						menuMgr1.add(compareWithPrevAction);
 						menuMgr1.add(compareWithCurrAction);
+						menuMgr1.add(compareWithOtherAction);
 						menuMgr1.add(new Separator());
 						menuMgr1.add(revertAction);
 					}
@@ -979,6 +983,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		getOpenAction();
 		getOpenEditorAction();
 		getCompareWithCurrentAction();
+		getCompareWithOtherAction();
 		getRevertAction();
 		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){ //$NON-NLS-1$
 			@Override
@@ -1068,6 +1073,66 @@ public class MercurialHistoryPage extends HistoryPage {
 		return compareWithPrevAction;
 	}
 
+	CompareRevisionAction getCompareWithOtherAction() {
+		if(compareWithOtherAction == null) {
+			compareWithOtherAction = new CompareRevisionAction(Messages.getString("CompareWithOtherAction.label"), this) { //$NON-NLS-1$
+
+				private IFile file;
+				private MercurialRevision selectedRev;
+
+				@Override
+				public void run() {
+					if(file == null || selectedRev == null) {
+						return;
+					}
+					String title = "Compare " + file.getName() + " ["
+							+ selectedRev.getRevision() + "] with ...";
+					RevisionChooserDialog dialog = new RevisionChooserDialog(getControl().getShell(),
+							title, file);
+					int result = dialog.open();
+					if (result == IDialogConstants.OK_ID) {
+						ChangeSet cs = dialog.getChangeSet();
+						MercurialRevision rev = new MercurialRevision(cs, null, file, null, null);
+						super.updateSelection(new StructuredSelection(new Object[] {selectedRev, rev}));
+						super.run();
+					}
+				}
+
+				@Override
+				protected boolean updateSelection(IStructuredSelection selection) {
+					Object element = selection.getFirstElement();
+					if(element instanceof MercurialHistory){
+						MercurialHistory history = (MercurialHistory) element;
+						IFileRevision[] revisions = history.getFileRevisions();
+						if(revisions.length != 1 || !(revisions[0] instanceof MercurialRevision)){
+							file = null;
+							selectedRev = null;
+							return false;
+						}
+						MercurialRevision rev = (MercurialRevision) revisions[0];
+						if(rev.getResource() instanceof IFile){
+							file = (IFile) rev.getResource();
+							selectedRev = rev;
+							return file.exists();
+						}
+					} else if (element instanceof MercurialRevision){
+						MercurialRevision rev = (MercurialRevision) element;
+						if(rev.getResource() instanceof IFile){
+							file = (IFile) rev.getResource();
+							selectedRev = rev;
+							return file.exists();
+						}
+					}
+					file = null;
+					selectedRev = null;
+					return false;
+				}
+			};
+			compareWithOtherAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif")); //$NON-NLS-1$
+		}
+		return compareWithOtherAction;
+	}
+
 	@Override
 	public Control getControl() {
 		return rootControl;
@@ -1140,6 +1205,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		openAction.selectionChanged(selection);
 		openEditorAction.selectionChanged(selection);
 		compareWithCurrAction.selectionChanged(selection);
+		compareWithOtherAction.selectionChanged(selection);
 		compareWithPrevAction.selectionChanged(selection);
 		compareTwo.selectionChanged(selection);
 		revertAction.selectionChanged(selection);
