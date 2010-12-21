@@ -17,9 +17,16 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.team.ui.history.IHistoryPage;
+import org.eclipse.team.ui.history.IHistoryView;
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -94,6 +101,7 @@ public class RefreshRootJob extends Job {
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
+			updateHistoryView();
 		}
 
 		if((type & INCOMING) != 0){
@@ -117,6 +125,31 @@ public class RefreshRootJob extends Job {
 		}
 		monitor.done();
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * Running in UI thread asynchronously
+	 */
+	private void updateHistoryView() {
+		Display.getDefault().asyncExec(new Runnable() {
+
+			public void run() {
+				IWorkbenchWindow[] windows = PlatformUI.getWorkbench().getWorkbenchWindows();
+				for (IWorkbenchWindow ww : windows) {
+					IViewPart view = ww.getActivePage().findView(IHistoryView.VIEW_ID);
+					if(!(view instanceof IHistoryView)) {
+						return;
+					}
+					IHistoryView hview = (IHistoryView) view;
+					IHistoryPage page = hview.getHistoryPage();
+					if(!(page instanceof MercurialHistoryPage)) {
+						return;
+					}
+					MercurialHistoryPage mhp = (MercurialHistoryPage) page;
+					mhp.refresh();
+				}
+			}
+		});
 	}
 
 	/**
