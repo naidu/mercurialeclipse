@@ -61,6 +61,7 @@ import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -68,7 +69,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 @SuppressWarnings("restriction")
-public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
+public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 
 	public static final String ID = "com.vectrace.MercurialEclipse.changeSetContent";
 
@@ -129,7 +130,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);
-//				if (toRefresh != null) {
+				if(toRefresh != null) {
 					boolean added = toRefresh.getChangesets().add(set);
 					if (added) {
 						Utils.asyncExec(new Runnable() {
@@ -138,7 +139,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 							}
 						}, getTreeViewer());
 					}
-//				}
+				}
 			}
 		}
 
@@ -147,7 +148,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 			set.removeListener(changeSetListener);
 			if (isVisibleInMode(set)) {
-				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);// = set.getDirection() == Direction.INCOMING ? incoming : outgoing;
+				final ChangesetGroup toRefresh = findChangeSetInProjects(cs);
 				boolean removed = toRefresh.getChangesets().remove(set);
 				if(removed) {
 					Utils.asyncExec(new Runnable() {
@@ -294,11 +295,19 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				return group.getChangesets().toArray();
 			}
 		} else if (parent instanceof RepositoryChangesetGroup) {
+			// added groups to view
+			boolean showEmpty = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
 			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) parent;
 			ArrayList<Object> groups =new ArrayList<Object>();
-			groups.add(supergroup.getIncoming());
-			groups.add(supergroup.getOutgoing());
-			groups.add(supergroup.getUncommittedSet());
+			if(showEmpty || supergroup.getIncoming().getChangesets().size() > 0) {
+				groups.add(supergroup.getIncoming());
+			}
+			if(showEmpty || supergroup.getOutgoing().getChangesets().size() > 0) {
+				groups.add(supergroup.getOutgoing());
+			}
+			if(showEmpty || supergroup.getUncommittedSet().getFiles().size() > 0) {
+				groups.add(supergroup.getUncommittedSet());
+			}
 			return groups.toArray();
 		} else if (parent instanceof ChangeSet) {
 			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
@@ -513,14 +522,16 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				return true;
 			}
 		} else if (element instanceof RepositoryChangesetGroup) {
-//			SuperChangesetGroup supergroup = (SuperChangesetGroup) element;
-//				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
-//					return true;
-//				}
-//				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
-//					return true;
-//				}
+			if(MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS)) {
+				RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) element;
+				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
+					return true;
+				}
+				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
+					return true;
+				}
 			return true;
+			}
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
