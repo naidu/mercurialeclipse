@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - init
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -138,12 +138,12 @@ public class RefreshRootJob extends Job {
 				for (IWorkbenchWindow ww : windows) {
 					IViewPart view = ww.getActivePage().findView(IHistoryView.VIEW_ID);
 					if(!(view instanceof IHistoryView)) {
-						return;
+						continue;
 					}
 					IHistoryView hview = (IHistoryView) view;
 					IHistoryPage page = hview.getHistoryPage();
 					if(!(page instanceof MercurialHistoryPage)) {
-						return;
+						continue;
 					}
 					MercurialHistoryPage mhp = (MercurialHistoryPage) page;
 					mhp.refresh();
