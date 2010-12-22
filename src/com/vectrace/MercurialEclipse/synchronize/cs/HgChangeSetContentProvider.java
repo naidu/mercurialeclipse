@@ -641,6 +641,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			STATUS_CACHE.deleteObserver(sg.getUncommittedSet());
 			sg.getUncommittedSet().dispose();
 		}
+		projectGroup.clear();
 //		initialized=false;
 		super.dispose();
 	}
