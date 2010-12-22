@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.synchronize.cs;
 import org.eclipse.team.internal.core.subscribers.ChangeSet;
 
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * @author Soren Mathiasen
@@ -23,11 +24,13 @@ public class RepositoryChangesetGroup {
 	private final String name;
 	private ChangesetGroup incoming;
 	private ChangesetGroup outgoing;
+	private final WorkingChangeSet uncommittedSet;
 	private final IHgRepositoryLocation location;
 
-	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location) {
+	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location, WorkingChangeSet uncommittedSet) {
 		this.name = name;
 		this.location = location;
+		this.uncommittedSet = uncommittedSet;
 	}
 
 	public String getName() {
@@ -92,5 +95,12 @@ public class RepositoryChangesetGroup {
 	 */
 	public IHgRepositoryLocation getLocation() {
 		return location;
+	}
+
+	/**
+	 * @return the uncommittedSet
+	 */
+	public WorkingChangeSet getUncommittedSet() {
+		return uncommittedSet;
 	}
 }
