@@ -123,7 +123,7 @@ public final class HgSignClient {
 		List<String> getKeysCmd = new ArrayList<String>();
 		getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
 		getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
-		GpgCommand command = new GpgCommand(hgRoot, "Fetching GPG key list", getKeysCmd, ResourcesPlugin
+		GpgCommand command = new GpgCommand(hgRoot, "Retrieving GPG key list", getKeysCmd, ResourcesPlugin
 				.getWorkspace().getRoot().getLocation().toFile());
 		return new String(command.executeToBytes());
 	}

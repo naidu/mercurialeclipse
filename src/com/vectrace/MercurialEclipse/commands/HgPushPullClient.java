@@ -120,7 +120,7 @@ public class HgPushPullClient extends AbstractClient {
 			return op + " all changes" + ((branch == null) ? "" : " in " + branch);
 		}
 
-		return op + " up to " + changeset.getChangeset();
+		return op + " changeset " + changeset.getChangeset();
 	}
 
 	protected static void applyChangeset(AbstractShellCommand command, ChangeSet changeset) {

@@ -30,7 +30,7 @@ public class HgGLogClient extends HgCommand {
 	private final List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
 	public HgGLogClient(IResource resource, int batchSize, int startRev) throws HgException {
-		super("glog", "Fetching revision graph for resource", resource, false);
+		super("glog", "Retrieving revision graph for resource", resource, false);
 		File fileHandle = ResourceUtils.getFileHandle(resource);
 
 		if (resource.getType() == IResource.FILE) {
@@ -71,7 +71,7 @@ public class HgGLogClient extends HgCommand {
 	}
 
 	public HgGLogClient(HgRoot hgRoot, int batchSize, int startRev) throws HgException {
-		super("glog", "Fetching revision graph", hgRoot, false);
+		super("glog", "Retrieving revision graph", hgRoot, false);
 
 		configureOptions(batchSize, startRev);
 		load(executeToString());

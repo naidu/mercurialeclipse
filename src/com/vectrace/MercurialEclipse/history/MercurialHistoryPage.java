@@ -257,7 +257,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		private final int from;
 
 		public RefreshMercurialHistory(int from) {
-			super("Fetching Mercurial revisions..."); //$NON-NLS-1$
+			super("Retrieving Mercurial revisions..."); //$NON-NLS-1$
 			this.from = from;
 			setRule(new ExclusiveHistoryRule());
 		}

@@ -40,7 +40,7 @@ public class HgResolveClient extends AbstractClient {
 	 */
 	public static List<FlaggedAdaptable> list(IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
-				"Fetching conflict status for resource", res, false);
+				"Calculating conflict status for resource", res, false);
 		command
 				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		command.addOptions("-l"); //$NON-NLS-1$

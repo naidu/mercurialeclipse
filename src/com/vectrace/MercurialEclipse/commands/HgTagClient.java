@@ -35,7 +35,7 @@ public class HgTagClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("tags", "Fetching tags", hgRoot, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("tags", "Retrieving tags", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 
