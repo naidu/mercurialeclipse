@@ -1309,6 +1309,7 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
+     
      <factory
            adaptableType="com.vectrace.MercurialEclipse.model.HgRoot"
            class="com.vectrace.MercurialEclipse.AdapterFactory">
@@ -1316,13 +1317,103 @@
               type="org.eclipse.team.ui.history.IHistoryPageSource">
         </adapter>
      </factory>
-   <!-- Adapt IResource to itself does not make sense at all and can only generates troubles
-   <factory
-       adaptableType="org.eclipse.core.resources.IResource"
-       class="com.vectrace.MercurialEclipse.ResourceAdapterFactory">
-       <adapter type="org.eclipse.core.resources.IResource"/>
-     </factory> -->
+     
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+      
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+   
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
+         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
+         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
+         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
+      </factory>
+      
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.Tag"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.history.MercurialRevision"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.FileStatus"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="org.eclipse.team.internal.ui.history.GenericHistoryView"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySheetPage" />
+       </factory>
+              
    </extension>
+   
+       <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertyContributor">
+       <propertyContributor
+             contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage"
+             labelProvider="com.vectrace.MercurialEclipse.properties.PropPageTitleProvider">
+          <propertyCategory category="advanced"/>
+       </propertyContributor>
+    </extension>
+
+    <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+       <propertyTabs contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage">
+    
+          <propertyTab
+                category="advanced"
+                id="tab.Advanced"
+                image="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+                indented="false"
+                label="&gt;"/>
+
+       </propertyTabs>
+    </extension>
+
+    <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertySections">
+       <propertySections contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage">
+          <propertySection
+                class="org.eclipse.ui.views.properties.tabbed.AdvancedPropertySection"
+                enablesFor="1"
+                id="section.Advanced"
+                tab="tab.Advanced">
+             <input
+                   type="java.lang.Object">
+             </input>
+          </propertySection>
+
+       </propertySections>
+    </extension>
 
    <!-- Views -->
 
@@ -1633,27 +1724,7 @@
       <extends-model id="org.eclipse.core.resources.modelProvider"/>
    </extension>
    
-   <extension
-         point="org.eclipse.core.runtime.adapters">
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
-         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
-      </factory>
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
-         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
-      </factory>
-   
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
-         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
-         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
-         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
-      </factory>   
-   </extension>
+
    <extension
          point="org.eclipse.ui.exportWizards">
       <category

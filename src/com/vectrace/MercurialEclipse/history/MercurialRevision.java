@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     John Peberdy              - optimization
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -38,6 +38,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 /**
@@ -52,7 +53,6 @@ public class MercurialRevision extends FileRevision {
 	private MercurialRevisionStorage mercurialRevisionStorage;
 	private final GChangeSet gChangeSet;
 	private final int revision;
-	private final String hash;
 	private final Signature signature;
 	private File parent;
 
@@ -84,7 +84,6 @@ public class MercurialRevision extends FileRevision {
 		this.changeSet = changeSet;
 		this.gChangeSet = gChangeSet;
 		this.revision = changeSet.getChangesetIndex();
-		this.hash = changeSet.getChangeset();
 		this.resource = resource;
 		this.signature = sig;
 		this.bisectStatus = bisectStatus;
@@ -128,20 +127,24 @@ public class MercurialRevision extends FileRevision {
 		return changeSet;
 	}
 
+	@DoNotDisplayMe
 	public GChangeSet getGChangeSet() {
 		return gChangeSet;
 	}
 
+	@DoNotDisplayMe
 	public String getName() {
 		return resource.getName();
 	}
 
 	@Override
+	@DoNotDisplayMe
 	public boolean exists() {
 		return true;
 	}
 
 	@Override
+	@DoNotDisplayMe
 	public String getContentIdentifier() {
 		return changeSet.getChangeset();
 	}
@@ -157,6 +160,7 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	@Override
+	@DoNotDisplayMe
 	public long getTimestamp() {
 		return resource.exists()? resource.getLocalTimeStamp() : super.getTimestamp();
 	}
@@ -210,8 +214,7 @@ public class MercurialRevision extends FileRevision {
 		pendingTags.add(newTag);
 	}
 
-	private void processPendingTags()
-	{
+	private void processPendingTags() {
 		if (pendingTags == null) {
 			return;
 		}
@@ -251,11 +254,11 @@ public class MercurialRevision extends FileRevision {
 				IFile parentRes =  ResourcesPlugin.getWorkspace().getRoot()
 					.getFileForLocation(new Path(parent.getAbsolutePath()));
 				mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
-						revision, hash, changeSet);
+						revision, getContentIdentifier(), changeSet);
 			} else {
 				if(resource instanceof IFile){
 					mercurialRevisionStorage = new MercurialRevisionStorage((IFile) resource,
-							revision, hash, changeSet);
+							revision, getContentIdentifier(), changeSet);
 					mercurialRevisionStorage.setParent(parent);
 				}
 			}
@@ -263,6 +266,7 @@ public class MercurialRevision extends FileRevision {
 		return mercurialRevisionStorage;
 	}
 
+	@DoNotDisplayMe
 	public boolean isPropertyMissing() {
 		return false;
 	}
@@ -280,15 +284,9 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	/**
-	 * @return the hash
-	 */
-	public String getHash() {
-		return hash;
-	}
-
-	/**
 	 * @return never null
 	 */
+	@DoNotDisplayMe
 	public IResource getResource() {
 		return resource;
 	}
@@ -311,6 +309,7 @@ public class MercurialRevision extends FileRevision {
 	 *
 	 * @return true, if the resource represented by this revision is file
 	 */
+	@DoNotDisplayMe
 	public boolean isFile(){
 		return resource instanceof IFile;
 	}

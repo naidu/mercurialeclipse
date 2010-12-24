@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov 		 - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -186,10 +186,18 @@ public class ChangePathsTableProvider extends TableViewer {
 						return;
 					}
 					FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
-					if(cs[0] != null) {
-						List<FileStatus> list = cs[0].getChangedFiles();
+					ChangeSet fullCs = cs[0];
+					if(fullCs != null) {
+						ChangeSet revCs = rev.getChangeSet();
+						// TODO this is a workaround: we copy some info from freshly retrieved cs
+						// because this data is NOT currently available in the history view changesets (different template)
+						// but it is nice to show it in the properties view
+						revCs.setTags(fullCs.getTags());
+						revCs.setTagsStr(fullCs.getTagsStr());
+						List<FileStatus> list = fullCs.getChangedFiles();
+						revCs.setChangedFiles(list);
 						changedFiles = list.toArray(new FileStatus[list.size()]);
-						if(changedFiles == null || changedFiles.length == 0){
+						if(changedFiles.length == 0){
 							changedFiles = EMPTY_CHANGE_PATHS;
 						}
 					}

@@ -52,6 +52,7 @@ import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -89,6 +90,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
+import org.eclipse.team.ui.history.IHistoryView;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
@@ -518,7 +520,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		changedPaths = new ChangedPathsPage(this, rootControl);
 		createTableHistory(changedPaths.getControl());
 		changedPaths.createControl();
-		getSite().setSelectionProvider(viewer);
+		setSelectionProvider(viewer);
 		getSite().getActionBars().setGlobalActionHandler(ActionFactory.COPY.getId(), new Action() {
 			@Override
 			public void run() {
@@ -691,6 +693,13 @@ public class MercurialHistoryPage extends HistoryPage {
 				gotoText.selectAll();
 			}
 		});
+
+		viewer.getControl().addFocusListener(new FocusAdapter() {
+			@Override
+			public void focusGained(FocusEvent e) {
+				setSelectionProvider(viewer);
+			}
+		});
 		contributeActions();
 	}
 
@@ -802,7 +811,7 @@ public class MercurialHistoryPage extends HistoryPage {
 							return;
 						}
 					}
-					UpdateJob job = new UpdateJob(rev.getHash(), true, root, false);
+					UpdateJob job = new UpdateJob(rev.getContentIdentifier(), true, root, false);
 					JobChangeAdapter adap = new JobChangeAdapter() {
 						@Override
 						public void done(IJobChangeEvent event) {
@@ -1140,7 +1149,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	@Override
 	public void setFocus() {
-		// Nothing to see here
+		viewer.getControl().setFocus();
 	}
 
 	public String getDescription() {
@@ -1306,5 +1315,15 @@ public class MercurialHistoryPage extends HistoryPage {
 			getHistoryPageSite().getWorkbenchPageSite().getActionBars().getStatusLineManager()
 					.setErrorMessage("Multiple matches found");
 		}
+	}
+
+	/**
+	 * Set the selection provider for current history view
+	 */
+	void setSelectionProvider(ISelectionProvider provider) {
+		getSite().setSelectionProvider(provider);
+		// it looks crazy, but the fact is that the page site doesn't set global
+		// selection provider, so we must have it set properly to support Properties view
+		getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
 	}
 }

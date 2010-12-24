@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetResourceMapping;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -73,6 +74,7 @@ public class FileFromChangeSet implements IAdaptable{
 	/**
 	 * @return see {@link Differencer}
 	 */
+	@DoNotDisplayMe
 	public int getDiffKind() {
 		return kind;
 	}
@@ -143,6 +145,7 @@ public class FileFromChangeSet implements IAdaptable{
 		return file;
 	}
 
+	@DoNotDisplayMe
 	public ChangeSet getChangeset() {
 		return changeset;
 	}

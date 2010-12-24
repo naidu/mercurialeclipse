@@ -32,6 +32,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
@@ -39,6 +40,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
@@ -284,6 +286,27 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return tags;
 	}
 
+	/**
+	 * @param tags the tags to set
+	 */
+	public void setTags(Tag[] tags) {
+		this.tags = tags;
+	}
+
+	/**
+	 * @param tagsStr the tagsStr to set
+	 */
+	public void setTagsStr(String tagsStr) {
+		this.tagsStr = tagsStr;
+	}
+
+	/**
+	 * @return the tagsStr
+	 */
+	public String getTagsStr() {
+		return tagsStr;
+	}
+
 	public String getBranch() {
 		return branch;
 	}
@@ -327,6 +350,14 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 */
 	public List<FileStatus> getChangedFiles() {
 		return changedFiles == null? EMPTY_STATUS : changedFiles;
+	}
+
+	/**
+	 * @param changedFiles the changedFiles to set
+	 */
+	public void setChangedFiles(List<FileStatus> changedFiles) {
+		this.changedFiles = (changedFiles == null ? EMPTY_STATUS : Collections
+				.unmodifiableList(changedFiles));
 	}
 
 	/**
@@ -467,10 +498,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((changeset == null) ? 0 : changeset.hashCode());
-		return result;
+		return 31 + ((changeset == null) ? 0 : changeset.hashCode()) + changesetIndex;
 	}
 
 	/**
@@ -515,7 +543,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return null;
 	}
 
-	private void setParents(String[] parents) {
+	public void setParents(String[] parents) {
 		// filter null parents (hg uses -1 to signify a null parent)
 		if (parents != null) {
 			List<String> temp = new ArrayList<String>(parents.length);
@@ -537,6 +565,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 				&& !StringUtils.isEmpty(parents[1]);
 	}
 
+	@DoNotDisplayMe
 	public boolean isShowFirstParentChanges() {
 		return showFirstParentChanges;
 	}
@@ -620,10 +649,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 * NOT performant, as it may create dynamic proxy objects. {@inheritDoc}
 	 */
 	@Override
+	@DoNotDisplayMe
 	public IFile[] getResources() {
 		return getFiles().toArray(EMPTY_FILES);
 	}
 
+	@DoNotDisplayMe
 	public FileFromChangeSet[] getChangesetFiles() {
 		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
 
@@ -662,6 +693,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 *         returned file references might not exist (yet/anymore) on the disk or in the Eclipse
 	 *         workspace.
 	 */
+	@DoNotDisplayMe
 	public Set<IFile> getFiles() {
 		if (files != null) {
 			return files;
@@ -677,6 +709,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 		files = Collections.unmodifiableSet(files1);
 		return files;
+	}
+
+	@Override
+	@DoNotDisplayMe
+	public SyncInfoTree getSyncInfoSet() {
+		return super.getSyncInfoSet();
 	}
 
 	@Override
