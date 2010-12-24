@@ -60,7 +60,10 @@ public class GenericPropertySource implements IPropertySource {
 				// for collections and arrays we want to start another level in the tree
 				Class<?> returnType = method.getReturnType();
 				if (isArrayOrCollection(returnType)) {
-					descriptorId = getDescriptorFromReturnValue(object, method);
+					Object value = getDescriptorFromReturnValue(object, method);
+					if(value != null) {
+						descriptorId = value;
+					}
 				}
 				props.add(new PropertyDescriptor(descriptorId, getReadableName(method)));
 			}
@@ -153,7 +156,10 @@ public class GenericPropertySource implements IPropertySource {
 
 	private static Object getDescriptorFromReturnValue(Object instance, Method method) {
 		try {
-			return new GenericPropertySource(method.invoke(instance, (Object[]) null));
+			Object result = method.invoke(instance, (Object[]) null);
+			if(result != null) {
+				return new GenericPropertySource(result);
+			}
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(
 					"GenericPropertySource: method invication failed", e);
