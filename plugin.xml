@@ -67,7 +67,7 @@
         <decorator
            adaptable="true"
            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
-           icon="icons/mercury_Hg.png"
+           icon="icons/mercurialeclipse.png"
            id="com.vectrace.MercurialEclipse.team.ResourceDecorator"
            label="%MercurialEclipseDecorations"
            lightweight="true"
@@ -1668,7 +1668,7 @@
       <page
             adaptable="true"
             class="com.vectrace.MercurialEclipse.repository.RepoPropertiesPage"
-            icon="icons/mercury_Hg.png"
+            icon="icons/mercurialeclipse.png"
             id="com.vectrace.MercurialEclipse.repositoryProperties"
             name="%repositoryPage.name"
             objectClass="com.vectrace.MercurialEclipse.model.IHgRepositoryLocation">
@@ -1734,7 +1734,7 @@
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.export"
             class="com.vectrace.MercurialEclipse.wizards.BundleRepoWizard"
-            icon="icons/mercury_Hg.png"
+            icon="icons/mercurialeclipse.png"
             id="com.vectrace.mercurialeclipse.BundleWizard"
             name="%bundleRepoWizard.name">
       </wizard>
@@ -1753,7 +1753,7 @@
             canSearchEnclosingProjects="true"
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage"
             enabled="true"
-            icon="icons/mercury_Hg.png"
+            icon="icons/actions/search.gif"
             id="MercurialEclipse.page1"
             label="Mercurial Search"
             showScopeSection="true">
@@ -1763,7 +1763,7 @@
          point="org.eclipse.search.searchResultViewPages">
       <viewPage
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
-            icon="icons/mercury_Hg.png"
+            icon="icons/actions/search.gif"
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
             label="Mercurial Search"
             searchResultClass="com.vectrace.MercurialEclipse.search.MercurialTextSearchResult">
