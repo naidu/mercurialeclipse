@@ -329,9 +329,16 @@
                  description="%compareWithParentDescription"
                  name="%compareWithParentName"/>
         <category
+              description="Mercurial (Hg) related commands"
               id="com.vectrace.MercurialEclipse.commandCategory"
               name="%mercurial">
         </category>
+        <command
+              categoryId="com.vectrace.MercurialEclipse.commandCategory"
+              description="Search text in the Mercurial history"
+              id="com.vectrace.MercurialEclipse.menu.SearchHandler"
+              name="Mercurial Search">
+        </command>
     </extension>
 
     <!-- handlers -->
@@ -638,7 +645,16 @@
                  class="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"/>
                  
 		<handler commandId="com.vectrace.MercurialEclipse.menu.CompareWithParent"
-                 class="com.vectrace.MercurialEclipse.menu.CompareWithParentHandler" />                 
+                 class="com.vectrace.MercurialEclipse.menu.CompareWithParentHandler" />
+        <handler
+                commandId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+                class="com.vectrace.MercurialEclipse.menu.SearchHandler">
+           <enabledWhen>
+                <and>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>                    
+                </and>
+            </enabledWhen>
+        </handler>                 
     </extension>
 
     <!-- TODO Andrei:
@@ -754,6 +770,12 @@
                        </and>
                     </visibleWhen>
                 </command>
+                
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+                  label="Search in History..."
+                  icon="icons/actions/search.gif">
+                </command>                
                 
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
@@ -1015,7 +1037,42 @@
             </menu>
 
         </menuContribution>
+        
+    </extension>
 
+    <!-- Search Menu Additions -->
+    <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="Mercurial Search"
+            description="Full text search support for Mercurial repositories"
+            visible="true"
+            id="org.eclipse.pde.ui.SearchActionSet">
+<!-- see http://bugs.eclipse.org/bugs/show_bug.cgi?id=15684    -->
+<!-- Note: The menu (re-) definition has to be here due to bug: -->
+<!-- =================================================================== -->
+<!-- Search Menu                                                         -->
+<!-- =================================================================== -->
+         <menu
+               label="%searchMenu.label"
+               path="navigate"
+               id="org.eclipse.search.menu">
+                <groupMarker name="internalDialogGroup"/>   <!-- not to be used by clients  -->
+                <groupMarker name="dialogGroup"/>           <!-- to be used by clients      -->
+                <separator name="fileSearchContextMenuActionsGroup"/> <!-- to be used by clients      -->
+                <separator name="contextMenuActionsGroup"/> <!-- to be used by clients -->
+                <separator name="occurencesActionsGroup"/> <!-- to be used by clients -->
+                <separator name="extraSearchGroup"/> <!-- to be used by clients -->
+         </menu>
+         <action
+               class="com.vectrace.MercurialEclipse.menu.SearchHandler$SearchAction"
+               definitionId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+               icon="/icons/actions/search.gif"
+               id="com.vectrace.MercurialEclipse.menu.SearchHandler$SearchAction"
+               label="Mercurial Search..."
+               menubarPath="org.eclipse.search.menu/dialogGroup">
+         </action>
+      </actionSet>
     </extension>
 
    <!-- All Team menu -->
@@ -1754,7 +1811,7 @@
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage"
             enabled="true"
             icon="icons/actions/search.gif"
-            id="MercurialEclipse.page1"
+            id="MercurialEclipse.searchPage"
             label="Mercurial Search"
             showScopeSection="true">
       </page>
