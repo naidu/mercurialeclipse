@@ -14,8 +14,7 @@ import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.team.ui.history.IHistoryView;
 import org.eclipse.ui.views.properties.IPropertySheetPage;
 import org.eclipse.ui.views.properties.IPropertySource;
-import org.eclipse.ui.views.properties.tabbed.ITabbedPropertySheetPageContributor;
-import org.eclipse.ui.views.properties.tabbed.TabbedPropertySheetPage;
+import org.eclipse.ui.views.properties.PropertySheetPage;
 
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
@@ -31,6 +30,8 @@ import com.vectrace.MercurialEclipse.model.Tag;
  */
 public class PropertyPageAdapterFactory implements IAdapterFactory {
 
+	/* Disabled tabbed property view support - right now this is overkill.
+	 * see also plugin.xml
 	private static class MercurialPropertySheetPage extends TabbedPropertySheetPage {
 
 		static ITabbedPropertySheetPageContributor contributor = new ITabbedPropertySheetPageContributor() {
@@ -44,6 +45,7 @@ public class PropertyPageAdapterFactory implements IAdapterFactory {
 		}
 
 	}
+	*/
 
 	public Object getAdapter(Object adaptable, @SuppressWarnings("rawtypes") Class adapterType) {
 		if (adapterType == IPropertySource.class) {
@@ -58,7 +60,7 @@ public class PropertyPageAdapterFactory implements IAdapterFactory {
 		if (adapterType == IPropertySheetPage.class) {
 			if (adaptable instanceof IHistoryView
 					&& ((IHistoryView) adaptable).getHistoryPage() instanceof MercurialHistoryPage) {
-				return new MercurialPropertySheetPage();
+				return new /*Mercurial*/PropertySheetPage();
 			}
 		}
 		return null;

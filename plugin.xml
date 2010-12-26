@@ -1459,7 +1459,9 @@
               
    </extension>
    
-       <extension
+<!-- Disabled tabbed property view support - right now this is overkill.
+    
+    <extension
           point="org.eclipse.ui.views.properties.tabbed.propertyContributor">
        <propertyContributor
              contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage"
@@ -1497,6 +1499,7 @@
 
        </propertySections>
     </extension>
+-->
 
    <!-- Views -->
 
