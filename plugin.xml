@@ -1262,6 +1262,32 @@
                path="additions">
          </action>
       </objectContribution>
+      
+      <objectContribution adaptable="true"
+            objectClass="com.vectrace.MercurialEclipse.model.ChangeSet"
+            id="com.vectrace.MercurialEclipse.changesetProps">
+         <action
+              class="com.vectrace.MercurialEclipse.properties.OpenPropertiesAction"
+              enablesFor="1"
+              icon="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+              id="com.vectrace.MercurialEclipse.changesetProps"
+              label="Properties"
+              menubarPath="additions">
+         </action>
+      </objectContribution>
+      
+      <objectContribution adaptable="true"
+            objectClass="com.vectrace.MercurialEclipse.history.MercurialRevision"
+            id="com.vectrace.MercurialEclipse.revisionProps">
+         <action
+              class="com.vectrace.MercurialEclipse.properties.OpenPropertiesAction"
+              enablesFor="1"
+              icon="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+              id="com.vectrace.MercurialEclipse.revisionProps"
+              label="Properties"
+              menubarPath="additions">
+         </action>
+      </objectContribution>
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">

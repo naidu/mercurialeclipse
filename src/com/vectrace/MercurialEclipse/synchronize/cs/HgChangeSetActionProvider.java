@@ -6,13 +6,14 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov 			- implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -32,16 +33,17 @@ import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.navigator.ICommonViewerSite;
 import org.eclipse.ui.navigator.ICommonViewerWorkbenchSite;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.properties.OpenPropertiesAction;
 import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * This class adds some actions supporting {@link FileFromChangeSet} objects in the sync view
+ * This class adds some actions supporting different objects in the sync view
  * @author Andrei
  */
 @SuppressWarnings("restriction")
@@ -50,6 +52,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 	private OpenFileInSystemEditorAction openFileAction;
 	private ISynchronizePageConfiguration configuration;
 	private DeleteAction deleteAction;
+	private Action propertiesAction;
 
 	public HgChangeSetActionProvider() {
 		super();
@@ -70,6 +73,17 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 						configuration, wps.getSelectionProvider());
 				deleteAction.setActionDefinitionId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
 				deleteAction.setId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
+				propertiesAction = new Action("Properties",
+						AbstractUIPlugin.imageDescriptorFromPlugin("org.eclipse.ui",
+								"/icons/full/eview16/prop_ps.gif")) {
+					{
+						setId(OpenPropertiesAction.class.getName());
+					}
+					@Override
+					public void run() {
+						new OpenPropertiesAction().run(this);
+					}
+				};
 			}
 		}
 	}
@@ -87,12 +101,16 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 					(IStructuredSelection) selection);
 		}
 		if (selection instanceof IStructuredSelection && !hasDeleteMenu(menu)) {
-			fillDeleteMenu(menu, ISynchronizePageConfiguration.FILE_GROUP,
+			fillDeleteMenu(menu, DeleteAction.HG_DELETE_GROUP,
+					(IStructuredSelection) selection);
+		}
+		if (selection instanceof IStructuredSelection && !hasPropertiesMenu(menu)) {
+			fillPropertiesMenu(menu, ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
 					(IStructuredSelection) selection);
 		}
 	}
 
-	private void fillDeleteMenu(IMenuManager menu, String fileGroup, IStructuredSelection selection) {
+	private void fillDeleteMenu(IMenuManager menu, String groupId, IStructuredSelection selection) {
 		// Only supported if at least one file is selected.
 		if (selection == null || selection.size() != 1) {
 			return;
@@ -109,7 +127,22 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 
 		if (deleteAction != null) {
 			deleteAction.selectionChanged(new StructuredSelection(resource));
-			menu.appendToGroup(DeleteAction.HG_DELETE_GROUP, deleteAction);
+			menu.appendToGroup(groupId, deleteAction);
+		}
+	}
+
+	private void fillPropertiesMenu(IMenuManager menu, String groupId, IStructuredSelection selection) {
+		// Only supported if at least one changeset is selected.
+		if (selection == null || selection.size() != 1) {
+			return;
+		}
+
+		Object element = selection.getFirstElement();
+		if(!(element instanceof ChangeSet) || element instanceof WorkingChangeSet) {
+			return;
+		}
+		if (propertiesAction != null) {
+			menu.appendToGroup(groupId, propertiesAction);
 		}
 	}
 
@@ -157,6 +190,9 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 	}
 	private boolean hasDeleteMenu(IMenuManager menu) {
 		return deleteAction != null && menu.find(deleteAction.getId()) != null;
+	}
+	private boolean hasPropertiesMenu(IMenuManager menu) {
+		return propertiesAction != null && menu.find(propertiesAction.getId()) != null;
 	}
 
 	@Override
