@@ -432,15 +432,6 @@ public class MercurialHistoryPage extends HistoryPage {
 		IActionBars actionBars = getHistoryPageSite().getWorkbenchPageSite().getActionBars();
 		IMenuManager actionBarsMenu = actionBars.getMenuManager();
 
-		// bisect actions
-		actionBarsMenu.add(new Separator());
-		actionBarsMenu.add(mergeWithCurrentChangesetAction);
-		actionBarsMenu.add(bisectResetAction);
-		actionBarsMenu.add(new Separator());
-		// export to bundle
-		actionBarsMenu.add(exportAsBundleAction);
-		actionBarsMenu.add(new Separator());
-
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
 
@@ -944,6 +935,18 @@ public class MercurialHistoryPage extends HistoryPage {
 		menuMgr.addMenuListener(new IMenuListener() {
 
 			public void menuAboutToShow(IMenuManager menuMgr1) {
+				// enablement
+				updateAction.setEnabled(updateAction.isEnabled());
+				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
+				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
+				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
+				exportAsBundleAction.setEnabled(true);
+				mergeWithCurrentChangesetAction.setEnabled(true);
+				stripAction.setEnabled(stripAction.isEnabled());
+				backoutAction.setEnabled(backoutAction.isEnabled());
+				undoMenu.setVisible(stripAction.isEnabled() || backoutAction.isEnabled());
+
+				// layout
 				if(resource instanceof IFile){
 					IStructuredSelection sel = updateActionEnablement();
 					menuMgr1.add(openAction);
@@ -959,25 +962,13 @@ public class MercurialHistoryPage extends HistoryPage {
 						menuMgr1.add(revertAction);
 					}
 				}
-				updateAction.setEnabled(updateAction.isEnabled());
-				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
-				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
-				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
-				exportAsBundleAction.setEnabled(true);
-				mergeWithCurrentChangesetAction.setEnabled(true);
+				menuMgr1.add(mergeWithCurrentChangesetAction);
+				menuMgr1.add(undoMenu);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
-				menuMgr1.add(new Separator());
-				menuMgr1.add(mergeWithCurrentChangesetAction);
 				menuMgr1.add(bisectMenu);
-				menuMgr1.add(new Separator());
-				menuMgr1.add(undoMenu);
-				stripAction.setEnabled(stripAction.isEnabled());
-				backoutAction.setEnabled(backoutAction.isEnabled());
-				undoMenu.setVisible(stripAction.isEnabled() || backoutAction.isEnabled());
-				menuMgr1.add(new Separator());
-				menuMgr1.add(exportAsBundleAction);
 				menuMgr1.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+				menuMgr1.add(exportAsBundleAction);
 			}
 		});
 
