@@ -15,7 +15,6 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class UntrackedFilesFilter extends ViewerFilter {
 	private final boolean allowMissing;
@@ -31,11 +30,11 @@ public class UntrackedFilesFilter extends ViewerFilter {
 	@Override
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 		if (element instanceof CommitResource){
-			char status = ((CommitResource) element).getStatus();
-			if (status == MercurialStatusCache.CHAR_UNKNOWN) {
+			CommitResource cres = (CommitResource) element;
+			if (cres.isUnknown()) {
 				return false;
 			}
-			if (!allowMissing && status == MercurialStatusCache.CHAR_MISSING) {
+			if (!allowMissing && cres.isMissing()) {
 				return false;
 			}
 		}

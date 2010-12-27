@@ -163,31 +163,6 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	/**
-	 * @param hgRoot non null hg root
-	 * @param files non null file list from given root to commit
-	 * @return hg status output, never null (may be empty string)
-	 * @throws HgException
-	 */
-	public static String getStatusForCommit(HgRoot hgRoot, List<IResource> files) throws HgException {
-		StringBuilder output = new StringBuilder();
-		// if there are too many resources, do several calls
-		int size = files.size();
-		int delta = AbstractShellCommand.MAX_PARAMS - 1;
-		for (int i = 0; i < size; i += delta) {
-			final int j = Math.min(i + delta, size);
-			AbstractShellCommand command = new HgCommand("status", "Calculating status for " + (j - i) + " resources", //$NON-NLS-1$
-					hgRoot, true);
-			command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-			// modified, added, removed, deleted, unknown
-			command.addOptions("-mardu"); //$NON-NLS-1$
-			command.addFiles(files.subList(i, j));
-			output.append(command.executeToString());
-		}
-
-		return output.toString();
-	}
-
-	/**
 	 * @return root relative paths of changed files, never null
 	 */
 	public static String[] getDirtyFiles(HgRoot root) throws HgException {
