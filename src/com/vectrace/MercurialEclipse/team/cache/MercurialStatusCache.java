@@ -16,6 +16,7 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,8 +24,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -962,6 +963,18 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
 		List<String> strangeStates = new ArrayList<String>();
+
+		// Make values in the path map canonical
+		try {
+			for (Iterator<IProject> it = pathMap.keySet().iterator(); it.hasNext();) {
+				IProject key = it.next();
+				pathMap.put(key, Path.fromOSString(pathMap.get(key).toFile().getCanonicalPath()));
+			}
+		} catch(IOException e) {
+			MercurialEclipsePlugin.logError("Unexpected error - paths should be canonicalizable", e);
+		}
+
+		// HgRoots are always canonical
 		IPath hgRootPath = new Path(root.getAbsolutePath());
 
 		for (String line : lines) {
