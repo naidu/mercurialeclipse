@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -173,7 +173,11 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			}
 
 			if (res.getType() != IResource.PROJECT) {
-				command.addOptions(res.getLocation().toOSString());
+				IPath path = ResourceUtils.getPath(res);
+				if(path.isEmpty()) {
+					return EMPTY_MAP;
+				}
+				command.addOptions(path.toOSString());
 			} else {
 				HgRoot hgRoot = command.getHgRoot();
 				File fileHandle = ResourceUtils.getFileHandle(res);
@@ -396,7 +400,11 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					res, result, Direction.LOCAL, null, null, null);
-			Set<ChangeSet> set = revisions.get(res.getLocation());
+			IPath location = ResourceUtils.getPath(res);
+			if(location.isEmpty()) {
+				return null;
+			}
+			Set<ChangeSet> set = revisions.get(location);
 			if (set != null) {
 				return Collections.min(set);
 			}

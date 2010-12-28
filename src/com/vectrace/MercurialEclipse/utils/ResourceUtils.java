@@ -6,9 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
- * Andrei Loskutov (Intland) - bugfixes
- * Zsolt Koppany (Intland)
+ *     bastian	               - implementation
+ *     Andrei Loskutov         - bugfixes
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -123,11 +123,10 @@ public final class ResourceUtils {
 	/**
 	 * @param resource
 	 *            a handle to possibly non-existing resource
-	 * @return a (file) path representing given resource
+	 * @return a (file) path representing given resource, never null. May return an "empty" file.
 	 */
 	public static File getFileHandle(IResource resource) {
-		IPath path = getPath(resource);
-		return path.toFile();
+		return getPath(resource).toFile();
 	}
 
 	/**
@@ -144,7 +143,9 @@ public final class ResourceUtils {
 	/**
 	 * @param resource
 	 *            a handle to possibly non-existing resource
-	 * @return a (file) path representing given resource
+	 * @return a (file) path representing given resource, might be {@link Path#EMPTY} in case the
+	 *         resource location and project location are both unknown. {@link Path#EMPTY} return
+	 *         value will be always logged as error.
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();
@@ -153,12 +154,12 @@ public final class ResourceUtils {
 			IProject project = resource.getProject();
 			IPath projectLocation = project.getLocation();
 			if (projectLocation == null) {
-				// project removed too
-				projectLocation = project.getWorkspace().getRoot().getLocation().append(
-						project.getName());
-			}
-			if (project == resource) {
-				return projectLocation;
+				// project removed too, there is no way to correctly determine the right
+				// location in case project is not located under workspace or project name doesn't
+				// match project root folder name
+				String message = "Failed to resolve location for resource: " + resource;
+				MercurialEclipsePlugin.logError(message, new IllegalStateException(message));
+				return Path.EMPTY;
 			}
 			path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));
 		}
@@ -322,10 +323,10 @@ public final class ResourceUtils {
 	 */
 	public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
 		// determine absolute path
-		IPath path = new Path(hgRoot.getAbsolutePath()).append(repoRelPath);
+		IPath path = hgRoot.toAbsolute(repoRelPath);
 
 		// determine project relative path
-		int equalSegments = path.matchingFirstSegments(project.getLocation());
+		int equalSegments = path.matchingFirstSegments(getPath(project));
 		path = path.removeFirstSegments(equalSegments);
 		return project.findMember(path);
 	}

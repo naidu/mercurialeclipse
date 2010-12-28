@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - implementation (with lots of stuff pulled up from HgCommand)
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Adam Berkes (Intland)     - bug fixes/restructure
  *     Zsolt Koppany (Intland)   - enhancements
  *     Philip Graf               - use default timeout from preferences
@@ -34,6 +34,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -47,6 +48,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -655,7 +657,10 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		// TODO This can be done faster without any file system calls by saving uncanonicalized hg
 		// root locations (?).
 		// files.add(resource.getLocation().toOSString());
-		addFile(resource.getLocation().toFile());
+		IPath location = ResourceUtils.getPath(resource);
+		if(!location.isEmpty()) {
+			addFile(location.toFile());
+		}
 	}
 
 	public void setUsePreferenceTimeout(String cloneTimeout) {

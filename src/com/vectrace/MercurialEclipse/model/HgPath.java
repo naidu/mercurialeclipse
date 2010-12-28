@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov     - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -136,11 +136,15 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 		return path.append(relative);
 	}
 
+	public IPath toAbsolute(String relative) {
+		return path.append(relative);
+	}
+
 	/**
 	 * Converts given path to the relative
 	 *
 	 * @param child
-	 *            a possible child path
+	 *            a possible child path, non null
 	 * @return a hg root relative path of a given file, if the given file is located under this
 	 *         root, otherwise the path of a given file. If the given path matches the root,
 	 *         returns an empty string
@@ -165,6 +169,25 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 		}
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(getPath().length() + 1);
+	}
+
+	/**
+	 * Converts given file to the relative path (if the file exists)
+	 *
+	 * @param child
+	 *            a possible child path, non null
+	 * @return a hg root relative path of a given file, if the given file is located under this
+	 *         root, otherwise the path of a given file. If the given path matches the root, returns
+	 *         an empty path. If the file location can not be computed, returns null.
+	 * @see IResource#getLocation()
+	 * @see ResourceUtils#getPath(IResource)
+	 */
+	public IPath toRelative(IFile file) {
+		IPath location = ResourceUtils.getPath(file);
+		if(location.isEmpty()) {
+			return null;
+		}
+		return new Path(toRelative(location.toFile()));
 	}
 
 	public static boolean isHgRoot(File path) {

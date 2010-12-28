@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bugfixes
+ *     Andrei Loskutov           - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -53,6 +53,7 @@ import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -104,7 +105,7 @@ public class MercurialHistory extends FileHistory {
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-		if(root != null && root.getIPath().equals(resource.getLocation())){
+		if(root != null && root.getIPath().equals(ResourceUtils.getPath(resource))){
 			this.resource = null;
 		} else {
 			this.resource = resource;
@@ -251,7 +252,7 @@ public class MercurialHistory extends FileHistory {
 		IPath location;
 		if(!isRootHistory()) {
 			map = HgLogClient.getProjectLog(resource, logBatchSize, from, false);
-			location = resource.getLocation();
+			location = ResourceUtils.getPath(resource);
 		} else {
 			map = HgLogClient.getRootLog(hgRoot, logBatchSize, from, false);
 			location = hgRoot.getIPath();
@@ -275,7 +276,7 @@ public class MercurialHistory extends FileHistory {
 		changeSets.addAll(localChangeSets);
 
 		if (revisions.size() < changeSets.size()
-				|| !(location.equals(revisions.get(0).getResource().getLocation()))) {
+				|| !(location.equals(ResourceUtils.getPath(revisions.get(0).getResource())))) {
 			revisions.clear();
 			gChangeSets.clear();
 		}

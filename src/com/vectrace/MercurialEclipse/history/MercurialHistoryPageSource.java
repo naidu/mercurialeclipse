@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -43,7 +43,7 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
 		}
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		if(resource.exists()) {
-			return cache.isSupervised(resource) && !cache.isAdded(resource.getLocation());
+			return cache.isSupervised(resource) && !cache.isAdded(ResourceUtils.getPath(resource));
 		}
 		// allow to show history for files which are already deleted and committed
 		// (neither in the cache nor on disk)

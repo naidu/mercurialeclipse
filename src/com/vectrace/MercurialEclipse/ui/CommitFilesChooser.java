@@ -7,8 +7,8 @@
  *
  * Contributors:
  * Administrator	implementation
- *     Andrei Loskutov (Intland) - bug fixes
- *     Zsolt Koppany (Intland)
+ *     Andrei Loskutov         - bug fixes
+ *     Zsolt Koppany (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -326,7 +326,7 @@ public class CommitFilesChooser extends Composite {
 			if (resource.getType() == IResource.FILE) {
 				try {
 					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-					File path = new File(hgRoot.toRelative(resource.getLocation().toFile()));
+					File path = new File(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
 					CommitResource cr = new CommitResource(MercurialStatusCache.BIT_CLEAN,
 							resource, path);
 					CommitResource[] input = new CommitResource[] { cr };

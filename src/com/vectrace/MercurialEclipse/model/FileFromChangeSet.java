@@ -103,7 +103,7 @@ public class FileFromChangeSet implements IAdaptable{
 				}
 			}
 			if (root != null) {
-				return root.getRelativePath(file);
+				return root.toRelative(file);
 			}
 		}
 		return null;

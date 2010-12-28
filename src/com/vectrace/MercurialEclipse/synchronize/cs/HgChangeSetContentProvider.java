@@ -37,8 +37,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
+import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -53,9 +53,9 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -759,9 +759,13 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 					FileFromChangeSet fcs = (FileFromChangeSet) o2;
 					IResource childResource = ResourceUtils.getResource(fcs);
 					IPath childPath = (IPath) o1;
-					IPath folderPath = childResource.getLocation().removeLastSegments(childPath.segmentCount() + 1);
-					this.resource = ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(folderPath);
-					this.path = fcs.getPath().removeLastSegments(childPath.segmentCount() + 1);
+					IPath folderPath = ResourceUtils.getPath(childResource).removeLastSegments(
+							childPath.segmentCount() + 1);
+					this.resource = ResourcesPlugin.getWorkspace().getRoot()
+							.getContainerForLocation(folderPath);
+					IPath fcsPath = fcs.getPath();
+					this.path = fcsPath == null ? null : fcsPath.removeLastSegments(childPath
+							.segmentCount() + 1);
 				}
 			}
 		}

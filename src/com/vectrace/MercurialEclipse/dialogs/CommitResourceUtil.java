@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -81,8 +81,14 @@ public final class CommitResourceUtil {
 
 	private static void processStatusResult(HgRoot root, MercurialStatusCache cache,
 			List<CommitResource> list, IResource resource) {
-		IPath location = resource.getLocation();
-		if (resource instanceof IFile && !cache.isDirectory(location) && !Team.isIgnoredHint(resource)) {
+		if (!(resource instanceof IFile)) {
+			return;
+		}
+		IPath location = ResourceUtils.getPath(resource);
+		if(location.isEmpty() || cache.isDirectory(location)) {
+			return;
+		}
+		if (!Team.isIgnoredHint(resource)) {
 			Integer status = cache.getStatus(resource);
 			File path = new File(root.toRelative(location.toFile()));
 			list.add(new CommitResource(status == null ? MercurialStatusCache.BIT_UNKNOWN : status

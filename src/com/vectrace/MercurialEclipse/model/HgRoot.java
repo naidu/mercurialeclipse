@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     bastian					- implementation
+ *     Andrei Loskutov			- bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -20,16 +20,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -220,7 +218,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		IProject[] projects = MercurialTeamProvider.getKnownHgProjects(this).toArray(
 				new IProject[0]);
 		if (projects.length == 1) {
-			if (getIPath().equals(projects[0].getLocation())) {
+			if (getIPath().equals(ResourceUtils.getPath(projects[0]))) {
 				return projects;
 			}
 		}
@@ -245,12 +243,4 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		return true;
 	}
 
-	public IPath getRelativePath(IFile file) {
-		try {
-			return Path.fromOSString(file.getLocation().toFile().getCanonicalPath())
-					.makeRelativeTo(new Path(getAbsolutePath()));
-		} catch (IOException e) {
-			return file.getLocation().makeRelativeTo(new Path(getAbsolutePath()));
-		}
-	}
 }

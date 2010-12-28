@@ -53,6 +53,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -399,7 +400,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private String getSuffixForFiles(IResource resource, ChangeSet cs) throws HgException {
 		String suffix = ""; //$NON-NLS-1$
 		// suffix for files
-		if (!STATUS_CACHE.isAdded(resource.getLocation())) {
+		if (!STATUS_CACHE.isAdded(ResourceUtils.getPath(resource))) {
 			ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
 			if (fileCs != null) {
 				suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$

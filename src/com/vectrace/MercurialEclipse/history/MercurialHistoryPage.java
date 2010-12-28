@@ -119,6 +119,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 import com.vectrace.MercurialEclipse.wizards.StripWizard;
@@ -1144,7 +1145,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	public String getDescription() {
-		return resource != null? resource.getLocation().toOSString() : hgRoot.getAbsolutePath();
+		return resource != null? ResourceUtils.getPath(resource).toOSString() : hgRoot.getAbsolutePath();
 	}
 
 	public String getName() {

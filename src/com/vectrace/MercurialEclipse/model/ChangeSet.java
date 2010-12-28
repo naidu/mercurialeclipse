@@ -631,7 +631,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	public boolean contains(IPath local) {
 		for (IFile resource : getFiles()) {
-			if (local.equals(resource.getLocation())) {
+			if (local.equals(ResourceUtils.getPath(resource))) {
 				return true;
 			}
 		}

@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 	   Bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *     Philip Graf               - proxy support
  *******************************************************************************/
@@ -24,6 +24,7 @@ import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -31,6 +32,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Base client class
@@ -96,7 +98,10 @@ public abstract class AbstractClient {
 	static List<File> toFiles(List<IResource> files) {
 		List<File> toFiles = new ArrayList<File>();
 		for (IResource r : files) {
-			toFiles.add(r.getLocation().toFile());
+			IPath path = ResourceUtils.getPath(r);
+			if(!path.isEmpty()) {
+				toFiles.add(path.toFile());
+			}
 		}
 		return toFiles;
 	}

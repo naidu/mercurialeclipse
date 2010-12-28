@@ -169,10 +169,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			// hg deletes the parent folder too if the deleted file was the only one in the folder
 			// we have to tell Eclipse that the folder (and probably all subsequent parents)
 			// are deleted too...
-			File dir = resource.getLocation().toFile().getParentFile();
+			File dir = ResourceUtils.getFileHandle(resource).getParentFile();
 			IContainer parent = resource.getParent();
 			tree.deletedFile((IFile) resource);
-			while(parent instanceof IFolder && !dir.exists()){
+			while(parent instanceof IFolder && dir != null && !dir.exists()){
 				IContainer backup = parent.getParent();
 				tree.deletedFolder((IFolder) parent);
 				parent = backup;
@@ -199,7 +199,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			return false;
 		}
 
-		if(!hgRoot.getIPath().equals(project.getLocation())){
+		if(!hgRoot.getIPath().equals(ResourceUtils.getPath(project))){
 			final Set<IResource> allFiles = ResourceUtils.getMembers(project);
 
 			try {

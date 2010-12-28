@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Administrator	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Administrator            - implementation
+ *     Andrei Loskutov          - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -39,6 +39,7 @@ import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 
 import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
@@ -247,7 +248,7 @@ public class LocationChooser extends Composite implements Listener {
 			return null;
 		case Workspace:
 			IFile file = getWorkspaceFile();
-			return file == null ? null : file.getLocation().toFile();
+			return file == null ? null : ResourceUtils.getFileHandle(file);
 		default:
 			return null;
 		}

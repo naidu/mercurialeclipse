@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -128,7 +129,11 @@ public class HgResolveClient extends AbstractClient {
 	 * Mark a resource as unresolved ("U")
 	 */
 	public static String markUnresolved(IFile ifile) throws HgException {
-		File file = ifile.getLocation().toFile();
+		IPath path = ResourceUtils.getPath(ifile);
+		if(path.isEmpty()) {
+			throw new HgException("Failed to unresolve: location is unknown: " + ifile);
+		}
+		File file = path.toFile();
 		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
 				"Marking resource as unresolved", ifile, false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command
