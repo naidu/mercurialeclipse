@@ -89,21 +89,25 @@ public class MercurialRootCache extends AbstractCache {
 	}
 
 	/**
-	 * Find the hgroot for the given resource. If the root could not be found,
-	 * no error would be reported.
+	 * Find the hg root for the given resource. If the root could not be found, no error would be
+	 * reported.
 	 *
-	 * @param resource The resource, not null.
-	 * @return The hgroot, or null if an error occurred or root was not found.
+	 * @param resource
+	 *            The resource, not null.
+	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
+	 *         team provider is not Mercurial or hg root is not found
 	 */
 	public HgRoot hasHgRoot(IResource resource) {
 		return getHgRoot(resource, false);
 	}
 
 	/**
-	 * Find the hgroot for the given resource.
+	 * Find the hg root for the given resource.
 	 *
-	 * @param resource The resource, not null.
-	 * @return The hgroot, or null if an error occurred or not found
+	 * @param resource
+	 *            The resource, not null.
+	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
+	 *         team provider is not Mercurial or hg root is not found
 	 */
 	public HgRoot getHgRoot(IResource resource, boolean reportNotFoundRoot) {
 		if (resource instanceof HgRootContainer) {

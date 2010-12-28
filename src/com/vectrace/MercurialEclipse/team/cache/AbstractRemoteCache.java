@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei Loskutov (Intland) - implementation
+ * Andrei Loskutov         - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -29,9 +29,9 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -179,12 +179,11 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> getChangeSets(IResource resource,
 			IHgRepositoryLocation repository, String branch) throws HgException {
-		IProject project = resource.getProject();
-		// check if mercurial is team provider and if we're working on an open project
-		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if (hgRoot == null){
+			// if mercurial is not team provider or if we're working on a closed project
 			return EMPTY_SET;
 		}
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 		synchronized (repoDatas){
 			RemoteData data = fastRepoMap.get(key);
@@ -213,16 +212,16 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> hasChangeSets(IResource resource, IHgRepositoryLocation repository,
 			String branch) {
-		IProject project = resource.getProject();
-		// check if mercurial is team provider and if we're working on an open project
-		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
-			return EMPTY_SET;
-		}
 		HgRoot hgRoot;
 		try {
+			// also checks if mercurial is team provider and if we're working on an open project
 			hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
+			return EMPTY_SET;
+		}
+		if (hgRoot == null){
+			// if mercurial is not team provider or if we're working on a closed project
 			return EMPTY_SET;
 		}
 		RemoteKey key = new RemoteKey(hgRoot, repository, branch);

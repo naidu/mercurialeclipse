@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -137,6 +138,20 @@ public final class ResourceUtils {
 	 */
 	public static IFile getFileHandle(IPath path) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		IFile[] files = root.findFilesForLocationURI(URIUtil.toURI(path.makeAbsolute()));
+		if(files.length == 0) {
+			return root.getFileForLocation(path);
+		}
+		if(files.length == 1) {
+			return files[0];
+		}
+
+		// try to find the first file contained in a hg root and managed by our team provider
+		for (IFile file : files) {
+			if (MercurialTeamProvider.isHgTeamProviderFor(file.getProject())) {
+				return file;
+			}
+		}
 		return root.getFileForLocation(path);
 	}
 
@@ -410,7 +425,7 @@ public final class ResourceUtils {
 
 	/**
 	 * @param selection may be null
-	 * @return never null , may be ampty list containing all resources from given selection
+	 * @return never null , may be empty list containing all resources from given selection
 	 */
 	public static List<IResource> getResources(IStructuredSelection selection) {
 		List<IResource> resources = new ArrayList<IResource>();
@@ -426,9 +441,9 @@ public final class ResourceUtils {
 
 	/**
 	 * This is optimized version of {@link IPath#isPrefixOf(IPath)} (30-50% faster). Main difference is
-	 * that we prefer the cheep opearions first and check path segments starting from the
+	 * that we prefer the cheap operations first and check path segments starting from the
 	 * end of the first path (with the assumption that paths starts in most cases
-	 * with common paths segments => so we postpone redundand comparisions).
+	 * with common paths segments => so we postpone redundant comparisons).
 	 * @param first non null
 	 * @param second non null
 	 * @return true if the first path is prefix of the second

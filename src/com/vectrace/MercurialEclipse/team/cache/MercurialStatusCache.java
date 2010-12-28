@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -437,7 +437,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Assert.isNotNull(resource);
 		IProject project = resource.getProject();
 		if (path.equals(project.getLocation())) {
-			return project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project);
+			return MercurialTeamProvider.isHgTeamProviderFor(project);
 		}
 		int status = statusInt.intValue();
 		int highestBit = Bits.highestBit(status);

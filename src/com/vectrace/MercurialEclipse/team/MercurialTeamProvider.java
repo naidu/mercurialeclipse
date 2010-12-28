@@ -200,18 +200,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	/**
-	 * Checks if the given project is controlled by MercurialEclipse.
+	 * Checks if the given project is both contained in a hg root and controlled by MercurialEclipse
+	 * as team provider.
 	 *
-	 * @return true, if MercurialEclipse provides team functions to this
-	 *         project, false otherwise.
+	 * @param project
+	 *            non null
+	 * @return true, if MercurialEclipse provides team functions to this project, false otherwise
+	 *         (if an error occurred or project is closed or hg root was not found).
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
 		Assert.isNotNull(project);
-		HgRoot result = MercurialRootCache.getInstance().hasHgRoot(project);
-		if(result == null){
-			return RepositoryProvider.getProvider(project, ID) != null;
-		}
-		return true;
+		return MercurialRootCache.getInstance().hasHgRoot(project) != null;
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
@@ -281,7 +280,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 *
 	 * @param resource
 	 *            the resource to get the hg root for, not null
-	 * @return the {@link java.io.File} referencing the hg root directory
+	 * @return the {@link java.io.File} referencing the hg root directory. May return null
 	 * @throws HgException
 	 *             if an error occurred (e.g. no root could be found)
 	 */

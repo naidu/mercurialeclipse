@@ -253,7 +253,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			boolean withFiles) throws HgException {
 		Assert.isNotNull(res);
 		IProject project = res.getProject();
-		if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
+		if (MercurialTeamProvider.isHgTeamProviderFor(project)) {
 			clear(res, false);
 			int versionLimit = getLogBatchSize();
 			if(withFiles && versionLimit > 1) {
