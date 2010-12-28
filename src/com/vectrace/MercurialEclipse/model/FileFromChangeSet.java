@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -30,9 +29,18 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class FileFromChangeSet implements IAdaptable{
 
+	/**
+	 * May be null. Eg a resource is removed
+	 */
 	private final IFile file;
+
+	/**
+	 * Not null
+	 */
 	private final ChangeSet changeset;
+
 	private final int kind;
+
 	private FileStatus fileStatus;
 
 	/**
@@ -95,7 +103,7 @@ public class FileFromChangeSet implements IAdaptable{
 				}
 			}
 			if (root != null) {
-				return file.getLocation().makeRelativeTo(new Path(root.getAbsolutePath()));
+				return root.getRelativePath(file);
 			}
 		}
 		return null;

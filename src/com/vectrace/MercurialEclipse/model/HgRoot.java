@@ -20,7 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -240,5 +243,14 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	public boolean isLocal() {
 		return true;
+	}
+
+	public IPath getRelativePath(IFile file) {
+		try {
+			return Path.fromOSString(file.getLocation().toFile().getCanonicalPath())
+					.makeRelativeTo(new Path(getAbsolutePath()));
+		} catch (IOException e) {
+			return file.getLocation().makeRelativeTo(new Path(getAbsolutePath()));
+		}
 	}
 }

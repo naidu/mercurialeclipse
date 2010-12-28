@@ -52,7 +52,6 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
@@ -657,6 +656,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		private final String display;
 
+		protected IPath path;
+
 		protected IResource resource;
 
 		/**
@@ -685,10 +686,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 				if (o.display.equals(display) && o.parent.equals(parent))
 				{
-					if (o.resource == null) {
-						return resource == null;
+					if (o.path == null) {
+						return path == null;
 					}
-					return o.resource.equals(resource);
+					return o.path.equals(path);
 				}
 			}
 			return false;
@@ -721,7 +722,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			this.data = data;
 
 			if (data != null && data.size() > 0) {
-				this.resource = data.get(0).getFile().getParent();
+				FileFromChangeSet first = data.get(0);
+				this.path = first.getPath().removeLastSegments(1);
+				this.resource = first.getFile().getParent();
 			}
 		}
 
@@ -738,7 +741,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public TreePathFromChangeSet(Object prnt, String seg, List<Object> data) {
 			super(prnt, seg);
 			this.data = data;
-			this.resource = getResource();
+			calculatePath();
 		}
 
 		@Override
@@ -746,27 +749,21 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return collectTree(HgChangeSetContentProvider.this, data);
 		}
 
-		private IResource getResource() {
-			IResource result = null;
+		private void calculatePath() {
 			if (data.size() > 1) {
 				// first object must be an IPath
 				Object o1 = data.get(0);
 				// and second must be FileFromChangeSet
 				Object o2 = data.get(1);
 				if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
-					IResource childResource = ResourceUtils.getResource(o2);
+					FileFromChangeSet fcs = (FileFromChangeSet) o2;
+					IResource childResource = ResourceUtils.getResource(fcs);
 					IPath childPath = (IPath) o1;
-
 					IPath folderPath = childResource.getLocation().removeLastSegments(childPath.segmentCount() + 1);
-					try {
-						result = ResourceUtils.convert(folderPath.toFile());
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
+					this.resource = ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(folderPath);
+					this.path = fcs.getPath().removeLastSegments(childPath.segmentCount() + 1);
 				}
 			}
-
-			return result;
 		}
 	}
 }

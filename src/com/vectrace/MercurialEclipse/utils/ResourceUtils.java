@@ -168,10 +168,10 @@ public final class ResourceUtils {
 	/**
 	 * Converts a {@link java.io.File} to a workspace resource
 	 *
-	 * @param file
-	 * @return
-	 * @throws HgException
+	 * @deprecated This is not compatible with symbolic links because getContainerForLocation()
+	 *             doesn't canonicalize workspace locations
 	 */
+	@Deprecated
 	public static IResource convert(File file) throws HgException {
 		String canonicalPath;
 		try {
