@@ -20,7 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -29,6 +32,12 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public final class CommitResourceUtil {
 
+	/**
+	 * Bit mask of status cache bits for cancidate statuses when committing
+	 */
+	private static final int COMMIT_CANDIDATE_STATUSES_BITS = MercurialStatusCache.BIT_MISSING
+			| MercurialStatusCache.BIT_REMOVED | MercurialStatusCache.BIT_UNKNOWN
+			| MercurialStatusCache.BIT_ADDED | MercurialStatusCache.BIT_MODIFIED;
 
 	private CommitResourceUtil() {
 		// static utility
@@ -57,14 +66,28 @@ public final class CommitResourceUtil {
 		ArrayList<CommitResource> list = new ArrayList<CommitResource>();
 
 		for (IResource resource : resources) {
-			if (!Team.isIgnoredHint(resource)) {
-				Integer status = cache.getStatus(resource);
-				File path = new File(root.toRelative(resource.getLocation().toFile()));
-				list.add(new CommitResource(status == null ? MercurialStatusCache.BIT_UNKNOWN : status.intValue(), resource, path));
+			if (resource instanceof IContainer) {
+				for (IResource curResource : cache.getResources(COMMIT_CANDIDATE_STATUSES_BITS,
+						(IContainer)resource)) {
+					processStatusResult(root, cache, list, curResource);
+				}
+			} else {
+				processStatusResult(root, cache, list, resource);
 			}
 		}
 
 		return list;
+	}
+
+	private static void processStatusResult(HgRoot root, MercurialStatusCache cache,
+			List<CommitResource> list, IResource resource) {
+		IPath location = resource.getLocation();
+		if (resource instanceof IFile && !cache.isDirectory(location) && !Team.isIgnoredHint(resource)) {
+			Integer status = cache.getStatus(resource);
+			File path = new File(root.toRelative(location.toFile()));
+			list.add(new CommitResource(status == null ? MercurialStatusCache.BIT_UNKNOWN : status
+					.intValue(), resource, path));
+		}
 	}
 
 	/**

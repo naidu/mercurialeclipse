@@ -585,6 +585,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	public Set<IResource> getResources(int statusBits, IContainer folder){
+		// Possible optimization: don't walk the entry set. Call folder.accept() and query statusMap
+		// individually for each.
 		Set<IResource> resources;
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
