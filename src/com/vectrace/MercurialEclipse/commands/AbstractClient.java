@@ -101,14 +101,6 @@ public abstract class AbstractClient {
 		return toFiles;
 	}
 
-	static List<String> toPaths(List<File> files) {
-		List<String> paths = new ArrayList<String>();
-		for (File f : files) {
-			paths.add(f.getAbsolutePath());
-		}
-		return paths;
-	}
-
 	/**
 	 * Checks whether a command is available in installed Mercurial version by
 	 * issuing hg help <commandName>. If Mercurial doesn't answer with

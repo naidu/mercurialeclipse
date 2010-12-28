@@ -14,12 +14,11 @@ package com.vectrace.MercurialEclipse.operations;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.IWorkbenchPart;
 
@@ -94,7 +93,7 @@ public class ShelveOperation extends HgOperation {
 					throw new HgCoreException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
-				Set<IPath> resources = new HashSet<IPath>(); // getDirtyFiles(hgRoot);
+				List<IResource> resources = Collections.emptyList(); // getDirtyFiles(hgRoot);
 				List<String> options = new ArrayList<String>(1);
 
 				options.add("--git");

@@ -74,7 +74,7 @@ public class HgStatusClient extends AbstractClient {
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		if (res.getType() == IResource.FILE) {
-			command.addOptions(res.getLocation().toFile().getAbsolutePath());
+			command.addFiles(res);
 		}
 		return command.executeToString();
 	}
@@ -251,7 +251,7 @@ public class HgStatusClient extends AbstractClient {
 		command.addOptions("-arC"); //$NON-NLS-1$
 		command.addOptions("--rev"); //$NON-NLS-1$
 		command.addOptions(firstRev + ":" + secondRev); //$NON-NLS-1$
-		command.addFiles(file.getAbsolutePath());
+		command.addFile(file);
 		String result = command.executeToString();
 		if (result == null || result.length() == 0) {
 			return null;

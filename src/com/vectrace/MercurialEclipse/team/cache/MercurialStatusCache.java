@@ -990,21 +990,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				continue;
 			}
 			String localName = line.substring(2);
-			IResource member = findMember(pathMap, hgRootPath, localName);
+			IResource member = findMember(pathMap, hgRootPath, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
 
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
 			if (member == null) {
-				if(bit == BIT_REMOVED || bit == BIT_MISSING){
-					IPath path = hgRootPath.append(localName);
-					// creates a handle to non-existent file. This is ok.
-					member = workspaceRoot.getFileForLocation(path);
-					if(member == null) {
-						continue;
-					}
-				} else {
-					continue;
-				}
+				continue;
 			}
 
 			Integer bitSet;
@@ -1070,7 +1061,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return list;
 	}
 
-	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath) {
+	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath, boolean allowForce) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
@@ -1080,8 +1071,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// determine project relative path
 			int equalSegments = path.matchingFirstSegments(projectLocation);
 			if(equalSegments == projectLocation.segmentCount() || singleProject) {
+				IProject project = entry.getKey();
 				IPath segments = path.removeFirstSegments(equalSegments);
-				return entry.getKey().findMember(segments);
+				IResource result = project.findMember(segments);
+
+				if (result == null && allowForce) {
+					result = project.getFile(segments);
+				}
+				return result;
 			}
 		}
 		return null;

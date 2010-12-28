@@ -31,11 +31,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -602,25 +600,43 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected abstract String getExecutable();
 
-	public void addFiles(String... myFiles) {
-		for (String file : myFiles) {
-			files.add(file);
+	/**
+	 * Add a file. Need not be canonical, but will try transform to canonical.
+	 *
+	 * @param myfiles The files to add
+	 */
+	public void addFiles(Collection<File> myfiles) {
+		for (File file : myfiles) {
+			addFile(file);
 		}
 	}
 
-	public void addFiles(Collection<String> myFiles) {
-		files.addAll(myFiles);
+	/**
+	 * Add a file. Need not be canonical, but will try transform to canonical.
+	 *
+	 * @param file The file to add
+	 */
+	public void addFile(File file) {
+		String sfile;
+		try {
+			sfile = file.getCanonicalPath();
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+			sfile = file.getAbsolutePath();
+		}
+
+		files.add(sfile);
 	}
 
 	public void addFiles(IResource... resources) {
 		for (IResource resource : resources) {
-			files.add(resource.getLocation().toOSString());
+			addResource(resource);
 		}
 	}
 
 	public void addFiles(List<? extends IResource> resources) {
 		for (IResource resource : resources) {
-			files.add(resource.getLocation().toOSString());
+			addResource(resource);
 		}
 	}
 
@@ -630,15 +646,16 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	public void addFilesWithoutFolders(List<? extends IResource> resources) {
 		for (IResource resource : resources) {
 			if (resource.getType() == IResource.FILE) {
-				files.add(resource.getLocation().toOSString());
+				addResource(resource);
 			}
 		}
 	}
 
-	public void addFiles(Set<IPath> paths) {
-		for (IPath path : paths) {
-			files.add(path.toOSString());
-		}
+	private void addResource(IResource resource) {
+		// TODO This can be done faster without any file system calls by saving uncanonicalized hg
+		// root locations (?).
+		// files.add(resource.getLocation().toOSString());
+		addFile(resource.getLocation().toFile());
 	}
 
 	public void setUsePreferenceTimeout(String cloneTimeout) {
