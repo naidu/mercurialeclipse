@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * @author bastian
@@ -55,6 +57,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public final class ResourceUtils {
 
+	public static final IPath[] NO_PATHS = new Path[0];
 	private static final File TMP_ROOT = new File(System.getProperty("java.io.tmpdir"));
 	private static long tmpFileSuffix;
 
@@ -137,22 +140,72 @@ public final class ResourceUtils {
 	 *         workspace
 	 */
 	public static IFile getFileHandle(IPath path) {
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IFile[] files = root.findFilesForLocationURI(URIUtil.toURI(path.makeAbsolute()));
-		if(files.length == 0) {
-			return root.getFileForLocation(path);
-		}
-		if(files.length == 1) {
-			return files[0];
-		}
+		return (IFile) getHandle(path, true);
+	}
 
-		// try to find the first file contained in a hg root and managed by our team provider
-		for (IFile file : files) {
-			if (MercurialTeamProvider.isHgTeamProviderFor(file.getProject())) {
-				return file;
+	private static IResource getHandle(IPath origPath, boolean isFile) {
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		// origPath may be canonical but not necessarily.
+		// Eclipse allows a project to be symlinked or an arbitrary folder under a project
+		// to be symlinked. Also Eclipse allows a subtree of one project to exist as another
+		// project.
+		// Mercurial doesn't follow symbolic links so if path is canonical it is sufficient to find
+		// a containing hg root. hg roots are always canonical.
+		// There is an unresolvable ambiguity when a project with a sub repo is imported
+		// as a project. Such cases are unsupported for now.
+		// If one of the candidate resources is under a Mercurial managed project it must
+		// be returned.
+		IPath[] paths = NO_PATHS;
+		IResource best = null;
+
+		loop: for (int i = 0;; i++) {
+			IPath path;
+
+			switch (i) {
+			case 0:
+				path = origPath;
+				break;
+			case 1:
+				// Only query the root cache if the plain path didn't find a definite match.
+				paths = MercurialRootCache.getInstance().uncanonicalize(origPath);
+				//$FALL-THROUGH$
+			default:
+				if (i - 1 >= paths.length) {
+					break loop;
+				}
+				path = paths[i - 1];
+			}
+
+			// Is best a definite match?
+			if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
+				return best;
+			}
+
+			URI uri = URIUtil.toURI(path.makeAbsolute());
+			IResource[] resources = isFile ? root.findFilesForLocationURI(uri) : root
+					.findContainersForLocationURI(uri);
+			if (resources.length > 0) {
+				if (resources.length == 1) {
+					best = resources[0];
+				} else {
+					// try to find the first file contained in a hg root and managed by our team
+					// provider
+					for (IResource resource : resources) {
+						if (MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())) {
+							return resource;
+						}
+					}
+				}
+			} else {
+				best = ifNull(isFile ? root.getFileForLocation(path) : root
+						.getContainerForLocation(path), best);
 			}
 		}
-		return root.getFileForLocation(path);
+		return best;
+	}
+
+	private static IResource ifNull(IResource a, IResource b) {
+		return a == null ? b : a;
 	}
 
 	/**
@@ -183,11 +236,7 @@ public final class ResourceUtils {
 
 	/**
 	 * Converts a {@link java.io.File} to a workspace resource
-	 *
-	 * @deprecated This is not compatible with symbolic links because getContainerForLocation()
-	 *             doesn't canonicalize workspace locations
 	 */
-	@Deprecated
 	public static IResource convert(File file) throws HgException {
 		String canonicalPath;
 		try {
@@ -195,14 +244,7 @@ public final class ResourceUtils {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		IResource resource;
-		if (file.isDirectory()) {
-			resource = root.getContainerForLocation(new Path(canonicalPath));
-		} else {
-			resource = root.getFileForLocation(new Path(canonicalPath));
-		}
-		return resource;
+		return getHandle(new Path(canonicalPath), !file.isDirectory());
 	}
 
 	/**

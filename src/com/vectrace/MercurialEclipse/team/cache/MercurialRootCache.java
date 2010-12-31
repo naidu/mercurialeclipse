@@ -15,7 +15,13 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IFile;
@@ -54,6 +60,34 @@ public class MercurialRootCache extends AbstractCache {
 
 	private final ConcurrentHashMap<HgRoot, HgRoot> knownRoots = new ConcurrentHashMap<HgRoot, HgRoot>(
 			16, 0.75f, 4);
+
+	/**
+	 * Tracks known non-canonical forms of paths.
+	 *
+	 * There is a concurrent tree map in Java 1.6+ only.
+	 */
+	private final TreeMap<IPath, Set<IPath>> canonicalMap = new TreeMap<IPath, Set<IPath>>(
+			new Comparator<IPath>() {
+				public int compare(IPath o1, IPath o2) {
+					for (int i = 0, n = Math.max(o1.segmentCount(), o2.segmentCount()); i < n; i++) {
+						String a = o1.segment(i), b = o2.segment(i);
+						int res;
+
+						if (a == null) {
+							res = b == null ? 0 : -1;
+						} else if (b == null) {
+							res = 1;
+						} else {
+							res = a.compareTo(b);
+						}
+
+						if (res != 0) {
+							return res;
+						}
+					}
+					return 0;
+				}
+			});
 
 	private MercurialRootCache() {
 	}
@@ -156,6 +190,16 @@ public class MercurialRootCache extends AbstractCache {
 		if (cacheResult) {
 			try {
 				resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
+
+				if (root != null) {
+					synchronized (canonicalMap) {
+						Set<IPath> s = canonicalMap.get(root.getIPath());
+						if (s == null) {
+							canonicalMap.put(root.getIPath(), s = new HashSet<IPath>());
+						}
+						s.add(project.getLocation());
+					}
+				}
 			} catch (CoreException e) {
 				// Possible reasons:
 				// - 2 reasons above, or
@@ -166,7 +210,6 @@ public class MercurialRootCache extends AbstractCache {
 		}
 		return root;
 	}
-
 
 	/**
 	 * Find the hgroot for the given resource.
@@ -231,6 +274,65 @@ public class MercurialRootCache extends AbstractCache {
 	 */
 	public void uncacheAllNegative() {
 		noRoot = new String(noRoot); // equals but not ==
+	}
+
+	/**
+	 * Return any paths other than the given path for which path is canonical of.
+	 *
+	 * @param path
+	 *            The path to query
+	 * @return Non null possibly empty list of paths
+	 */
+	public IPath[] uncanonicalize(IPath path) {
+		Set<IPath> candidates = null;
+		IPath bestKey = null;
+
+		// Search for key that is a prefix of path
+		synchronized (canonicalMap) {
+			int matchingSegments = 1;
+			SortedMap<IPath, Set<IPath>> map = canonicalMap;
+			loop: for (int n = path.segmentCount(); matchingSegments < n && !map.isEmpty(); matchingSegments++) {
+				IPath curPrefix = path.removeLastSegments(n - matchingSegments - 1);
+				IPath curKey = map.firstKey();
+
+				if (curPrefix.isPrefixOf(curKey)) {
+					bestKey = curKey;
+					map = map.subMap(curPrefix, map.lastKey());
+				} else {
+					break loop;
+				}
+			}
+
+			if (bestKey != null) {
+				candidates = map.get(bestKey);
+				assert bestKey.isPrefixOf(path);
+				assert matchingSegments == bestKey.segmentCount();
+			}
+		}
+
+		// Build results by switching one prefix for the other
+		if (candidates != null && /* redundant */ bestKey != null) {
+			IPath pathRel = path.removeFirstSegments(bestKey.segmentCount());
+			List<IPath> result = null;
+
+			for (IPath candidate : candidates) {
+				// The documentation says the path is canonicalized, but in fact symbolic links
+				// aren't normalized.
+				candidate = candidate.append(pathRel);
+
+				if (!candidate.equals(path)) {
+					if (result == null) {
+						result = new ArrayList<IPath>(candidates.size());
+					}
+					result.add(candidate);
+				}
+			}
+
+			if (result != null) {
+				return result.toArray(new IPath[result.size()]);
+			}
+		}
+		return ResourceUtils.NO_PATHS;
 	}
 
 	public static MercurialRootCache getInstance(){
