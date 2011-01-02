@@ -212,14 +212,8 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> hasChangeSets(IResource resource, IHgRepositoryLocation repository,
 			String branch) {
-		HgRoot hgRoot;
-		try {
-			// also checks if mercurial is team provider and if we're working on an open project
-			hgRoot = MercurialTeamProvider.getHgRoot(resource);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return EMPTY_SET;
-		}
+		// also checks if mercurial is team provider and if we're working on an open project
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		if (hgRoot == null){
 			// if mercurial is not team provider or if we're working on a closed project
 			return EMPTY_SET;

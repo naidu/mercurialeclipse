@@ -237,6 +237,7 @@ public class CommitFilesChooser extends Composite {
 		return CompareUtils.getCompareInput(left, right, false);
 	}
 
+	@SuppressWarnings("unused")
 	private void makeActions() {
 		getViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -324,17 +325,16 @@ public class CommitFilesChooser extends Composite {
 		if (showClean && resources.size() == 1 && commitResources.length == 0) {
 			IResource resource = resources.get(0);
 			if (resource.getType() == IResource.FILE) {
-				try {
-					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-					File path = new File(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
-					CommitResource cr = new CommitResource(MercurialStatusCache.BIT_CLEAN,
-							resource, path);
-					CommitResource[] input = new CommitResource[] { cr };
-					getViewer().setInput(input);
-					getViewer().setCheckedElements(input);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+				if(hgRoot == null) {
+					return;
 				}
+				File path = new File(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
+				CommitResource cr = new CommitResource(MercurialStatusCache.BIT_CLEAN,
+						resource, path);
+				CommitResource[] input = new CommitResource[] { cr };
+				getViewer().setInput(input);
+				getViewer().setCheckedElements(input);
 			}
 		}
 	}

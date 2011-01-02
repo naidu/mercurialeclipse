@@ -48,6 +48,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * @author bastian
@@ -272,7 +273,7 @@ public final class ResourceUtils {
 			if (!project.isAccessible()) {
 				continue;
 			}
-			HgRoot proot = MercurialTeamProvider.hasHgRoot(project);
+			HgRoot proot = MercurialRootCache.getInstance().hasHgRoot(project, true);
 			if (proot == null) {
 				continue;
 			}
@@ -292,7 +293,7 @@ public final class ResourceUtils {
 		Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
 		if (resources != null) {
 			for (IResource resource : resources) {
-				HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
+				HgRoot root = MercurialRootCache.getInstance().hasHgRoot(resource, true);
 				if (root == null) {
 					continue;
 				}
