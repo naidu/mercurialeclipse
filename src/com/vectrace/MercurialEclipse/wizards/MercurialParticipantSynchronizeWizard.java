@@ -286,7 +286,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			}
 		}
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), "Mercurial"); //TODO Better name
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
+
+		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), MercurialSynchronizeParticipant.computeSecondaryId(scope, repos)); //TODO Better name
 
 		// do not reuse participants which may already existing, but dispose them
 		// not doing this would lead to the state where many sync. participants would listen
@@ -306,7 +308,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 
 		// Create a new participant for given repo/project pair
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		ResourceMapping[] selectedMappings = new ResourceMapping[selectedProjects.length];
 		for (int i = 0; i < selectedProjects.length; i++) {

@@ -96,15 +96,16 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
 			sb.append("[");
-			for (IProject project : projects) {
+//			for (IProject project : projects) {
 				for(IHgRepositoryLocation repo : repos) {
-					Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
-					for (HgRoot hgRoot : hgRoots) {
-						if(hgRoot.getIPath().toString().equals(project.getLocation().toString())) {
-							sb.append(project.getName()).append(" ("+repo.getLocation()+") ").append(',');
-						}
-					}
-				}
+//					Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
+//					for (HgRoot hgRoot : hgRoots) {
+//						if(hgRoot.getIPath().toString().equals(project.getLocation().toString())) {
+					String logicalName = repo.getLogicalName(); //project.getName()
+							sb.append(logicalName).append(" ("+repo.getLocation()+") ").append(',');
+//						}
+//					}
+//				}
 
 			}
 			sb.deleteCharAt(sb.length() - 1);
@@ -314,8 +315,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		ResourceMapping[] mappings = getContext().getScope().getMappings();
 		String jobName = null;
 		String taskName = null;
-			jobName = getShortTaskName();
-			taskName = getLongTaskName(mappings);
+		jobName = getShortTaskName();
+		taskName = getLongTaskName(mappings);
 		Job.getJobManager().cancel(this);
 		RefreshParticipantJob job = new RefreshModelParticipantJob(this, jobName, taskName, mappings, listener);
 		job.setUser(true);
