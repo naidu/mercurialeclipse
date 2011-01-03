@@ -96,16 +96,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
 			sb.append("[");
-//			for (IProject project : projects) {
-				for(IHgRepositoryLocation repo : repos) {
-//					Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
-//					for (HgRoot hgRoot : hgRoots) {
-//						if(hgRoot.getIPath().toString().equals(project.getLocation().toString())) {
-					String logicalName = repo.getLogicalName(); //project.getName()
-							sb.append(logicalName).append(" ("+repo.getLocation()+") ").append(',');
-//						}
-//					}
-//				}
+			for(IHgRepositoryLocation repo : repos) {
+				sb.append(" ("+repo.getLocation()+") ").append(',');
 
 			}
 			sb.deleteCharAt(sb.length() - 1);
