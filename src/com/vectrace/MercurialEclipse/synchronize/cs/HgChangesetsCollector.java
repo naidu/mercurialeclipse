@@ -34,9 +34,9 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -185,12 +185,12 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		ChangesetsCollectorJob job = new ChangesetsCollectorJob("Initializing changesets");
 		job.setRule(new ExclusiveRule());
 		job.schedule(100);
-		try {
-			job.join(); // needed otherwise the update seems lazy, and elements are "randomly" poping in the sync list...
-			//TODO Gotta be a better ways than this, anyone ?
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+//		try {
+//			job.join(); // needed otherwise the update seems lazy, and elements are "randomly" poping in the sync list...
+//			//TODO Gotta be a better ways than this, anyone ?
+//		} catch (InterruptedException e) {
+//			MercurialEclipsePlugin.logError(e);
+//		}
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
