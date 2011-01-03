@@ -105,7 +105,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 	private final class PreferenceListener implements IPropertyChangeListener {
 		public void propertyChange(PropertyChangeEvent event) {
 			Object input = getTreeViewer().getInput();
-			if (event.getProperty().equals(PresentationMode.PREFERENCE_KEY)	&& input instanceof HgChangeSetModelProvider) {
+			if (( event.getProperty().equals(PresentationMode.PREFERENCE_KEY) ||
+					event.getProperty().equals(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS))
+					&& input instanceof HgChangeSetModelProvider) {
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
@@ -116,8 +118,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 							treeViewer.refresh(sg.getUncommittedSet(), true);
 						}
 						treeViewer.getTree().setRedraw(true);
+						getTreeViewer().refresh();
 					}
 				}, getTreeViewer());
+//				getTreeViewer().getTree().redraw();
+//				getTreeViewer().refresh();
 			}
 		}
 	}
