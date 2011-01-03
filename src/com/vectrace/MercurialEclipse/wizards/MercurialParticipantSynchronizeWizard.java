@@ -288,22 +288,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
 
-		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(MercurialSynchronizeParticipant.class.getName(), MercurialSynchronizeParticipant.computeSecondaryId(scope, repos)); //TODO Better name
-
-		// do not reuse participants which may already existing, but dispose them
-		// not doing this would lead to the state where many sync. participants would listen
+		// do not reuse participants which may already existing, not doing this would lead to the state where many sync. participants would listen
 		// to resource changes and update/request same data/cashes many times
 		// we can not reuse participants because their scope can be different (if there are
 		// more then one project under same repository)
-		if (participant != null) {
-			try {
-				ISynchronizeParticipant participant2 = participant.getParticipant();
-				TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
-				while (Display.getCurrent().readAndDispatch()) {
-					// give Team UI a chance to dispose the sync page, if any
+		ISynchronizeParticipantReference[] synchronizeParticipants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
+		for (ISynchronizeParticipantReference participant : synchronizeParticipants) {
+			if (participant != null) {
+				try {
+					ISynchronizeParticipant participant2 = participant.getParticipant();
+					TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
+					while (Display.getCurrent().readAndDispatch()) {
+						// give Team UI a chance to dispose the sync page, if any
+					}
+				} catch (TeamException e) {
+					MercurialEclipsePlugin.logError(e);
 				}
-			} catch (TeamException e) {
-				MercurialEclipsePlugin.logError(e);
 			}
 		}
 
