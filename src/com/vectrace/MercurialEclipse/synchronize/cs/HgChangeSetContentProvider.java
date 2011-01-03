@@ -121,8 +121,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						getTreeViewer().refresh();
 					}
 				}, getTreeViewer());
-//				getTreeViewer().getTree().redraw();
-//				getTreeViewer().refresh();
 			}
 		}
 	}
@@ -420,7 +418,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		}
 	}
 
-	// traverse throgh elements and add them to the correct group
+	// traverse through elements and add them to the correct group
 	private Object[] getRootElements() {
 		initCollector();
 		List<ChangeSet> result = new ArrayList<ChangeSet>();
@@ -527,16 +525,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				return true;
 			}
 		} else if (element instanceof RepositoryChangesetGroup) {
-			if(MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS)) {
+			boolean showEmptyGroups = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
 				RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) element;
-				if (isOutgoingVisible() && supergroup.getOutgoing().getChangesets().size() > 0) {
+				if (isOutgoingVisible() && (showEmptyGroups || supergroup.getOutgoing().getChangesets().size() > 0)) {
 					return true;
 				}
-				if (isIncomingVisible() && supergroup.getIncoming().getChangesets().size() > 0) {
+				if (isIncomingVisible() && (showEmptyGroups || supergroup.getIncoming().getChangesets().size() > 0)) {
 					return true;
 				}
-			return true;
-			}
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
