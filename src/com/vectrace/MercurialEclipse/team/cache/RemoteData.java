@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov         - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -24,9 +24,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -104,7 +104,7 @@ public class RemoteData {
 		if(set == null || set.isEmpty()) {
 			return EMPTY_SETS;
 		}
-		if(set instanceof SortedSet<?>) {
+		if(set instanceof SortedSet) {
 			return Collections.unmodifiableSortedSet((SortedSet) set);
 		}
 		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>(set);
@@ -118,7 +118,7 @@ public class RemoteData {
 		TreeSet<ChangeSet> psets = new TreeSet<ChangeSet>();
 		ProjectCache cache = new ProjectCache(project, getBranch(), psets);
 		projectMap.put(project, cache);
-		IPath projectPath = project.getLocation();
+		IPath projectPath = ResourceUtils.getPath(project);
 		Set<ChangeSet> set = changesets.get(projectPath);
 		if(set != null){
 			psets.addAll(set);
@@ -129,8 +129,8 @@ public class RemoteData {
 		for (ChangeSet changeSet : set) {
 			Set<IFile> files = changeSet.getFiles();
 			for (IFile file : files) {
-				IPath path = file.getLocation();
-				if(path != null && projectPath.isPrefixOf(path)){
+				IPath path = ResourceUtils.getPath(file);
+				if(!path.isEmpty() && projectPath.isPrefixOf(path)){
 					// TODO filter by branch, or it is already filtered?
 					// if(Branch.same(branch, changeSet.getBranch()))
 					psets.add(changeSet);

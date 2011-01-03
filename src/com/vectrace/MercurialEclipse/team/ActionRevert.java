@@ -10,7 +10,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - some updates
  *     Charles O'Farrell         - fix revert open file
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -171,7 +171,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	private void revertToParentVersion(final IResource resource){
-		Job job = new Job("Reverting to parent revision: " + resource.getLocation()){
+		Job job = new Job("Reverting to parent revision: " + ResourceUtils.getPath(resource)){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				ChangeSet cs;

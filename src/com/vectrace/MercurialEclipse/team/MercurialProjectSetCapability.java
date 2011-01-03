@@ -7,8 +7,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Bastian Doetsch - Implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Bastian Doetsch           - Implementation
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
@@ -29,6 +30,7 @@ import org.eclipse.team.core.TeamException;
 import com.vectrace.MercurialEclipse.actions.AddToWorkspaceAction;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Defines ProjectSetCapabilities for MercurialEclipse
@@ -123,8 +125,9 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 			if (srcRepository != null && srcRepository.length() > 0) {
 				reference = "MercurialEclipseProjectSet" + SEPARATOR + project.getName()
 						+ SEPARATOR + srcRepository;
-				if(!hgRoot.getIPath().equals(project.getLocation())){
-					reference += SEPARATOR + hgRoot.toRelative(project.getLocation().toFile());
+				IPath path = ResourceUtils.getPath(project);
+				if(!hgRoot.getIPath().equals(path)){
+					reference += SEPARATOR + hgRoot.toRelative(path.toFile());
 				}
 			}
 		} catch (CoreException e) {

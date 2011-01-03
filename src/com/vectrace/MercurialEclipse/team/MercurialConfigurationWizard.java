@@ -11,7 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - make map operation asynchronous
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 
 /**
@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
@@ -51,6 +52,7 @@ import org.eclipse.ui.IWorkbench;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage;
 import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
 
@@ -132,7 +134,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 				WizardDialog dialog = new WizardDialog(MercurialEclipsePlugin.getActiveShell(), wizard);
 				dialog.open();
 			} else if (e.widget == restoreProjectDirButton){
-				hgPath = project.getLocation().toOSString();
+				hgPath = ResourceUtils.getPath(project).toOSString();
 				directoryText.setText(hgPath);
 			}else if (e.widget == restoreExistingDirButton){
 				hgPath = foundhgPath.getAbsolutePath();
@@ -159,8 +161,9 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	@Override
 	public void addPages() {
 		foundhgPath = MercurialTeamProvider.hasHgRoot(project);
-		if (foundhgPath == null || foundhgPath.getIPath().equals(project.getLocation())) {
-			hgPath = project.getLocation().toOSString();
+		IPath path = ResourceUtils.getPath(project);
+		if (foundhgPath == null || foundhgPath.getIPath().equals(path)) {
+			hgPath = path.toOSString();
 			page = new NewWizardPage(true);
 		} else {
 			hgPath = foundhgPath.getAbsolutePath();

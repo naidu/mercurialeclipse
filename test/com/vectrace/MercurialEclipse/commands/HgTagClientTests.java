@@ -30,7 +30,7 @@ public class HgTagClientTests extends TestCase {
 			"Root_eclipse-2-1   5601:8de90d654b96",
 		};
 
-		Collection<Tag> tags = HgTagClient.getTags(lines);
+		Collection<Tag> tags = HgTagClient.getTags(null, lines);
 		Iterator<Tag> it = tags.iterator();
 
 		Tag tag = it.next();
@@ -70,7 +70,7 @@ public class HgTagClientTests extends TestCase {
 			"RELEASE_0.1                       40:dde832884afc"
 		};
 
-		Collection<Tag> tags = HgTagClient.getTags(lines);
+		Collection<Tag> tags = HgTagClient.getTags(null, lines);
 		Iterator<Tag> it = tags.iterator();
 
 		Tag tag = it.next();

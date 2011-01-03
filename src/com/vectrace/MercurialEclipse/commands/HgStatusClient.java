@@ -68,19 +68,19 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", "Fetching resource status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
 
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		if (res.getType() == IResource.FILE) {
-			command.addOptions(res.getLocation().toFile().getAbsolutePath());
+			command.addFiles(res);
 		}
 		return command.executeToString();
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", "Fetching resource status", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
 
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
@@ -153,7 +153,7 @@ public class HgStatusClient extends AbstractClient {
 
 	public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", //$NON-NLS-1$
-				"Fetching status for " + files.size() + " resources", root, true);
+				"Calculating status for " + files.size() + " resources", root, true);
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		// modified, added, removed, deleted, unknown, ignored, clean
@@ -163,35 +163,10 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	/**
-	 * @param hgRoot non null hg root
-	 * @param files non null file list from given root to commit
-	 * @return hg status output, never null (may be empty string)
-	 * @throws HgException
-	 */
-	public static String getStatusForCommit(HgRoot hgRoot, List<IResource> files) throws HgException {
-		StringBuilder output = new StringBuilder();
-		// if there are too many resources, do several calls
-		int size = files.size();
-		int delta = AbstractShellCommand.MAX_PARAMS - 1;
-		for (int i = 0; i < size; i += delta) {
-			final int j = Math.min(i + delta, size);
-			AbstractShellCommand command = new HgCommand("status", "Fetching status for " + (j - i) + " resources", //$NON-NLS-1$
-					hgRoot, true);
-			command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-			// modified, added, removed, deleted, unknown
-			command.addOptions("-mardu"); //$NON-NLS-1$
-			command.addFiles(files.subList(i, j));
-			output.append(command.executeToString());
-		}
-
-		return output.toString();
-	}
-
-	/**
 	 * @return root relative paths of changed files, never null
 	 */
 	public static String[] getDirtyFiles(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", "Finding dirty resources", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("status", "Calculating dirty resources", root, true); //$NON-NLS-1$
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-mard"); //$NON-NLS-1$
@@ -276,7 +251,7 @@ public class HgStatusClient extends AbstractClient {
 		command.addOptions("-arC"); //$NON-NLS-1$
 		command.addOptions("--rev"); //$NON-NLS-1$
 		command.addOptions(firstRev + ":" + secondRev); //$NON-NLS-1$
-		command.addFiles(file.getAbsolutePath());
+		command.addFile(file);
 		String result = command.executeToString();
 		if (result == null || result.length() == 0) {
 			return null;

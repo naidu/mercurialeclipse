@@ -6,15 +6,13 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov           - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -51,11 +49,9 @@ public class RemoteKey {
 	}
 
 	public static RemoteKey create(IResource res, IHgRepositoryLocation repo, String branch){
-		try {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+		if(hgRoot != null) {
 			return new RemoteKey(hgRoot, repo, branch);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
 		}
 		return new RemoteKey(null, repo, Branch.DEFAULT);
 	}

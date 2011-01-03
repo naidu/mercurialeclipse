@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov         - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -35,6 +35,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -70,7 +71,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		if(context != null && context.isHidden(file)){
 			return false;
 		}
-		if(cache.isDirectory(file.getLocation())){
+		if(cache.isDirectory(ResourceUtils.getPath(file))){
 			return false;
 		}
 		boolean added;

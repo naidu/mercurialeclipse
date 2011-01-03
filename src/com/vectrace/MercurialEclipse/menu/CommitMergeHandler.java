@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -70,7 +70,6 @@ public class CommitMergeHandler extends RunnableHandler {
 
 		// do hg call
 		String result = HgCommitClient.commit(hgRoot, commitName, message);
-		MercurialStatusCache.getInstance().clearMergeStatus(hgRoot);
 		return result;
 	}
 

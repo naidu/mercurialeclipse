@@ -16,6 +16,7 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,8 +24,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Pattern;
@@ -436,7 +437,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		Assert.isNotNull(resource);
 		IProject project = resource.getProject();
 		if (path.equals(project.getLocation())) {
-			return project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project);
+			return MercurialTeamProvider.isHgTeamProviderFor(project);
 		}
 		int status = statusInt.intValue();
 		int highestBit = Bits.highestBit(status);
@@ -584,6 +585,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	public Set<IResource> getResources(int statusBits, IContainer folder){
+		// Possible optimization: don't walk the entry set. Call folder.accept() and query statusMap
+		// individually for each.
 		Set<IResource> resources;
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
@@ -962,6 +965,18 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
 		List<String> strangeStates = new ArrayList<String>();
+
+		// Make values in the path map canonical
+		try {
+			for (Iterator<IProject> it = pathMap.keySet().iterator(); it.hasNext();) {
+				IProject key = it.next();
+				pathMap.put(key, Path.fromOSString(pathMap.get(key).toFile().getCanonicalPath()));
+			}
+		} catch(IOException e) {
+			MercurialEclipsePlugin.logError("Unexpected error - paths should be canonicalizable", e);
+		}
+
+		// HgRoots are always canonical
 		IPath hgRootPath = new Path(root.getAbsolutePath());
 
 		for (String line : lines) {
@@ -977,21 +992,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				continue;
 			}
 			String localName = line.substring(2);
-			IResource member = findMember(pathMap, hgRootPath, localName);
+			IResource member = findMember(pathMap, hgRootPath, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
 
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
 			if (member == null) {
-				if(bit == BIT_REMOVED || bit == BIT_MISSING){
-					IPath path = hgRootPath.append(localName);
-					// creates a handle to non-existent file. This is ok.
-					member = workspaceRoot.getFileForLocation(path);
-					if(member == null) {
-						continue;
-					}
-				} else {
-					continue;
-				}
+				continue;
 			}
 
 			Integer bitSet;
@@ -1057,7 +1063,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return list;
 	}
 
-	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath) {
+	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath, boolean allowForce) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
@@ -1067,8 +1073,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// determine project relative path
 			int equalSegments = path.matchingFirstSegments(projectLocation);
 			if(equalSegments == projectLocation.segmentCount() || singleProject) {
+				IProject project = entry.getKey();
 				IPath segments = path.removeFirstSegments(equalSegments);
-				return entry.getKey().findMember(segments);
+				IResource result = project.findMember(segments);
+
+				if (result == null && allowForce) {
+					result = project.getFile(segments);
+				}
+				return result;
 			}
 		}
 		return null;
@@ -1401,8 +1413,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	public void clear(HgRoot root, boolean notify) {
 		Set<IProject> projects = ResourceUtils.getProjects(root);
+		clearMergeStatus(root.getIPath());
 		for (IProject project : projects) {
-			clearStatusCache(project, false);
+			clear(project, false);
 			if(notify) {
 				notifyChanged(project, false);
 			}
@@ -1410,6 +1423,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	public void clear(IProject project, boolean notify) {
+		clearMergeStatus(project);
 		clearStatusCache(project, false);
 		if(notify) {
 			notifyChanged(project, false);
@@ -1472,16 +1486,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			statusBatchSize = STATUS_BATCH_SIZE;
 			MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
 		}
-	}
-
-
-
-	public void clearMergeStatus(HgRoot hgRoot) {
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		for (IProject project : projects) {
-			clearMergeStatus(project);
-		}
-		clearMergeStatus(hgRoot.getIPath());
 	}
 
 	private void clearMergeStatus(IPath path) {

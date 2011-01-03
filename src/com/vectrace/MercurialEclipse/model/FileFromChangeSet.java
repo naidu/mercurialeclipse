@@ -16,10 +16,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetResourceMapping;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -29,9 +27,18 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class FileFromChangeSet implements IAdaptable{
 
+	/**
+	 * May be null. Eg a resource is removed
+	 */
 	private final IFile file;
+
+	/**
+	 * Not null
+	 */
 	private final ChangeSet changeset;
+
 	private final int kind;
+
 	private FileStatus fileStatus;
 
 	/**
@@ -73,6 +80,7 @@ public class FileFromChangeSet implements IAdaptable{
 	/**
 	 * @return see {@link Differencer}
 	 */
+	@DoNotDisplayMe
 	public int getDiffKind() {
 		return kind;
 	}
@@ -86,14 +94,10 @@ public class FileFromChangeSet implements IAdaptable{
 		} else if (file != null) {
 			HgRoot root = changeset.getHgRoot();
 			if (root == null) {
-				try {
-					root = MercurialTeamProvider.getHgRoot(file);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				root = MercurialTeamProvider.getHgRoot(file);
 			}
 			if (root != null) {
-				return file.getLocation().makeRelativeTo(new Path(root.getAbsolutePath()));
+				return root.toRelative(file);
 			}
 		}
 		return null;
@@ -143,6 +147,7 @@ public class FileFromChangeSet implements IAdaptable{
 		return file;
 	}
 
+	@DoNotDisplayMe
 	public ChangeSet getChangeset() {
 		return changeset;
 	}

@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * lordofthepigs	implementation
+ *     lordofthepigs            - implementation
+ *     Andrei Loskutov			- bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -19,10 +20,12 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author lordofthepigs
@@ -80,7 +83,7 @@ public class HgSubreposClient extends AbstractClient {
 
 	public static Set<HgRoot> findSubrepositoriesRecursively(HgRoot root){
 		Set<HgRoot> found = new HashSet<HgRoot>();
-		doFindSubrepositoriesRecursively(root, found, null);
+		doFindSubrepositoriesRecursively(root, found, Path.EMPTY);
 		return found;
 	}
 
@@ -91,18 +94,22 @@ public class HgSubreposClient extends AbstractClient {
 		}
 
 		Set<HgRoot> found = new HashSet<HgRoot>();
-		doFindSubrepositoriesRecursively(root, found, container.getLocation());
+		doFindSubrepositoriesRecursively(root, found, ResourceUtils.getPath(container));
 		return found;
 	}
 
 	/**
-	 * recursively finds all the subrepositories under the specified HgRoot and stores all the discovered subrepos in the
-	 * specified set. An IPath can optionally be specified, in which case, all the returned subrepos will be children of that IPath.
+	 * recursively finds all the subrepositories under the specified HgRoot and stores all the
+	 * discovered subrepos in the specified set. An IPath can optionally be specified, in which
+	 * case, all the returned subrepos will be children of that IPath.
+	 *
+	 * @param containerPath
+	 *            non null. Use {@link Path#EMPTY} if the containerPath should be not used
 	 */
 	private static void doFindSubrepositoriesRecursively(HgRoot root, Set<HgRoot> found, IPath containerPath){
 		Set<HgRoot> subs = findSubrepositories(root);
 		for(HgRoot sub : subs){
-			if(containerPath == null || containerPath.isPrefixOf(sub.getIPath())) {
+			if(containerPath.isEmpty() || containerPath.isPrefixOf(sub.getIPath())) {
 				found.add(sub);
 				doFindSubrepositoriesRecursively(sub, found, containerPath);
 			}

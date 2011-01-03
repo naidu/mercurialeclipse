@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Bastian Doetsch	implementation
- * 		Andrei Loskutov (Intland) - bugfixes
+ * 		Bastian Doetsch	      - implementation
+ * 		Andrei Loskutov       - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -31,12 +31,13 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset objects.
@@ -160,7 +161,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 			File bundleFile, String branch) throws HgException {
 
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
-		IPath path = res.getLocation();
+		IPath path = ResourceUtils.getPath(res);
 
 		return createLocalRevisions(path, input, direction, repository, bundleFile, branch, hgRoot);
 	}
@@ -239,6 +240,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 	private static String cleanControlChars(String str) {
 		final StringBuilder buf = new StringBuilder();
 		final int len = str.length();
+		boolean inString=false;
 		for (int i = 0; i < len; i++) {
 			final int ch = str.codePointAt(i);
 			if (ch == '\r' || ch == '\n' || ch == '\t') {
@@ -249,6 +251,11 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 				buf.append("&amp;");
 			} else if (ch == '"') {
 				buf.append("\"");
+				inString = !inString;
+			} else if ((ch == '<') && inString) {
+				buf.append("&lt;");
+			} else if ((ch == '>') && inString) {
+				buf.append("&gt;");
 			} else {
 				buf.appendCodePoint(ch);
 			}

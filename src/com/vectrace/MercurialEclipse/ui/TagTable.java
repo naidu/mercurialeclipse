@@ -128,7 +128,7 @@ public class TagTable extends Composite {
 	 */
 	void fetchChangesetInfo(final ItemMediator[] tags) {
 		final LocalChangesetCache cache = LocalChangesetCache.getInstance();
-		Job fetchJob = new Job("Fetching hg changesets info") {
+		Job fetchJob = new Job("Retrieving changesets info") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				// this can cause UI hang for big projects. Should be done in a job.

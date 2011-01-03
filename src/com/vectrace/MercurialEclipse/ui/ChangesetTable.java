@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - support for multi-select tables
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - bug fix
  *     Ilya Ivanov (Intland)     - modifications
  *******************************************************************************/
@@ -57,7 +57,7 @@ public class ChangesetTable extends Composite {
 	private int logBatchSize;
 	private boolean autoFetch;
 
-	private boolean bottomNotFetched;
+	private int smallestKnownVersion;
 
 	private HgRoot hgRoot;
 
@@ -90,7 +90,7 @@ public class ChangesetTable extends Composite {
 		this.resource = resource;
 		this.autoFetch = autoFetch;
 		changesets = new ChangeSet[0];
-		bottomNotFetched = true;
+		smallestKnownVersion = -1;
 		this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
 		// limit log to allow "smooth" scrolling (not too small and not too big)
 		// - but only if not set in preferences
@@ -129,8 +129,6 @@ public class ChangesetTable extends Composite {
 				if (table.isEnabled()
 						&& tableItem.equals(table.getItems()[table.getItemCount() - 1])
 						&& cs.getChangesetIndex() > 0) {
-					// limit log to allow "smooth" scrolling (not too small and not too big)
-					logBatchSize = 200;
 					try {
 						int startRev = cs.getChangesetIndex() - 1;
 						updateTable(startRev);
@@ -159,31 +157,33 @@ public class ChangesetTable extends Composite {
 
 	/**
 	 * Updates the table data if autofetch is enabled
-	 * @param startRev -1 to fetch data from the beginning
+	 * @param startRev Integer.MAX_VALUE to fetch data from the beginning
 	 * @throws HgException
 	 */
 	private void updateTable(int startRev) throws HgException {
 		if (!isAutoFetchEnabled()) {
 			return;
 		}
+
 		LocalChangesetCache cache = LocalChangesetCache.getInstance();
-		if (startRev - logBatchSize > 0 || bottomNotFetched) {
-			if(resource != null) {
-				cache.fetchRevisions(resource, true, logBatchSize, startRev, false);
-			} else {
-				cache.fetchRevisions(hgRoot, true, logBatchSize, startRev, false);
-			}
-		}
 		SortedSet<ChangeSet> set;
 		if(resource != null) {
 			set = cache.getOrFetchChangeSets(resource);
 		} else {
 			set = cache.getOrFetchChangeSets(hgRoot);
 		}
-
-		// only fetch rev 0:0+logbatchsize once
-		if (set.size() == 0 || set.first().getChangesetIndex() == 0) {
-			bottomNotFetched = false;
+		if(!set.isEmpty()) {
+			int smallestInCache = set.first().getChangesetIndex();
+			if (smallestKnownVersion < 0 || smallestKnownVersion != smallestInCache) {
+				if(resource != null) {
+					cache.fetchRevisions(resource, true, logBatchSize, startRev, false);
+					set = cache.getOrFetchChangeSets(resource);
+				} else if(smallestInCache > 0) {
+					cache.fetchRevisions(hgRoot, true, logBatchSize, startRev, false);
+					set = cache.getOrFetchChangeSets(hgRoot);
+				}
+			}
+			smallestKnownVersion = set.first().getChangesetIndex();
 		}
 
 		/*
@@ -275,7 +275,7 @@ public class ChangesetTable extends Composite {
 		table.setEnabled(enabled);
 		try {
 			if (enabled) {
-				updateTable(-1);
+				updateTable(Integer.MAX_VALUE);
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

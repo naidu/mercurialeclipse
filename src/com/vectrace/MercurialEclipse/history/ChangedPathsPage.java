@@ -476,7 +476,9 @@ public class ChangedPathsPage {
 		final BaseSelectionListenerAction openEditorAction = page.getOpenEditorAction();
 		final BaseSelectionListenerAction compareWithCurrent = page.getCompareWithCurrentAction();
 		final BaseSelectionListenerAction compareWithPrevious = page.getCompareWithPreviousAction();
+		final BaseSelectionListenerAction compareWithOther = page.getCompareWithOtherAction();
 		final BaseSelectionListenerAction actionRevert = page.getRevertAction();
+		final BaseSelectionListenerAction focusOnSelected = page.getFocusOnSelectedFileAction();
 
 		changePathsViewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -508,19 +510,24 @@ public class ChangedPathsPage {
 				}
 				selection = new StructuredSelection(derived);
 				openAction.selectionChanged(selection);
+				focusOnSelected.selectionChanged(selection);
 				openEditorAction.selectionChanged(selection);
 				compareWithCurrent.selectionChanged(selection);
+				compareWithOther.selectionChanged(selection);
 				selection = new StructuredSelection(new Object[]{derived, fileStatus});
 				compareWithPrevious.selectionChanged(selection);
 				menuMgr1.add(openAction);
 				menuMgr1.add(openEditorAction);
+				menuMgr1.add(focusOnSelected);
 				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
 				menuMgr1.add(compareWithCurrent);
 				menuMgr1.add(compareWithPrevious);
+				menuMgr1.add(compareWithOther);
 				menuMgr1.add(new Separator());
 				selection = new StructuredSelection(new Object[]{derived});
 				actionRevert.selectionChanged(selection);
 				menuMgr1.add(actionRevert);
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 			}
 
 		});

@@ -91,7 +91,7 @@ public class HgCommitClient extends AbstractClient {
 		File messageFile = saveMessage(message, command);
 		try {
 			addMessage(command, messageFile, message);
-			command.addFiles(AbstractClient.toPaths(files));
+			command.addFiles(files);
 			String result = command.executeToString();
 			command.rememberUserName();
 			return result;

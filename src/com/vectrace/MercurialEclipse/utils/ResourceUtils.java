@@ -6,9 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
- * Andrei Loskutov (Intland) - bugfixes
- * Zsolt Koppany (Intland)
+ *     bastian	               - implementation
+ *     Andrei Loskutov         - bugfixes
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -47,6 +48,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * @author bastian
@@ -123,11 +125,10 @@ public final class ResourceUtils {
 	/**
 	 * @param resource
 	 *            a handle to possibly non-existing resource
-	 * @return a (file) path representing given resource
+	 * @return a (file) path representing given resource, never null. May return an "empty" file.
 	 */
 	public static File getFileHandle(IResource resource) {
-		IPath path = getPath(resource);
-		return path.toFile();
+		return getPath(resource).toFile();
 	}
 
 	/**
@@ -138,13 +139,29 @@ public final class ResourceUtils {
 	 */
 	public static IFile getFileHandle(IPath path) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		IFile[] files = root.findFilesForLocationURI(URIUtil.toURI(path.makeAbsolute()));
+		if(files.length == 0) {
+			return root.getFileForLocation(path);
+		}
+		if(files.length == 1) {
+			return files[0];
+		}
+
+		// try to find the first file contained in a hg root and managed by our team provider
+		for (IFile file : files) {
+			if (MercurialTeamProvider.isHgTeamProviderFor(file.getProject())) {
+				return file;
+			}
+		}
 		return root.getFileForLocation(path);
 	}
 
 	/**
 	 * @param resource
 	 *            a handle to possibly non-existing resource
-	 * @return a (file) path representing given resource
+	 * @return a (file) path representing given resource, might be {@link Path#EMPTY} in case the
+	 *         resource location and project location are both unknown. {@link Path#EMPTY} return
+	 *         value will be always logged as error.
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();
@@ -153,12 +170,12 @@ public final class ResourceUtils {
 			IProject project = resource.getProject();
 			IPath projectLocation = project.getLocation();
 			if (projectLocation == null) {
-				// project removed too
-				projectLocation = project.getWorkspace().getRoot().getLocation().append(
-						project.getName());
-			}
-			if (project == resource) {
-				return projectLocation;
+				// project removed too, there is no way to correctly determine the right
+				// location in case project is not located under workspace or project name doesn't
+				// match project root folder name
+				String message = "Failed to resolve location for resource: " + resource;
+				MercurialEclipsePlugin.logError(message, new IllegalStateException(message));
+				return Path.EMPTY;
 			}
 			path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));
 		}
@@ -168,10 +185,10 @@ public final class ResourceUtils {
 	/**
 	 * Converts a {@link java.io.File} to a workspace resource
 	 *
-	 * @param file
-	 * @return
-	 * @throws HgException
+	 * @deprecated This is not compatible with symbolic links because getContainerForLocation()
+	 *             doesn't canonicalize workspace locations
 	 */
+	@Deprecated
 	public static IResource convert(File file) throws HgException {
 		String canonicalPath;
 		try {
@@ -256,7 +273,7 @@ public final class ResourceUtils {
 			if (!project.isAccessible()) {
 				continue;
 			}
-			HgRoot proot = MercurialTeamProvider.hasHgRoot(project);
+			HgRoot proot = MercurialRootCache.getInstance().hasHgRoot(project, true);
 			if (proot == null) {
 				continue;
 			}
@@ -276,7 +293,7 @@ public final class ResourceUtils {
 		Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
 		if (resources != null) {
 			for (IResource resource : resources) {
-				HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
+				HgRoot root = MercurialRootCache.getInstance().hasHgRoot(resource, true);
 				if (root == null) {
 					continue;
 				}
@@ -322,10 +339,10 @@ public final class ResourceUtils {
 	 */
 	public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
 		// determine absolute path
-		IPath path = new Path(hgRoot.getAbsolutePath()).append(repoRelPath);
+		IPath path = hgRoot.toAbsolute(repoRelPath);
 
 		// determine project relative path
-		int equalSegments = path.matchingFirstSegments(project.getLocation());
+		int equalSegments = path.matchingFirstSegments(getPath(project));
 		path = path.removeFirstSegments(equalSegments);
 		return project.findMember(path);
 	}
@@ -409,7 +426,7 @@ public final class ResourceUtils {
 
 	/**
 	 * @param selection may be null
-	 * @return never null , may be ampty list containing all resources from given selection
+	 * @return never null , may be empty list containing all resources from given selection
 	 */
 	public static List<IResource> getResources(IStructuredSelection selection) {
 		List<IResource> resources = new ArrayList<IResource>();
@@ -425,9 +442,9 @@ public final class ResourceUtils {
 
 	/**
 	 * This is optimized version of {@link IPath#isPrefixOf(IPath)} (30-50% faster). Main difference is
-	 * that we prefer the cheep opearions first and check path segments starting from the
+	 * that we prefer the cheap operations first and check path segments starting from the
 	 * end of the first path (with the assumption that paths starts in most cases
-	 * with common paths segments => so we postpone redundand comparisions).
+	 * with common paths segments => so we postpone redundant comparisons).
 	 * @param first non null
 	 * @param second non null
 	 * @return true if the first path is prefix of the second

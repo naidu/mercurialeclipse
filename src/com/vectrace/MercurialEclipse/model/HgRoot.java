@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     bastian					- implementation
+ *     Andrei Loskutov			- bug fixes
  *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -52,7 +53,6 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	 * Preferred encoding
 	 */
 	private Charset encoding;
-	private String defaultURL;
 
 	/**
 	 * Cached encoding fall back encoding as specified in the config file
@@ -219,7 +219,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		IProject[] projects = MercurialTeamProvider.getKnownHgProjects(this).toArray(
 				new IProject[0]);
 		if (projects.length == 1) {
-			if (getIPath().equals(projects[0].getLocation())) {
+			if (getIPath().equals(ResourceUtils.getPath(projects[0]))) {
 				return projects;
 			}
 		}

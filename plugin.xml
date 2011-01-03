@@ -67,7 +67,7 @@
         <decorator
            adaptable="true"
            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
-           icon="icons/mercury_Hg.png"
+           icon="icons/mercurialeclipse.png"
            id="com.vectrace.MercurialEclipse.team.ResourceDecorator"
            label="%MercurialEclipseDecorations"
            lightweight="true"
@@ -329,9 +329,16 @@
                  description="%compareWithParentDescription"
                  name="%compareWithParentName"/>
         <category
+              description="Mercurial (Hg) related commands"
               id="com.vectrace.MercurialEclipse.commandCategory"
               name="%mercurial">
         </category>
+        <command
+              categoryId="com.vectrace.MercurialEclipse.commandCategory"
+              description="Search text in the Mercurial history"
+              id="com.vectrace.MercurialEclipse.menu.SearchHandler"
+              name="Mercurial Search">
+        </command>
     </extension>
 
     <!-- handlers -->
@@ -638,7 +645,16 @@
                  class="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"/>
                  
 		<handler commandId="com.vectrace.MercurialEclipse.menu.CompareWithParent"
-                 class="com.vectrace.MercurialEclipse.menu.CompareWithParentHandler" />                 
+                 class="com.vectrace.MercurialEclipse.menu.CompareWithParentHandler" />
+        <handler
+                commandId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+                class="com.vectrace.MercurialEclipse.menu.SearchHandler">
+           <enabledWhen>
+                <and>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>                    
+                </and>
+            </enabledWhen>
+        </handler>                 
     </extension>
 
     <!-- TODO Andrei:
@@ -754,6 +770,12 @@
                        </and>
                     </visibleWhen>
                 </command>
+                
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+                  label="Search in History..."
+                  icon="icons/actions/search.gif">
+                </command>                
                 
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
@@ -1015,7 +1037,42 @@
             </menu>
 
         </menuContribution>
+        
+    </extension>
 
+    <!-- Search Menu Additions -->
+    <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="Mercurial Search"
+            description="Full text search support for Mercurial repositories"
+            visible="true"
+            id="org.eclipse.pde.ui.SearchActionSet">
+<!-- see http://bugs.eclipse.org/bugs/show_bug.cgi?id=15684    -->
+<!-- Note: The menu (re-) definition has to be here due to bug: -->
+<!-- =================================================================== -->
+<!-- Search Menu                                                         -->
+<!-- =================================================================== -->
+         <menu
+               label="%searchMenu.label"
+               path="navigate"
+               id="org.eclipse.search.menu">
+                <groupMarker name="internalDialogGroup"/>   <!-- not to be used by clients  -->
+                <groupMarker name="dialogGroup"/>           <!-- to be used by clients      -->
+                <separator name="fileSearchContextMenuActionsGroup"/> <!-- to be used by clients      -->
+                <separator name="contextMenuActionsGroup"/> <!-- to be used by clients -->
+                <separator name="occurencesActionsGroup"/> <!-- to be used by clients -->
+                <separator name="extraSearchGroup"/> <!-- to be used by clients -->
+         </menu>
+         <action
+               class="com.vectrace.MercurialEclipse.menu.SearchHandler$SearchAction"
+               definitionId="com.vectrace.MercurialEclipse.menu.SearchHandler"
+               icon="/icons/actions/search.gif"
+               id="com.vectrace.MercurialEclipse.menu.SearchHandler$SearchAction"
+               label="Mercurial Search..."
+               menubarPath="org.eclipse.search.menu/dialogGroup">
+         </action>
+      </actionSet>
     </extension>
 
    <!-- All Team menu -->
@@ -1205,6 +1262,32 @@
                path="additions">
          </action>
       </objectContribution>
+      
+      <objectContribution adaptable="true"
+            objectClass="com.vectrace.MercurialEclipse.model.ChangeSet"
+            id="com.vectrace.MercurialEclipse.changesetProps">
+         <action
+              class="com.vectrace.MercurialEclipse.properties.OpenPropertiesAction"
+              enablesFor="1"
+              icon="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+              id="com.vectrace.MercurialEclipse.changesetProps"
+              label="Properties"
+              menubarPath="additions">
+         </action>
+      </objectContribution>
+      
+      <objectContribution adaptable="true"
+            objectClass="com.vectrace.MercurialEclipse.history.MercurialRevision"
+            id="com.vectrace.MercurialEclipse.revisionProps">
+         <action
+              class="com.vectrace.MercurialEclipse.properties.OpenPropertiesAction"
+              enablesFor="1"
+              icon="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+              id="com.vectrace.MercurialEclipse.revisionProps"
+              label="Properties"
+              menubarPath="additions">
+         </action>
+      </objectContribution>
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
@@ -1309,6 +1392,7 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
+     
      <factory
            adaptableType="com.vectrace.MercurialEclipse.model.HgRoot"
            class="com.vectrace.MercurialEclipse.AdapterFactory">
@@ -1316,13 +1400,106 @@
               type="org.eclipse.team.ui.history.IHistoryPageSource">
         </adapter>
      </factory>
-   <!-- Adapt IResource to itself does not make sense at all and can only generates troubles
-   <factory
-       adaptableType="org.eclipse.core.resources.IResource"
-       class="com.vectrace.MercurialEclipse.ResourceAdapterFactory">
-       <adapter type="org.eclipse.core.resources.IResource"/>
-     </factory> -->
+     
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+      
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+   
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
+         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
+         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
+         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
+      </factory>
+      
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.Tag"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.history.MercurialRevision"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.FileStatus"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+       
+      <factory
+             adaptableType="org.eclipse.team.internal.ui.history.GenericHistoryView"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySheetPage" />
+       </factory>
+              
    </extension>
+   
+<!-- Disabled tabbed property view support - right now this is overkill.
+    
+    <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertyContributor">
+       <propertyContributor
+             contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage"
+             labelProvider="com.vectrace.MercurialEclipse.properties.PropPageTitleProvider">
+          <propertyCategory category="advanced"/>
+       </propertyContributor>
+    </extension>
+
+    <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertyTabs">
+       <propertyTabs contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage">
+    
+          <propertyTab
+                category="advanced"
+                id="tab.Advanced"
+                image="platform:/plugin/org.eclipse.ui/icons/full/eview16/prop_ps.gif"
+                indented="false"
+                label="&gt;"/>
+
+       </propertyTabs>
+    </extension>
+
+    <extension
+          point="org.eclipse.ui.views.properties.tabbed.propertySections">
+       <propertySections contributorId="com.vectrace.MercurialEclipse.history.MercurialHistoryPage">
+          <propertySection
+                class="org.eclipse.ui.views.properties.tabbed.AdvancedPropertySection"
+                enablesFor="1"
+                id="section.Advanced"
+                tab="tab.Advanced">
+             <input
+                   type="java.lang.Object">
+             </input>
+          </propertySection>
+
+       </propertySections>
+    </extension>
+-->
 
    <!-- Views -->
 
@@ -1577,7 +1754,7 @@
       <page
             adaptable="true"
             class="com.vectrace.MercurialEclipse.repository.RepoPropertiesPage"
-            icon="icons/mercury_Hg.png"
+            icon="icons/mercurialeclipse.png"
             id="com.vectrace.MercurialEclipse.repositoryProperties"
             name="%repositoryPage.name"
             objectClass="com.vectrace.MercurialEclipse.model.IHgRepositoryLocation">
@@ -1633,27 +1810,7 @@
       <extends-model id="org.eclipse.core.resources.modelProvider"/>
    </extension>
    
-   <extension
-         point="org.eclipse.core.runtime.adapters">
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
-         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
-      </factory>
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
-         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
-      </factory>
-   
-      <factory
-            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
-            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
-         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
-         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
-         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
-      </factory>   
-   </extension>
+
    <extension
          point="org.eclipse.ui.exportWizards">
       <category
@@ -1663,7 +1820,7 @@
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.export"
             class="com.vectrace.MercurialEclipse.wizards.BundleRepoWizard"
-            icon="icons/mercury_Hg.png"
+            icon="icons/mercurialeclipse.png"
             id="com.vectrace.mercurialeclipse.BundleWizard"
             name="%bundleRepoWizard.name">
       </wizard>
@@ -1682,8 +1839,8 @@
             canSearchEnclosingProjects="true"
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage"
             enabled="true"
-            icon="icons/mercury_Hg.png"
-            id="MercurialEclipse.page1"
+            icon="icons/actions/search.gif"
+            id="MercurialEclipse.searchPage"
             label="Mercurial Search"
             showScopeSection="true">
       </page>
@@ -1692,7 +1849,7 @@
          point="org.eclipse.search.searchResultViewPages">
       <viewPage
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
-            icon="icons/mercury_Hg.png"
+            icon="icons/actions/search.gif"
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
             label="Mercurial Search"
             searchResultClass="com.vectrace.MercurialEclipse.search.MercurialTextSearchResult">

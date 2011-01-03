@@ -70,7 +70,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 		store.setDefault(SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS, true);
 
-		store.setDefault(LOG_BATCH_SIZE, 200);
+		store.setDefault(LOG_BATCH_SIZE, 500);
 		store.setDefault(STATUS_BATCH_SIZE, 10);
 		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);
 		store.setDefault(ENABLE_FULL_GLOG, true);
@@ -95,7 +95,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
-		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_BACKGROUND, "222,222,222");
+		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_BACKGROUND, "255,210,210");
 		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_FOREGROUND, "0,0,0");
 
 

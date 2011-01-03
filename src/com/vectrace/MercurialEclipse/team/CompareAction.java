@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -61,6 +61,9 @@ public class CompareAction extends SingleFileAction {
 
 	// operations
 
+	/**
+	 * @param file non null
+	 */
 	@Override
 	protected void run(final IFile file) throws TeamException {
 		Job job = new Job("Diff for " + file.getName()) {
@@ -128,6 +131,9 @@ public class CompareAction extends SingleFileAction {
 		job.schedule();
 	}
 
+	/**
+	 * @param file non null
+	 */
 	private void compareToLocal(IFile file) {
 		// local workspace version
 		ResourceNode leftNode = new ResourceNode(file);
@@ -136,7 +142,10 @@ public class CompareAction extends SingleFileAction {
 		CompareUtils.openEditor(leftNode, rightNode, false, true, syncConfig);
 	}
 
-	private void openMergeEditor(IFile file, boolean workspaceUpdateConflict){
+	/**
+	 * @param file non null
+	 */
+	private void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
 		try {
 			RevisionNode ancestorNode;
 			RevisionNode mergeNode;
@@ -163,6 +172,11 @@ public class CompareAction extends SingleFileAction {
 				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestorId));
 			} else {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+				if(hgRoot == null) {
+					MercurialEclipsePlugin.showError(new IllegalStateException(
+							"Failed to find hg root for: " + file.getLocation()));
+					return;
+				}
 				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
 				int ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);

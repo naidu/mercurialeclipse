@@ -104,7 +104,7 @@ public class HgBranchClient extends AbstractClient {
 	 *             if a hg error occurred
 	 */
 	public static String getActiveBranch(HgRoot workingDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("branch", "Fetching current branch name", workingDir, false); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("branch", "Retrieving current branch name", workingDir, false); //$NON-NLS-1$
 		return command.executeToString().replaceAll("\n", "");
 	}
 

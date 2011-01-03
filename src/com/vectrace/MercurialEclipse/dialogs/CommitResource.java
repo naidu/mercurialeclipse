@@ -19,53 +19,37 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class CommitResource {
 	private final String statusMessage;
-	private final char status;
-	private final File path;
+	private final int status;
 	private final IResource resource;
+	private final File path;
 
-	private String convertStatus(char statusChar, String originalString) {
-		switch (statusChar) {
-		case MercurialStatusCache.CHAR_MODIFIED:
-			return CommitDialog.FILE_MODIFIED;
-		case MercurialStatusCache.CHAR_ADDED:
-			return CommitDialog.FILE_ADDED;
-		case MercurialStatusCache.CHAR_REMOVED:
-			return CommitDialog.FILE_REMOVED;
-		case MercurialStatusCache.CHAR_UNKNOWN:
-			return CommitDialog.FILE_UNTRACKED;
-		case MercurialStatusCache.CHAR_MISSING:
-			return CommitDialog.FILE_DELETED;
-		case MercurialStatusCache.CHAR_CLEAN:
-			return CommitDialog.FILE_CLEAN;
-		default:
-			return "status error: " + originalString; //$NON-NLS-1$
-		}
-	}
-
-	private char getStatusChar(String statusToken) {
-		if(statusToken.length() == 0) {
-			return 0;
-		}
-		return  statusToken.charAt(0);
-	}
-
-	public CommitResource(String statusString, IResource resource, File path) {
-		this.status = getStatusChar(statusString);
-		this.statusMessage = convertStatus(status, statusString);
+	public CommitResource(int statusBitField, IResource resource, File path) {
+		this.status = statusBitField;
+		this.statusMessage = convertStatus(status);
 		this.resource = resource;
 		this.path = path;
 	}
 
-	public String getStatusMessage() {
-		return statusMessage;
+	private String convertStatus(int bits) {
+		if ((bits & MercurialStatusCache.BIT_MODIFIED) != 0) {
+			return CommitDialog.FILE_MODIFIED;
+		} else if ((bits & MercurialStatusCache.BIT_ADDED) != 0) {
+			return CommitDialog.FILE_ADDED;
+		} else if ((bits & MercurialStatusCache.BIT_REMOVED) != 0) {
+			return CommitDialog.FILE_REMOVED;
+		} else if ((bits & MercurialStatusCache.BIT_UNKNOWN) != 0) {
+			return CommitDialog.FILE_UNTRACKED;
+		} else if ((bits & MercurialStatusCache.BIT_MISSING) != 0) {
+			return CommitDialog.FILE_DELETED;
+		} else if ((bits & MercurialStatusCache.BIT_CLEAN) != 0) {
+			return CommitDialog.FILE_CLEAN;
+		} else {
+			return "status error: " + bits; //$NON-NLS-1$
+		}
 	}
 
-	/**
-	 * @return the status character, as defined by {@link MercurialStatusCache}, or
-	 * zero, if status was not the one we expected to see from hg
-	 */
-	public char getStatus() {
-		return status;
+	public String getStatusMessage() {
+		return statusMessage;
 	}
 
 	public IResource getResource() {
@@ -119,4 +103,11 @@ public class CommitResource {
 		return true;
 	}
 
+	public boolean isUnknown() {
+		return (status & MercurialStatusCache.BIT_UNKNOWN) != 0;
+	}
+
+	public boolean isMissing() {
+		return (status & MercurialStatusCache.BIT_MISSING) != 0;
+	}
 }

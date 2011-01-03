@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010 Andrei Loskutov (Intland).
+ * Copyright (c) 2010 Andrei Loskutov.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov         - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -20,7 +20,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class ActionShowRootHistory implements IWorkbenchWindowActionDelegate {
@@ -32,7 +31,7 @@ public class ActionShowRootHistory implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void dispose() {
-
+		// noop
 	}
 
 	public void init(IWorkbenchWindow window) {
@@ -40,11 +39,10 @@ public class ActionShowRootHistory implements IWorkbenchWindowActionDelegate {
 
 	public void run(IAction action) {
 		final IResource resource = (IResource) selection.getFirstElement();
-		final HgRoot hgRoot;
-		try {
-			hgRoot = MercurialTeamProvider.getHgRoot(resource);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.showError(e);
+		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if (hgRoot == null) {
+			MercurialEclipsePlugin.showError(new IllegalStateException("There is no hg root for: "
+					+ resource));
 			return;
 		}
 		Runnable r = new Runnable() {

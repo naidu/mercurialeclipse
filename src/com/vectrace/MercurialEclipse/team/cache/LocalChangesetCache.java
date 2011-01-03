@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
- * Andrei Loskutov (Intland) - bugfixes
+ *     Bastian Doetsch	        - implementation
+ *     Andrei Loskutov          - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -122,7 +122,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		members.add(resource);
 		synchronized(localChangeSets){
 			for (IResource member : members) {
-				localChangeSets.remove(member.getLocation());
+				localChangeSets.remove(ResourceUtils.getPath(member));
 			}
 		}
 		if(resource instanceof IProject){
@@ -142,7 +142,10 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @return never null, but possibly empty set
 	 */
 	public SortedSet<ChangeSet> getOrFetchChangeSets(IResource resource) throws HgException {
-		IPath location = resource.getLocation();
+		IPath location = ResourceUtils.getPath(resource);
+		if(location.isEmpty()) {
+			return EMPTY_SET;
+		}
 
 		SortedSet<ChangeSet> revisions;
 		synchronized(localChangeSets){
@@ -250,7 +253,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			boolean withFiles) throws HgException {
 		Assert.isNotNull(res);
 		IProject project = res.getProject();
-		if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
+		if (MercurialTeamProvider.isHgTeamProviderFor(project)) {
 			clear(res, false);
 			int versionLimit = getLogBatchSize();
 			if(withFiles && versionLimit > 1) {

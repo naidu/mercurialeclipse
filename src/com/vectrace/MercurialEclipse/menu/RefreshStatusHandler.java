@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -38,12 +39,18 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 
 	@Override
 	protected void run(List<IResource> resources) throws Exception {
+		MercurialRootCache cache = MercurialRootCache.getInstance();
+
+		for (IResource res : resources) {
+			cache.uncache(res);
+		}
+
 		if(resources.size() == 1){
 			refreshSingleResource(resources.get(0));
 			return;
 		}
 
-		// separate files which are selected without their projects
+		// separate files or projects are selected
 		Set<IResource> singleFiles = collectSingleFiles(resources);
 		for (IResource resource : singleFiles) {
 			refreshSingleResource(resource);
