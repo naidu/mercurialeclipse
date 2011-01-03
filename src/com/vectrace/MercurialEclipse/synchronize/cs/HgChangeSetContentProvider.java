@@ -37,8 +37,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
+import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -53,9 +53,9 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -656,8 +656,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		private final String display;
 
-		protected IPath path;
-
 		protected IResource resource;
 
 		/**
@@ -686,10 +684,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 				if (o.display.equals(display) && o.parent.equals(parent))
 				{
-					if (o.path == null) {
-						return path == null;
+					if (o.resource == null) {
+						return resource == null;
 					}
-					return o.path.equals(path);
+					return o.resource.equals(resource);
 				}
 			}
 			return false;
@@ -722,9 +720,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			this.data = data;
 
 			if (data != null && data.size() > 0) {
-				FileFromChangeSet first = data.get(0);
-				this.path = first.getPath().removeLastSegments(1);
-				this.resource = first.getFile().getParent();
+				this.resource = data.get(0).getFile().getParent();
 			}
 		}
 
@@ -741,7 +737,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public TreePathFromChangeSet(Object prnt, String seg, List<Object> data) {
 			super(prnt, seg);
 			this.data = data;
-			calculatePath();
+			this.resource = getResource();
 		}
 
 		@Override
@@ -749,7 +745,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return collectTree(HgChangeSetContentProvider.this, data);
 		}
 
-		private void calculatePath() {
+		private IResource getResource() {
+			IResource result = null;
 			if (data.size() > 1) {
 				// first object must be an IPath
 				Object o1 = data.get(0);
@@ -758,16 +755,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
 					FileFromChangeSet fcs = (FileFromChangeSet) o2;
 					IResource childResource = ResourceUtils.getResource(fcs);
-					IPath childPath = (IPath) o1;
 					IPath folderPath = ResourceUtils.getPath(childResource).removeLastSegments(
-							childPath.segmentCount() + 1);
-					this.resource = ResourcesPlugin.getWorkspace().getRoot()
-							.getContainerForLocation(folderPath);
-					IPath fcsPath = fcs.getPath();
-					this.path = fcsPath == null ? null : fcsPath.removeLastSegments(childPath
-							.segmentCount() + 1);
+							((IPath) o1).segmentCount() + 1);
+					return ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(
+							folderPath);
 				}
 			}
+
+			return result;
 		}
 	}
 }
