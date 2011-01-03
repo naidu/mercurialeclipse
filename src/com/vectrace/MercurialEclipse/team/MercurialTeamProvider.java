@@ -17,7 +17,6 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -76,10 +75,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		super();
 	}
 
-	public static Collection<HgRoot> getKnownHgRoots(){
-		return MercurialRootCache.getInstance().getKnownHgRoots();
-	}
-
+	/**
+	 *
+	 * @return never null, list of all projects already known to be contained in a hg root and
+	 *         managed by this team provider
+	 */
 	public static List<IProject> getKnownHgProjects(){
 		List<IProject> projects = new ArrayList<IProject>();
 		IProject[] iProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
@@ -91,6 +91,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		return projects;
 	}
 
+	/**
+	 *
+	 * @return never null, list of all projects already known to be contained in the given hg root
+	 *         and managed by this team provider
+	 */
 	public static List<IProject> getKnownHgProjects(HgRoot hgRoot){
 		List<IProject> hgProjects = getKnownHgProjects();
 		List<IProject> projects = new ArrayList<IProject>();
@@ -200,17 +205,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	/**
-	 * Checks if the given project is both contained in a hg root and controlled by MercurialEclipse
-	 * as team provider.
+	 * Checks if the given project is already controlled by MercurialEclipse
+	 * as team provider. This method does not access any locks and so can be called
+	 * from synchronized code.
 	 *
 	 * @param project
 	 *            non null
 	 * @return true, if MercurialEclipse provides team functions to this project, false otherwise
-	 *         (if an error occurred or project is closed or hg root was not found).
+	 *         (if an error occurred or project is closed).
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
-		Assert.isNotNull(project);
-		return MercurialRootCache.getInstance().hasHgRoot(project) != null;
+		return MercurialRootCache.isHgTeamProviderFor(project);
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
@@ -281,10 +286,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * @param resource
 	 *            the resource to get the hg root for, not null
 	 * @return the {@link java.io.File} referencing the hg root directory. May return null
-	 * @throws HgException
-	 *             if an error occurred (e.g. no root could be found)
 	 */
-	public static HgRoot getHgRoot(IResource resource) throws HgException {
+	public static HgRoot getHgRoot(IResource resource) {
 		if(resource == null){
 			return null;
 		}
@@ -303,19 +306,21 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	/**
-	 * Gets the hg root of a resource as {@link java.io.File}.
+	 * Gets the already known hg root of a resource as {@link java.io.File}.
+	 * <p>
+	 * <b>Note:</b> this method do NOT tries to find/configure not yet known hg roots.
 	 *
 	 * @param resource
-	 *            the resource to get the hg root for
-	 * @return the {@link java.io.File} referencing the hg root directory, or null if no
-	 * hg root can't be found
+	 *            the resource to get the hg root for, can be null
+	 * @return the {@link java.io.File} referencing the hg root directory, or null if no hg root
+	 *         can't be found or the project is not configured yet with Mercurial team provider
 	 */
 	public static HgRoot hasHgRoot(IResource resource) {
 		if(resource == null || resource instanceof IWorkspaceRoot){
 			return null;
 		}
 
-		return MercurialRootCache.getInstance().hasHgRoot(resource);
+		return MercurialRootCache.getInstance().hasHgRoot(resource, false);
 	}
 
 	/**
@@ -343,13 +348,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 */
 	public static String getCurrentBranch(IResource res){
 		Assert.isNotNull(res);
-		HgRoot hgRoot;
-		try {
-			hgRoot = getHgRoot(res);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return Branch.DEFAULT;
-		}
+		HgRoot hgRoot = getHgRoot(res);
 		if(hgRoot == null){
 			return Branch.DEFAULT;
 		}

@@ -10,14 +10,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * Exclusive rule for locking access to the resources related to same hg root.
@@ -42,7 +41,7 @@ public class HgRootRule implements ISchedulingRule {
 
 	/**
 	 * Note: this method (used by Job API to detect deadlocks) should avoid made locking calls to
-	 * avoid deadlocks, see issue 13474
+	 * avoid deadlocks, see issues 13474, 13497
 	 */
 	public boolean isConflicting(ISchedulingRule rule) {
 		if(!(rule instanceof HgRootRule)){
@@ -50,17 +49,13 @@ public class HgRootRule implements ISchedulingRule {
 				return false;
 			}
 			if (rule instanceof IResource) {
-				IProject project = ((IResource) rule).getProject();
-				// isShared() call does not lock. In case project is not shared, we don't care
-				if (project != null && RepositoryProvider.isShared(project)) {
-					// hasHgRoot() locks but only in case the project was unshared before the call (issue 13474)
-					// but now it's safe to use it as we know the project was already shared
-					HgRoot resourceRoot = MercurialRootCache.getInstance().hasHgRoot((IResource) rule);
-					if(resourceRoot == null) {
-						return false;
-					}
-					return getHgRoot().equals(resourceRoot);
+				// hasHgRoot() returns cached value, if any (see issue 13474, 13497)
+				// if the value is not yet cached, we don't care
+				HgRoot resourceRoot = MercurialTeamProvider.hasHgRoot((IResource) rule);
+				if(resourceRoot == null) {
+					return false;
 				}
+				return getHgRoot().equals(resourceRoot);
 			}
 			return false;
 		}

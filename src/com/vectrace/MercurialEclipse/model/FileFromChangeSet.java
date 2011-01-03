@@ -17,8 +17,6 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetResourceMapping;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -96,11 +94,7 @@ public class FileFromChangeSet implements IAdaptable{
 		} else if (file != null) {
 			HgRoot root = changeset.getHgRoot();
 			if (root == null) {
-				try {
-					root = MercurialTeamProvider.getHgRoot(file);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				root = MercurialTeamProvider.getHgRoot(file);
 			}
 			if (root != null) {
 				return root.toRelative(file);

@@ -98,13 +98,7 @@ public class MercurialHistory extends FileHistory {
 	public MercurialHistory(IResource resource) {
 		super();
 		Assert.isNotNull(resource);
-
-		HgRoot root = null;
-		try {
-			root = MercurialTeamProvider.getHgRoot(resource);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		HgRoot root = MercurialTeamProvider.getHgRoot(resource);
 		if(root != null && root.getIPath().equals(ResourceUtils.getPath(resource))){
 			this.resource = null;
 		} else {

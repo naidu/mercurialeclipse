@@ -8,7 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch				- Adaption to Mercurial
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov              - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -27,7 +27,6 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -72,11 +71,7 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 			} else {
 				IResource resource = ResourceUtils.getResource(object);
 				if(resource != null){
-					try {
-						object = MercurialTeamProvider.getHgRoot(resource);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
+					object = MercurialTeamProvider.getHgRoot(resource);
 				}
 			}
 		} else {

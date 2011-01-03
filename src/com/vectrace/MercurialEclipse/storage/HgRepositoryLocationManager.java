@@ -12,7 +12,7 @@
  *     Bastian Doetsch           - support for project specific repository locations
  *     Adam Berkes (Intland)     - bug fixes
  *     Ilya Ivanov  (Intland)    - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -22,18 +22,20 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
@@ -41,7 +43,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -256,13 +257,24 @@ public class HgRepositoryLocationManager {
 		}
 	}
 
+	private static List<IProject> getAllProjects(){
+		List<IProject> projects = new ArrayList<IProject>();
+		IProject[] iProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		for (IProject project : iProjects) {
+			if(RepositoryProvider.isShared(project)){
+				projects.add(project);
+			}
+		}
+		return projects;
+	}
+
 	/**
 	 * @return set with ALL projects managed by hg, <b>not only</b> projects for which we know remote repo locations
 	 * @throws HgException
 	 */
 	private Map<HgRoot, List<IResource>> loadRepos() throws HgException {
 		rootRepos.clear();
-		List<IProject> projects = MercurialTeamProvider.getKnownHgProjects();
+		List<IProject> projects = getAllProjects();
 		Map<HgRoot, List<IResource>> roots = ResourceUtils.groupByRoot(projects);
 
 		for (Entry<HgRoot, List<IResource>> entry : roots.entrySet()) {
@@ -271,6 +283,7 @@ public class HgRepositoryLocationManager {
 		}
 		return roots;
 	}
+
 
 	public void loadRepos(HgRoot hgRoot) throws HgException {
 		// Load .hg/hgrc paths first; plugin settings will override these
@@ -403,7 +416,7 @@ public class HgRepositoryLocationManager {
 	}
 
 	private void saveProjectRepos() {
-		List<IProject> projects = MercurialTeamProvider.getKnownHgProjects();
+		List<IProject> projects = getAllProjects();
 
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(projects);
 		Set<HgRoot> roots = byRoot.keySet();

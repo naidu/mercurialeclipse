@@ -24,7 +24,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -85,20 +84,16 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 			if(location.isEmpty()) {
 				return false;
 			}
-			try {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
-				if(hgRoot == null){
-					return false;
-				}
-				File file = location.toFile();
-				boolean bool = Boolean.valueOf(args[0].toString()).booleanValue();
-				if(bool) {
-					return hgRoot.equals(file);
-				}
-				return !hgRoot.equals(file);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+			if(hgRoot == null){
+				return false;
 			}
+			File file = location.toFile();
+			boolean bool = Boolean.valueOf(args[0].toString()).booleanValue();
+			if(bool) {
+				return hgRoot.equals(file);
+			}
+			return !hgRoot.equals(file);
 		}
 		return false;
 	}

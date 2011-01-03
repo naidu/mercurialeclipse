@@ -9,15 +9,13 @@
  *     Jérôme Nègre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - extracted from RevisionChooserDialog for Sync.
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -36,11 +34,6 @@ public class FileDataLoader extends DataLoader {
 
 	@Override
 	public HgRoot getHgRoot() {
-		try {
-			return MercurialTeamProvider.getHgRoot(file);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return null;
-		}
+		return MercurialTeamProvider.getHgRoot(file);
 	}
 }

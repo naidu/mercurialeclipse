@@ -478,15 +478,10 @@ public class MercurialHistoryPage extends HistoryPage {
 					return;
 				}
 				if(resource instanceof IProject){
-					try {
-						HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-						if(root != null){
-							getHistoryView().showHistoryFor(root, true);
-						} else {
-							setEnabled(false);
-						}
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
+					HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+					if(root != null){
+						getHistoryView().showHistoryFor(root, true);
+					} else {
 						setEnabled(false);
 					}
 				} else {

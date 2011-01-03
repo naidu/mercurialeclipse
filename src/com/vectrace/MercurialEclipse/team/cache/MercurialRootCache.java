@@ -28,11 +28,13 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.internal.core.TeamPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
@@ -128,11 +130,15 @@ public class MercurialRootCache extends AbstractCache {
 	 *
 	 * @param resource
 	 *            The resource, not null.
+	 * @param resolveIfNotKnown
+	 *            true to trigger hg root search or/and also possible team provider configuration
+	 *            operation, which may lead to locking
+	 *
 	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
 	 *         team provider is not Mercurial or hg root is not found
 	 */
-	public HgRoot hasHgRoot(IResource resource) {
-		return getHgRoot(resource, false);
+	public HgRoot hasHgRoot(IResource resource, boolean resolveIfNotKnown) {
+		return getHgRoot(resource, resolveIfNotKnown);
 	}
 
 	/**
@@ -143,14 +149,14 @@ public class MercurialRootCache extends AbstractCache {
 	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
 	 *         team provider is not Mercurial or hg root is not found
 	 */
-	public HgRoot getHgRoot(IResource resource, boolean reportNotFoundRoot) {
+	private HgRoot getHgRoot(IResource resource, boolean resolveIfNotKnown) {
 		if (resource instanceof HgRootContainer) {
 			// special case for HgRootContainers, they already know their HgRoot
 			return ((HgRootContainer) resource).getHgRoot();
 		}
 
 		IProject project = resource.getProject();
-		if(!project.isAccessible()) {
+		if(project == null) {
 			return null;
 		}
 
@@ -158,10 +164,16 @@ public class MercurialRootCache extends AbstractCache {
 		// MercurialTeamProvider if it doesn't happen before. Additionally, we avoid the
 		// case if the hg root is there but project is NOT configured for MercurialEclipse
 		// as team provider. See issue 13448.
-		RepositoryProvider provider = RepositoryProvider.getProvider(project,
-				MercurialTeamProvider.ID);
-		if (!(provider instanceof MercurialTeamProvider)) {
-			return null;
+		if(resolveIfNotKnown) {
+			RepositoryProvider provider = RepositoryProvider.getProvider(project,
+					MercurialTeamProvider.ID);
+			if (!(provider instanceof MercurialTeamProvider)) {
+				return null;
+			}
+		} else {
+			if(!isHgTeamProviderFor(project)){
+				return null;
+			}
 		}
 
 		// As an optimization only cache for containers not files
@@ -185,8 +197,11 @@ public class MercurialRootCache extends AbstractCache {
 			cacheResult = false;
 		}
 
+		if(!resolveIfNotKnown) {
+			return null;
+		}
 		// cachedRoot can be only null or an obsolete noRoot object
-		HgRoot root = calculateHgRoot(ResourceUtils.getFileHandle(resource), reportNotFoundRoot);
+		HgRoot root = calculateHgRoot(ResourceUtils.getFileHandle(resource), true);
 		if (cacheResult) {
 			try {
 				resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
@@ -210,6 +225,32 @@ public class MercurialRootCache extends AbstractCache {
 		}
 		return root;
 	}
+
+	/**
+	 * Checks if the given project is controlled by MercurialEclipse
+	 * as team provider. This method does not access any locks and so can be called
+	 * from synchronized code.
+	 *
+	 * @param project
+	 *            non null
+	 * @return true, if MercurialEclipse provides team functions to this project, false otherwise
+	 *         (if an error occurred or project is closed).
+	 */
+	@SuppressWarnings("restriction")
+	public static boolean isHgTeamProviderFor(IProject project){
+		Assert.isNotNull(project);
+		try {
+			if(!project.isAccessible()) {
+				return false;
+			}
+			Object provider = project.getSessionProperty(TeamPlugin.PROVIDER_PROP_KEY);
+			return provider instanceof MercurialTeamProvider;
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
+	}
+
 
 	/**
 	 * Find the hgroot for the given resource.
