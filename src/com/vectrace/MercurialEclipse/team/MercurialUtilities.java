@@ -11,7 +11,7 @@
  *     StefanC                   - some updates
  *     Stefan Groschupf          - logError
  *     Bastian Doetsch           - updates, cleanup and documentation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.team;
@@ -461,5 +461,27 @@ public final class MercurialUtilities {
 			parentRev = new MercurialRevisionStorage(file, parents[0]);
 		}
 		return parentRev;
+	}
+
+	public static void setMergeViewDialogShown(boolean shown) {
+		try {
+			ResourcesPlugin
+					.getWorkspace()
+					.getRoot()
+					.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED,
+							shown ? "true" : null);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
+
+	public static boolean isMergeViewDialogShown() {
+		try {
+			return ResourcesPlugin.getWorkspace().getRoot()
+					.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) != null;
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return true;
+		}
 	}
 }

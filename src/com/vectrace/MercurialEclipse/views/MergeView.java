@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Jerome Negre - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Jerome Negre              - implementation
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
@@ -63,6 +63,7 @@ import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -304,7 +305,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		}
 
 		// Show commit dialog
-		if (attemptToCommit && !MercurialStatusCache.getInstance().isMergeViewDialogShown()
+		if (attemptToCommit && !MercurialUtilities.isMergeViewDialogShown()
 				&& areAllResolved()) {
 			/*
 			 * Offer commit of merge or rebase exactly once if no conflicts are found. Uses {@link
@@ -312,7 +313,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			 * repeatedly. This flag should be cleared when any of the following operations occur:
 			 * commit, rebase, revert.
 			 */
-			MercurialStatusCache.getInstance().setMergeViewDialogShown(true);
+			MercurialUtilities.setMergeViewDialogShown(true);
 			attemptToCommit();
 		}
 	}
@@ -321,7 +322,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		try {
 			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
 
-			MercurialStatusCache.getInstance().setMergeViewDialogShown(true);
+			MercurialUtilities.setMergeViewDialogShown(true);
 			RunnableHandler handler = merging ? new CommitMergeHandler()
 					: new ContinueRebaseHandler();
 

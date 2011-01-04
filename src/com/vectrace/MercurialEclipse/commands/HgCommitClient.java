@@ -11,7 +11,7 @@
  *     StefanC
  *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland)
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -32,7 +32,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -128,7 +127,7 @@ public class HgCommitClient extends AbstractClient {
 		File messageFile = saveMessage(message, command);
 		try {
 			addMessage(command, messageFile, message);
-			MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
+			MercurialUtilities.setMergeViewDialogShown(false);
 			String result = command.executeToString();
 			command.rememberUserName();
 			new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();

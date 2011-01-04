@@ -67,7 +67,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -1560,28 +1559,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return null;
 	}
 
-	public boolean isSubrepoSupportEnabled() {
+	boolean isSubrepoSupportEnabled() {
 		return enableSubrepos;
-	}
-
-	public boolean isMergeViewDialogShown()
-	{
-		try {
-			return ResourcesPlugin.getWorkspace().getRoot().getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) != null;
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			return true;
-		}
-	}
-
-	public void setMergeViewDialogShown(boolean shown)
-	{
-		try {
-			ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(
-					ResourceProperties.MERGE_COMMIT_OFFERED, shown ? "true" : null);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
 	}
 
 	/**

@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ *     Bastian Doetsch           - implementation
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
@@ -18,7 +19,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
@@ -110,7 +111,7 @@ public class HgRebaseClient extends AbstractClient {
 			c.addOptions("--keep"); //$NON-NLS-1$
 		}
 
-		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
+		MercurialUtilities.setMergeViewDialogShown(false);
 
 		return c.executeToString();
 	}

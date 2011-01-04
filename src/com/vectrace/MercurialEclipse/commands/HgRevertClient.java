@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov          - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -19,8 +19,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.Messages;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author Andrei
@@ -55,7 +55,7 @@ public class HgRevertClient extends AbstractClient {
 		}
 		monitor.worked(1);
 
-		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
+		MercurialUtilities.setMergeViewDialogShown(false);
 	}
 
 	public static void performRevertAll(IProgressMonitor monitor, HgRoot hgRoot) throws HgException {
@@ -68,6 +68,6 @@ public class HgRevertClient extends AbstractClient {
 		command.addOptions("--no-backup");
 		command.executeToString();
 
-		MercurialStatusCache.getInstance().setMergeViewDialogShown(false);
+		MercurialUtilities.setMergeViewDialogShown(false);
 	}
 }
