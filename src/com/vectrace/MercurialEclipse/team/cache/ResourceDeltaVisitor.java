@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov           - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -27,7 +27,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -83,12 +82,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		if(subrepoEnabled){
 			// We should re-set currentRoot each time because the delta resources may be
 			// from different projects AND from different UNRELATED roots too
-			try {
-				currentRoot = AbstractClient.getHgRoot(res);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-				currentRoot = MercurialTeamProvider.getHgRoot(res);
-			}
+			currentRoot = MercurialTeamProvider.getHgRoot(res);
 		} else {
 			currentRoot = MercurialTeamProvider.getHgRoot(project);
 		}

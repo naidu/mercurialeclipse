@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -447,7 +446,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		if (!project.isOpen() || !STATUS_CACHE.isSupervised(res)) {
 			return;
 		}
-		HgRoot root = AbstractClient.getHgRoot(res);
+		HgRoot root = MercurialTeamProvider.getHgRoot(res);
 
 		Map<IPath, Set<ChangeSet>> revisions;
 		// now we may change cache state, so lock

@@ -8,7 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
@@ -35,10 +35,10 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
@@ -139,7 +139,7 @@ public class QImportWizardPage extends HgWizardPage {
 
 	private void checkExisting(File file) throws IOException, HgException {
 		setMessage(null);
-		HgRoot hgRoot = AbstractClient.getHgRoot(resource);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
 		File[] patches = patchDir.listFiles();
 		if (patches != null) {

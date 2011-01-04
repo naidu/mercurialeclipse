@@ -56,7 +56,6 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
@@ -111,16 +110,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refreshing the status of too many files, just refresh the whole project
 				HgRoot projectRoot = resources.rootOf(project);
 				if(projectRoot == null){
-					if(enableSubrepos){
-						try {
-							projectRoot = AbstractClient.getHgRoot(project);
-						} catch (HgException e) {
-							MercurialEclipsePlugin.logError(e);
-							projectRoot = MercurialTeamProvider.getHgRoot(project);
-						}
-					} else {
-						projectRoot = MercurialTeamProvider.getHgRoot(project);
-					}
+					projectRoot = MercurialTeamProvider.getHgRoot(project);
 					resources.clear();
 					resources.add(projectRoot, project);
 				}
@@ -767,16 +757,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		// find all the subrepos that are inside the resource
 		Set<HgRoot> repos;
-		HgRoot root;
+		HgRoot root = MercurialTeamProvider.getHgRoot(res);
 		if(enableSubrepos){
 			// find the reposoritory in which the resource is
-			root = AbstractClient.getHgRoot(res);
 			repos = HgSubreposClient.findSubrepositoriesRecursivelyWithin(root, res);
 		} else {
-			root = MercurialTeamProvider.getHgRoot(res);
 			repos = new HashSet<HgRoot>();
-			repos.add(root);
 		}
+		repos.add(root);
 
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
@@ -1609,16 +1597,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// Ideally we would save more state so we know what mode we are actually in. For now
 			// just check we're not merging or rebasing. Transplant conflicts don't set files in
 			// conflict mode. Are there other modes?
-			try {
-				HgRoot root = AbstractClient.getHgRoot(file);
-				if (root != null && !isMergeInProgress(root) && !HgRebaseClient.isRebasing(root)) {
-					return true;
-				}
-			} catch (HgException e) {
-				return false;
+			HgRoot root = MercurialTeamProvider.getHgRoot(file);
+			if (root != null && !isMergeInProgress(root) && !HgRebaseClient.isRebasing(root)) {
+				return true;
 			}
 		}
-
 		return false;
 	}
 }

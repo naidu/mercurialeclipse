@@ -75,7 +75,7 @@ public abstract class AbstractClient {
 	 * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
 	 * @throws HgException
 	 */
-	public static HgRoot getHgRoot(IResource resource) throws HgException {
+	static HgRoot getHgRoot(IResource resource) throws HgException {
 		Assert.isNotNull(resource);
 		return MercurialRootCache.getInstance().getHgRoot(resource);
 	}

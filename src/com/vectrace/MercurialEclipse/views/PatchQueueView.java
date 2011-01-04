@@ -7,7 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - bug fix, popup menu
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
@@ -50,7 +50,6 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
@@ -333,48 +332,43 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	}
 
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-		try {
-			if (selection instanceof IStructuredSelection) {
-				IStructuredSelection structured = (IStructuredSelection) selection;
-				if (structured.getFirstElement() instanceof IAdaptable) {
-					IResource newResource = (IResource) ((IAdaptable) structured.getFirstElement())
-							.getAdapter(IResource.class);
-					if (resource != null && resource.isAccessible()
-							&& MercurialUtilities.hgIsTeamProviderFor(resource, false)
-							&& newResource != null && newResource.equals(resource)) {
-						return;
-					}
-
-					if (newResource != null && newResource.isAccessible()
-							&& MercurialUtilities.hgIsTeamProviderFor(newResource, false)) {
-						HgRoot newRoot = AbstractClient.getHgRoot(newResource);
-						if (!newRoot.equals(currentHgRoot)) {
-							currentHgRoot = newRoot;
-							resource = newResource;
-							populateTable();
-							statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
-						}
-					}
-
+		if (selection instanceof IStructuredSelection) {
+			IStructuredSelection structured = (IStructuredSelection) selection;
+			if (structured.getFirstElement() instanceof IAdaptable) {
+				IResource newResource = (IResource) ((IAdaptable) structured.getFirstElement())
+						.getAdapter(IResource.class);
+				if (resource != null && resource.isAccessible()
+						&& MercurialUtilities.hgIsTeamProviderFor(resource, false)
+						&& newResource != null && newResource.equals(resource)) {
+					return;
 				}
-			}
-			if (part instanceof IEditorPart) {
-				IEditorInput input = ((IEditorPart) part).getEditorInput();
-				IFile file = (IFile) input.getAdapter(IFile.class);
-				if (file != null && file.isAccessible()
-						&& MercurialUtilities.hgIsTeamProviderFor(file, false)) {
-					HgRoot newRoot = AbstractClient.getHgRoot(file);
+
+				if (newResource != null && newResource.isAccessible()
+						&& MercurialUtilities.hgIsTeamProviderFor(newResource, false)) {
+					HgRoot newRoot = MercurialTeamProvider.getHgRoot(newResource);
 					if (!newRoot.equals(currentHgRoot)) {
 						currentHgRoot = newRoot;
-						resource = file;
+						resource = newResource;
 						populateTable();
 						statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
 					}
 				}
+
 			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			statusLabel.setText(e.getMessage());
+		}
+		if (part instanceof IEditorPart) {
+			IEditorInput input = ((IEditorPart) part).getEditorInput();
+			IFile file = (IFile) input.getAdapter(IFile.class);
+			if (file != null && file.isAccessible()
+					&& MercurialUtilities.hgIsTeamProviderFor(file, false)) {
+				HgRoot newRoot = MercurialTeamProvider.getHgRoot(file);
+				if (!newRoot.equals(currentHgRoot)) {
+					currentHgRoot = newRoot;
+					resource = file;
+					populateTable();
+					statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
+				}
+			}
 		}
 	}
 

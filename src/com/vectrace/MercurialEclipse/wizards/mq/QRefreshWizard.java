@@ -6,8 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	     implementation
- * Philip Graf   load current commit text
+ *     bastian                  - implementation
+ *     Philip Graf              - load current commit text
+ *     Andrei Loskutov          - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
@@ -20,10 +21,10 @@ import org.eclipse.jface.text.Document;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQHeaderClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgWizard;
@@ -68,7 +69,7 @@ public class QRefreshWizard extends HgWizard {
 								.getUserTextField().getText(), page.getDate()
 								.getText());
 				monitor.worked(1);
-				new RefreshRootJob(AbstractClient.getHgRoot(resource), RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+				new RefreshRootJob(MercurialTeamProvider.getHgRoot(resource), RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 				monitor.done();
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
