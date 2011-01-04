@@ -138,9 +138,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						Utils.asyncExec(new Runnable() {
 							public void run() {
 								getTreeViewer().refresh(toRefresh, true);
+								getTreeViewer().refresh();
 							}
 						}, getTreeViewer());
 					}
+
 				}
 			}
 		}
@@ -301,13 +303,19 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			boolean showEmpty = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
 			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) parent;
 			ArrayList<Object> groups =new ArrayList<Object>();
-			if(showEmpty || supergroup.getIncoming().getChangesets().size() > 0) {
+			if(supergroup.getIncoming().getChangesets().size() > 0) {
+				groups.add(supergroup.getIncoming());
+			} else if(showEmpty) {
 				groups.add(supergroup.getIncoming());
 			}
-			if(showEmpty || supergroup.getOutgoing().getChangesets().size() > 0) {
+			if(supergroup.getOutgoing().getChangesets().size() > 0) {
+				groups.add(supergroup.getOutgoing());
+			} else if(showEmpty) {
 				groups.add(supergroup.getOutgoing());
 			}
-			if(showEmpty || supergroup.getUncommittedSet().getFiles().size() > 0) {
+			if(supergroup.getUncommittedSet().getFiles().size() > 0) {
+				groups.add(supergroup.getUncommittedSet());
+			} else if(showEmpty) {
 				groups.add(supergroup.getUncommittedSet());
 			}
 			return groups.toArray();
