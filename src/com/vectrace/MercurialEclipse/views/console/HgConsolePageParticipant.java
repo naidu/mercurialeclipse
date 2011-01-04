@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
@@ -14,21 +15,20 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleConstants;
 import org.eclipse.ui.console.IConsolePageParticipant;
+import org.eclipse.ui.console.actions.CloseConsoleAction;
 import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
  * Console helper that allows contributing actions to the console view when
- * the CVS console is visible. Added to the console via an extension point
+ * the Mercurial console is visible. Added to the console via an extension point
  * from org.eclipse.ui.console.
- *
- * @since 3.1
  */
 public class HgConsolePageParticipant implements IConsolePageParticipant {
 
-	private ConsoleRemoveAction consoleRemoveAction;
+	private CloseConsoleAction consoleRemoveAction;
 
 	public void init(IPageBookViewPage page, IConsole console) {
-		this.consoleRemoveAction = new ConsoleRemoveAction();
+		consoleRemoveAction = new CloseConsoleAction(console);
 		IActionBars bars = page.getSite().getActionBars();
 		bars.getToolBarManager().appendToGroup(IConsoleConstants.LAUNCH_GROUP, consoleRemoveAction);
 	}
@@ -43,7 +43,7 @@ public class HgConsolePageParticipant implements IConsolePageParticipant {
 	public void deactivated() {
 	}
 
-	public Object getAdapter(Class adapter) {
+	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
 		return null;
 	}
 }

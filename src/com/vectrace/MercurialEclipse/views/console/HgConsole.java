@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov     - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
@@ -33,9 +33,13 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * generic console view. It supports coloring for message, command, and error
  * lines in addition the font can be configured.
  *
- * @since 3.0
  */
 public class HgConsole extends MessageConsole {
+
+	/**
+	 * Used in plugin.xml
+	 */
+	private static final String HG_CONSOLE_TYPE = "hgConsole";
 
 	/** created colors for each line type - must be disposed at shutdown*/
 	private Color commandColor;
@@ -67,7 +71,7 @@ public class HgConsole extends MessageConsole {
 	 * console page yet.
 	 */
 	public HgConsole() {
-		super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
+		super("Mercurial Console", HG_CONSOLE_TYPE, MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"), true); //$NON-NLS-1$ //$NON-NLS-2$
 		document = new ConsoleDocument();
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);

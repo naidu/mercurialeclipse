@@ -1531,6 +1531,7 @@
             name="%patchQueueViewName">
       </view>
    </extension>
+   
    <extension
          point="org.eclipse.ui.console.consoleFactories">
       <consoleFactory
@@ -1538,6 +1539,17 @@
             icon="icons/mercurialeclipse.png"
             label="%consoleName">
       </consoleFactory>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.console.consolePageParticipants">
+      <consolePageParticipant
+            class="com.vectrace.MercurialEclipse.views.console.HgConsolePageParticipant"
+            id="com.vectrace.MercurialEclipse.HgConsoleParticipant">
+         <enablement>
+            <test property="org.eclipse.ui.console.consoleTypeTest" value="hgConsole"/>
+         </enablement>
+      </consolePageParticipant>
    </extension>
 
    <extension point="org.eclipse.ui.themes">

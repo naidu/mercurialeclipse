@@ -6,11 +6,14 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * ijuma	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     ijuma                 - implementation
+ *     Andrei Loskutov       - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE;
+
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -24,8 +27,6 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * This class should only be called from the UI thread as it is not thread-safe.
@@ -56,9 +57,12 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 				return;
 			}
 			console = new HgConsole();
-			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
-					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
-			MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(this);
+			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+
+			store.addPropertyChangeListener(this);
+			getConsoleManager().addConsoleListener(this);
+
+			showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
 
 			// install font
 			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
@@ -107,14 +111,14 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		return console;
 	}
 
-	public void registerConsole() {
+	private void registerConsole() {
 		boolean exists = isConsoleRegistered();
 		if (!exists) {
 			getConsoleManager().addConsoles(new IConsole[] { console });
 		}
 	}
 
-	public boolean isConsoleRegistered() {
+	private boolean isConsoleRegistered() {
 		if(registered){
 			return true;
 		}
@@ -127,39 +131,27 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		return registered;
 	}
 
-	public void closeConsole() {
-		IConsoleManager manager = ConsolePlugin.getDefault()
-				.getConsoleManager();
-		if (console != null) {
-			manager.removeConsoles(new IConsole[] { console });
-		}
-	}
-
 	public HgConsole getConsole() {
 		init();
 		return console;
 	}
 
 	public void consolesAdded(IConsole[] consoles) {
-		for (int i = 0; i < consoles.length; i++) {
-			IConsole c = consoles[i];
-			if (console == c) {
-				console.init();
-				showConsole(true);
-				break;
-			}
-		}
+		// noop
 	}
 
 	public void consolesRemoved(IConsole[] consoles) {
 		for (int i = 0; i < consoles.length; i++) {
 			IConsole c = consoles[i];
 			if (c == console) {
+				registered = false;
 				console.dispose();
 				console = null;
 				JFaceResources.getFontRegistry().removeListener(this);
 				MercurialEclipsePlugin.getDefault().getPreferenceStore()
 						.removePropertyChangeListener(this);
+				ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+				theme.removePropertyChangeListener(this);
 				break;
 			}
 		}
@@ -167,9 +159,9 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 	}
 
 	public void propertyChange(PropertyChangeEvent event) {
-		if(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
-			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
-					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
+		if(PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
+			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+			showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
 		} else if (CONSOLE_FONT.equals(event.getProperty())) {
 			setConsoleFont();
 		} else {
