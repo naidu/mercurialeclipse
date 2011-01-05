@@ -95,6 +95,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 							treeViewer.refresh(sg, true);
 						}
 						treeViewer.getTree().setRedraw(true);
+						treeViewer.getTree().layout(true);
 					}
 				}, getTreeViewer());
 			}
@@ -540,6 +541,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				if (isIncomingVisible() && (showEmptyGroups || supergroup.getIncoming().getChangesets().size() > 0)) {
 					return true;
 				}
+				if(supergroup.getUncommittedSet().getChangesetFiles().length > 0) {
+					return true;
+				}
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
@@ -607,6 +611,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		HgSubscriberMergeContext context = (HgSubscriberMergeContext) participant.getContext();
 		for (RepositoryChangesetGroup rcg : projectGroup) {
 			rcg.getUncommittedSet().setContext(context);
+//			rcg.getUncommittedSet().setRoots(MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(rcg.getLocation()).toArray(new IProject[]{}));
 		}
 	}
 
@@ -631,13 +636,13 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 
 			for (RepositoryChangesetGroup rcg : projectGroup) {
 				WorkingChangeSet uSet = rcg.getUncommittedSet();
-				ArrayList<IProject> result = new ArrayList<IProject>();
-				for(IProject proj : projects) {
-					if(proj.getName().equals(rcg.getName())) {
-						result.add(proj);
-					}
-				}
-				uSet.setRoots(result.toArray(new IProject[]{}));
+//				ArrayList<IProject> result = new ArrayList<IProject>();
+//				for(IProject proj : projects) {
+//					if(proj.getName().equals(rcg.getName())) {
+//						result.add(proj);
+//					}
+//				}
+				uSet.setRoots(projects); //result.toArray(new IProject[]{}));
 				uSet.addListener(uncommittedSetListener);
 				STATUS_CACHE.addObserver(uSet);
 			}
