@@ -344,10 +344,9 @@ public class MercurialRootCache extends AbstractCache {
 				}
 			}
 
-			if (bestKey != null) {
+			if (bestKey != null && matchingSegments == bestKey.segmentCount()) {
 				candidates = map.get(bestKey);
 				assert bestKey.isPrefixOf(path);
-				assert matchingSegments == bestKey.segmentCount();
 			}
 		}
 

@@ -176,11 +176,6 @@ public final class ResourceUtils {
 				path = paths[i - 1];
 			}
 
-			// Is best a definite match?
-			if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
-				return best;
-			}
-
 			URI uri = URIUtil.toURI(path.makeAbsolute());
 			IResource[] resources = isFile ? root.findFilesForLocationURI(uri) : root
 					.findContainersForLocationURI(uri);
@@ -200,6 +195,11 @@ public final class ResourceUtils {
 				best = ifNull(isFile ? root.getFileForLocation(path) : root
 						.getContainerForLocation(path), best);
 			}
+
+			// Is best a definite match?
+            if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
+                return best;
+            }
 		}
 		return best;
 	}
