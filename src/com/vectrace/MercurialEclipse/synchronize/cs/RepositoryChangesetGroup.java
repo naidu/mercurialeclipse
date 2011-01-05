@@ -10,8 +10,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
+import java.util.ArrayList;
+import java.util.Set;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.team.internal.core.subscribers.ChangeSet;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
@@ -26,8 +31,11 @@ public class RepositoryChangesetGroup {
 	private ChangesetGroup outgoing;
 	private final WorkingChangeSet uncommittedSet;
 	private final IHgRepositoryLocation location;
+	private Set<HgRoot> hgRoots;
+	private ArrayList<IResource> projects;
 
-	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location, WorkingChangeSet uncommittedSet) {
+	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location,
+			WorkingChangeSet uncommittedSet) {
 		this.name = name;
 		this.location = location;
 		this.uncommittedSet = uncommittedSet;
@@ -36,7 +44,6 @@ public class RepositoryChangesetGroup {
 	public String getName() {
 		return name;
 	}
-
 
 	@Override
 	public String toString() {
@@ -47,14 +54,14 @@ public class RepositoryChangesetGroup {
 			builder.append(name);
 			builder.append(", ");
 		}
-		if(incoming != null && incoming.getChangesets().size() > 0) {
-			for(ChangeSet set : incoming.getChangesets()) {
-				builder.append(set.toString()+" ,");
+		if (incoming != null && incoming.getChangesets().size() > 0) {
+			for (ChangeSet set : incoming.getChangesets()) {
+				builder.append(set.toString() + " ,");
 			}
 		}
-		if(outgoing != null && outgoing.getChangesets().size() > 0) {
-			for(ChangeSet set : outgoing.getChangesets()) {
-				builder.append(set.toString()+" ,");
+		if (outgoing != null && outgoing.getChangesets().size() > 0) {
+			for (ChangeSet set : outgoing.getChangesets()) {
+				builder.append(set.toString() + " ,");
 			}
 		}
 
@@ -63,7 +70,8 @@ public class RepositoryChangesetGroup {
 	}
 
 	/**
-	 * @param incoming the incoming to set
+	 * @param incoming
+	 *            the incoming to set
 	 */
 	public void setIncoming(ChangesetGroup incoming) {
 		this.incoming = incoming;
@@ -77,7 +85,8 @@ public class RepositoryChangesetGroup {
 	}
 
 	/**
-	 * @param outgoing the outgoing to set
+	 * @param outgoing
+	 *            the outgoing to set
 	 */
 	public void setOutgoing(ChangesetGroup outgoing) {
 		this.outgoing = outgoing;
@@ -102,5 +111,32 @@ public class RepositoryChangesetGroup {
 	 */
 	public WorkingChangeSet getUncommittedSet() {
 		return uncommittedSet;
+	}
+
+	/**
+	 * @param hgRoots
+	 *            the hgRoots to set
+	 */
+	public void setHgRoots(Set<HgRoot> hgRoots) {
+		this.hgRoots = hgRoots;
+	}
+
+	/**
+	 * @return the hgRoots
+	 */
+	public Set<HgRoot> getHgRoots() {
+		return hgRoots;
+	}
+
+	/**
+	 * @param projects
+	 */
+	public void setProjects(ArrayList<IResource> projects) {
+		this.projects = projects;
+
+	}
+
+	public ArrayList<IResource> getProjects() {
+		return projects;
 	}
 }

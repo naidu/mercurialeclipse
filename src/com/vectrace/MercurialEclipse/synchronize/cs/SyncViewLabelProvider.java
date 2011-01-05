@@ -118,10 +118,21 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		if(elementOrPath instanceof RepositoryChangesetGroup){
 			RepositoryChangesetGroup group = (RepositoryChangesetGroup) elementOrPath;
 			String name = group.getName();
-			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
+			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty() && group.getUncommittedSet().getChangesetFiles().length == 0){
 				return name + " (empty)";
 			}
-			return name + " incoming(" + group.getIncoming().getChangesets().size() + "), outgoing("+group.getOutgoing().getChangesets().size()+")";
+			name += "   [ ";
+			if(!group.getIncoming().getChangesets().isEmpty()) {
+				name += " incoming(" + group.getIncoming().getChangesets().size() + ")";
+			}
+			if(!group.getOutgoing().getChangesets().isEmpty()) {
+				name += " outgoing("+group.getOutgoing().getChangesets().size()+")";
+			}
+			if(group.getUncommittedSet().getChangesetFiles().length > 0) {
+				name += " Uncommited("+group.getUncommittedSet().getChangesetFiles().length+")";
+			}
+			name += " ]";
+			return name;
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;

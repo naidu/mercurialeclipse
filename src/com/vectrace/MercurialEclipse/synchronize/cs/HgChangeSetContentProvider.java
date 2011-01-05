@@ -14,11 +14,13 @@
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -104,8 +106,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 	private final class PreferenceListener implements IPropertyChangeListener {
 		public void propertyChange(PropertyChangeEvent event) {
 			Object input = getTreeViewer().getInput();
-			if (( event.getProperty().equals(PresentationMode.PREFERENCE_KEY) ||
-					event.getProperty().equals(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS))
+			if (( event.getProperty().equals(PresentationMode.PREFERENCE_KEY)
+					||	event.getProperty().equals(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS))
 					&& input instanceof HgChangeSetModelProvider) {
 				Utils.asyncExec(new Runnable() {
 					public void run() {
@@ -262,6 +264,13 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						RepositoryChangesetGroup scg = new RepositoryChangesetGroup(projectName, repoLocation,  new WorkingChangeSet("Uncommitted"));
 						scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 						scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
+
+						ArrayList<IResource> projects = new ArrayList<IResource>();
+						Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(provider.getSubscriber().getProjects()));
+						for(HgRoot root : hgRoots) {
+							projects.addAll(byRoot.get(root));
+						}
+						scg.setProjects(projects);
 						projectGroup.add(scg);
 					}
 				}
@@ -301,6 +310,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		} else if (parent instanceof RepositoryChangesetGroup) {
 			// added groups to view
 			boolean showEmpty = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
+//			showEmpty = true;
 			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) parent;
 			ArrayList<Object> groups =new ArrayList<Object>();
 			if(supergroup.getIncoming().getChangesets().size() > 0) {
@@ -313,7 +323,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			} else if(showEmpty) {
 				groups.add(supergroup.getOutgoing());
 			}
-			if(supergroup.getUncommittedSet().getFiles().size() > 0) {
+			if(supergroup.getUncommittedSet().getChangesetFiles().length > 0) {
 				groups.add(supergroup.getUncommittedSet());
 			} else if(showEmpty) {
 				groups.add(supergroup.getUncommittedSet());
@@ -532,7 +542,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				return true;
 			}
 		} else if (element instanceof RepositoryChangesetGroup) {
-			boolean showEmptyGroups = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
+			boolean showEmptyGroups =  MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SHOW_EMPTY_GROUPS);
 				RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) element;
 				if (isOutgoingVisible() && (showEmptyGroups || supergroup.getOutgoing().getChangesets().size() > 0)) {
 					return true;
@@ -637,7 +647,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				WorkingChangeSet uSet = rcg.getUncommittedSet();
 				ArrayList<IProject> result = new ArrayList<IProject>();
 				for(IProject proj : projects) {
-					if(proj.getName().equals(rcg.getName())) {
+					if(rcg.getProjects().contains(proj)) {
 						result.add(proj);
 					}
 				}

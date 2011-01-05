@@ -220,7 +220,7 @@ IWorkbenchPreferencePage {
 		addField(new BooleanFieldEditor(
 			SHOW_EMPTY_GROUPS,
 			Messages.getString("GeneralPreferencePage.showEmptyGroups"), //$NON-NLS-1$
-			getFieldEditorParent()));
+		getFieldEditorParent()));
 	}
 
 	protected void enablePathEditor(boolean on) {
