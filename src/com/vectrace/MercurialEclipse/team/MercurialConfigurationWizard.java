@@ -50,6 +50,8 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -162,6 +164,13 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	public void addPages() {
 		foundhgPath = MercurialTeamProvider.hasHgRoot(project);
 		IPath path = ResourceUtils.getPath(project);
+		if(foundhgPath == null) {
+			try {
+				foundhgPath = HgRootClient.getHgRoot(path.toFile());
+			} catch (HgException e) {
+				// ignore, we just looking for a *possible* root
+			}
+		}
 		if (foundhgPath == null || foundhgPath.getIPath().equals(path)) {
 			hgPath = path.toOSString();
 			page = new NewWizardPage(true);
