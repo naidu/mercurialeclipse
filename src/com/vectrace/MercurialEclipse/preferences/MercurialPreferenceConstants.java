@@ -112,4 +112,7 @@ public final class MercurialPreferenceConstants {
 	// push
 	public static final String PREF_PUSH_NEW_BRANCH = "hg.pushNewBranch"; //$NON-NLS-1$
 
+	// synchronize view
+	public static final String SHOW_EMPTY_GROUPS = "hg.sync.view.showemptygroups"; //$NON-NLS-1$
+
 }

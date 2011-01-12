@@ -40,10 +40,10 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -62,6 +62,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 
 	private final IAction expandAction;
+
+	private IAction pullUpdateAllAction;
+	private IAction pushAllAction;
 
 	private final PreferenceAction allBranchesAction;
 
@@ -84,6 +87,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			}
 		};
 
+//		pullUpdateAllAction = new Action("Pull/Update all", MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif")) {
+//			@Override
+//			public void run() {
+//				ISynchronizeParticipant part = getConfiguration().getParticipant();
+//				if(part instanceof MercurialSynchronizeParticipant) {
+//					MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
+//					Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
+//					new PushPullSynchronizeOperation(getConfiguration(),null, null, true, true).run();
+//				}
+//			}
+//		};
+
 		presentationModeActions = new ArrayList<PresentationModeAction>();
 
 		for (PresentationMode mode : PresentationMode.values()) {
@@ -97,9 +112,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			public void run() {
 				prefStore.setValue(prefKey, !isChecked());
 				MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant)getConfiguration().getParticipant();
-
-				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant
-						.getContext().getScope().getMappings());
+				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant.getContext().getScope().getMappings());
 			}
 
 			@Override
@@ -149,7 +162,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
+
+		pullUpdateAllAction = new PushPullSynchronizeAction("Pull and Update", configuration, getVisibleRootsSelectionProvider(), true, true);
+		pushAllAction = new PushPullSynchronizeAction("Push all", configuration, getVisibleRootsSelectionProvider(), false, false);
 	}
+
 
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
@@ -369,6 +386,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		IToolBarManager manager = actionBars.getToolBarManager();
 		appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
 		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, allBranchesAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pullUpdateAllAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pushAllAction);
 
 		IMenuManager menu = actionBars.getMenuManager();
 		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
