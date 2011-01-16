@@ -21,6 +21,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -32,6 +36,7 @@ import com.vectrace.MercurialEclipse.menu.PushHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -139,9 +144,22 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		}
 		getShell().getDisplay().syncExec(new Runnable(){
 			public void run() {
-				monitor.setCanceled(!MessageDialog.openConfirm(getShell(), title, message));
+				showDontShowAgainConfirmDialog(monitor, title, message, MercurialPreferenceConstants.PREF_SHOW_PULL_WARNING_DIALOG);
 			}
+
 		});
+	}
+
+	private void showDontShowAgainConfirmDialog(final IProgressMonitor monitor, final String title,
+			final String message, String key) {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		String pref = store.getString(key);
+		if (MessageDialogWithToggle.PROMPT.equals(pref)) {
+			String toggleMessage = Messages.getString("Dialogs.DontShowAgain");
+			MessageDialogWithToggle confirmDialog = MessageDialogWithToggle.open(MessageDialog.CONFIRM, getShell(), title, message, toggleMessage, false, store, key, SWT.NONE);
+			int returnCode = confirmDialog.getReturnCode();
+			monitor.setCanceled(returnCode != Window.OK);
+		}
 	}
 
 	private void checkProjects(final IProgressMonitor monitor, HgRoot hgRoot) {
@@ -157,7 +175,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		final String message = "Pull will affect " + projects.size() + " projects in workspace. Continue?";
 		getShell().getDisplay().syncExec(new Runnable(){
 			public void run() {
-				monitor.setCanceled(!MessageDialog.openConfirm(getShell(), title, message));
+				showDontShowAgainConfirmDialog(monitor, title, message, MercurialPreferenceConstants.PREF_SHOW_MULTIPLE_PROJECTS_DIALOG);
 			}
 		});
 	}

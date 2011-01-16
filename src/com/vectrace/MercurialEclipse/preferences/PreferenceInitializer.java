@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -142,6 +143,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		} else {
 			store.setDefault(PREF_PUSH_NEW_BRANCH, true);
 		}
+
+		store.setDefault(PREF_SHOW_PULL_WARNING_DIALOG, MessageDialogWithToggle.PROMPT);
+		store.setDefault(PREF_SHOW_MULTIPLE_PROJECTS_DIALOG, MessageDialogWithToggle.PROMPT);
 	}
 
 	private File checkForPossibleHgExecutables() {
