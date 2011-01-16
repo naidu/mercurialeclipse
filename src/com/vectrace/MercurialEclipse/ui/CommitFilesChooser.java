@@ -24,6 +24,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -64,6 +65,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -315,9 +317,15 @@ public class CommitFilesChooser extends Composite {
 		CommitResource[] commitResources = createCommitResources(resources);
 		getViewer().setInput(commitResources);
 
-		List<CommitResource> tracked = CommitResourceUtil.filterForTracked(commitResources);
-		getViewer().setCheckedElements(tracked.toArray());
-		if (selectable && !showUntracked) {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		boolean preSelectAll = store.getBoolean(MercurialPreferenceConstants.PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG);
+		if (preSelectAll) {
+			getViewer().setCheckedElements(commitResources);
+		} else {
+			List <CommitResource> tracked = CommitResourceUtil.filterForTracked(commitResources);
+			getViewer().setCheckedElements(tracked.toArray());
+		}
+		if (selectable && (!showUntracked || preSelectAll)) {
 			selectAllButton.setSelection(true);
 		}
 		// show clean file, if we are called on a single, not modified file

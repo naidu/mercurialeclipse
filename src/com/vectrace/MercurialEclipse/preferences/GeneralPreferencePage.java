@@ -208,6 +208,11 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.syncOnlyCurrentBranch"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
+		addField(new BooleanFieldEditor(
+				PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG,
+				Messages.getString("GeneralPreferencePage.preselectUntrackedInCommitDialog"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
 		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
 				COMMIT_MESSAGE_BATCH_SIZE,
 				Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
