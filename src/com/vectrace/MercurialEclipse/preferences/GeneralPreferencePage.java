@@ -12,6 +12,7 @@
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
  *     Ilya Ivanov (Intland)	 - bug fixes
+ *     Soren Mathiasen			 - synchronize view options
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -219,6 +220,12 @@ IWorkbenchPreferencePage {
 				getFieldEditorParent());
 		commitSizeEditor.setValidRange(1, Integer.MAX_VALUE);
 		addField(commitSizeEditor);
+
+
+		addField(new BooleanFieldEditor(
+			SHOW_EMPTY_GROUPS,
+			Messages.getString("GeneralPreferencePage.showEmptyGroups"), //$NON-NLS-1$
+		getFieldEditorParent()));
 	}
 
 	protected void enablePathEditor(boolean on) {

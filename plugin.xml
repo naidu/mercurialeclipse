@@ -221,6 +221,15 @@
 
     <!-- commands -->
     <extension point="org.eclipse.ui.commands">
+    	<command
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                id="com.vectrace.MercurialEclipse.menu.LockHandler"
+                name="%lock"/>
+        <command
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                id="com.vectrace.MercurialEclipse.menu.UnLockHandler"
+                name="%unlock"/>
+    
         <command
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                 id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
@@ -654,6 +663,14 @@
                     <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>                    
                 </and>
             </enabledWhen>
+        </handler>
+        <handler
+              class="com.vectrace.MercurialEclipse.menu.LockHandler"
+              commandId="com.vectrace.MercurialEclipse.menu.LockHandler">
+        </handler>
+        <handler
+              class="com.vectrace.MercurialEclipse.menu.UnLockHandler"
+              commandId="com.vectrace.MercurialEclipse.menu.UnLockHandler">
         </handler>                 
     </extension>
 
@@ -1152,6 +1169,22 @@
               icon="icons/actions/commit.gif"
               menubarPath="team.main/group1"
               label="%actionLabel.commit">
+           </action>
+           
+            
+            <action
+                  class="com.vectrace.MercurialEclipse.team.ActionLock"
+                  icon="icons/actions/lock.gif"
+                  id="com.vectrace.MercurialEclipse.menu.LockHandler"
+                  label="%actionLabel.lock"
+                  menubarPath="team.main/group11">
+           </action>
+            <action
+                  class="com.vectrace.MercurialEclipse.team.ActionUnLock"
+                  icon="icons/actions/unlock.gif"
+                  id="com.vectrace.MercurialEclipse.menu.UnLockHandler"
+                  label="%actionLabel.unlock"
+                  menubarPath="team.main/group11">
            </action>
       </objectContribution>
 

@@ -50,7 +50,7 @@ public class HgCommand extends AbstractShellCommand {
 	public HgCommand(String command, String uiName, HgRoot root, boolean escapeFiles) {
 		super(uiName, root, root, escapeFiles);
 		this.command = command;
-
+//		addOptions("--encoding",MercurialEclipsePlugin.getDefaultEncoding().name());
 		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
