@@ -201,7 +201,11 @@ public class MercurialRootCache extends AbstractCache {
 			return null;
 		}
 		// cachedRoot can be only null or an obsolete noRoot object
-		HgRoot root = calculateHgRoot(ResourceUtils.getFileHandle(resource), true);
+		File fileHandle = ResourceUtils.getFileHandle(resource);
+		if(fileHandle.getPath().length() == 0) {
+			return null;
+		}
+		HgRoot root = calculateHgRoot(fileHandle, true);
 		if (cacheResult) {
 			try {
 				resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);

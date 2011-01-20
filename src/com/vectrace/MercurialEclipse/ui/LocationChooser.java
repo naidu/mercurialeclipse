@@ -211,7 +211,7 @@ public class LocationChooser extends Composite implements Listener {
 	}
 
 	private boolean isValidSystemFile(File file) {
-		if (file == null) {
+		if (file == null || file.getPath().length() == 0) {
 			return false;
 		}
 		if (!file.isAbsolute()) {

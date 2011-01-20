@@ -197,9 +197,9 @@ public final class ResourceUtils {
 			}
 
 			// Is best a definite match?
-            if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
-                return best;
-            }
+			if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
+				return best;
+			}
 		}
 		return best;
 	}
@@ -227,6 +227,13 @@ public final class ResourceUtils {
 				// match project root folder name
 				String message = "Failed to resolve location for resource: " + resource;
 				MercurialEclipsePlugin.logError(message, new IllegalStateException(message));
+				return Path.EMPTY;
+			}
+
+			// see issue 12500: we should check whether the resource is virtual
+			// TODO as soon as 3.5 is not supported, use resource.isVirtual() call
+			URI locationURI = resource.getLocationURI();
+			if(locationURI == null || "virtual".equals(locationURI.getScheme())) {
 				return Path.EMPTY;
 			}
 			path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));

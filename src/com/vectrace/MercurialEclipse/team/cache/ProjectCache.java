@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov        - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -66,7 +66,7 @@ public class ProjectCache {
 		mainLoop: for (ChangeSet cs : changesets) {
 			if (rootRelative == null) {
 				File path = ResourceUtils.getFileHandle(resource);
-				if (path == null) {
+				if (path == null || path.getPath().length() == 0) {
 					return changesets;
 				}
 				rootRelative = new Path(cs.getHgRoot().toRelative(path));
