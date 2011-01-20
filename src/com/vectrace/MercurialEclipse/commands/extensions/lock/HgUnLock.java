@@ -13,12 +13,14 @@ package com.vectrace.MercurialEclipse.commands.extensions.lock;
 import java.io.File;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author soren
@@ -29,12 +31,15 @@ public class HgUnLock extends HgCommand {
 	public HgUnLock(IResource resource) throws HgException {
 		super("unlock", "Locking a resource", getMyHgRoot(resource), false);
 
-		addOptions(resource.getName());
+		addOptions(resource.getProjectRelativePath().toString());
 		String executeToString = executeToString();
 		System.out.println(executeToString);
-		if(!executeToString().contains("Status:200")) {
-			MercurialEclipsePlugin.showError(new RuntimeException(executeToString));
+		if(executeToString.contains("Status:200")) {
+			MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(), "Lock released", "Successfully released lock");
+		} else { //error
+			MessageDialog.openError(MercurialEclipsePlugin.getActiveShell(), "UnLock error", "Unable to release look");
 		}
+		MercurialStatusCache.getInstance().refreshStatus(resource, null);
 	}
 
 	/**

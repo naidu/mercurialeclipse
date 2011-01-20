@@ -64,4 +64,9 @@ public final class DecoratorImages {
 	 */
 	public static final ImageDescriptor CONFLICT = ImageDescriptor.createFromFile(DecoratorImages.class, "images/confchg_ov.gif"); //$NON-NLS-1$
 
+	/**
+	 * Lock Image Descriptor
+	 */
+	public static final ImageDescriptor LOCKED = ImageDescriptor.createFromFile(DecoratorImages.class, "images/lock.gif"); //$NON-NLS-1$
+
 }

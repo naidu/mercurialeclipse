@@ -217,6 +217,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/** directory bit */
 	public static final int BIT_DIR = 1 << 10;
 
+	public static final int BIT_LOCKED = 1 << 11;
+
 	private static final Integer IGNORE = Integer.valueOf(BIT_IGNORE);
 	private static final Integer CLEAN = Integer.valueOf(BIT_CLEAN);
 //    private final static Integer _MISSING = Integer.valueOf(BIT_MISSING);
@@ -239,6 +241,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public static final char CHAR_MODIFIED = 'M';
 	public static final char CHAR_UNRESOLVED = 'U';
 	public static final char CHAR_RESOLVED = 'R';
+	public static final char CHAR_LOCKED = 'L';
 
 	/**
 	 * If the child file has any of the bits set: BIT_IGNORE | BIT_CLEAN |
@@ -298,6 +301,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		private final PathsSet conflict = new PathsSet(1000, 0.75f);
 		/** directories */
 		private final PathsSet dir = new PathsSet(1000, 0.75f);
+
+		private final PathsSet lock = new PathsSet(1000, 0.75f);
 		// we do not cache impossible values
 		// private final Set<IPath> impossible = new HashSet<IPath>();
 
@@ -332,6 +337,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if((mask & BIT_DIR) != 0){
 				dir.add(path);
 			}
+			if((mask & BIT_LOCKED) != 0){
+				lock.add(path);
+			}
 		}
 
 		synchronized PathsSet get(int bit){
@@ -352,6 +360,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return ignore;
 			case BIT_DIR:
 				return dir;
+			case BIT_LOCKED:
+				return lock;
 			default:
 				return null;
 			}
@@ -366,6 +376,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			remove(path, conflict);
 			remove(path, ignore);
 			remove(path, dir);
+			remove(path, lock);
 		}
 
 		void remove(IPath path, PathsSet set) {
@@ -949,7 +960,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// we need the project for performance reasons - gotta hand it to
 		// addToProjectResources
 		Set<IResource> changed = new HashSet<IResource>();
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
 		List<String> strangeStates = new ArrayList<String>();
 
@@ -1190,6 +1200,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return BIT_ADDED;
 		case CHAR_MODIFIED:
 			return BIT_MODIFIED;
+		case CHAR_LOCKED:
+			return BIT_LOCKED;
 		default:
 			return BIT_IMPOSSIBLE;
 		}
@@ -1317,6 +1329,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					}
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
 					String[] lines = NEWLINE.split(output);
+
 					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 					IPath projectLocation = project.getLocation();
 					if(projectLocation != null) {

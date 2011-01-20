@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.extensions.lock.LockHelper;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -67,6 +68,7 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	//called from refresh status in the team menu
 	public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
 
@@ -76,7 +78,13 @@ public class HgStatusClient extends AbstractClient {
 		if (res.getType() == IResource.FILE) {
 			command.addFiles(res);
 		}
-		return command.executeToString();
+		String statuses = command.executeToString();
+		List<String> lockedFiles = LockHelper.getLockedFiles(root);
+		for (String lockStatus : lockedFiles) {
+			statuses += lockStatus+"\n";
+		}
+
+		return statuses;
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {
@@ -85,7 +93,13 @@ public class HgStatusClient extends AbstractClient {
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		return command.executeToString();
+		String statuses = command.executeToString();
+		List<String> lockedFiles = LockHelper.getLockedFiles(root);
+		for (String lockStatus : lockedFiles) {
+			statuses += lockStatus+"\n";
+		}
+
+		return statuses;
 	}
 
 	/**
@@ -159,7 +173,8 @@ public class HgStatusClient extends AbstractClient {
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.addFiles(files);
-		return command.executeToString();
+		String statuses = command.executeToString();
+		return statuses;
 	}
 
 	/**
