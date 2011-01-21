@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class HgQRefreshClient extends AbstractClient {
 	public static String refresh(HgRoot root, boolean shortFlag, List<IResource> files,
-			String message) throws HgException {
+			String message, boolean currentDate) throws HgException {
 		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", root, true);
 
@@ -36,6 +36,9 @@ public class HgQRefreshClient extends AbstractClient {
 		}
 		if (message != null && message.length() > 0) {
 			command.addOptions("-m", message); //$NON-NLS-1$
+		}
+		if (currentDate) {
+			command.addOptions("--currentdate");
 		}
 		command.addFiles(files);
 		return command.executeToString();

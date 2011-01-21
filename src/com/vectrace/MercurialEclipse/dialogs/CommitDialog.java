@@ -579,7 +579,7 @@ public class CommitDialog extends TitleAreaDialog {
 			// refresh patch with added/removed/changed files
 			pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
 			String result = HgQRefreshClient
-					.refresh(root, true, resourcesToCommit, messageToCommit);
+					.refresh(root, true, resourcesToCommit, messageToCommit, true);
 			pm.worked(1);
 			// remove patch and promote it to a new changeset
 			pm.subTask("Removing amend patch from MQ and promoting it to repository.");
