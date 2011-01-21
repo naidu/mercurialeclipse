@@ -83,7 +83,7 @@ public class HgServeClient extends AbstractClient {
 			setProgressGroup(progress, IProgressMonitor.UNKNOWN);
 			setPriority(LONG);
 			setUser(false);
-			setSystem(true);
+			setSystem(false);
 			setRule(new ServeRule(port));
 		}
 
