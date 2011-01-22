@@ -66,7 +66,7 @@ public class QDeleteWizard extends HgWizard {
 				IStructuredSelection selection = (IStructuredSelection) page
 						.getPatchViewer().getSelection();
 				List<Patch> patches = selection.toList();
-				HgQDeleteClient.delete(resource, false, page
+				HgQDeleteClient.delete(resource, page.getKeepCheckBox().getSelection(), page
 						.getChangesetTable().getSelection(), patches);
 				monitor.worked(1);
 				monitor.done();
