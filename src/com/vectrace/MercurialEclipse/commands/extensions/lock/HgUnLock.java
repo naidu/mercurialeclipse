@@ -30,8 +30,8 @@ public class HgUnLock extends HgCommand {
 
 	public HgUnLock(IResource resource) throws HgException {
 		super("unlock", "Locking a resource", getMyHgRoot(resource), false);
-
-		addOptions(resource.getProjectRelativePath().toString());
+		String loc = resource.getFullPath().toString().replaceFirst("/", "");
+		addOptions(loc);
 		String executeToString = executeToString();
 		System.out.println(executeToString);
 		if(executeToString.contains("Status:200")) {
