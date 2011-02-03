@@ -176,7 +176,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	}
 
 	private void autoshareProject(final IProject project) {
-		final HgRoot hgRoot = MercurialTeamProvider.hasHgRoot(project);
+		final HgRoot hgRoot = MercurialRootCache.getInstance().calculateHgRoot(project);
 		if(hgRoot == null){
 			return;
 		}

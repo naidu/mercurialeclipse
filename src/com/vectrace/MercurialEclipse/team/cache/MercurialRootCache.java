@@ -94,6 +94,14 @@ public class MercurialRootCache extends AbstractCache {
 	private MercurialRootCache() {
 	}
 
+	public HgRoot calculateHgRoot(IResource resource) {
+		File fileHandle = ResourceUtils.getFileHandle(resource);
+		if(fileHandle.getPath().length() == 0) {
+			return null;
+		}
+		return calculateHgRoot(fileHandle, false);
+	}
+
 	private HgRoot calculateHgRoot(File file, boolean reportNotFoundRoot) {
 		if (file instanceof HgRoot) {
 			return (HgRoot) file;
