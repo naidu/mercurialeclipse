@@ -282,30 +282,34 @@ public class ChangedPathsPage {
 		int nrOfLines = document.getNumberOfLines();
 		Display display = diffTextViewer.getControl().getDisplay();
 
-		try {
-			diffTextViewer.getControl().setRedraw(false);
-			for (int i = 0; i < nrOfLines && !monitor.isCanceled(); i++) {
-				if(nrOfLines > 100 && i%100 == 0){
-					while(display.readAndDispatch()){
-						if(monitor.isCanceled()){
-							// give user the chance to break the job
-							return;
-						}
+		for (int lineNo = 0; lineNo < nrOfLines && !monitor.isCanceled();)
+		{
+			// color lines 100 at a time to allow user cancellation in between
+			try {
+				diffTextViewer.getControl().setRedraw(false);
+				for (int i = 0; i < 100 && lineNo < nrOfLines; i++, lineNo++) {
+					try {
+						IRegion lineInformation = document.getLineInformation(i);
+						int offset = lineInformation.getOffset();
+						int length = lineInformation.getLength();
+						Color lineColor = getDiffLineColor(document.get( offset, length));
+						diffTextViewer.setTextColor(lineColor, offset, length, true);
+					} catch (BadLocationException e) {
+						MercurialEclipsePlugin.logError(e);
 					}
 				}
-				try {
-					IRegion lineInformation = document.getLineInformation(i);
-					int offset = lineInformation.getOffset();
-					int length = lineInformation.getLength();
-					Color lineColor = getDiffLineColor(document.get( offset, length));
-					diffTextViewer.setTextColor(lineColor, offset, length, true);
-				} catch (BadLocationException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
 			}
-		}
-		finally {
-			diffTextViewer.getControl().setRedraw(true);
+			finally {
+				diffTextViewer.getControl().setRedraw(true);
+			}
+
+			// don't dispatch event with redraw disabled & re-check control status afterwards !
+			while(display.readAndDispatch()){
+				// give user the chance to break the job
+			}
+			if (diffTextViewer.getControl() == null || diffTextViewer.getControl().isDisposed()) {
+				return;
+			}
 		}
 	}
 
