@@ -162,6 +162,9 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
 
 	private void addResource(Map<IProject, RootResourceSet<IResource>> map, IProject project, HgRoot root, IResource res){
+		if(root == null) {
+			return;
+		}
 		RootResourceSet<IResource> set = map.get(project);
 		if(set == null){
 			set = new RootResourceSet<IResource>();
