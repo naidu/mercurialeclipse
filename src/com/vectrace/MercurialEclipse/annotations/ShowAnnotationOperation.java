@@ -8,7 +8,7 @@
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
  *     StefanC           - jobs framework, code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov   - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -76,7 +76,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		@Override
 		public Object getHoverInfo() {
-			return block.getUser()
+			return entry.getUser()
 					+ " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					(entry != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}
@@ -159,29 +159,29 @@ public class ShowAnnotationOperation extends TeamOperation {
 		}
 	}
 
-    /**
-     * Shows the history view, creating it if necessary, but does not give it focus.
-     *
-     * @param page the workbench page to operate in
-     * @param editor the editor that is showing the file
-     * @return the history view
-     * @throws PartInitException
-     */
-    private IHistoryView showHistoryView(IWorkbenchPage page, AbstractDecoratedTextEditor editor) {
-    	Object object = res;
-    	if (object == null) {
+	/**
+	 * Shows the history view, creating it if necessary, but does not give it focus.
+	 *
+	 * @param page the workbench page to operate in
+	 * @param editor the editor that is showing the file
+	 * @return the history view
+	 * @throws PartInitException
+	 */
+	private IHistoryView showHistoryView(IWorkbenchPage page, AbstractDecoratedTextEditor editor) {
+		Object object = res;
+		if (object == null) {
 			object = editor.getEditorInput();
 		}
 		IHistoryView historyView= TeamUI.showHistoryFor(page, object, null);
-    	IHistoryPage historyPage = historyView.getHistoryPage();
-    	if (historyPage instanceof MercurialHistoryPage){
-    		MercurialHistoryPage mercurialHistoryPage = (MercurialHistoryPage) historyPage;
-    		// We need to call link to ensure that the history page gets linked
+		IHistoryPage historyPage = historyView.getHistoryPage();
+		if (historyPage instanceof MercurialHistoryPage){
+			MercurialHistoryPage mercurialHistoryPage = (MercurialHistoryPage) historyPage;
+			// We need to call link to ensure that the history page gets linked
 			// even if the page input did not change
-    		mercurialHistoryPage.linkWithEditor();
-    	}
-    	return historyView;
-    }
+			mercurialHistoryPage.linkWithEditor();
+		}
+		return historyView;
+	}
 
 
 	@Override

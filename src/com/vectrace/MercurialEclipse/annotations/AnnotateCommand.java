@@ -36,7 +36,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class AnnotateCommand {
 	private static final Pattern ANNOTATE = Pattern
-			.compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$"); //$NON-NLS-1$
+			.compile("^\\s*(.+?)\\s+(\\d+)\\s+(\\w+)\\s+(\\w+ \\w+ \\d+ \\d+:\\d+:\\d+ \\d+ [\\+\\-]\\d+)"); //$NON-NLS-1$
 
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
 			"EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
@@ -72,13 +72,11 @@ public class AnnotateCommand {
 			int count = 0;
 			String line;
 			while ((line = reader.readLine()) != null) {
-				if (line.trim().length() == 0) {
+				Matcher matcher = ANNOTATE.matcher(line);
+				if (!matcher.find()) {
 					// ignore empty lines
 					continue;
 				}
-
-				Matcher matcher = ANNOTATE.matcher(line);
-				matcher.find();
 				String author = matcher.group(1);
 				int revision = Integer.parseInt(matcher.group(2));
 				String changeset = matcher.group(3);
