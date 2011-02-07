@@ -230,15 +230,27 @@ public final class ResourceUtils {
 				return Path.EMPTY;
 			}
 
-			// see issue 12500: we should check whether the resource is virtual
-			// TODO as soon as 3.5 is not supported, use resource.isVirtual() call
 			URI locationURI = resource.getLocationURI();
-			if(locationURI == null || "virtual".equals(locationURI.getScheme())) {
+			if(isVirtual(locationURI)) {
+				// path is null for virtual folders => we can't do anything here
 				return Path.EMPTY;
 			}
 			path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));
 		}
 		return path;
+	}
+
+	/**
+	 * see issue 12500: we should check whether the resource is virtual
+	 * <p>
+	 * TODO as soon as 3.5 is not supported, use resource.isVirtual() call
+	 *
+	 * @param locationURI
+	 *            may be null
+	 * @return true if the given path is null OR is virtual location
+	 */
+	public static boolean isVirtual(URI locationURI) {
+		return locationURI == null || "virtual".equals(locationURI.getScheme());
 	}
 
 	/**
