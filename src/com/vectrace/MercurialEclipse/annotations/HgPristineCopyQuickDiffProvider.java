@@ -9,7 +9,7 @@
  *     Charles O'Farrell - implementation (based on subclipse)
  *     StefanC           - jobs framework code cleenup
  *     Bastian Doetsch   - refactoring
- *     Andrei Loskutov (Intland)  - made it finally working
+ *     Andrei Loskutov   - made it finally working
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -40,7 +40,7 @@ import org.eclipse.ui.texteditor.quickdiff.IQuickDiffReferenceProvider;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -282,7 +282,7 @@ public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvi
 	private File getManagedHgFile() {
 		if (editor != null) {
 			IFile file = getFileFromEditor();
-			if (file != null && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
+			if (file != null && MercurialTeamProvider.isHgTeamProviderFor(file)) {
 				File hgFile = ResourceUtils.getFileHandle(file);
 				if (hgFile.exists()) {
 					return hgFile;

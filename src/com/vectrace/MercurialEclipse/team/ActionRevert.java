@@ -242,7 +242,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 				if(merging){
 					mergeIsRunning = true;
 				}
-				boolean supervised = MercurialUtilities.hgIsTeamProviderFor(resource, false);
+				boolean supervised = MercurialTeamProvider.isHgTeamProviderFor(resource);
 				if (supervised) {
 					resources.add(resource);
 				}

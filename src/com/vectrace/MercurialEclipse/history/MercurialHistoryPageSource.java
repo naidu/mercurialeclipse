@@ -18,7 +18,7 @@ import org.eclipse.team.ui.history.HistoryPageSource;
 import org.eclipse.ui.part.Page;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -47,7 +47,7 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
 		}
 		// allow to show history for files which are already deleted and committed
 		// (neither in the cache nor on disk)
-		return MercurialUtilities.isPossiblySupervised(resource);
+		return MercurialTeamProvider.isHgTeamProviderFor(resource);
 	}
 
 	public Page createPage(Object object) {

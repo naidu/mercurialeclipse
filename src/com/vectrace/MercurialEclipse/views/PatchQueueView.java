@@ -62,7 +62,6 @@ import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
 
@@ -338,13 +337,13 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				IResource newResource = (IResource) ((IAdaptable) structured.getFirstElement())
 						.getAdapter(IResource.class);
 				if (resource != null && resource.isAccessible()
-						&& MercurialUtilities.hgIsTeamProviderFor(resource, false)
+						&& MercurialTeamProvider.isHgTeamProviderFor(resource)
 						&& newResource != null && newResource.equals(resource)) {
 					return;
 				}
 
 				if (newResource != null && newResource.isAccessible()
-						&& MercurialUtilities.hgIsTeamProviderFor(newResource, false)) {
+						&& MercurialTeamProvider.isHgTeamProviderFor(newResource)) {
 					HgRoot newRoot = MercurialTeamProvider.getHgRoot(newResource);
 					if (!newRoot.equals(currentHgRoot)) {
 						currentHgRoot = newRoot;
@@ -360,7 +359,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			IEditorInput input = ((IEditorPart) part).getEditorInput();
 			IFile file = (IFile) input.getAdapter(IFile.class);
 			if (file != null && file.isAccessible()
-					&& MercurialUtilities.hgIsTeamProviderFor(file, false)) {
+					&& MercurialTeamProvider.isHgTeamProviderFor(file)) {
 				HgRoot newRoot = MercurialTeamProvider.getHgRoot(file);
 				if (!newRoot.equals(currentHgRoot)) {
 					currentHgRoot = newRoot;

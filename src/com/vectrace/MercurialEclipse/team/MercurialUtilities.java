@@ -23,9 +23,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -34,7 +31,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -42,8 +38,6 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.Team;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -236,74 +230,6 @@ public final class MercurialUtilities {
 		if (jobs.length == 0) {
 			job.schedule(50);
 		}
-	}
-
-	public static boolean isPossiblySupervised(IResource resource) {
-		if (resource == null) {
-			return false;
-		}
-		// check, if we're team provider
-		IProject project = resource.getProject();
-		if (!MercurialTeamProvider.isHgTeamProviderFor(project)) {
-			return false;
-		}
-		if(resource instanceof IProject){
-			// do not try to match project names: this doesn't make sense, see issue #11833
-			return true;
-		}
-
-		// TODO: The .hg folder should always be teamprivate, but support for this is not
-		// implemented for repositories not at project root.
-		if ((resource instanceof IFolder && ".hg".equals(resource.getName()))
-			|| resource.isTeamPrivateMember()) {
-			return false;
-		}
-		if (resource instanceof IFile) {
-			return !Team.isIgnoredHint(resource);
-		}
-		return true;
-	}
-
-	/**
-	 * Checks if the given resource is controlled by MercurialEclipse. If the given resource is
-	 * linked, it is not controlled by MercurialEclipse and therefore false is returned. A linked
-	 * file is not followed, so even if there might be a hg repository in the linked files original
-	 * location, we won't handle such a resource as supervised.
-	 *
-	 * @param dialog
-	 *            flag to signify that an error message should be displayed if the resource is a
-	 *            linked resource Return true if the resource
-	 * @return true, if MercurialEclipse provides team functions to this resource, false otherwise.
-	 */
-	public static boolean hgIsTeamProviderFor(IResource resource, boolean dialog) {
-		// check, if we're team provider
-		if (resource == null) {
-			return false;
-		}
-		IProject project = resource.getProject();
-		if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
-			return false;
-		}
-
-		// if we are team provider, this project can't be linked :-).
-		if (resource instanceof IProject) {
-			return true;
-		}
-
-		// Check to se if resource is not in a link
-		boolean isLinked = resource.isLinked(IResource.CHECK_ANCESTORS);
-
-		// open dialog if resource is linked and flag is set to true
-		if (dialog && isLinked) {
-			Shell shell = MercurialEclipsePlugin.getActiveShell();
-			MessageDialog.openInformation(shell, Messages
-					.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
-					Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
-		}
-
-		// TODO Follow links and see if they point to another reposetory
-
-		return !isLinked;
 	}
 
 	/**

@@ -7,7 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov  - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -41,7 +41,6 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
 
 /**
@@ -67,7 +66,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 
 		Composite comp = createComposite(parent, 1);
 
-		if (!MercurialUtilities.hgIsTeamProviderFor(project, false)) {
+		if (!MercurialTeamProvider.isHgTeamProviderFor(project)) {
 			setMessage("This project doesn't use MercurialEclipse as Team provider.");
 			return comp;
 		}

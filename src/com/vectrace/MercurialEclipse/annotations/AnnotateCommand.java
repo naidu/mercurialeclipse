@@ -10,7 +10,7 @@
  *     StefanC           - remove empty lines, code cleenup
  *     Jérôme Nègre      - make it work
  *     Bastian Doetsch   - refactorings
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov   - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.annotations;
@@ -32,7 +32,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class AnnotateCommand {
 	private static final Pattern ANNOTATE = Pattern
@@ -49,7 +49,7 @@ public class AnnotateCommand {
 
 	public AnnotateBlocks execute() throws HgException {
 
-		if (!MercurialUtilities.hgIsTeamProviderFor(file, true)) {
+		if (!MercurialTeamProvider.isHgTeamProviderFor(file)) {
 			return null;
 		}
 

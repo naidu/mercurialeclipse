@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
@@ -37,6 +38,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.Team;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 import org.eclipse.ui.IPropertyListener;
 
@@ -216,6 +218,56 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
 		return MercurialRootCache.isHgTeamProviderFor(project);
+	}
+
+	/**
+	 * Checks if the given resource is controlled by MercurialEclipse. If the given resource is
+	 * linked, it is possibly not controlled by MercurialEclipse and therefore false can be returned. A linked
+	 * file is followed only if it is contained inside the same hg root as the project.
+	 *
+	 * @return true, if MercurialEclipse provides team functions to this resource, false otherwise.
+	 */
+	public static boolean isHgTeamProviderFor(IResource resource) {
+		// check, if we're team provider
+		if (resource == null) {
+			return false;
+		}
+		IProject project = resource.getProject();
+		if (project == null || !isHgTeamProviderFor(project)) {
+			return false;
+		}
+
+		// if we are team provider, this project can't be linked :-).
+		if (resource instanceof IProject) {
+			return true;
+		}
+
+		// TODO: The .hg folder should always be team private, but support for this is not
+		// implemented for repositories not at project root.
+		if ((resource instanceof IFolder && ".hg".equals(resource.getName()))
+				|| resource.isTeamPrivateMember()) {
+			return false;
+		}
+
+		boolean ignored = Team.isIgnoredHint(resource);
+		if(ignored) {
+			return false;
+		}
+
+		// Check to se if resource is not in a link
+		boolean isLinked = resource.isLinked(IResource.CHECK_ANCESTORS);
+
+		if(!isLinked) {
+			return true;
+		}
+
+		// Follow links and see if they point to another repository
+		IResource realLocation = ResourceUtils.getRealLocation(resource);
+		if(realLocation == null) {
+			return false;
+		}
+		HgRoot hgRoot = hasHgRoot(realLocation.getProject());
+		return hgRoot != null;
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
@@ -417,4 +469,5 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		}
 		return resourceRuleFactory;
 	}
+
 }

@@ -31,7 +31,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
@@ -74,7 +73,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			return false;
 		}
 
-		if (!MercurialUtilities.isPossiblySupervised(res)) {
+		if (!MercurialTeamProvider.isHgTeamProviderFor(res)) {
 			return false;
 		}
 

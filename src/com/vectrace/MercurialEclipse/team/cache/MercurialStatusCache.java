@@ -66,7 +66,6 @@ import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -676,7 +675,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			Iterator<IProject> iterator = projects.resourceIterator();
 			while (iterator.hasNext()) {
 				IProject project = iterator.next();
-				if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(project)) {
+				if (!project.isOpen() || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
 					iterator.remove();
 					continue;
 				}
@@ -750,7 +749,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 		IProject project = res.getProject();
 
-		if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(res)) {
+		if (!project.isOpen() || !MercurialTeamProvider.isHgTeamProviderFor(res)) {
 			return;
 		}
 
@@ -763,7 +762,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		} else {
 			repos = new HashSet<HgRoot>();
 		}
-		repos.add(root);
+		if(root != null) {
+			repos.add(root);
+		}
 
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath projectLocation = project.getLocation();
@@ -944,13 +945,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 */
 	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines,
 			boolean propagateAllStates) {
-		long start = System.currentTimeMillis();
-
+		long start = 0;
+		if(debug){
+			start = System.currentTimeMillis();
+		}
 		// we need the project for performance reasons - gotta hand it to
 		// addToProjectResources
 		Set<IResource> changed = new HashSet<IResource>();
-		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-
 		List<String> strangeStates = new ArrayList<String>();
 
 		// Make values in the path map canonical
@@ -995,8 +996,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				bitSet = Integer.valueOf(bit);
 				changed.add(member);
 			}
-			setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
-			changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
+			if(!member.isLinked(IResource.CHECK_ANCESTORS)) {
+				setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
+				changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
+			}
 		}
 		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
@@ -1050,7 +1053,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return list;
 	}
 
-	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath, boolean allowForce) {
+	/**
+	 * @return return null if resource is not known or linked and not under the same root
+	 */
+	private IResource findMember(Map<IProject, IPath> pathMap, final IPath hgRootPath,
+			final String repoRelPath, final boolean allowForce) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();

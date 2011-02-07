@@ -254,6 +254,22 @@ public final class ResourceUtils {
 	}
 
 	/**
+	 * @param linked non null linked resource
+	 * @return may return null if the link target is not inside workspace
+	 */
+	public static IResource getRealLocation(IResource linked) {
+		IPath path = getPath(linked);
+		if(path.isEmpty()) {
+			return null;
+		}
+		IResource handle = getHandle(path, linked.getType() == IResource.FILE);
+		if(handle == null || handle.isLinked()) {
+			return null;
+		}
+		return handle;
+	}
+
+	/**
 	 * Converts a {@link java.io.File} to a workspace resource
 	 */
 	public static IResource convert(File file) throws HgException {
