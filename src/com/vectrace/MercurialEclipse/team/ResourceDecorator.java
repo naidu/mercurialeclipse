@@ -194,9 +194,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		}
 
 		try {
-			if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
-				// Resource could be inside a link or something do nothing
-				// in the future this could check is this is another repository
+			if (!MercurialTeamProvider.isHgTeamProviderFor(project)) {
 				return;
 			}
 
