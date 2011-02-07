@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -249,9 +250,13 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return false;
 		}
 
-		boolean ignored = Team.isIgnoredHint(resource);
-		if(ignored) {
-			return false;
+		// Should not check ignored status for directories which may contain NOT ignored files...
+		// http://code.google.com/a/eclipselabs.org/p/mercurialeclipse/issues/detail?id=28
+		if(resource instanceof IFile) {
+			boolean ignored = Team.isIgnoredHint(resource);
+			if(ignored) {
+				return false;
+			}
 		}
 
 		// Check to se if resource is not in a link
