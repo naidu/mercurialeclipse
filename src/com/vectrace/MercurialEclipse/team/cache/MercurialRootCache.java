@@ -185,7 +185,7 @@ public class MercurialRootCache extends AbstractCache {
 		}
 
 		// As an optimization only cache for containers not files
-		if (resource instanceof IFile) {
+		if (resource instanceof IFile && !resource.isLinked()) {
 			resource = resource.getParent();
 		}
 
