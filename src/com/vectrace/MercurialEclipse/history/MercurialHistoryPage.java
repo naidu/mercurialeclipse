@@ -48,6 +48,7 @@ import org.eclipse.jface.fieldassist.IContentProposalListener;
 import org.eclipse.jface.fieldassist.IContentProposalListener2;
 import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.revisions.Revision;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -91,9 +92,12 @@ import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.team.ui.history.IHistoryView;
+import org.eclipse.team.ui.history.RevisionAnnotationController;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
@@ -106,6 +110,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
+import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -126,6 +131,7 @@ import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 public class MercurialHistoryPage extends HistoryPage {
 
+	public static final String REMOTE_MODE = null;
 	private GraphLogTableViewer viewer;
 	IResource resource;
 	private HgRoot hgRoot;
@@ -157,6 +163,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private Composite gotoPanel;
 	private HistoryContentProposalProvider proposalProvider;
 	private Job fetchAllJob;
+	private RevisionAnnotationController rulerSelectionListener;
 
 
 	/**
@@ -404,6 +411,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				} else {
 					mercurialHistory = null;
 				}
+				linkWithEditor();
 				refresh();
 			}
 			return true;
@@ -418,6 +426,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			} else {
 				mercurialHistory = null;
 			}
+			linkWithEditor();
 			refresh();
 		}
 		return true;
@@ -514,7 +523,6 @@ public class MercurialHistoryPage extends HistoryPage {
 				copyToClipboard();
 			}
 		});
-
 	}
 
 	private static Composite createComposite(Composite parent) {
@@ -1313,4 +1321,56 @@ public class MercurialHistoryPage extends HistoryPage {
 		// selection provider, so we must have it set properly to support Properties view
 		getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
 	}
+
+	/**
+	 * @see org.eclipse.ui.part.Page#dispose()
+	 */
+	@Override
+	public void dispose() {
+		super.dispose();
+
+		if (rulerSelectionListener != null) {
+			rulerSelectionListener.dispose();
+			rulerSelectionListener= null;
+		}
+	}
+
+	private final class MercurialRevisionAnnotationController extends RevisionAnnotationController {
+		public MercurialRevisionAnnotationController(IWorkbenchPage page, IFile file) {
+			super(page, file, viewer);
+		}
+
+		public MercurialRevisionAnnotationController(IWorkbenchPage page, IStorageEditorInput editorInput) {
+			super(page, editorInput, viewer);
+		}
+
+		@Override
+		protected Object getHistoryEntry(Revision selected) {
+			if (selected instanceof ShowAnnotationOperation.MercurialRevision) {
+				return MercurialHistoryPage.this.mercurialHistory.getFileRevision(((ShowAnnotationOperation.MercurialRevision)selected).getChangeSet().getChangeset());
+			}
+			return null;
+		}
+	}
+
+	public void linkWithEditor() {
+		if (rulerSelectionListener != null) {
+			rulerSelectionListener.dispose();
+			rulerSelectionListener= null;
+		}
+
+		if (!getHistoryPageSite().isModal()) {
+			if (resource instanceof IFile) {
+				IFile file = (IFile) resource;
+				rulerSelectionListener= new MercurialRevisionAnnotationController(getHistoryPageSite().getWorkbenchPageSite().getPage(), file);
+			} else {
+				Object input = getInput();
+				if (input instanceof IStorageEditorInput) {
+					IStorageEditorInput editorInput = (IStorageEditorInput) input;
+					rulerSelectionListener= new MercurialRevisionAnnotationController(getHistoryPageSite().getWorkbenchPageSite().getPage(), editorInput);
+				}
+			}
+		}
+	}
+
 }
