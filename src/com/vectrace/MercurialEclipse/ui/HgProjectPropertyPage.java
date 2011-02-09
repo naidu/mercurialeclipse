@@ -231,7 +231,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 	@Override
 	public boolean isValid() {
 		if (hgRoot == null) {
-			return false;
+			return super.isValid();
 		}
 		IHgRepositoryLocation data = (IHgRepositoryLocation) defTextField.getData();
 		if (data == null) {
