@@ -36,6 +36,7 @@ public class HgCatClient extends AbstractClient {
 
 		command.addOptions("--decode"); //$NON-NLS-1$
 		command.addOptions(hgRoot.toRelative(file));
+		command.setEncoding(ResourceUtils.getFileEncoding(resource));
 
 		return command.executeToString();
 	}
@@ -54,7 +55,9 @@ public class HgCatClient extends AbstractClient {
 		}
 
 		hgCommand.addOptions("--decode", hgRoot.toRelative(file));
+		hgCommand.setEncoding(ResourceUtils.getFileEncoding(resource));
 
 		return hgCommand.executeToString();
 	}
+
 }

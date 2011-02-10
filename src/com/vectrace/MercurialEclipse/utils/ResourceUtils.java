@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -131,6 +132,26 @@ public final class ResourceUtils {
 	 */
 	public static File getFileHandle(IResource resource) {
 		return getPath(resource).toFile();
+	}
+
+	/**
+	 * Tries to determine the encoding for a file resource. Returns null, if the encoding cannot be
+	 * determined.
+	 */
+	public static String getFileEncoding(IFile resource){
+		try{
+			String charset = resource.getCharset(true);
+			if(charset != null) {
+				new String(new byte[]{}, charset); //test that JVM has the charset available
+			}
+			return charset;
+		} catch (CoreException e) {
+			//cannot determine the file charset
+			return null;
+		} catch (UnsupportedEncodingException e) {
+			//unknown encoding, ignore the request
+			return null;
+		}
 	}
 
 	/**

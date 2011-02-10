@@ -58,6 +58,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private static final int BUFFER_SIZE = 32768;
 
 	/**
+	 * File encoding to use. If not specified falls back to {@link HgRoot}'s encoding.
+	 */
+	private String encoding = null;
+
+	/**
 	 * See http://msdn.microsoft.com/en-us/library/ms682425(VS.85).aspx The maximum command line
 	 * length for the CreateProcess function is 32767 characters. This limitation comes from the
 	 * UNICODE_STRING structure.
@@ -501,8 +506,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		} else if (output instanceof ByteArrayOutputStream) {
 			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
 			try {
-				String encoding = getEncoding();
-				msg = baos.toString(encoding);
+				msg = baos.toString(getEncoding());
 			} catch (UnsupportedEncodingException e) {
 				logError(e);
 				msg = baos.toString();
@@ -515,14 +519,21 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	/**
+	 * Sets the command output charset if the charset is available in the VM.
+	 */
+	public void setEncoding(String charset) {
+		encoding = charset;
+	}
+	/**
 	 * @return never returns null
 	 */
 	private String getEncoding() {
-		String encoding = null;
-		if (hgRoot != null) {
-			encoding = hgRoot.getEncoding().name();
-		} else {
-			encoding = getDefaultEncoding().name();
+		if(encoding == null){
+			if (hgRoot != null) {
+				encoding = hgRoot.getEncoding().name();
+			} else {
+				encoding = getDefaultEncoding().name();
+			}
 		}
 		return encoding;
 	}
