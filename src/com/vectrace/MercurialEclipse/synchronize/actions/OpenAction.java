@@ -135,7 +135,7 @@ public class OpenAction extends Action {
 					} else {
 						parentRev = new MercurialRevisionStorage(file, parents[0]);
 					}
-					CompareUtils.openEditor(thisRev, parentRev, false, false, configuration);
+					CompareUtils.openEditor(parentRev, thisRev, false, false, configuration);
 				} else {
 					// incoming
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
@@ -166,7 +166,7 @@ public class OpenAction extends Action {
 						parentRev = new MercurialRevisionStorage(
 								file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
 					}
-					CompareUtils.openEditor(remoteRev, parentRev, false, false, configuration);
+					CompareUtils.openEditor(parentRev, remoteRev, false, false, configuration);
 					// the line below compares the remote changeset with the local copy.
 					// it was replaced with the code above to fix the issue 10364
 					// CompareUtils.openEditor(file, cs, true, true);
