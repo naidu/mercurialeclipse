@@ -117,7 +117,7 @@
 
         <!-- mercurial -->
         <definition id="com.vectrace.MercurialEclipse.def.mercurial">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <test
                           property="org.eclipse.core.resources.projectPersistentProperty"
@@ -129,7 +129,7 @@
 
         <!-- Must be file -->
         <definition id="com.vectrace.MercurialEclipse.def.file">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <adapt type="org.eclipse.core.resources.IFile"/>
                 </adapt>
@@ -138,7 +138,7 @@
 
         <!-- Must be project -->
         <definition id="com.vectrace.MercurialEclipse.def.project">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <adapt type="org.eclipse.core.resources.IProject"/>
                 </adapt>
@@ -147,7 +147,7 @@
 
         <!-- notInMercurial -->
         <definition id="com.vectrace.MercurialEclipse.def.ignored">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                         <test
                               property="com.vectrace.MercurialEclipse.propertyTester.status"
@@ -159,7 +159,7 @@
         
         <!-- project is NOT hg root -->
         <definition id="com.vectrace.MercurialEclipse.def.notRoot">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <adapt type="org.eclipse.core.resources.IProject">
                            <test
@@ -173,7 +173,7 @@
 
         <!-- hgUnknown -->
         <definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
                               args="unknown"/>
@@ -194,7 +194,7 @@
 
         <!-- merging -->
         <definition id="com.vectrace.MercurialEclipse.def.merging">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <test
                           property="org.eclipse.core.resources.projectPersistentProperty"
@@ -206,7 +206,7 @@
 
         <!-- notMerging -->
         <definition id="com.vectrace.MercurialEclipse.def.notMerging">
-            <iterate>
+            <iterate ifEmpty="false">
                 <adapt type="org.eclipse.core.resources.IResource">
                     <not>
                         <test
