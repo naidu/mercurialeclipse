@@ -10,7 +10,7 @@
  *     VecTrace (Zingo Andersen) - updateing it
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Ilya Ivanov (Intland)	 - bug fixes
  *******************************************************************************/
 
@@ -201,11 +201,6 @@ IWorkbenchPreferencePage {
 		addField(new BooleanFieldEditor(
 				PREF_AUTO_SHARE_PROJECTS,
 				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
-				getFieldEditorParent()));
-
-		addField(new BooleanFieldEditor(
-				PREF_SYNC_ONLY_CURRENT_BRANCH,
-				Messages.getString("GeneralPreferencePage.syncOnlyCurrentBranch"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(

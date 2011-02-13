@@ -1300,6 +1300,10 @@
             id="com.vectrace.MercurialEclipse.prefspage"
             category="org.eclipse.team.ui.TeamPreferences"
             name="%mercurial"/>
+      <page class="com.vectrace.MercurialEclipse.preferences.SynchronizePreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.Synchronize"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="%synchronize"/>
       <page class="com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
             category="com.vectrace.MercurialEclipse.prefspage"

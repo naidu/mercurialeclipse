@@ -9,7 +9,7 @@
  *     Gunnar Ahlberg - implementation
  *     Jérôme Nègre   - constants are now, well, constant
  *     Bastian Doetsch
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -41,6 +41,8 @@ public final class MercurialPreferenceConstants {
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
 	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
 
+	/** true to automatically include all projects from the repository in the synchronize view */
+	public static final String PREF_SYNC_ALL_PROJECTS_IN_REPO = "hg.syncAllProjectsInRepository"; //$NON-NLS-1$
 	public static final String PREF_SYNC_ONLY_CURRENT_BRANCH = "hg.syncOnlyCurrentBranch"; //$NON-NLS-1$
 	public static final String PREF_SYNC_PRESENTATION_MODE = "hg.syncPresentationMode";  //$NON-NLS-1$
 

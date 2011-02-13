@@ -8,6 +8,7 @@
  * Contributors:
  *     Jerome Negre - implementation
  *     Bastian Doetsch
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -36,25 +37,28 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class MultipleResourcesHandler extends AbstractHandler {
 
-	private List<IResource> selection;
+	private final List<IResource> selection = new ArrayList<IResource>();
 	private ExecutionEvent event;
 
-	protected Shell getShell() {
+	protected static Shell getShell() {
 		return MercurialEclipsePlugin.getActiveShell();
 	}
 
+	/**
+	 *
+	 * @return never null, list with resources selected by user
+	 */
 	protected List<IResource> getSelectedResources() {
 		return selection;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Object execute(ExecutionEvent event1) throws ExecutionException {
 		this.event = event1;
 		Object selectionObject = ((EvaluationContext) event
 				.getApplicationContext()).getDefaultVariable();
-		selection = new ArrayList<IResource>();
+		selection.clear();
 		if (selectionObject != null && selectionObject instanceof List) {
-			List list = (List) selectionObject;
+			List<?> list = (List) selectionObject;
 			for (Object listEntry : list) {
 				if (listEntry != null && listEntry instanceof IAdaptable) {
 					IAdaptable selectionAdaptable = (IAdaptable) listEntry;
@@ -63,7 +67,7 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 				}
 			}
 		}
-		if (selection.size() == 0) {
+		if (selection.isEmpty()) {
 			selection.add(ResourceUtils.getActiveResourceFromEditor());
 		}
 
@@ -76,12 +80,14 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 							Messages
 									.getString("MultipleResourcesHandler.hgSays"), e.getMessage() + Messages.getString("MultipleResourcesHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 			throw new ExecutionException(e.getMessage(), e);
+		} finally {
+			selection.clear();
 		}
 		this.event = null;
 		return null;
 	}
 
-	protected HgRoot ensureSameRoot(List<IResource> resources) throws HgException {
+	protected static HgRoot ensureSameRoot(List<IResource> resources) throws HgException {
 		final HgRoot root = MercurialTeamProvider.getHgRoot(resources.get(0));
 		for (IResource res : resources) {
 			if (!root.equals(MercurialTeamProvider.getHgRoot(res))) {
