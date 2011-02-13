@@ -12,8 +12,11 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -36,9 +39,9 @@ public class HgGrepClient extends AbstractClient {
 	 * @return
 	 * @throws HgException
 	 */
-	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern, List<IResource> files, boolean all)
+	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern, List<IResource> files, boolean all, final IProgressMonitor monitor)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("grep", "Searching repository", root, true);
+		final AbstractShellCommand cmd = new HgCommand("grep", "Searching repository", root, true);
 		cmd.addOptions("-nuf");
 		if (all) {
 			cmd.addOptions("--all");
@@ -49,9 +52,30 @@ public class HgGrepClient extends AbstractClient {
 
 		cmd.addOptions(pattern);
 		cmd.addFilesWithoutFolders(files);
-		String result = cmd.executeToString(false);
-		List<MercurialTextSearchMatchAccess> list = getSearchResults(root, result, all);
-		return list;
+
+		String result = null;
+
+		if (monitor != null) {
+			Timer t = new Timer("HG GREP watcher");
+			try {
+				t.schedule(new TimerTask() {
+					@Override
+					public void run() {
+						if (monitor.isCanceled()) {
+							cmd.terminate();
+							cancel();
+						}
+					}
+				}, 100, 100);
+				result = cmd.executeToString(false);
+			} finally {
+				t.cancel();
+			}
+		} else {
+			result = cmd.executeToString(false);
+		}
+
+		return getSearchResults(root, result, all);
 	}
 
 	/**
