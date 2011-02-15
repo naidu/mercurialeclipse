@@ -8,7 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -175,10 +175,8 @@ public class PullPage extends PushPullPage {
 			public void widgetSelected(SelectionEvent e) {
 				commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
 				if (mergeCheckBox.getSelection()) {
-					String status;
 					try {
-						status = HgStatusClient.getStatus(getHgRoot());
-						if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
+						if (HgStatusClient.isDirty(getHgRoot())) {
 							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
 							setPageComplete(false);
 						} else {

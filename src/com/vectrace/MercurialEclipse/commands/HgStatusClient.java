@@ -9,7 +9,7 @@
  *     Jerome Negre              - initial
  *     Bastian Doetsch           - changes
  *     Brian Wallis              - getMergeStatus
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -58,14 +58,6 @@ public class HgStatusClient extends AbstractClient {
 	//             group 1                         group 2                             group 3
 	// (first parent, optional dirty flag)(merge parent, optional dirty flag) space (branch name)
 	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$");
-
-	public static String getStatus(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
-		// modified, added, removed, deleted, unknown, ignored, clean
-		command.addOptions("-marduic"); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		return command.executeToString();
-	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$

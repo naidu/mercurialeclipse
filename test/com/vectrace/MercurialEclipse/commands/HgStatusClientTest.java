@@ -26,6 +26,6 @@ public class HgStatusClientTest extends TestCase {
 		HgClients.initialize(cfg, cfg, cfg);
 	}
 	public void testGetStatus() throws Exception {
-		HgStatusClient.getStatus(new HgRoot("."));
+		HgStatusClient.getDirtyFiles(new HgRoot("."));
 	}
 }
