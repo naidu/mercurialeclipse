@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2010 Andrei Loskutov (Intland).
+ * Copyright (c) 2010 Andrei Loskutov.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -24,8 +24,6 @@ import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.internal.ui.wizards.GlobalRefreshWizardSelectionPage;
-import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
@@ -144,16 +142,11 @@ public class SelectRevisionPage extends WizardPage {
 				if(!event.doit){
 					return;
 				}
-				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
-						|| event.getTargetPage() instanceof GlobalRefreshWizardSelectionPage
-						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage
-						|| event.getTargetPage() instanceof SelectRevisionPage
-						|| event.getTargetPage() instanceof ClonePage){
-					// always allow flip back and force from the Eclipse "New..."/"Synchronize" wizards
-					event.doit = true;
-					return;
+				if (event.getCurrentPage() == SelectRevisionPage.this
+						&& event.getTargetPage() != SelectRevisionPage.this.getPreviousPage()) {
+					// Only fire if we're transitioning forward from this page.
+					event.doit = nextButtonPressed();
 				}
-				event.doit = nextButtonPressed();
 			}
 		});
 	}

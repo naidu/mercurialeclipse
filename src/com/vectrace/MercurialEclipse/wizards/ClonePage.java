@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Bastian Doetsch    - implementation
+ *     Andrei Loskutov    - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -37,8 +37,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.team.internal.ui.wizards.GlobalRefreshWizardSelectionPage;
-import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -111,15 +109,11 @@ public class ClonePage extends PushPullPage {
 		dialog.addPageChangingListener(new IPageChangingListener() {
 
 			public void handlePageChanging(PageChangingEvent event) {
-				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
-						|| event.getTargetPage() instanceof ClonePage
-						|| event.getTargetPage() instanceof GlobalRefreshWizardSelectionPage
-						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage){
-					// always allow flip back and force from the Eclipse "New..."/"Synchronize" wizards
-					event.doit = true;
-					return;
+				if (event.getCurrentPage() == ClonePage.this
+						&& event.getTargetPage() != ClonePage.this.getPreviousPage()) {
+					// Only fire if we're transitioning forward from this page.
+					event.doit = nextButtonPressed();
 				}
-				event.doit = nextButtonPressed();
 			}
 		});
 	}
