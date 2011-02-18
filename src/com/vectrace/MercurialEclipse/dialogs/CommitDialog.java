@@ -552,16 +552,26 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private boolean confirmHistoryRewrite() {
-		return MessageDialog.openQuestion(getShell(), Messages
-				.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
-				Messages.getString("CommitDialog.amendWarning1")
-						+ Messages.getString("CommitDialog.amendWarning2")
-						+ Messages.getString("CommitDialog.amendWarning3"));
+		MessageDialog dialog = new MessageDialog(
+				getShell(),
+				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
+				null,
+				Messages.getString("CommitDialog.amendWarning1") 				//$NON-NLS-1$
+					+ Messages.getString("CommitDialog.amendWarning2")			//$NON-NLS-1$
+					+ Messages.getString("CommitDialog.amendWarning3"),			//$NON-NLS-1$
+				MessageDialog.CONFIRM,
+				new String[]{
+					IDialogConstants.YES_LABEL,
+					IDialogConstants.CANCEL_LABEL},
+				1 // default index - cancel
+				);
+		dialog.setBlockOnOpen(true); // if false then may show in background
+		return  dialog.open() == 0; // 0 means yes
 	}
 
 	/**
 	 * @return the result of the commit operation (hg output), if any. If there was no commit or
-	 *         commit ouput was null, return empty string
+	 *         commit output was null, return empty string
 	 */
 	public String getCommitResult() {
 		return commitResult != null ? commitResult : "";
