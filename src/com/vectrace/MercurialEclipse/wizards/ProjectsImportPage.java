@@ -815,16 +815,26 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		// Eclipse will create a new EMPTY project
 		if (record.description.getLocationURI() == null && !projectName.equals(record.getDataDir().getName())) {
 			File newRoot = new File(record.getDataDir().getParentFile(), projectName);
-			if(!newRoot.exists()) {
+			boolean ok = false;
+
+			try {
+				ok = newRoot.getCanonicalFile().getName().equals(record.getDataDir().getName());
+			} catch (IOException e) {
+			}
+
+			if (ok) {
+				// case insensitive filesystem and the project name differs in case
+			}
+			else if(!newRoot.exists()) {
 				// we CAN use renameTo here because src and dest folders are on same file system
 				// renameTo does NOT work on different file systems
 				boolean renamed = record.getDataDir().renameTo(newRoot);
 				if(!renamed){
-					// XXX report issue
+					MercurialEclipsePlugin.logError(new IllegalStateException("Couldn't rename hgroot to project dir"));
 					return false;
 				}
 			} else {
-				// XXX report issue
+				MercurialEclipsePlugin.logError(new IllegalStateException("New project data directory doesn't exist"));
 				return false;
 			}
 		}
