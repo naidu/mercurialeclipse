@@ -815,17 +815,14 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		// Eclipse will create a new EMPTY project
 		if (record.description.getLocationURI() == null && !projectName.equals(record.getDataDir().getName())) {
 			File newRoot = new File(record.getDataDir().getParentFile(), projectName);
-			boolean ok = false;
+			boolean caseDiffers = false;
 
 			try {
-				ok = newRoot.getCanonicalFile().getName().equals(record.getDataDir().getName());
+				caseDiffers = newRoot.getCanonicalFile().getName().equals(record.getDataDir().getName());
 			} catch (IOException e) {
 			}
 
-			if (ok) {
-				// case insensitive filesystem and the project name differs in case
-			}
-			else if(!newRoot.exists()) {
+			if(!newRoot.exists() || caseDiffers) {
 				// we CAN use renameTo here because src and dest folders are on same file system
 				// renameTo does NOT work on different file systems
 				boolean renamed = record.getDataDir().renameTo(newRoot);
