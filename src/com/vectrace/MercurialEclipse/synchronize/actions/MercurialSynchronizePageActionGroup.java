@@ -40,10 +40,10 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -194,7 +194,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 							getConfiguration(), getVisibleRootsSelectionProvider()));
 			menu.insertAfter(
 					HG_COMMIT_GROUP,
-					new SwitchToSynchronizeAction("Switch to",
+					new SwitchToSynchronizeAction("Switch to", "Switch to parent",
 							getConfiguration(), getVisibleRootsSelectionProvider()));
 		}
 

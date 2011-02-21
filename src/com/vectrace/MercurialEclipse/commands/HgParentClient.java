@@ -46,12 +46,7 @@ public class HgParentClient extends AbstractClient {
 		AbstractShellCommand command = new HgCommand("parents", "Finding parent revisions", hgRoot,
 				false);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = getLines(command.executeToString());
-		String[] parents = new String[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = lines[i].trim();
-		}
-		return parents;
+		return parseParentsCommand(command);
 	}
 
 	public static String[] getParentNodeIds(IResource file)
@@ -62,22 +57,27 @@ public class HgParentClient extends AbstractClient {
 			command.addFiles(file);
 		}
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = getLines(command.executeToString());
-		String[] parents = new String[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = lines[i].trim();
-		}
-		return parents;
+		return parseParentsCommand(command);
 	}
 
-	public static String[] getParentNodeIds(IResource resource, ChangeSet cs)
-			throws HgException {
+	public static String[] getParentNodeIds(ChangeSet cs, String template) throws HgException {
+		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
+				"Finding parent revisions", cs.getHgRoot(), false);
+		command.addOptions("--template", template + "\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				.getChangeset());
+		return parseParentsCommand(command);
+	}
+
+	public static String[] getParentNodeIds(IResource resource, ChangeSet cs) throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				"Finding parent revisions", resource, false);
-		command
-				.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-						.getChangeset());
-		String[] lines = getLines(command.executeToString());
+		command.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				.getChangeset());
+		return parseParentsCommand(command);
+	}
+
+	private static String[] parseParentsCommand(AbstractShellCommand parentsCommand) throws HgException {
+		String[] lines = getLines(parentsCommand.executeToString());
 		String[] parents = new String[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			parents[i] = lines[i].trim();

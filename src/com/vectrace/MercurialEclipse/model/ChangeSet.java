@@ -37,6 +37,7 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
@@ -533,6 +534,17 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	public String[] getParents() {
 		return parents;
+	}
+
+	public HgRevision getParentRevision(int ordinal, boolean bQuery) {
+		if (bQuery && getChangesetIndex() != 0 && (parents == null || parents.length == 0)) {
+			try {
+				parents = HgParentClient.getParentNodeIds(this, "{rev}:{node}");
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		return getParentRevision(ordinal);
 	}
 
 	public HgRevision getParentRevision(int ordinal) {
