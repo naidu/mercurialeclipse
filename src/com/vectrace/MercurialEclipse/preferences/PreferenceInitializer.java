@@ -92,7 +92,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_SHOW_COMMENTS, true);
 		store.setDefault(PREF_SHOW_PATHS, true);
 		store.setDefault(PREF_SHOW_DIFFS, true);
-		store.setDefault(PREF_SHOW_ALL_TAGS, true);
+		store.setDefault(PREF_SHOW_ALL_TAGS, false);
 		store.setDefault(PREF_SHOW_GOTO_TEXT, true);
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
