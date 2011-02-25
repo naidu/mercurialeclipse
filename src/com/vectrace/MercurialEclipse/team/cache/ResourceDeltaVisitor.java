@@ -25,7 +25,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
@@ -90,19 +89,10 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			addResource(changed, project, currentRoot, project);
 			return false;
 		}
-		// System.out.println("Observing change on: " + res);
 
 		// NB: the resource may not exist at this point (deleted/moved)
 		// so any access to the IResource's API should be checked against null
-		if(subrepoEnabled && res.getType() == IResource.FOLDER){
-			// each folder is potentially a new subrepos, which may mean another HgRoot for its children
-			HgRoot root = AbstractClient.isHgRoot(res);
-			if(root != null){
-				// yup that was indeed a subrepos.
-				currentRoot = root;
-			}
-
-		} else if (res.getType() == IResource.FILE) {
+		if (res.getType() == IResource.FILE) {
 			IResource resource = isCompleteStatusRequested()? project : res;
 			switch (delta.getKind()) {
 			case IResourceDelta.ADDED:
