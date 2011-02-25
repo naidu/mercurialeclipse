@@ -95,6 +95,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		INTERESTING_PREFS.add(PREF_DECORATE_WITH_COLORS);
 		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		INTERESTING_PREFS.add(PREF_ENABLE_SUBREPO_SUPPORT);
 	}
 
 	/** set to true when having 2 different statuses in a folder flags it has modified */
@@ -105,8 +106,8 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private boolean showIncomingChangeset;
 	private boolean enableSubrepos;
 	private boolean disposed;
-	private IPropertyChangeListener themeListener;
-	private IPropertyChangeListener prefsListener;
+	private final IPropertyChangeListener themeListener;
+	private final IPropertyChangeListener prefsListener;
 
 	public ResourceDecorator() {
 		configureFromPreferences();
