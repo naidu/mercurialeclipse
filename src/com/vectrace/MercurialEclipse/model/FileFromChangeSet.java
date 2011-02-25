@@ -86,7 +86,8 @@ public class FileFromChangeSet implements IAdaptable{
 	}
 
 	/**
-	 * @return Path relative to the hg root. May return null if file is not under Eclipse workspace.
+	 * @return Path relative to the hg root or the containing project, whichever has the greater
+	 *         number of segments. May return null.
 	 */
 	public IPath getPath() {
 		if (fileStatus != null) {
@@ -96,9 +97,15 @@ public class FileFromChangeSet implements IAdaptable{
 			if (root == null) {
 				root = MercurialTeamProvider.getHgRoot(file);
 			}
-			if (root != null) {
-				return root.toRelative(file);
+
+			IPath path1, path2 = file.getProjectRelativePath();
+			if (root != null && (path1 = root.toRelative(file)) != null)  {
+				if (path2 == null) {
+					return path1;
+				}
+				return path1.segmentCount() > path2.segmentCount() ? path1 : path2;
 			}
+			return path2;
 		}
 		return null;
 	}
