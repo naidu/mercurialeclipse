@@ -367,7 +367,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			remove(path, dir);
 		}
 
-		void remove(IPath path, PathsSet set) {
+		static void remove(IPath path, PathsSet set) {
 			if(!set.isEmpty()) {
 				set.remove(path);
 			}
@@ -1056,17 +1056,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/**
 	 * @return return null if resource is not known or linked and not under the same root
 	 */
-	private IResource findMember(Map<IProject, IPath> pathMap, final IPath hgRootPath,
+	private static IResource findMember(Map<IProject, IPath> pathMap, final IPath hgRootPath,
 			final String repoRelPath, final boolean allowForce) {
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
-		boolean singleProject = pathMap.size() == 1;
 		for (Entry<IProject, IPath> entry : set) {
 			IPath projectLocation = entry.getValue();
 			// determine project relative path
 			int equalSegments = path.matchingFirstSegments(projectLocation);
-			if(equalSegments == projectLocation.segmentCount() || singleProject) {
+			if(equalSegments == projectLocation.segmentCount() || hgRootPath.equals(projectLocation)) {
 				IProject project = entry.getKey();
 				IPath segments = path.removeFirstSegments(equalSegments);
 				IResource result = project.findMember(segments);
