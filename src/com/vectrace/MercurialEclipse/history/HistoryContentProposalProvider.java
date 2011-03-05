@@ -48,32 +48,32 @@ public class HistoryContentProposalProvider implements IContentProposalProvider 
 			ChangeSet changeSet = revision.getChangeSet();
 			if (changeSet.getName().startsWith(filter)
 					|| changeSet.getChangeset().startsWith(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.REVISION, null));
+				result.add(new RevisionContentProposal(revision, ContentType.REVISION, null));
 				continue;
 			}
 			String author = revision.getAuthor();
 			if(author != null && author.toLowerCase().contains(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.AUTHOR, author));
+				result.add(new RevisionContentProposal(revision, ContentType.AUTHOR, author));
 				continue;
 			}
 			String comment = revision.getComment();
 			if(comment != null && comment.toLowerCase().contains(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.SUMMARY, null));
+				result.add(new RevisionContentProposal(revision, ContentType.SUMMARY, null));
 				continue;
 			}
 			String tags = ChangeSetUtils.getPrintableTagsString(revision.getChangeSet());
 			if(tags.toLowerCase().contains(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.TAG, tags));
+				result.add(new RevisionContentProposal(revision, ContentType.TAG, tags));
 				continue;
 			}
 			String branch = revision.getChangeSet().getBranch();
 			if(branch != null && branch.toLowerCase().contains(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.BRANCH, branch));
+				result.add(new RevisionContentProposal(revision, ContentType.BRANCH, branch));
 				continue;
 			}
 			String date = revision.getChangeSet().getDateString();
 			if(date != null && date.startsWith(filter)) {
-				result.add(0, new RevisionContentProposal(revision, ContentType.DATE, date));
+				result.add(new RevisionContentProposal(revision, ContentType.DATE, date));
 				continue;
 			}
 		}
