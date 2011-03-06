@@ -144,7 +144,7 @@ public class IncomingPage extends HgWizardPage {
 						parentRev = new MercurialRevisionStorage(
 								file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
 					}
-					CompareUtils.openEditor(remoteRev, parentRev, true, false);
+					CompareUtils.openEditor(remoteRev, parentRev, true);
 					// the line below compares the remote changeset with the local copy.
 					// it was replaced with the code above to fix the issue 10364
 					// CompareUtils.openEditor(file, cs, true, true);

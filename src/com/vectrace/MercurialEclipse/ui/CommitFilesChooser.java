@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -228,18 +227,6 @@ public class CommitFilesChooser extends Composite {
 				GridData.FILL_HORIZONTAL));
 	}
 
-	protected CompareEditorInput getCompareEditorInput() {
-		if (selectedFile == null) {
-			return null;
-		}
-		MercurialRevisionStorage iStorage = new MercurialRevisionStorage(
-				selectedFile);
-		ResourceNode right = new RevisionNode(iStorage);
-		ResourceNode left = new ResourceNode(selectedFile);
-		return CompareUtils.getCompareInput(left, right, false);
-	}
-
-	@SuppressWarnings("unused")
 	private void makeActions() {
 		getViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -447,7 +434,7 @@ public class CommitFilesChooser extends Composite {
 					selectedFile);
 			ResourceNode right = new RevisionNode(iStorage);
 			ResourceNode left = new ResourceNode(selectedFile);
-			CompareUtils.openEditor(left, right, true, false, null);
+			CompareUtils.openEditor(left, right, true, null);
 		}
 	}
 

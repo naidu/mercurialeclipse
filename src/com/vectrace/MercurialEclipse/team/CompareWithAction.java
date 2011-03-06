@@ -30,7 +30,7 @@ public class CompareWithAction extends CompareAction {
 				Messages.getString("CompareWithAction.compareWith"), file); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			CompareUtils.openEditor(file, dialog.getChangeSet(), true);
+			CompareUtils.openEditor(file, dialog.getChangeSet());
 		}
 	}
 

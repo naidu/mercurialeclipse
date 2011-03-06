@@ -126,7 +126,7 @@ public class OutgoingPage extends IncomingPage {
 				} else {
 					parentRev = new MercurialRevisionStorage(file, parents[0]);
 				}
-				CompareUtils.openEditor(thisRev, parentRev, true, false);
+				CompareUtils.openEditor(thisRev, parentRev, true);
 			} else {
 				// It is possible that file has been removed or part of the
 				// repository but not the project (and has incoming changes)

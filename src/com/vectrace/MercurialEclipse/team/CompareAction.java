@@ -11,7 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
@@ -27,7 +27,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -114,7 +113,7 @@ public class CompareAction extends SingleFileAction {
 							ChangeSet cs2 = LocalChangesetCache.getInstance()
 									.getOrFetchChangeSetById(file, parents[0]);
 							if (cs2 != null) {
-								CompareUtils.openEditor(file, cs2, true);
+								CompareUtils.openEditor(file, cs2);
 								return Status.OK_STATUS;
 							}
 						}
@@ -139,7 +138,7 @@ public class CompareAction extends SingleFileAction {
 		ResourceNode leftNode = new ResourceNode(file);
 		// mercurial version
 		RevisionNode rightNode = new RevisionNode(new MercurialRevisionStorage(file));
-		CompareUtils.openEditor(leftNode, rightNode, false, true, syncConfig);
+		CompareUtils.openEditor(leftNode, rightNode, false, syncConfig);
 	}
 
 	/**
@@ -185,8 +184,8 @@ public class CompareAction extends SingleFileAction {
 				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestor));
 			}
 
-			final HgCompareEditorInput compareInput = new HgCompareEditorInput(
-					new CompareConfiguration(), file, ancestorNode, mergeNode, true);
+			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,
+					ancestorNode, mergeNode);
 
 			Display.getDefault().asyncExec(new Runnable() {
 				public void run() {

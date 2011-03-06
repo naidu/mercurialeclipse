@@ -40,7 +40,7 @@ public class CompareWithCurrentDelegate implements IObjectActionDelegate {
 		// TODO handle cases when file was renamed/copied
 		// see com.vectrace.MercurialEclipse.history.CompareRevisionAction.getStorage()
 		MercurialRevisionStorage right = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
-		CompareUtils.openEditor(left, right, false, false);
+		CompareUtils.openEditor(left, right, false);
 	}
 
 	/**

@@ -54,24 +54,42 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	 * and does 3-way compare.
 	 * @param syncConfig
 	 */
-	public HgCompareEditorInput(CompareConfiguration configuration,
-			IFile resource, ResourceNode left, ResourceNode right, ISynchronizePageConfiguration syncConfig) {
-		super(configuration);
-		this.resource = resource;
-		this.left = left;
-		this.syncConfig = syncConfig;
-		this.ancestor = findParentNodeIfExists(resource, left, right);
-		this.right = right;
+	public HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
+			ResourceNode left, ResourceNode right, ISynchronizePageConfiguration syncConfig) {
+		this(configuration, resource, left, findParentNodeIfExists(resource, left, right), right,
+				!(left instanceof RevisionNode), syncConfig);
+
 		setTitle(resource.getName());
+	}
+
+	public HgCompareEditorInput(CompareConfiguration configuration, IFile leftResource,
+			ResourceNode ancestor, ResourceNode right) {
+		this(configuration, leftResource, new ResourceNode(leftResource), ancestor, right, true,
+				null);
+
+		setTitle(left.getName());
+
+		if (ancestor != null) {
+			configuration.setAncestorLabel(getLabel(ancestor));
+		}
+	}
+
+	private HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
+			ResourceNode left, ResourceNode ancestor, ResourceNode right, boolean bLeftEditable,
+			ISynchronizePageConfiguration syncConfig) {
+		super(configuration);
+		this.syncConfig = syncConfig;
+		this.left = left;
+		this.ancestor = ancestor;
+		this.right = right;
+		this.resource = resource;
 		configuration.setLeftLabel(getLabel(left));
-		// if left isn't a RevisionNode, then it must be the one on the filesystem
-		configuration.setLeftEditable(!(left instanceof RevisionNode));
+		configuration.setLeftEditable(bLeftEditable);
 		configuration.setRightLabel(getLabel(right));
 		configuration.setRightEditable(false);
 	}
 
-
-	private ResourceNode findParentNodeIfExists(IFile file, ResourceNode l, ResourceNode r) {
+	private static ResourceNode findParentNodeIfExists(IFile file, ResourceNode l, ResourceNode r) {
 		if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
 			return null;
 		}
@@ -120,24 +138,6 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			MercurialEclipsePlugin.logError(e);
 			return null;
 		}
-	}
-
-	public HgCompareEditorInput(CompareConfiguration configuration,
-			IFile leftResource, ResourceNode ancestor, ResourceNode right, boolean localEditable) {
-		super(configuration);
-		this.syncConfig = null;
-		this.left = new ResourceNode(leftResource);
-		this.ancestor = ancestor;
-		this.right = right;
-		this.resource = leftResource;
-		setTitle(left.getName());
-		configuration.setLeftLabel(getLabel(left));
-		configuration.setLeftEditable(localEditable);
-		if(ancestor != null) {
-			configuration.setAncestorLabel(getLabel(ancestor));
-		}
-		configuration.setRightLabel(getLabel(right));
-		configuration.setRightEditable(false);
 	}
 
 	private static String getLabel(ResourceNode node) {
@@ -296,8 +296,4 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		}
 		return true;
 	}
-
-
-
-
 }

@@ -49,7 +49,7 @@ public final class CompareUtils {
 		// hide constructor of utility class.
 	}
 
-	public static void openEditor(IFile file, ChangeSet changeset, boolean localEditable) {
+	public static void openEditor(IFile file, ChangeSet changeset) {
 		int changesetIndex = changeset == null ? 0 : changeset.getChangesetIndex();
 		String changesetId = changeset == null ? null : changeset.getChangeset();
 
@@ -58,15 +58,15 @@ public final class CompareUtils {
 			leftNode = new ResourceNode(file);
 		}
 		RevisionNode rightNode = getNode(new MercurialRevisionStorage(file, changesetIndex, changesetId, changeset));
-		openEditor(leftNode, rightNode, false, localEditable, null);
+		openEditor(leftNode, rightNode, false, null);
 	}
 
-	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right, boolean dialog, boolean localEditable) {
-		openEditor(left, right, dialog, localEditable, null);
+	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right, boolean dialog) {
+		openEditor(left, right, dialog, null);
 	}
 
 	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right,
-			boolean dialog, boolean localEditable, ISynchronizePageConfiguration configuration) {
+			boolean dialog, ISynchronizePageConfiguration configuration) {
 		ResourceNode leftNode;
 		ResourceNode rightNode;
 		if (right == null) {
@@ -77,25 +77,23 @@ public final class CompareUtils {
 			leftNode = getNode(left);
 			rightNode = getNode(right);
 		}
-		openEditor(leftNode, rightNode, dialog, localEditable, configuration);
+		openEditor(leftNode, rightNode, dialog, configuration);
 	}
 
 	/**
+	 * Open a compare editor asynchronously
+	 *
 	 * @param configuration might be null
 	 */
 	public static void openEditor(final ResourceNode left, final ResourceNode right,
-			final boolean dialog, final boolean localEditable,
-			final ISynchronizePageConfiguration configuration) {
+			final boolean dialog, final ISynchronizePageConfiguration configuration) {
 		Assert.isNotNull(right);
 		if (dialog) {
-			openCompareDialog(left, right, localEditable);
+			openCompareDialog(getCompareInput(left, right, null));
 			return;
 		}
 
-		final CompareEditorInput compareInput = getCompareInput(left, right, localEditable, configuration);
-		if (compareInput == null) {
-			return;
-		}
+		final CompareEditorInput compareInput = getCompareInput(left, right, configuration);
 
 		UIJob uiDiffJob = new UIJob("Preparing hg diff...") {
 			@Override
@@ -137,26 +135,12 @@ public final class CompareUtils {
 	}
 
 	/**
-	 * Opens a compare dialog and returns it. Unfortunately the dialog is
-	 * internal Eclipse API, so it might change in future Eclipse versions.
-	 *
-	 * @param left
-	 *            the left ResourceNode to determine the compare editor input
-	 * @param right
-	 *            the right ResourceNode to determine the compare editor input
-	 */
-	public static int openCompareDialog(ResourceNode left, ResourceNode right, boolean localEditable) {
-		CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
-		return openCompareDialog(compareInput);
-	}
-
-	/**
 	 * Opens a compare dialog using the given input.
 	 *
 	 * @param compareInput
 	 * @return
 	 */
-	public static int openCompareDialog(final CompareEditorInput compareInput) {
+	private static int openCompareDialog(final CompareEditorInput compareInput) {
 		Runnable uiAction = new Runnable() {
 			public void run() {
 				CompareUI.openCompareDialog(compareInput);
@@ -166,22 +150,22 @@ public final class CompareUtils {
 		return Window.CANCEL;
 	}
 
-	public static CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right,
-			boolean localEditable) {
-		return getCompareInput(left, right, localEditable, null);
-	}
-
 	/**
 	 * @param configuration might be null
 	 */
-	public static CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right,
-			boolean localEditable, ISynchronizePageConfiguration configuration) {
+	private static CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right,
+			ISynchronizePageConfiguration configuration) {
 		IFile resource = (IFile) right.getResource();
 		// switch left to right if left is null and put local to left
 		ResourceNode leftNode = left != null ? left : right;
 		ResourceNode rightNode = left != null ? right : new ResourceNode(resource);
 
 		return new HgCompareEditorInput(new CompareConfiguration(), resource, leftNode, rightNode, configuration);
+	}
+
+	public static CompareEditorInput getPrecomputedCompareInput(IFile leftResource,
+			ResourceNode ancestor, ResourceNode right) {
+		return new HgCompareEditorInput(new CompareConfiguration(), leftResource, ancestor, right);
 	}
 
 	private static RevisionNode getNode(MercurialRevisionStorage rev) {

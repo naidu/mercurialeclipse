@@ -94,8 +94,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 					return;
 				}
 
-				boolean localEditable = right[0] == null;
-				CompareUtils.openEditor(left[0], right[0], false, localEditable);
+				CompareUtils.openEditor(left[0], right[0], false);
 			}
 		});
 		job.schedule();

@@ -149,7 +149,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 								.getChangesetIndex());
 						MercurialRevisionStorage right = new MercurialRevisionStorage(file,
 								parents[0]);
-						CompareUtils.openEditor(left, right, true, false);
+						CompareUtils.openEditor(left, right, true);
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
