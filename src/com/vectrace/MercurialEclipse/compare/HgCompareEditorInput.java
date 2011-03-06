@@ -27,15 +27,8 @@ import org.eclipse.team.internal.ui.synchronize.SynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class HgCompareEditorInput extends CompareEditorInput {
 	private static final Differencer DIFFERENCER = new Differencer();
@@ -55,16 +48,16 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	 * @param syncConfig
 	 */
 	public HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
-			ResourceNode left, ResourceNode right, ISynchronizePageConfiguration syncConfig) {
-		this(configuration, resource, left, findParentNodeIfExists(resource, left, right), right,
+			ResourceNode left, ResourceNode right, ResourceNode ancestor, ISynchronizePageConfiguration syncConfig) {
+		this(configuration, resource, left, right, ancestor,
 				!(left instanceof RevisionNode), syncConfig);
 
 		setTitle(resource.getName());
 	}
 
 	public HgCompareEditorInput(CompareConfiguration configuration, IFile leftResource,
-			ResourceNode ancestor, ResourceNode right) {
-		this(configuration, leftResource, new ResourceNode(leftResource), ancestor, right, true,
+			ResourceNode right, ResourceNode ancestor) {
+		this(configuration, leftResource, new ResourceNode(leftResource), right, ancestor, true,
 				null);
 
 		setTitle(left.getName());
@@ -75,7 +68,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	private HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
-			ResourceNode left, ResourceNode ancestor, ResourceNode right, boolean bLeftEditable,
+			ResourceNode left, ResourceNode right, ResourceNode ancestor, boolean bLeftEditable,
 			ISynchronizePageConfiguration syncConfig) {
 		super(configuration);
 		this.syncConfig = syncConfig;
@@ -87,57 +80,6 @@ public class HgCompareEditorInput extends CompareEditorInput {
 		configuration.setLeftEditable(bLeftEditable);
 		configuration.setRightLabel(getLabel(right));
 		configuration.setRightEditable(false);
-	}
-
-	private static ResourceNode findParentNodeIfExists(IFile file, ResourceNode l, ResourceNode r) {
-		if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
-			return null;
-		}
-		RevisionNode lNode = (RevisionNode) l;
-		RevisionNode rNode = (RevisionNode) r;
-
-		try {
-			int commonAncestor = -1;
-			if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
-				try {
-					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
-							lNode.getChangeSet(), rNode.getChangeSet());
-				} catch (HgException e) {
-					// continue
-				}
-			}
-
-			int lId = lNode.getRevision();
-			int rId = rNode.getRevision();
-
-			if(commonAncestor == -1){
-				try {
-					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
-							Integer.toString(lId), Integer.toString(rId));
-				} catch (HgException e) {
-					// continue: no changeset in the local repo, se issue #10616
-				}
-			}
-
-			if (commonAncestor == lId) {
-				return null;
-			}
-			if (commonAncestor == rId) {
-				return null;
-			}
-			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(file));
-			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
-			if(!localKnown){
-				// no common ancestor
-				return null;
-			}
-			return new RevisionNode(new MercurialRevisionStorage(file, commonAncestor));
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return null;
-		}
 	}
 
 	private static String getLabel(ResourceNode node) {
