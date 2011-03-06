@@ -49,8 +49,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	 */
 	public HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
 			ResourceNode left, ResourceNode right, ResourceNode ancestor, ISynchronizePageConfiguration syncConfig) {
-		this(configuration, resource, left, right, ancestor,
-				!(left instanceof RevisionNode), syncConfig);
+		this(configuration, resource, left, right, ancestor, !(left instanceof RevisionNode), syncConfig);
 
 		setTitle(resource.getName());
 	}

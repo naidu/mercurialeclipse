@@ -18,7 +18,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -58,7 +57,6 @@ import org.eclipse.swt.widgets.TableItem;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
@@ -430,11 +428,12 @@ public class CommitFilesChooser extends Composite {
 
 	private void showDiffForSelection() {
 		if (selectedFile != null) {
-			MercurialRevisionStorage iStorage = new MercurialRevisionStorage(
-					selectedFile);
-			ResourceNode right = new RevisionNode(iStorage);
-			ResourceNode left = new ResourceNode(selectedFile);
-			CompareUtils.openEditor(left, right, true, null);
+			MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
+			try {
+				CompareUtils.openEditor(selectedFile, iStorage, true, null);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 	}
 

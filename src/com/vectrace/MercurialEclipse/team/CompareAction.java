@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
-import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -27,7 +26,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -125,20 +123,16 @@ public class CompareAction extends SingleFileAction {
 				compareToLocal(file);
 				return Status.OK_STATUS;
 			}
-
 		};
 		job.schedule();
 	}
 
-	/**
-	 * @param file non null
-	 */
 	private void compareToLocal(IFile file) {
-		// local workspace version
-		ResourceNode leftNode = new ResourceNode(file);
-		// mercurial version
-		RevisionNode rightNode = new RevisionNode(new MercurialRevisionStorage(file));
-		CompareUtils.openEditor(leftNode, rightNode, false, syncConfig);
+		try {
+			CompareUtils.openEditor(file, new MercurialRevisionStorage(file), false, syncConfig);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	/**
@@ -146,8 +140,8 @@ public class CompareAction extends SingleFileAction {
 	 */
 	private void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
 		try {
-			RevisionNode ancestorNode;
-			RevisionNode mergeNode;
+			MercurialRevisionStorage ancestorNode;
+			MercurialRevisionStorage mergeNode;
 
 			if (workspaceUpdateConflict) {
 				String[] changeSets = HgResolveClient.restartMergeAndGetChangeSetsForCompare(file);
@@ -167,8 +161,8 @@ public class CompareAction extends SingleFileAction {
 					return;
 				}
 
-				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, otherId));
-				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestorId));
+				mergeNode = new MercurialRevisionStorage(file, otherId);
+				ancestorNode = new MercurialRevisionStorage(file, ancestorId);
 			} else {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
 				if(hgRoot == null) {
@@ -180,8 +174,8 @@ public class CompareAction extends SingleFileAction {
 				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
 				int ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
 
-				mergeNode = new RevisionNode(new MercurialRevisionStorage(file, mergeNodeId));
-				ancestorNode = new RevisionNode(new MercurialRevisionStorage(file, ancestor));
+				mergeNode = new MercurialRevisionStorage(file, mergeNodeId);
+				ancestorNode = new MercurialRevisionStorage(file, ancestor);
 			}
 
 			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,
