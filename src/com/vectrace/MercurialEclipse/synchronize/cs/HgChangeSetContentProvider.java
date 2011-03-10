@@ -65,6 +65,7 @@ import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -250,34 +251,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 	@Override
 	@SuppressWarnings("hiding")
 	public Object[] getElements(Object parent) {
-		if (!initialized) {
-			if (parent instanceof HgChangeSetModelProvider) {
-				HgChangeSetModelProvider provider = (HgChangeSetModelProvider) parent;
-				if (provider.getSubscriber() != null) {
-					Set<IHgRepositoryLocation> repositoryLocations = provider.getSubscriber().getParticipant().getRepositoryLocation();
-					for (IHgRepositoryLocation repoLocation : repositoryLocations) {
-						Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
-						String projectName = repoLocation.getLocation();
-						if(hgRoots.size() == 1) {
-							projectName = hgRoots.iterator().next().getName();
-						}
-						RepositoryChangesetGroup scg = new RepositoryChangesetGroup(projectName, repoLocation,  new WorkingChangeSet("Uncommitted"));
-						scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
-						scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
-
-						ArrayList<IResource> projects = new ArrayList<IResource>();
-						Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(provider.getSubscriber().getProjects()));
-						for(HgRoot root : hgRoots) {
-							projects.addAll(byRoot.get(root));
-						}
-						scg.setProjects(projects);
-						projectGroup.add(scg);
-					}
-				}
-
-				initialized = true;
-			}
-		}
 		if (parent instanceof ISynchronizationContext) {
 			// Do not show change sets when all models are visible because
 			// model providers that override the resource content may cause
@@ -347,6 +320,28 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		}
 
 		return new Object[0];
+	}
+
+	private synchronized void initProjects(MercurialSynchronizeSubscriber subscriber) {
+		Set<IHgRepositoryLocation> repositoryLocations = subscriber.getParticipant().getRepositoryLocation();
+		for (IHgRepositoryLocation repoLocation : repositoryLocations) {
+			Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
+			String projectName = repoLocation.getLocation();
+			if(hgRoots.size() == 1) {
+				projectName = hgRoots.iterator().next().getName();
+			}
+			RepositoryChangesetGroup scg = new RepositoryChangesetGroup(projectName, repoLocation,  new WorkingChangeSet("Uncommitted"));
+			scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
+			scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
+
+			ArrayList<IResource> projects = new ArrayList<IResource>();
+			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(subscriber.getProjects()));
+			for(HgRoot root : hgRoots) {
+				projects.addAll(byRoot.get(root));
+			}
+			scg.setProjects(projects);
+			projectGroup.add(scg);
+		}
 	}
 
 	private Object[] collectTree(Object parent, FileFromChangeSet[] files) {
@@ -641,8 +636,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		if (csc.supportsCheckedInChangeSets()) {
 			csCollector = ((HgChangeSetCapability) csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			csCollector.addListener(collectorListener);
-			IProject[] projects = csCollector.getSubscriber().getProjects();
-
+			MercurialSynchronizeSubscriber subscriber = csCollector.getSubscriber();
+			IProject[] projects = subscriber.getProjects();
+			initProjects(subscriber);
 			for (RepositoryChangesetGroup rcg : projectGroup) {
 				WorkingChangeSet uSet = rcg.getUncommittedSet();
 				ArrayList<IProject> result = new ArrayList<IProject>();
@@ -901,14 +897,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
 					FileFromChangeSet fcs = (FileFromChangeSet) o2;
 					IResource childResource = ResourceUtils.getResource(fcs);
-					IPath folderPath = ResourceUtils.getPath(childResource).removeLastSegments(
-							((IPath) o1).segmentCount() + 1);
-					return ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(
-							folderPath);
+						IPath folderPath = ResourceUtils.getPath(childResource).removeLastSegments(
+								((IPath) o1).segmentCount() + 1);
+						return ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(
+								folderPath);
 					}
 				}
 
 			return result;
-			}
+		}
 	}
 }
