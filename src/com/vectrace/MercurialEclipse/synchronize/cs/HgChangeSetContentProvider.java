@@ -862,7 +862,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			this.data = data;
 
 			if (data != null && data.size() > 0) {
-				this.resource = data.get(0).getFile().getParent();
+				IFile file = data.get(0).getFile();
+				this.resource = file != null? file.getParent() : null;
 			}
 		}
 
@@ -897,13 +898,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 				if (o1 instanceof IPath && o2 instanceof FileFromChangeSet) {
 					FileFromChangeSet fcs = (FileFromChangeSet) o2;
 					IResource childResource = ResourceUtils.getResource(fcs);
+					if(childResource != null) {
 						IPath folderPath = ResourceUtils.getPath(childResource).removeLastSegments(
 								((IPath) o1).segmentCount() + 1);
 						return ResourcesPlugin.getWorkspace().getRoot().getContainerForLocation(
 								folderPath);
 					}
 				}
-
+			}
 			return result;
 		}
 	}
