@@ -7,13 +7,16 @@
  *
  * Contributors:
  *     Soren Mathiasen (Schantz) - implementation
+ *     Andrei Loskutov			 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.team.internal.core.subscribers.ChangeSet;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -24,15 +27,14 @@ import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
  * @author Soren Mathiasen
  */
 @SuppressWarnings("restriction")
-public class RepositoryChangesetGroup {
+public class RepositoryChangesetGroup implements IAdaptable {
 
 	private final String name;
 	private ChangesetGroup incoming;
 	private ChangesetGroup outgoing;
 	private final WorkingChangeSet uncommittedSet;
 	private final IHgRepositoryLocation location;
-	private Set<HgRoot> hgRoots;
-	private ArrayList<IResource> projects;
+	private List<IProject> projects;
 
 	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location,
 			WorkingChangeSet uncommittedSet) {
@@ -48,7 +50,7 @@ public class RepositoryChangesetGroup {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("SuperChangesetGroup [");
+		builder.append("RepositoryChangesetGroup [");
 		if (name != null) {
 			builder.append("name=");
 			builder.append(name);
@@ -114,29 +116,29 @@ public class RepositoryChangesetGroup {
 	}
 
 	/**
-	 * @param hgRoots
-	 *            the hgRoots to set
-	 */
-	public void setHgRoots(Set<HgRoot> hgRoots) {
-		this.hgRoots = hgRoots;
-	}
-
-	/**
-	 * @return the hgRoots
-	 */
-	public Set<HgRoot> getHgRoots() {
-		return hgRoots;
-	}
-
-	/**
 	 * @param projects
 	 */
-	public void setProjects(ArrayList<IResource> projects) {
+	public void setProjects(List<IProject> projects) {
 		this.projects = projects;
 
 	}
 
-	public ArrayList<IResource> getProjects() {
+	public List<IProject> getProjects() {
 		return projects;
+	}
+
+	public Object getAdapter(Class adapter) {
+		// Resource adapter is enabled for "working" changeset only to avoid "dirty"
+		// decorations shown in the tree on changeset files from already commited changesets
+		if(adapter == IResource.class && projects != null && projects.size() == 1){
+			return projects.get(0);
+		}
+		if (adapter == HgRoot.class && location instanceof HgRoot) {
+			return location;
+		}
+		if(adapter == ResourceMapping.class){
+			return new HgChangeSetResourceMapping(this);
+		}
+		return null;
 	}
 }

@@ -1455,6 +1455,12 @@
             class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
          <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
       </factory>
+      
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
    
       <factory
             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
@@ -1490,6 +1496,16 @@
        
       <factory
              adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>
+      <factory
+             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup"
              class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
           <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
        </factory>

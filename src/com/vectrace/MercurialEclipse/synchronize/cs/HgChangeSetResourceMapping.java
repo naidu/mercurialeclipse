@@ -7,11 +7,12 @@
  *
  * Contributors:
  *	   IBM Corporation - initial API and implementation
- *     Andrei Loskutov (Intland) - adopting to hg
+ *     Andrei Loskutov - adopting to hg
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -34,10 +35,12 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 	private final ChangeSet changeSet;
 	private final IResource[] resources;
 	private FileFromChangeSet file;
+	private final RepositoryChangesetGroup repoChangesetGroup;
 
 	public HgChangeSetResourceMapping(ChangeSet changeSet) {
 		this.changeSet = changeSet;
 		resources = changeSet.getResources();
+		repoChangesetGroup = null;
 	}
 
 	public HgChangeSetResourceMapping(FileFromChangeSet file) {
@@ -48,11 +51,26 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 		} else {
 			resources = new IResource[0];
 		}
+		repoChangesetGroup = null;
+	}
+
+	/**
+	 * @param repositoryChangesetGroup
+	 */
+	public HgChangeSetResourceMapping(RepositoryChangesetGroup repositoryChangesetGroup) {
+		changeSet = null;
+		repoChangesetGroup = repositoryChangesetGroup;
+		List<IProject> projects = repositoryChangesetGroup.getProjects();
+		if(projects != null) {
+			resources = projects.toArray(new IResource[0]);
+		} else {
+			resources = new IResource[0];
+		}
 	}
 
 	@Override
 	public Object getModelObject() {
-		return file != null? file : changeSet;
+		return file != null? file : changeSet != null? changeSet : repoChangesetGroup;
 	}
 
 	@Override
@@ -63,19 +81,25 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 	@Override
 	public IProject[] getProjects() {
 		Set<IProject> result = new HashSet<IProject>();
-		Set<IFile> files = changeSet.getFiles();
-		for (IFile changeSetFile : files) {
-			if (changeSetFile != null && changeSetFile.getProject() != null) {
-				result.add(changeSetFile.getProject());
-			} else {
-				// it is possible that files are out of eclipse project scope
-				// so resolve project according to hg root.
-				final HgRoot root = changeSet.getHgRoot();
-				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-				for (IProject project : projects) {
-					IPath fullPath = project.getFullPath();
-					if (fullPath != null && fullPath.toFile().getAbsolutePath().startsWith(root.getAbsolutePath())) {
-						result.add(project);
+		if(repoChangesetGroup != null) {
+			if(repoChangesetGroup.getProjects() != null) {
+				result.addAll(repoChangesetGroup.getProjects());
+			}
+		} else {
+			Set<IFile> files = changeSet.getFiles();
+			for (IFile changeSetFile : files) {
+				if (changeSetFile != null && changeSetFile.getProject() != null) {
+					result.add(changeSetFile.getProject());
+				} else {
+					// it is possible that files are out of eclipse project scope
+					// so resolve project according to hg root.
+					final HgRoot root = changeSet.getHgRoot();
+					IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+					for (IProject project : projects) {
+						IPath fullPath = project.getFullPath();
+						if (fullPath != null && fullPath.toFile().getAbsolutePath().startsWith(root.getAbsolutePath())) {
+							result.add(project);
+						}
 					}
 				}
 			}

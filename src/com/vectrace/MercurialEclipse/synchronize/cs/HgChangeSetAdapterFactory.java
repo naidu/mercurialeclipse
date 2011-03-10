@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov         - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -25,6 +25,10 @@ public class HgChangeSetAdapterFactory implements IAdapterFactory {
 		}
 		if (adaptableObject instanceof FileFromChangeSet && adapterType == ResourceMapping.class) {
 			FileFromChangeSet cs = (FileFromChangeSet) adaptableObject;
+			return new HgChangeSetResourceMapping(cs);
+		}
+		if (adaptableObject instanceof RepositoryChangesetGroup && adapterType == ResourceMapping.class) {
+			RepositoryChangesetGroup cs = (RepositoryChangesetGroup) adaptableObject;
 			return new HgChangeSetResourceMapping(cs);
 		}
 		return null;

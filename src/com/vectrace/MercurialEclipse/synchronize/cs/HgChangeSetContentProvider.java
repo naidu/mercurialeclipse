@@ -334,10 +334,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 			scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
 
-			ArrayList<IResource> projects = new ArrayList<IResource>();
+			ArrayList<IProject> projects = new ArrayList<IProject>();
 			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(subscriber.getProjects()));
 			for(HgRoot root : hgRoots) {
-				projects.addAll(byRoot.get(root));
+				projects.addAll((Collection<? extends IProject>) byRoot.get(root));
 			}
 			scg.setProjects(projects);
 			projectGroup.add(scg);
