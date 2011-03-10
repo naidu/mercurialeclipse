@@ -6,21 +6,19 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * soren	implementation
+ * 	   soren					 - implementation
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.lock;
-
-import java.io.File;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author soren
@@ -29,8 +27,8 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 public class HgLock extends HgCommand {
 
 	public HgLock(IResource resource) throws HgException {
-		super("lock", "Locking a resource", getMyHgRoot(resource), false);
-		String loc = resource.getFullPath().toString().replaceFirst("/", "");
+		super("lock", "Locking a resource", getHgRoot(resource), false);
+		String loc = getHgRoot().toRelative(ResourceUtils.getFileHandle(resource));
 		addOptions(loc);
 		String executeToString = executeToString();
 		if(!executeToString.contains("Status:200")) {
@@ -41,19 +39,5 @@ public class HgLock extends HgCommand {
 		}
 		MercurialStatusCache.getInstance().refreshStatus(resource, null);
 	}
-
-	/**
-	 * @return
-	 */
-	private static HgRoot getMyHgRoot(IResource resource) {
-		try {
-
-			return HgRootClient.getHgRoot(new File(resource.getLocation().toPortableString()));
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		return null;
-	}
-
 
 }

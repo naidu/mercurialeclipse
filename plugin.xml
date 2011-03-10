@@ -224,11 +224,11 @@
     	<command
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                 id="com.vectrace.MercurialEclipse.menu.LockHandler"
-                name="%lock"/>
+                name="%actionLabel.lock"/>
         <command
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                 id="com.vectrace.MercurialEclipse.menu.UnLockHandler"
-                name="%unlock"/>
+                name="%actionLabel.unlock"/>
     
         <command
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
@@ -976,6 +976,22 @@
                             </and>
                         </visibleWhen>
                     </command>
+                    
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.LockHandler"
+                      icon="icons/actions/lock.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.file" />
+                        </visibleWhen>
+                    </command>
+                    
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.UnLockHandler"
+                      icon="icons/actions/unlock.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.file" />
+                        </visibleWhen>
+                    </command>
                 </menu>
                 <separator
                       name="group2"
@@ -1171,21 +1187,6 @@
               label="%actionLabel.commit">
            </action>
            
-            
-            <action
-                  class="com.vectrace.MercurialEclipse.team.ActionLock"
-                  icon="icons/actions/lock.gif"
-                  id="com.vectrace.MercurialEclipse.menu.LockHandler"
-                  label="%actionLabel.lock"
-                  menubarPath="team.main/group11">
-           </action>
-            <action
-                  class="com.vectrace.MercurialEclipse.team.ActionUnLock"
-                  icon="icons/actions/unlock.gif"
-                  id="com.vectrace.MercurialEclipse.menu.UnLockHandler"
-                  label="%actionLabel.unlock"
-                  menubarPath="team.main/group11">
-           </action>
       </objectContribution>
 
       <!-- File Team Menu -->
