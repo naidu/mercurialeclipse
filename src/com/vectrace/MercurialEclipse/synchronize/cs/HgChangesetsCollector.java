@@ -219,6 +219,9 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
 						Assert.isNotNull(repo);
+						if(repo == null) {
+							throw new RuntimeException("Unable to find default repository");
+						}
 						result.addAll(cache.getChangeSets(project, repo, syncBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);

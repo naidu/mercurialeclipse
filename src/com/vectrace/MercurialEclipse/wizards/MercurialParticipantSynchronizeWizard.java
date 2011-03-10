@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -29,6 +28,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -155,10 +155,11 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
+
+
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-		Iterator<HgRoot> ite = roots.iterator();
-		while (ite.hasNext()) {
-			Map<String, Object> pageProperties = initPropertiesInternal(ite.next());
+		for (HgRoot hgRoot : roots) {
+			Map<String, Object> pageProperties = initPropertiesInternal(hgRoot);
 			if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
@@ -167,6 +168,10 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 				} else {
 					result.add(pageProperties);
 				}
+			} else {
+				MessageDialog.openError(MercurialEclipsePlugin.getActiveShell(), "No default url", hgRoot.getName()+" has no default url");
+				result.clear();
+				return result;
 			}
 		}
 		return result;
@@ -183,8 +188,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 * root (may be empty)
 	 */
 	private static Map<String, Object> initPropertiesInternal(HgRoot hgRoot) {
-		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultRepoLocation(hgRoot);
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
 		Map<String, Object> properties = new Hashtable<String, Object>();
 		if(repoLocation != null){
 			if(repoLocation.getLocation() != null) {
@@ -196,8 +200,8 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 					}
 				}
 			}
+			properties.put(PROP_HGROOT, hgRoot);
 		}
-		properties.put(PROP_HGROOT, hgRoot);
 		return properties;
 	}
 
