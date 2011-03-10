@@ -111,8 +111,7 @@ class PullOperation extends HgOperation {
 		return r;
 	}
 
-	private String performPull(final IHgRepositoryLocation repository,
-			IProgressMonitor monitor) throws CoreException {
+	private String performPull(final IHgRepositoryLocation repository, IProgressMonitor monitor) throws CoreException {
 		monitor.worked(1);
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$
 		String r = Messages.getString("PullRepoWizard.pullOperation.pull.header"); //$NON-NLS-1$

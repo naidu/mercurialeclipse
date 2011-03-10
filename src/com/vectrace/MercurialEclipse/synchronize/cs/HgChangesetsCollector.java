@@ -17,6 +17,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -33,9 +34,9 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -181,9 +182,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	@Override
 	protected void initializeSets() {
-		Job job = new ChangesetsCollectorJob("Initializing changesets");
+		ChangesetsCollectorJob job = new ChangesetsCollectorJob("Initializing changesets");
 		job.setRule(new ExclusiveRule());
 		job.schedule(100);
+//		try {
+//			job.join(); // needed otherwise the update seems lazy, and elements are "randomly" poping in the sync list...
+//			//TODO Gotta be a better ways than this, anyone ?
+//		} catch (InterruptedException e) {
+//			MercurialEclipsePlugin.logError(e);
+//		}
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
@@ -198,7 +205,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			return EMPTY_SET;
 		}
 
-		final IHgRepositoryLocation repo = participant.getRepositoryLocation();
+
 		final Set<ChangeSet> result = new HashSet<ChangeSet>();
 
 		Runnable runnable = new Runnable() {
@@ -210,6 +217,11 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					}
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
+						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						Assert.isNotNull(repo);
+						if(repo == null) {
+							throw new RuntimeException("Unable to find default repository");
+						}
 						result.addAll(cache.getChangeSets(project, repo, syncBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -219,6 +231,8 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 				for (HgRoot hgRoot : roots) {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
+						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
+						Assert.isNotNull(repo);
 						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, syncBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -281,9 +295,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		// fireDefaultChangedEvent(null, null);
 
 		// TODO not sure if this is a too big hammer, but right now it seems to fix the update issue #10985
-		initializeSets();
+		if(!initializing) {
+			synchronized (this) {
+				initializing = true;
+				initializeSets();
+				initializing = false;
+			}
+		}
 	}
-
+	boolean initializing;
 
 	@Override
 	public String toString() {
