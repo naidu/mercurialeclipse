@@ -7,7 +7,7 @@
  *
  * Contributors:
  *	   IBM Corporation - initial API and implementation
- *     Andrei Loskutov (Intland) - adopting to hg
+ *     Andrei Loskutov - adopting to hg
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -22,12 +22,12 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgChangeSetResourceMapping extends ResourceMapping {
 
@@ -73,8 +73,9 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 				final HgRoot root = changeSet.getHgRoot();
 				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 				for (IProject project : projects) {
-					IPath fullPath = project.getFullPath();
-					if (fullPath != null && fullPath.toFile().getAbsolutePath().startsWith(root.getAbsolutePath())) {
+					String projectPath = ResourceUtils.getPath(project).toFile().getAbsolutePath();
+					String rootPath = root.getAbsolutePath();
+					if (!projectPath.isEmpty() && projectPath.startsWith(rootPath)) {
 						result.add(project);
 					}
 				}

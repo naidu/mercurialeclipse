@@ -59,6 +59,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
 /**
@@ -262,7 +263,7 @@ public class TransplantRejectsDialog extends TrayDialog {
 			if (!(element instanceof IResource)) {
 				return null;
 			}
-			return ((IResource) element).getFullPath().makeRelativeTo(hgRoot.getIPath()).toString();
+			return hgRoot.toRelative(ResourceUtils.getFileHandle(((IResource) element)));
 		}
 
 		@Override
