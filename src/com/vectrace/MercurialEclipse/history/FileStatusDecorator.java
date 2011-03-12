@@ -48,6 +48,12 @@ public class FileStatusDecorator extends LabelProvider implements ILightweightLa
 			case REMOVED:
 				overlay = DecoratorImages.REMOVED;
 				break;
+			case COPIED:
+				overlay = DecoratorImages.COPIED;
+				break;
+			case MOVED:
+				overlay = DecoratorImages.MOVED;
+				break;
 			}
 		}
 		decoration.addOverlay(overlay);

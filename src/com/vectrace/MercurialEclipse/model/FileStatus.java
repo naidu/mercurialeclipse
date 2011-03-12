@@ -21,18 +21,37 @@ public class FileStatus {
 		/** 'A' */
 		ADDED(),
 		/** 'R' */
-		REMOVED();
+		REMOVED(),
+		/** Not a canonical file status */
+		COPIED(),
+		/** Not a canonical file status either */
+		MOVED();
 	}
 
 	private final Action action;
 	private final IPath path;
+	private final IPath copySourcePath; //< when action is COPIED or MOVED, indicates which file it was copied from
 	private final HgRoot hgRoot;
 	private IPath absPath;
 
 	public FileStatus(Action action, String path, HgRoot hgRoot) {
+		if(action == Action.COPIED || action == Action.MOVED){
+			throw new IllegalArgumentException("copy source path must be provided for actions COPIED or MOVED");
+		}
 		this.action = action;
 		this.hgRoot = hgRoot;
 		this.path = new Path(path);
+		this.copySourcePath = null;
+	}
+
+	public FileStatus(Action action, String path, String copySrcPath, HgRoot hgRoot) {
+		if(action != Action.COPIED && action != Action.MOVED){
+			throw new IllegalArgumentException("copy source path can only be provided for actions COPIED and MOVED");
+		}
+		this.action = action;
+		this.hgRoot = hgRoot;
+		this.path = new Path(path);
+		this.copySourcePath = new Path(copySrcPath);
 	}
 
 	public Action getAction() {
@@ -41,6 +60,10 @@ public class FileStatus {
 
 	public IPath getRootRelativePath() {
 		return path;
+	}
+
+	public IPath getRootRelativeCopySourcePath() {
+		return copySourcePath;
 	}
 
 	public IPath getAbsolutePath(){

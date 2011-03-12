@@ -675,6 +675,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			int kind = 0;
 			switch (fileStatus.getAction()) {
 			case ADDED:
+			case MOVED:
+			case COPIED:
 				kind = Differencer.ADDITION;
 				break;
 			case MODIFIED:

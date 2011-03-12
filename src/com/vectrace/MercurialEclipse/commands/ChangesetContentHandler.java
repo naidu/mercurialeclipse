@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -30,11 +31,11 @@ import org.xml.sax.SAXException;
 
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
@@ -72,6 +73,8 @@ final class ChangesetContentHandler implements ContentHandler {
 	private final Set<String> filesModified;
 	private final Set<String> filesAdded;
 	private final Set<String> filesRemoved;
+	private final Map<String, String> filesCopied; // destination -> source
+	private final Map<String, String> filesMoved; // destination -> source
 	private Action action;
 	private String prevNodeShort;
 	private int prevRev;
@@ -95,6 +98,8 @@ final class ChangesetContentHandler implements ContentHandler {
 		filesModified = new TreeSet<String>();
 		filesAdded = new TreeSet<String>();
 		filesRemoved = new TreeSet<String>();
+		filesCopied = new TreeMap<String, String>();
+		filesMoved = new TreeMap<String, String>();
 	}
 
 	private static String replaceAll(Pattern p, String source, String replacement){
@@ -163,6 +168,13 @@ final class ChangesetContentHandler implements ContentHandler {
 				for (String file : filesRemoved) {
 					list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
 				}
+				for(Map.Entry<String, String> entry : filesCopied.entrySet()){
+					list.add(new FileStatus(FileStatus.Action.COPIED, entry.getKey(), entry.getValue(), hgRoot));
+				}
+
+				for(Map.Entry<String, String> entry : filesMoved.entrySet()){
+					list.add(new FileStatus(FileStatus.Action.MOVED, entry.getKey(), entry.getValue(), hgRoot));
+				}
 				csb.changedFiles(list.toArray(new FileStatus[list.size()]));
 
 				ChangeSet changeSet = csb.build();
@@ -174,6 +186,8 @@ final class ChangesetContentHandler implements ContentHandler {
 			filesModified.clear();
 			filesAdded.clear();
 			filesRemoved.clear();
+			filesCopied.clear();
+			filesMoved.clear();
 			prevRev = rev;
 			prevNodeShort = nodeShort;
 		}
@@ -253,17 +267,27 @@ final class ChangesetContentHandler implements ContentHandler {
 			action = FileStatus.Action.ADDED;
 		} else if ("fd".equals(name)) {
 			action = FileStatus.Action.REMOVED;
+		} else if ("fc".equals(name)) {
+			action = FileStatus.Action.COPIED;
 		} else if ("f".equals(name)) {
 			if (action == Action.MODIFIED) {
-				filesModified.add(atts.getValue(0));
+				filesModified.add(atts.getValue("", "v"));
 			} else if (action == Action.ADDED) {
-				String value = atts.getValue(0);
+				String value = atts.getValue("", "v");
 				filesAdded.add(value);
-				filesModified.remove(value);
 			} else if (action == Action.REMOVED) {
-				String value = atts.getValue(0);
+				String value = atts.getValue("", "v");
 				filesRemoved.add(value);
-				filesModified.remove(value);
+			} else if(action == Action.COPIED) {
+				String dest = atts.getValue("", "v");
+				String src = atts.getValue("", "s");
+				if(filesRemoved.contains(src)){
+					filesMoved.put(dest, src);
+				}else{
+					filesCopied.put(dest, src);
+				}
+				filesAdded.remove(dest);
+				filesRemoved.remove(src);
 			}
 		}
 	}
