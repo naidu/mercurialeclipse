@@ -274,7 +274,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>(files2.size());
 		for (IFile file : files2) {
-			fcs.add(new FileFromChangeSet(this, file, diffKind));
+			fcs.add(new FileFromChangeSet(this, file, null, diffKind));
 		}
 		return fcs.toArray(new FileFromChangeSet[0]);
 	}

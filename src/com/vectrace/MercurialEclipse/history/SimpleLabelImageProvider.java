@@ -37,7 +37,7 @@ public final class SimpleLabelImageProvider extends LabelProvider {
 		}
 
 		FileStatus status = (FileStatus) element;
-		if(status.getAction() == FileStatus.Action.MOVED || status.getAction() == FileStatus.Action.COPIED){
+		if(status.isCopied()){
 			return " " + status.getRootRelativePath().toOSString() + " (" + status.getRootRelativeCopySourcePath().toOSString() + ")"; //$NON-NLS-1$
 		}
 		return " " + status.getRootRelativePath().toOSString(); //$NON-NLS-1$

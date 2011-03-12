@@ -33,6 +33,7 @@ public class FileStatus {
 	private final IPath copySourcePath; //< when action is COPIED or MOVED, indicates which file it was copied from
 	private final HgRoot hgRoot;
 	private IPath absPath;
+	private IPath absCopySourcePath;
 
 	public FileStatus(Action action, String path, HgRoot hgRoot) {
 		if(action == Action.COPIED || action == Action.MOVED){
@@ -58,6 +59,10 @@ public class FileStatus {
 		return action;
 	}
 
+	public boolean isCopied(){
+		return action == Action.COPIED || action == Action.MOVED;
+	}
+
 	public IPath getRootRelativePath() {
 		return path;
 	}
@@ -71,6 +76,13 @@ public class FileStatus {
 			absPath = hgRoot.toAbsolute(getRootRelativePath());
 		}
 		return absPath;
+	}
+
+	public IPath getAbsoluteCopySourcePath(){
+		if(absCopySourcePath == null){
+			absCopySourcePath = hgRoot.toAbsolute(getRootRelativeCopySourcePath());
+		}
+		return absCopySourcePath;
 	}
 
 	@Override

@@ -32,6 +32,9 @@ public class FileFromChangeSet implements IAdaptable{
 	 */
 	private final IFile file;
 
+	/** May be null. Only not null when a file has been copied or moved. */
+	private final IFile copySrcFile;
+
 	/**
 	 * Not null
 	 */
@@ -47,7 +50,10 @@ public class FileFromChangeSet implements IAdaptable{
 	 * @param diffKind see {@link Differencer}
 	 */
 	public FileFromChangeSet(ChangeSet changeset, FileStatus fileStatus, int diffKind) {
-		this(changeset, ResourceUtils.getFileHandle(fileStatus.getAbsolutePath()), diffKind);
+		this(changeset,
+				ResourceUtils.getFileHandle(fileStatus.getAbsolutePath()),
+				ResourceUtils.getFileHandle(fileStatus.getAbsoluteCopySourcePath()),
+				diffKind);
 		this.fileStatus = fileStatus;
 	}
 
@@ -56,9 +62,10 @@ public class FileFromChangeSet implements IAdaptable{
 	 * @param file may be null
 	 * @param diffKind
 	 */
-	public FileFromChangeSet(ChangeSet changeset, IFile file, int diffKind) {
+	public FileFromChangeSet(ChangeSet changeset, IFile file, IFile copySourceFile, int diffKind) {
 		this.changeset = changeset;
 		this.file = file;
+		this.copySrcFile = copySourceFile;
 		this.kind = diffKind;
 	}
 
@@ -152,6 +159,14 @@ public class FileFromChangeSet implements IAdaptable{
 
 	public IFile getFile() {
 		return file;
+	}
+
+	public IFile getCopySourceFile(){
+		return copySrcFile;
+	}
+
+	public boolean isCopy(){
+		return copySrcFile == null;
 	}
 
 	@DoNotDisplayMe

@@ -37,7 +37,12 @@ public class CompareWithParentDelegate implements IObjectActionDelegate {
 		}
 		ChangeSet cs = fileFromChangeSet.getChangeset();
 		MercurialRevisionStorage left = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
-		MercurialRevisionStorage right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getFile());
+		MercurialRevisionStorage right;
+		if(fileFromChangeSet.isCopy()){
+			right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getCopySourceFile());
+		}else{
+			right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getFile());
+		}
 		CompareUtils.openEditor(left, right, false);
 	}
 

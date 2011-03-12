@@ -60,13 +60,20 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 						left[0] = getStorage((MercurialRevision) selection[0], monitor);
 						if(selection.length > 1 && !monitor.isCanceled()){
 							if(enableCompareWithPrev && selection[1] instanceof FileStatus){
+
 								FileStatus clickedFileStatus = (FileStatus) selection[1];
 								ChangeSet cs = left[0].getChangeSet();
-								IPath fileAbsPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath());
+								IPath fileAbsPath;
+								if(clickedFileStatus.isCopied()){
+									fileAbsPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativeCopySourcePath());
+								}else{
+									fileAbsPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath());
+								}
 								IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 								if(file != null) {
 									right[0] = MercurialUtilities.getParentRevision(cs, file);
 								}
+
 							} else if(selection[1] instanceof MercurialRevision) {
 								right[0] = getStorage((MercurialRevision) selection[1], monitor);
 							}
