@@ -166,7 +166,7 @@ public class FileFromChangeSet implements IAdaptable{
 	}
 
 	public boolean isCopy(){
-		return copySrcFile == null;
+		return copySrcFile != null;
 	}
 
 	@DoNotDisplayMe

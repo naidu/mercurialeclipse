@@ -18,9 +18,9 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -120,6 +120,11 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				delegateText = file.toString();
 			}
+
+			if(file.getCopySourceFile() != null) {
+				delegateText += " (" + super.getDelegateText(file.getCopySourceFile()) + ")";
+			}
+
 			if(delegateText != null && delegateText.length() > 0){
 				delegateText = " " + delegateText;
 			}

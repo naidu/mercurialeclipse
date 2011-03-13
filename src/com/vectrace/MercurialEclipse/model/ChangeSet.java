@@ -672,32 +672,39 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 		for (FileStatus fileStatus : (isShowFirstParentChanges() ? getFirstParentChangedFiles()
 				: getChangedFiles())) {
-			int kind = 0;
+			int action = 0;
+			int dir = 0;
 			switch (fileStatus.getAction()) {
 			case ADDED:
-				kind = Differencer.ADDITION;
-				break;
-			case MODIFIED:
 			case MOVED:
 			case COPIED:
-				kind = Differencer.CHANGE;
+				action = Differencer.ADDITION;
+				break;
+			case MODIFIED:
+				action = Differencer.CHANGE;
 				break;
 			case REMOVED:
-				kind = Differencer.DELETION;
+				action = Differencer.DELETION;
 				break;
 			}
 			switch (getDirection()) {
 			case INCOMING:
-				kind |= Differencer.LEFT;
+				dir |= Differencer.LEFT;
 				break;
 			case OUTGOING:
-				kind |= Differencer.RIGHT;
+				dir |= Differencer.RIGHT;
 				break;
 			case LOCAL:
-				kind |= Differencer.RIGHT;
+				dir |= Differencer.RIGHT;
 				break;
 			}
-			fcs.add(new FileFromChangeSet(this, fileStatus, kind));
+			fcs.add(new FileFromChangeSet(this, fileStatus, action | dir));
+
+			if(fileStatus.getAction() == FileStatus.Action.MOVED){
+				// for moved files, include an extra FileFromChangeset for the deleted file
+				FileStatus fs = new FileStatus(Action.REMOVED, fileStatus.getRootRelativeCopySourcePath().toString(), this.hgRoot);
+				fcs.add(new FileFromChangeSet(this, fs, dir | Differencer.DELETION));
+			}
 		}
 		return fcs.toArray(new FileFromChangeSet[0]);
 	}
