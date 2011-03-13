@@ -165,7 +165,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 
 		addUndoMenu(menu);
-		addMergeViewStyleAction(menu);
 
 		if (isSelectionUncommited()) {
 			menu.insertAfter(
@@ -293,21 +292,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			HgRoot hgRoot = changeSet.getHgRoot();
 			submenu.add(new BackoutSynchronizeAction("Backout...", getConfiguration(), hgRoot, changeSet));
 			submenu.add(new StripSynchronizeAction("Strip...", getConfiguration(), hgRoot, changeSet));
-		}
-	}
-
-	private void addMergeViewStyleAction(IMenuManager menu) {
-		Object[] selectedObjects = getSelectedObjects();
-
-		if (selectedObjects.length != 1 || !(selectedObjects[0] instanceof ChangeSet)) {
-			return;
-		}
-
-		ChangeSet cs = (ChangeSet) selectedObjects[0];
-
-		if (cs.isMerge() && !(cs instanceof WorkingChangeSet)) {
-			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP,
-					new ToggleMergeStyleAction(cs));
 		}
 	}
 
@@ -447,26 +431,6 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		@Override
 		public void update() {
 			setChecked(mode.isSet());
-		}
-	}
-
-	private static class ToggleMergeStyleAction extends Action {
-		private final ChangeSet changeset;
-
-		public ToggleMergeStyleAction(ChangeSet cs) {
-			super("Show changes merged in", IAction.AS_CHECK_BOX);
-
-			if (!cs.isMerge() || cs instanceof WorkingChangeSet) {
-				throw new IllegalArgumentException();
-			}
-
-			changeset = cs;
-			setChecked(cs.isShowFirstParentChanges());
-		}
-
-		@Override
-		public void run() {
-			changeset.setShowFirstParentChanges(!changeset.isShowFirstParentChanges());
 		}
 	}
 }

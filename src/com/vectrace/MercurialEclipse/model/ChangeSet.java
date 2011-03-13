@@ -85,7 +85,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final HgRoot hgRoot;
 	Set<IFile> files;
 	private Tag[] tags;
-	private boolean showFirstParentChanges;
 
 	/**
 	 * Lazy loaded list of files changed. Only applicable to merge changesets when {@link #showFirstParentChanges} is true.
@@ -577,16 +576,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 				&& !StringUtils.isEmpty(parents[1]);
 	}
 
-	@DoNotDisplayMe
-	public boolean isShowFirstParentChanges() {
-		return showFirstParentChanges;
-	}
-
-	public void setShowFirstParentChanges(boolean showFirstParentChanges) {
-		this.showFirstParentChanges = showFirstParentChanges;
-		fireChanged();
-	}
-
 	private List<FileStatus> getFirstParentChangedFiles() {
 		if (firstParentChangedFiles == null) {
 			// Query for this data. Takes 300 - 500ms for me.
@@ -670,8 +659,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public FileFromChangeSet[] getChangesetFiles() {
 		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
 
-		for (FileStatus fileStatus : (isShowFirstParentChanges() ? getFirstParentChangedFiles()
-				: getChangedFiles())) {
+		for (FileStatus fileStatus : getChangedFiles()) {
 			int action = 0;
 			int dir = 0;
 			switch (fileStatus.getAction()) {
