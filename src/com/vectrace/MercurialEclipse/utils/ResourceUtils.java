@@ -161,6 +161,9 @@ public final class ResourceUtils {
 	 *         workspace
 	 */
 	public static IFile getFileHandle(IPath path) {
+		if(path == null) {
+			return null;
+		}
 		return (IFile) getHandle(path, true);
 	}
 

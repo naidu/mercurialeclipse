@@ -69,7 +69,7 @@ public class FileFromChangeSet implements IAdaptable{
 		this.kind = diffKind;
 	}
 
-	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+	public Object getAdapter(Class adapter) {
 		// Resource adapter is enabled for "working" changeset only to avoid "dirty"
 		// decorations shown in the tree on changeset files from already commited changesets
 		if(changeset instanceof WorkingChangeSet && adapter == IResource.class){
@@ -161,6 +161,10 @@ public class FileFromChangeSet implements IAdaptable{
 		return file;
 	}
 
+	/**
+	 * Getter for the original source file handle of copied or moved files (if any)
+	 * @return source file handle (must not exist) if the file was copied or moved, null otherwise
+	 */
 	public IFile getCopySourceFile(){
 		return copySrcFile;
 	}

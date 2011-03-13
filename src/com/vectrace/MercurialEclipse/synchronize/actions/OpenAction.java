@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov          - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
@@ -101,6 +101,9 @@ public class OpenAction extends Action {
 					"Diff for files external to Eclipse workspace is not supported yet!");
 			return;
 		}
+		IFile sourceFile = fcs.getCopySourceFile();
+		final IFile parentFile = sourceFile != null? sourceFile : file;
+
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
 			CompareAction compareAction = new CompareAction(file);
@@ -133,7 +136,7 @@ public class OpenAction extends Action {
 					if(cs.getRevision().getRevision() == 0 || parents.length == 0){
 						parentRev = new NullRevision(file, cs);
 					} else {
-						parentRev = new MercurialRevisionStorage(file, parents[0]);
+						parentRev = new MercurialRevisionStorage(parentFile, parents[0]);
 					}
 					CompareUtils.openEditor(thisRev, parentRev, false, configuration);
 				} else {
@@ -164,7 +167,7 @@ public class OpenAction extends Action {
 							parentCs = new ParentChangeSet(parentId, cs);
 						}
 						parentRev = new MercurialRevisionStorage(
-								file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
+								parentFile, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
 					}
 					CompareUtils.openEditor(remoteRev, parentRev, false, configuration);
 					// the line below compares the remote changeset with the local copy.

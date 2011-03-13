@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland) - implementation
+ * 		Andrei Loskutov          - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -60,7 +60,6 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 						left[0] = getStorage((MercurialRevision) selection[0], monitor);
 						if(selection.length > 1 && !monitor.isCanceled()){
 							if(enableCompareWithPrev && selection[1] instanceof FileStatus){
-
 								FileStatus clickedFileStatus = (FileStatus) selection[1];
 								ChangeSet cs = left[0].getChangeSet();
 								IPath fileAbsPath;
@@ -73,7 +72,6 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 								if(file != null) {
 									right[0] = MercurialUtilities.getParentRevision(cs, file);
 								}
-
 							} else if(selection[1] instanceof MercurialRevision) {
 								right[0] = getStorage((MercurialRevision) selection[1], monitor);
 							}
