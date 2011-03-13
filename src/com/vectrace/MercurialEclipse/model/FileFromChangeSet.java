@@ -150,6 +150,22 @@ public class FileFromChangeSet implements IAdaptable{
 		return true;
 	}
 
+	/**
+	 * Getter for the original source file handle of copied or moved files (if any)
+	 * @return source file handle (must not exist) if the file was copied or moved, null otherwise
+	 */
+	public IFile getSourceFile() {
+		if(fileStatus == null || fileStatus.getRootRelativeCopySourcePath() == null) {
+			return null;
+		}
+		HgRoot root = changeset != null? changeset.getHgRoot() : null;
+		if (root == null) {
+			return null;
+		}
+		IPath absolute = root.toAbsolute(fileStatus.getRootRelativeCopySourcePath());
+		return ResourceUtils.getFileHandle(absolute);
+	}
+
 	public IFile getFile() {
 		return file;
 	}
