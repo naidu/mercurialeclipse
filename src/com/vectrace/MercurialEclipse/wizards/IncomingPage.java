@@ -112,17 +112,17 @@ public class IncomingPage extends HgWizardPage {
 	protected class IncomingDoubleClickListener implements IDoubleClickListener {
 		public void doubleClick(DoubleClickEvent event) {
 			ChangeSet cs = getSelectedChangeSet();
-			IStructuredSelection sel = (IStructuredSelection) event
-					.getSelection();
-			FileStatus clickedFileStatus = (FileStatus) sel
-					.getFirstElement();
+			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+			FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
+
 			if (cs != null && clickedFileStatus != null) {
-				IPath fileRelPath = clickedFileStatus.getRootRelativePath();
-				IPath fileAbsPath = hgRoot.toAbsolute(fileRelPath);
+				IPath fileAbsPath = hgRoot.toAbsolute(clickedFileStatus.getRootRelativePath());
 				IFile file = ResourceUtils.getFileHandle(fileAbsPath);
+
 				if (file != null) {
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
 							file, cs.getChangesetIndex(), cs.getChangeset(), cs);
+
 					MercurialRevisionStorage parentRev;
 					String[] parents = cs.getParents();
 					if(cs.getRevision().getRevision() == 0 || parents.length == 0){
@@ -140,8 +140,16 @@ public class IncomingPage extends HgWizardPage {
 						if(parentCs == null) {
 							parentCs = new ParentChangeSet(parentId, cs);
 						}
-						parentRev = new MercurialRevisionStorage(
-								file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
+						if(clickedFileStatus.isCopied()){
+							IPath fileCopySrcPath = hgRoot.toAbsolute(clickedFileStatus.getRootRelativeCopySourcePath());
+							IFile copySrc = ResourceUtils.getFileHandle(fileCopySrcPath);
+							parentRev = new MercurialRevisionStorage(
+									copySrc, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
+
+						}else{
+							parentRev = new MercurialRevisionStorage(
+									file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
+						}
 					}
 					CompareUtils.openEditor(remoteRev, parentRev, true);
 					// the line below compares the remote changeset with the local copy.

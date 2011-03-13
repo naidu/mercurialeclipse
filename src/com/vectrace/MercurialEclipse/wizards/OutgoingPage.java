@@ -123,7 +123,13 @@ public class OutgoingPage extends IncomingPage {
 
 				if(cs.getRevision().getRevision() == 0 || parents.length == 0){
 					parentRev = new NullRevision(file, cs);
-				} else {
+
+				} else if(clickedFileStatus.isCopied()){
+					IPath fileCopySrcPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativeCopySourcePath());
+					IFile copySrc = ResourceUtils.getFileHandle(fileCopySrcPath);
+					parentRev = new MercurialRevisionStorage(copySrc, parents[0]);
+
+				}else{
 					parentRev = new MercurialRevisionStorage(file, parents[0]);
 				}
 				CompareUtils.openEditor(thisRev, parentRev, true);
