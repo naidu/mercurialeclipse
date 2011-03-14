@@ -75,7 +75,7 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 				for (IProject project : projects) {
 					String projectPath = ResourceUtils.getPath(project).toFile().getAbsolutePath();
 					String rootPath = root.getAbsolutePath();
-					if (!projectPath.isEmpty() && projectPath.startsWith(rootPath)) {
+					if (projectPath.length() > 0 && projectPath.startsWith(rootPath)) {
 						result.add(project);
 					}
 				}
