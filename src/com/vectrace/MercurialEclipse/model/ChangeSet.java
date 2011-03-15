@@ -372,6 +372,15 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	/**
 	 * @param resource
 	 *            non null
+	 * @return true if the given resource was moved in this changeset
+	 */
+	public boolean isMoved(IResource resource) {
+		return contains(resource, FileStatus.Action.MOVED);
+	}
+
+	/**
+	 * @param resource
+	 *            non null
 	 * @return true if the given resource was added in this changeset
 	 */
 	public boolean isAdded(IResource resource) {
@@ -385,6 +394,27 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 */
 	public boolean isModified(IResource resource) {
 		return contains(resource, FileStatus.Action.MODIFIED);
+	}
+
+	/**
+	 * @param resource
+	 *            non null
+	 * @return file status object if this changeset contains given resource, null otherwise
+	 */
+	public FileStatus getStatus(IResource resource) {
+		if (getChangedFiles().isEmpty()) {
+			return null;
+		}
+		IPath path = ResourceUtils.getPath(resource);
+		if(path.isEmpty()) {
+			return null;
+		}
+		for (FileStatus fileStatus : changedFiles) {
+			if (path.equals(fileStatus.getAbsolutePath())) {
+				return fileStatus;
+			}
+		}
+		return null;
 	}
 
 	/**

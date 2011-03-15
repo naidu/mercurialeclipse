@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
@@ -132,7 +133,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	private void handleWithDialog(final HgException e) {
+	private static void handleWithDialog(final HgException e) {
 		MercurialEclipsePlugin.logError(e);
 		// TODO use statushandler???
 		if(Display.getCurrent() != null) {
@@ -153,7 +154,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return ResourceUtils.getResource(selection.getFirstElement());
 	}
 
-	private ChangeSet getParentChangeset(IResource resource) throws HgException {
+	private static ChangeSet getParentChangeset(IResource resource) throws HgException {
 		String[] parents = HgParentClient.getParentNodeIds(resource);
 		ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(resource, parents[0]);
 		if(cs != null && cs.getChangesetIndex() != 0) {
@@ -170,7 +171,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return null;
 	}
 
-	private void revertToParentVersion(final IResource resource){
+	private static void revertToParentVersion(final IResource resource){
 		Job job = new Job("Reverting to parent revision: " + ResourceUtils.getPath(resource)){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -188,12 +189,17 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		job.schedule();
 	}
 
-	private void revertToGivenVersion(IResource resource, ChangeSet cs, IProgressMonitor monitor) throws HgException {
+	private static void revertToGivenVersion(IResource resource, ChangeSet cs, IProgressMonitor monitor) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		List<IResource> list = new ArrayList<IResource>();
 		list.add(resource);
-		HgRevertClient.performRevert(monitor, hgRoot, list, cs);
-		refreshResource(monitor, MercurialStatusCache.getInstance(), resource);
+		Set<String> reverted = HgRevertClient.performRevert(monitor, hgRoot, list, cs);
+		for (String path : reverted) {
+			IFile fileHandle = ResourceUtils.getFileHandle(new Path(path));
+			if(fileHandle != null) {
+				refreshResource(monitor, MercurialStatusCache.getInstance(), fileHandle);
+			}
+		}
 	}
 
 	private Shell getShell() {
@@ -331,7 +337,11 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		monitor.done();
 	}
 
-	private void refreshResource(IProgressMonitor monitor, MercurialStatusCache cache,
+	/**
+	 * @param cache non null
+	 * @param resource non null
+	 */
+	private static void refreshResource(IProgressMonitor monitor, MercurialStatusCache cache,
 			IResource resource) {
 		try {
 			if(cache.isAdded(ResourceUtils.getPath(resource))){
@@ -394,7 +404,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	 * @return a map where the files with the specified state are grouped by the project.
 	 * Projects with no files of given state are not included into the map
 	 */
-	private Map<IProject, Set<IResource>> getFiles(int statusBit, Set<IProject> projects) {
+	private static Map<IProject, Set<IResource>> getFiles(int statusBit, Set<IProject> projects) {
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		Map<IProject, Set<IResource>> resources = new HashMap<IProject, Set<IResource>>();
 		for (IProject project : projects) {

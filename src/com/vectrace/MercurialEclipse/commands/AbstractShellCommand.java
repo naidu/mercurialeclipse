@@ -29,8 +29,10 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -602,6 +604,17 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// TODO check that length <= MAX_PARAMS
 		return commands = result;
+	}
+
+	/**
+	 * Can be used after execution to get a list of paths needed to be updated
+	 * @return a copy of file paths affected by this command, if any. Never returns null,
+	 * but may return empty list. The elements of the set are absolute file paths.
+	 */
+	public Set<String> getAffectedFiles(){
+		Set<String> fileSet = new HashSet<String>();
+		fileSet.addAll(files);
+		return fileSet;
 	}
 
 	/**

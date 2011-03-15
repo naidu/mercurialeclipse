@@ -88,8 +88,8 @@ public final class CommitResourceUtil {
 		if(location.isEmpty() || cache.isDirectory(location)) {
 			return;
 		}
-		if (!Team.isIgnoredHint(resource)) {
-			Integer status = cache.getStatus(resource);
+		Integer status = cache.getStatus(resource);
+		if (status != null || !Team.isIgnoredHint(resource)) {
 			File path = new File(root.toRelative(location.toFile()));
 			list.add(new CommitResource(status == null ? MercurialStatusCache.BIT_UNKNOWN : status
 					.intValue(), resource, path));
