@@ -250,12 +250,20 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return false;
 		}
 
-		// Should not check ignored status for directories which may contain NOT ignored files...
-		// http://code.google.com/a/eclipselabs.org/p/mercurialeclipse/issues/detail?id=28
-		if(resource instanceof IFile) {
-			boolean ignored = Team.isIgnoredHint(resource);
-			if(ignored) {
-				return false;
+		// If the ignore/derived hints from Eclipse should be ignored: set to true
+		// as Team.isIgnoredHint() assumes that every "derived" file is ignored.
+		// Unfortunately this is not always true. It is not usual, but it may
+		// happen that somebody committed some files under the "derived" path.
+		// In this case it would be impossible to revert/commit delete of such files from Eclipse.
+		boolean ignoreEclipseIgnoredAndDerived = true;
+		if(!ignoreEclipseIgnoredAndDerived) {
+			// Should not check ignored status for directories which may contain NOT ignored files...
+			// http://code.google.com/a/eclipselabs.org/p/mercurialeclipse/issues/detail?id=28
+			if(resource instanceof IFile) {
+				boolean ignored = Team.isIgnoredHint(resource);
+				if(ignored) {
+					return false;
+				}
 			}
 		}
 

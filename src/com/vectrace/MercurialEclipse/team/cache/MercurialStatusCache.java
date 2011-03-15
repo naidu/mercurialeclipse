@@ -989,8 +989,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 
 			Integer bitSet;
-			boolean ignoredHint = Team.isIgnoredHint(member);
-			if (ignoredHint) {
+			if (bit == BIT_UNKNOWN && Team.isIgnoredHint(member)) {
 				bitSet = IGNORE;
 			} else {
 				bitSet = Integer.valueOf(bit);
@@ -1138,7 +1137,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				} else {
 					// propagate clean state back to parents - e.g. if file was reverted,
 					// and there are NO OTHER dirty children, parent state should change to "clean"
-					if (parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
+					if (parent.isAccessible() && !parent.isTeamPrivateMember()) {
 						MemberStatusVisitor visitor = new MemberStatusVisitor(parentLocation, childBitSet);
 						// we have to traverse all possible "dirty" children and change
 						// parent state from "dirty" to "clean"...
