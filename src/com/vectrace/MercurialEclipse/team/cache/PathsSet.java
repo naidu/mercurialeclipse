@@ -52,6 +52,10 @@ public class PathsSet {
 	public List<IPath> getChildren(IPath parent){
 		List<IPath> result = null;
 		int segmentCount = parent.segmentCount();
+		// empty or root paths shouldn't be tracked.
+		if(segmentCount == 0) {
+			return null;
+		}
 		int pathKey = categorize(parent.lastSegment());
 		int startSegment = categorize(segmentCount) + 1;
 		if(startSegment == MAX_SEGMENTS){
@@ -82,6 +86,10 @@ public class PathsSet {
 	public List<IPath> getDirectChildren(IPath parent) {
 		List<IPath> result = null;
 		int segmentCount = parent.segmentCount();
+		// empty or root paths shouldn't be tracked.
+		if(segmentCount == 0) {
+			return null;
+		}
 		int pathKey = categorize(parent.lastSegment());
 		int startSegment = categorize(segmentCount) + 1;
 		if(startSegment == MAX_SEGMENTS){

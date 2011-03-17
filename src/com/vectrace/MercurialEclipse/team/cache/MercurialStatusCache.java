@@ -585,6 +585,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return Collections.emptySet();
 			}
 			IPath parentPath = ResourceUtils.getPath(folder);
+			if(parentPath.isEmpty()) {
+				return Collections.emptySet();
+			}
 			resources = new HashSet<IResource>();
 			List<IPath> children = set.getChildren(parentPath);
 			if(children != null) {
@@ -606,6 +609,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			resources = new HashSet<IResource>();
 			Set<Entry<IPath, Integer>> entrySet = statusMap.entrySet();
 			IPath parentPath = ResourceUtils.getPath(folder);
+			if(parentPath.isEmpty()) {
+				return Collections.emptySet();
+			}
 			for (Entry<IPath, Integer> entry : entrySet) {
 				Integer status = entry.getValue();
 				if(status != null && Bits.contains(status.intValue(), statusBits)){
@@ -777,7 +783,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if(res instanceof IProject && knownStatus.contains(project)){
 				projectDeletedOrClosed(project);
 			} else {
-				clearStatusCache(res, false);
+				clearStatusCache(res);
 			}
 			monitor.worked(1);
 			if(monitor.isCanceled()){
@@ -874,6 +880,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 */
 	private Set<IPath> getPathChildrenFromCache(IPath parentPath) {
 		Set<IPath> children = new HashSet<IPath>();
+		// empty or root paths shouldn't be tracked.
+		if(parentPath.isEmpty()) {
+			return children;
+		}
 		Set<IPath> keySet = statusMap.keySet();
 		for (IPath path : keySet) {
 			if(path != null && ResourceUtils.isPrefixOf(parentPath, path)) {
@@ -989,8 +999,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 
 			Integer bitSet;
-			boolean ignoredHint = Team.isIgnoredHint(member);
-			if (ignoredHint) {
+			if (bit == BIT_UNKNOWN && Team.isIgnoredHint(member)) {
 				bitSet = IGNORE;
 			} else {
 				bitSet = Integer.valueOf(bit);
@@ -1080,7 +1089,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private void setStatus(IPath location, Integer status, boolean isDir) {
-		if(location == null){
+		if(location == null || location.isEmpty()){
 			return;
 		}
 		statusMap.put(location, status);
@@ -1138,7 +1147,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				} else {
 					// propagate clean state back to parents - e.g. if file was reverted,
 					// and there are NO OTHER dirty children, parent state should change to "clean"
-					if (parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
+					if (parent.isAccessible() && !parent.isTeamPrivateMember()) {
 						MemberStatusVisitor visitor = new MemberStatusVisitor(parentLocation, childBitSet);
 						// we have to traverse all possible "dirty" children and change
 						// parent state from "dirty" to "clean"...
@@ -1303,7 +1312,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				synchronized (statusUpdateLock) {
 					for (IResource curr : currentBatch) {
 						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
-						clearStatusCache(curr, false);
+						clearStatusCache(curr);
 						if (unknown && !curr.exists()) {
 							// remember parents of deleted files: we must update their state
 							IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
@@ -1337,15 +1346,13 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return changed;
 	}
 
-	public void clearStatusCache(IResource resource, boolean notify) {
-		Set<IResource> members = null;
-		if(notify){
-			members = getLocalMembers(resource);
-			members.add(resource);
+	public void clearStatusCache(IResource resource) {
+		if(resource instanceof IProject && !resource.exists()) {
+			return;
 		}
+		IPath parentPath = ResourceUtils.getPath(resource);
 		synchronized (statusUpdateLock) {
-			IPath parentPath = ResourceUtils.getPath(resource);
-			if(resource instanceof IContainer){
+			if(resource instanceof IContainer && !parentPath.isEmpty()){
 				// same can be done via getChildrenFromCache(resource), but we
 				// iterating/removing over keyset directly to reduce memory consumption
 				Set<IPath> entrySet = statusMap.keySet();
@@ -1361,9 +1368,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				bitMap.remove(parentPath);
 				statusMap.remove(parentPath);
 			}
-		}
-		if(notify){
-			notifyChanged(members, false);
 		}
 	}
 
@@ -1417,7 +1421,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	public void clear(IProject project, boolean notify) {
 		clearMergeStatus(project);
-		clearStatusCache(project, false);
+		clearStatusCache(project);
 		if(notify) {
 			notifyChanged(project, false);
 		}

@@ -249,8 +249,8 @@ public final class ResourceUtils {
 				// project removed too, there is no way to correctly determine the right
 				// location in case project is not located under workspace or project name doesn't
 				// match project root folder name
-				String message = "Failed to resolve location for resource: " + resource;
-				MercurialEclipsePlugin.logError(message, new IllegalStateException(message));
+				String message = "Failed to resolve location for resource (project deleted): " + resource;
+				MercurialEclipsePlugin.logWarning(message, new IllegalStateException(message));
 				return Path.EMPTY;
 			}
 

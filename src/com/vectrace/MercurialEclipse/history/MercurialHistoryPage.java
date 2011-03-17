@@ -1218,7 +1218,10 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	public BaseSelectionListenerAction getRevertAction() {
 		if (revertAction == null) {
-			revertAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.replaceCurrentWithSelected")) { //$NON-NLS-1$
+			final String replaceString = Messages.getString("MercurialHistoryPage.replaceCurrentWithSelected");
+			final String restoreString = Messages.getString("MercurialHistoryPage.restoreDeletedFile");
+			final String undoMoveString = Messages.getString("MercurialHistoryPage.undoMove");
+			revertAction = new BaseSelectionListenerAction(replaceString) {
 				@Override
 				public void run() {
 					IStructuredSelection selection = getStructuredSelection();
@@ -1228,7 +1231,8 @@ public class MercurialHistoryPage extends HistoryPage {
 					ActionRevert revert = new ActionRevert();
 					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
 					IResource selectedElement = revision.getResource();
-					if (!MercurialStatusCache.getInstance().isClean(selectedElement)
+					MercurialStatusCache cache = MercurialStatusCache.getInstance();
+					if (!cache.isUnknown(selectedElement) && !cache.isClean(selectedElement)
 							&& !MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
 							Messages.getString("MercurialHistoryPage.file") + selectedElement.getName() //$NON-NLS-1$
 									+ Messages.getString("MercurialHistoryPage.hasUncommittedChanges"))) { //$NON-NLS-1$
@@ -1250,6 +1254,13 @@ public class MercurialHistoryPage extends HistoryPage {
 						if(element instanceof MercurialRevision){
 							MercurialRevision rev = (MercurialRevision) element;
 							if(rev.getResource() instanceof IFile){
+								if(rev.getChangeSet().isRemoved(rev.getResource())) {
+									setText(restoreString);
+								} else if (rev.getChangeSet().isMoved(rev.getResource())) {
+									setText(undoMoveString);
+								} else {
+									setText(replaceString);
+								}
 								return true;
 							}
 						}
