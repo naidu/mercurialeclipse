@@ -118,7 +118,9 @@ public final class LocalChangesetCache extends AbstractCache {
 	@Deprecated
 	public void clear(IResource resource, boolean notify) {
 		Set<IResource> members = ResourceUtils.getMembers(resource);
-		members.add(resource);
+		if(resource instanceof IProject && !resource.exists()) {
+			members.remove(resource);
+		}
 		synchronized(localChangeSets){
 			for (IResource member : members) {
 				localChangeSets.remove(ResourceUtils.getPath(member));
@@ -460,12 +462,11 @@ public final class LocalChangesetCache extends AbstractCache {
 				return;
 			}
 
-			// every changeset is at least stored for the repository root
 			if (res.getType() != IResource.PROJECT) {
-//				IPath rootPath = new Path(root.getAbsolutePath());
-				// Strange code...
-				// localChangeSets.put(res.getLocation(), new TreeSet<ChangeSet>(revisions.get(rootPath)));
 				IPath location = ResourceUtils.getPath(res);
+				if(location.isEmpty()) {
+					return;
+				}
 				Set<ChangeSet> csets = revisions.get(location);
 				if(csets != null) {
 					localChangeSets.put(location, new TreeSet<ChangeSet>(csets));

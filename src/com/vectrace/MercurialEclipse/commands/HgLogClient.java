@@ -304,6 +304,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 
 		IPath location = ResourceUtils.getPath(resource);
+		if(location.isEmpty()) {
+			return null;
+		}
 		if(!map.isEmpty()) {
 			return Collections.min(map.get(location));
 		}

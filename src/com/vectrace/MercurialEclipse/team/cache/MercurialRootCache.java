@@ -285,6 +285,9 @@ public class MercurialRootCache extends AbstractCache {
 
 	@Override
 	public void projectDeletedOrClosed(IProject project) {
+		if(!project.exists()) {
+			return;
+		}
 		IPath projPath = ResourceUtils.getPath(project);
 
 		if (!projPath.isEmpty()) {
