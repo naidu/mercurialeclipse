@@ -84,8 +84,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 			HashSet h = new HashSet(result);
 			result.clear();
 			result.addAll(h);
-			PushPullSynchronizeOperation pullupdate = new PushPullSynchronizeOperation(
-					configuration, elements, result, isPull, update);
+			PushPullSynchronizeOperation pullupdate = new PushPullSynchronizeOperation(configuration, elements, result, isPull, update);
 			return pullupdate;
 		}
 		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)

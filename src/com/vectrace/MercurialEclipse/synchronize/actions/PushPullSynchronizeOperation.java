@@ -12,11 +12,11 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
@@ -68,7 +68,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
-		List<HgRoot> hgRoots = new ArrayList<HgRoot>();
+		Set<HgRoot> hgRoots = new TreeSet<HgRoot>();
 		ChangeSet changeSet = null; // ok to have changeset outside loop, if it's not null in the end we have only selected one thing, and the loop below runs only once.
 		// TODO Make a changeRequest class of a pair with hgroot and changeset(s)
 		for (Object target : targets) {
@@ -114,14 +114,16 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 				return;
 			}
 			hgRoots.add(hgRoot);
-			checkProjects(monitor, hgRoot);
+		}
+		//Inform the user on how many projects is about to update
+		for(HgRoot root: hgRoots) {
+			checkProjects(monitor, root);
 			if (monitor.isCanceled()) {
 				return;
 			}
 		}
 		monitor.beginTask(getTaskName(hgRoots), 1);
-		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
-				: Messages.getString("PushPullSynchronizeOperation.PushJob");
+		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob") : Messages.getString("PushPullSynchronizeOperation.PushJob");
 		PushPullJob job = new PushPullJob(jobName, hgRoots, changeSet, monitor);
 
 		if (changeSet == null) {
@@ -132,7 +134,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		job.schedule();
 	}
 
-	private String getTaskName(List<HgRoot> hgRoot) {
+	private String getTaskName(Set<HgRoot> hgRoot) {
 		String taskName;
 		if (isPull) {
 			taskName = Messages.getString("PushPullSynchronizeOperation.PullTask")
@@ -239,7 +241,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	private final class PushPullJob extends /*NON UI!*/Job {
 
 		private final IProgressMonitor opMonitor;
-		private final List<HgRoot> hgRoots;
+		private final Set<HgRoot> hgRoots;
 		private final ChangeSet changeSet;
 		private final HashMap<HgRoot,String> branches = new HashMap<HgRoot, String>();
 
@@ -249,7 +251,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		 * @param changeSet The changeset, may be null to push/pull everything
 		 * @param opMonitor The progress monitor
 		 */
-		private PushPullJob(String name, List<HgRoot> hgRoot, ChangeSet changeSet, IProgressMonitor opMonitor) {
+		private PushPullJob(String name, Set<HgRoot> hgRoot, ChangeSet changeSet, IProgressMonitor opMonitor) {
 			super(name);
 			this.hgRoots = hgRoot;
 			this.changeSet = changeSet;
