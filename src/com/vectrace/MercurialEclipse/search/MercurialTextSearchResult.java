@@ -6,23 +6,26 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian	implementation
+ * 		Bastian	implementation
+ * 		Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.search.internal.ui.SearchPluginImages;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
 import org.eclipse.search.ui.text.IEditorMatchAdapter;
 import org.eclipse.search.ui.text.IFileMatchAdapter;
+import org.eclipse.search.ui.text.Match;
+import org.eclipse.ui.IEditorPart;
 
 /**
  * @author Bastian
  *
  */
-@SuppressWarnings("restriction")
-public class MercurialTextSearchResult extends AbstractTextSearchResult {
+public class MercurialTextSearchResult extends AbstractTextSearchResult implements IEditorMatchAdapter, IFileMatchAdapter {
 
 	private MercurialTextSearchQuery query;
 
@@ -30,23 +33,21 @@ public class MercurialTextSearchResult extends AbstractTextSearchResult {
 		super();
 	}
 
-	/**
-	 * @param mercurialTextSearchQuery
-	 */
 	public MercurialTextSearchResult(MercurialTextSearchQuery query) {
 		this.query = query;
 	}
 
 	@Override
 	public IEditorMatchAdapter getEditorMatchAdapter() {
-		return new MercurialEditorMatchAdapter();
+		return this;
 	}
 
 	@Override
 	public IFileMatchAdapter getFileMatchAdapter() {
-		return new MercurialFileMatchAdapter();
+		return this;
 	}
 
+	@SuppressWarnings("restriction")
 	public ImageDescriptor getImageDescriptor() {
 		return SearchPluginImages.DESC_OBJ_TSEARCH_DPDN;
 	}
@@ -62,5 +63,25 @@ public class MercurialTextSearchResult extends AbstractTextSearchResult {
 	public String getTooltip() {
 		return getLabel();
 	}
+
+	public Match[] computeContainedMatches(AbstractTextSearchResult result, IFile file) {
+		return new Match[0];
+	}
+
+	public Match[] computeContainedMatches(AbstractTextSearchResult result, IEditorPart editor) {
+		return new Match[0];
+	}
+
+	public IFile getFile(Object element) {
+		if (element instanceof IFile) {
+			return (IFile)element;
+		}
+		return null;
+	}
+
+	public boolean isShownInEditor(Match match, IEditorPart editor) {
+		return false;
+	}
+
 
 }
