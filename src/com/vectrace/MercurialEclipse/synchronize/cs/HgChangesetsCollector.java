@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -231,7 +230,9 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
-						Assert.isNotNull(repo);
+						if(repo == null) {
+							throw new RuntimeException("Unable to find default repository");
+						}
 						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, syncBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
