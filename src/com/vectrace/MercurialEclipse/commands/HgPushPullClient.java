@@ -75,10 +75,10 @@ public class HgPushPullClient extends AbstractClient {
 				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
-		if (update) {
+		/*if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
 			addMergeToolPreference(command);
-		} else if (rebase) {
+		} else */if (rebase) {
 			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 			command.addOptions("--rebase"); //$NON-NLS-1$
 			addMergeToolPreference(command);
@@ -105,7 +105,7 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
-
+			HgUpdateClient.update(hgRoot, null, false);
 			if (result != null && result.contains("use 'hg resolve' to retry unresolved file merges")) {
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 
