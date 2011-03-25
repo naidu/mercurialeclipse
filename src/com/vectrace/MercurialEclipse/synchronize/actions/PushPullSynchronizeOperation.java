@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.synchronize.actions;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -56,10 +55,10 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	private final MercurialSynchronizeParticipant participant;
 	private final boolean update;
 	private final boolean isPull;
-	private final List<Object> targets;
+	private final Set<? extends Object> targets;
 
 	public PushPullSynchronizeOperation(ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, List<Object> target, boolean isPull, boolean update) {
+			IDiffElement[] elements, Set<? extends Object> target, boolean isPull, boolean update) {
 		super(configuration, elements);
 		this.targets = target;
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();

@@ -77,6 +77,7 @@ public class RepositoryChangesetGroup implements IAdaptable {
 	 */
 	public void setIncoming(ChangesetGroup incoming) {
 		this.incoming = incoming;
+		incoming.setRepositoryChangesetGroup(this);
 	}
 
 	/**
@@ -92,6 +93,7 @@ public class RepositoryChangesetGroup implements IAdaptable {
 	 */
 	public void setOutgoing(ChangesetGroup outgoing) {
 		this.outgoing = outgoing;
+		outgoing.setRepositoryChangesetGroup(this);
 	}
 
 	/**

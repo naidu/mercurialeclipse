@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +20,7 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
@@ -69,27 +69,27 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		// HgChangeSetModelProvider provider = (HgChangeSetModelProvider) input;
 		// provider.getSubscriber().getCollector().get
 		// }
+		if(sel instanceof TreeSelection) {
+			List list = ((TreeSelection)sel).toList();
+			return new PushPullSynchronizeOperation(configuration, elements, new HashSet(list), isPull, update);
+		}
 		ISynchronizeParticipant part = getConfiguration().getParticipant();
 		if (part instanceof MercurialSynchronizeParticipant) {
-			List<Object> result = new ArrayList<Object>();
+			HashSet<IProject> result = new HashSet<IProject>();
 			MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
 			Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
 			for (IHgRepositoryLocation repos : repositoryLocation) {
-				Set<IProject> projects = MercurialEclipsePlugin.getRepoManager()
-						.getAllRepoLocationProjects(repos);
+				Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repos);
 				for (IProject proj : projects) {
 					result.add(proj);
 				}
 			}
-			HashSet h = new HashSet(result);
-			result.clear();
-			result.addAll(h);
 			PushPullSynchronizeOperation pullupdate = new PushPullSynchronizeOperation(configuration, elements, result, isPull, update);
 			return pullupdate;
 		}
 		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
 		List<Object> object = sel.toList();
-		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
+		return new PushPullSynchronizeOperation(configuration, elements, new HashSet(object), isPull, update);
 	}
 
 	@Override

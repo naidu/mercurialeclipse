@@ -24,6 +24,7 @@ public class ChangesetGroup {
 	private final Direction direction;
 	private final String name;
 	private final Set<ChangeSet> changesets;
+	private RepositoryChangesetGroup repositoryChangesetGroup;
 
 	public ChangesetGroup(String name, Direction direction) {
 		this.name = name;
@@ -64,5 +65,19 @@ public class ChangesetGroup {
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	/**
+	 * @param repositoryChangesetGroup the repositoryChangesetGroup to set
+	 */
+	public void setRepositoryChangesetGroup(RepositoryChangesetGroup repositoryChangesetGroup) {
+		this.repositoryChangesetGroup = repositoryChangesetGroup;
+	}
+
+	/**
+	 * @return the repositoryChangesetGroup
+	 */
+	public RepositoryChangesetGroup getRepositoryChangesetGroup() {
+		return repositoryChangesetGroup;
 	}
 }
