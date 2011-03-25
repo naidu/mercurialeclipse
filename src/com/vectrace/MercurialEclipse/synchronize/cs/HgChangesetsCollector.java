@@ -218,7 +218,6 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
-						Assert.isNotNull(repo);
 						if(repo == null) {
 							throw new RuntimeException("Unable to find default repository");
 						}
