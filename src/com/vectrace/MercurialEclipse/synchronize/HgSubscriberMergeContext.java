@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.diff.IDiff;
@@ -36,14 +37,18 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
 	private final Set<IFile> hidden;
-	private final MercurialSynchronizeSubscriber subscriber;
 
 	public HgSubscriberMergeContext(Subscriber subscriber,
 			ISynchronizationScopeManager manager) {
 		super(subscriber, manager);
+		Assert.isLegal(subscriber instanceof MercurialSynchronizeSubscriber);
 		initialize();
 		hidden = new HashSet<IFile>();
-		this.subscriber = (MercurialSynchronizeSubscriber) subscriber;
+	}
+
+	@Override
+	public MercurialSynchronizeSubscriber getSubscriber() {
+		return (MercurialSynchronizeSubscriber) super.getSubscriber();
 	}
 
 	/**
@@ -94,7 +99,7 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 	@Override
 	public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
 		super.refresh(mappings, monitor);
-		HgChangesetsCollector collector = subscriber.getCollector();
+		HgChangesetsCollector collector = getSubscriber().getCollector();
 		if(collector != null) {
 			collector.refresh(mappings);
 		}

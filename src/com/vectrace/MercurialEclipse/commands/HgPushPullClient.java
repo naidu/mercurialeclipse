@@ -13,6 +13,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.ui.PlatformUI;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
@@ -64,18 +67,18 @@ public class HgPushPullClient extends AbstractClient {
 		return pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null);
 	}
 
-	public static String pull(HgRoot hgRoot, ChangeSet changeset,
+	public static String pull(final HgRoot hgRoot, ChangeSet changeset,
 			IHgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout, boolean merge, String branch) throws HgException {
-
+		//TODO Add fetch like behavior
 		HgCommand command = new HgCommand("pull", //$NON-NLS-1$
 				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
-		if (update) {
+		/*if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
 			addMergeToolPreference(command);
-		} else if (rebase) {
+		} else */if (rebase) {
 			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 			command.addOptions("--rebase"); //$NON-NLS-1$
 			addMergeToolPreference(command);
@@ -102,6 +105,16 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
+			HgUpdateClient.update(hgRoot, null, false);
+			if (result != null && result.contains("use 'hg resolve' to retry unresolved file merges")) {
+				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+
+					public void run() {
+						MessageDialog.openInformation(null, "Unresolved conflicts",
+								"You have unresolved conflicts after update. Use Synchronize View to edit conflicts");
+					}
+				});
+			}
 			if (update && result != null && result.contains("not updating, since new heads added")
 					&& !merge && !rebase) {
 				// inform user about new heads and ask if he wants to merge or rebase

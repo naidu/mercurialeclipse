@@ -22,6 +22,8 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 
 /**
  * Factory adapting our model for Property page
@@ -47,12 +49,14 @@ public class PropertyPageAdapterFactory implements IAdapterFactory {
 	}
 	*/
 
-	public Object getAdapter(Object adaptable, @SuppressWarnings("rawtypes") Class adapterType) {
+	public Object getAdapter(Object adaptable, Class adapterType) {
 		if (adapterType == IPropertySource.class) {
 			if (adaptable instanceof MercurialRevision
 					|| adaptable instanceof FileStatus
 					|| adaptable instanceof FileFromChangeSet
+					|| adaptable instanceof RepositoryChangesetGroup
 					|| adaptable instanceof ChangeSet
+					|| adaptable instanceof ChangesetGroup
 					|| adaptable instanceof Tag) {
 				return new GenericPropertySource(adaptable);
 			}
@@ -66,7 +70,6 @@ public class PropertyPageAdapterFactory implements IAdapterFactory {
 		return null;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Class[] getAdapterList() {
 		return new Class[] { IPropertySource.class, IPropertySheetPage.class };
 	}

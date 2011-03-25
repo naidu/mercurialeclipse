@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     John Peberdy              - refactoring
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -50,7 +50,6 @@ public class HgCommand extends AbstractShellCommand {
 	public HgCommand(String command, String uiName, HgRoot root, boolean escapeFiles) {
 		super(uiName, root, root, escapeFiles);
 		this.command = command;
-
 		Assert.isNotNull(command);
 		Assert.isNotNull(hgRoot);
 	}
