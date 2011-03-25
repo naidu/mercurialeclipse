@@ -40,6 +40,10 @@ public class HgMergeClient extends AbstractClient {
 		} catch (HgException e) {
 			// if conflicts aren't resolved and no merge tool is started, hg
 			// exits with 1
+			if(e.getMessage().startsWith("abort: untracked file in working directory differs from file")) {
+				String fileName = e.getMessage().substring(e.getMessage().indexOf("'")+1, e.getMessage().lastIndexOf("'"));
+				throw new HgException("There is a local file '"+fileName+"' not tracked via mercurial, the file is also in the incoming changeset. Please add the file and remerge");
+			}
 			if (e.getStatus().getCode() != 1) {
 				throw e;
 			}
