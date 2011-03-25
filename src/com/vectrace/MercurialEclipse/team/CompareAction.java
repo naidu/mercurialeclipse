@@ -157,7 +157,7 @@ public class CompareAction extends SingleFileAction {
 						}
 					});
 
-					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id"));
+					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id otherId="+otherId+", ancestorId="+ancestorId+" file="+file.getName()));
 					return;
 				}
 
