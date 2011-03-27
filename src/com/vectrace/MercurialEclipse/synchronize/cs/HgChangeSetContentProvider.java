@@ -84,6 +84,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommitted, true);
+						for (ChangeSet cs : uncommitted.getChangesets()) {
+							treeViewer.refresh(cs, true);
+						}
 						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());

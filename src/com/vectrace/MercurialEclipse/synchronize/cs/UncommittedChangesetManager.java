@@ -48,7 +48,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	public UncommittedChangesetManager(HgChangeSetContentProvider provider) {
 		this.provider = provider;
 		group = new UncommittedChangesetGroup(this);
-		defaultChangeset = new WorkingChangeSet("Default Changeset");
+		defaultChangeset = new WorkingChangeSet("Default Changeset", group);
 	}
 
 	public UncommittedChangesetGroup getUncommittedGroup(){
@@ -115,7 +115,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 				String name = entry.getValue();
 				WorkingChangeSet changeset = getChangeset(name, sets);
 				if(changeset == null){
-					changeset = new WorkingChangeSet(name);
+					changeset = new WorkingChangeSet(name, group);
 					sets.add(changeset);
 				}
 				// TODO

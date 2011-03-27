@@ -34,6 +34,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
+import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -57,14 +58,17 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	private HgSubscriberMergeContext context;
 	private final PropertyChangeEvent event;
 	private final MercurialStatusCache cache = MercurialStatusCache.getInstance();
+	private final UncommittedChangesetGroup group;
 
-	public WorkingChangeSet(String name) {
+	public WorkingChangeSet(String name, UncommittedChangesetGroup group) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
+		this.group = group;
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		projects = new HashSet<IProject>();
 		files = new HashSet<IFile>();
 		event = new PropertyChangeEvent(this, "", null, "");
+		setName(name);
 	}
 
 	public boolean add(IFile file){
@@ -282,6 +286,13 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			fcs.add(new FileFromChangeSet(this, file, null, diffKind));
 		}
 		return fcs.toArray(new FileFromChangeSet[0]);
+	}
+
+	/**
+	 * @return the group, never null
+	 */
+	public UncommittedChangesetGroup getGroup() {
+		return group;
 	}
 
 	private final class ExclusiveRule implements ISchedulingRule {

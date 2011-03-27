@@ -28,23 +28,31 @@ import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation {
-	private final WorkingChangeSet input;
+	private final WorkingChangeSet changeset;
+//	private final ISynchronizePageConfiguration configuration;
+//	private MercurialSynchronizeParticipant participant;
 
 	public EditChangesetSynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
 			IDiffElement[] elements, WorkingChangeSet input) {
 		super(configuration, elements);
-		this.input = input;
+//		this.configuration = configuration;
+//		ISynchronizeParticipant participant1 = configuration.getParticipant();
+//		if(participant1 instanceof MercurialSynchronizeParticipant) {
+//			this.participant = (MercurialSynchronizeParticipant) participant1;
+//		}
+		this.changeset = input;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
+		getPart();
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				// TODO get hg root and get the changeset type
 				boolean isDefaultChangeset = false;
 				HgRoot hgRoot;
-				Set<IFile> files = input.getFiles();
+				Set<IFile> files = changeset.getFiles();
 				if(files.isEmpty()){
 					// TODO how to get hg root? Should we allow null?
 					hgRoot = null;
@@ -52,11 +60,20 @@ public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation
 					// TODO not elegant. Should we restrict changesets to one root only?
 					hgRoot = ResourceUtils.groupByRoot(files).keySet().iterator().next();
 				}
-				EditChangesetDialog dialog = new EditChangesetDialog(getShell(), hgRoot, input, isDefaultChangeset);
+				EditChangesetDialog dialog = new EditChangesetDialog(getShell(), hgRoot, changeset, isDefaultChangeset);
 				int ok = dialog.open();
 				if(Window.OK != ok){
 					return;
 				}
+
+				changeset.getGroup().changesetChanged(changeset);
+//				Viewer viewer = configuration.getPage().getViewer();
+//				if(!(viewer instanceof ContentViewer)){
+//					return;
+//				}
+//				CommonViewer commonViewer = (CommonViewer) viewer;
+//				final HgChangeSetContentProvider csProvider = OpenAction.getProvider(commonViewer.getNavigatorContentService());
+
 				// TODO apply changes
 			}
 		});

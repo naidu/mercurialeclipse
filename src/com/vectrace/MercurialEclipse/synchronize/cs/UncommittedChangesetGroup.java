@@ -228,6 +228,11 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return changed;
 	}
 
+	public void changesetChanged(WorkingChangeSet set) {
+		// TODO: add argument to avoid too much updates?
+		notifyListeners();
+	}
+
 	private void notifyListeners() {
 		Job updateJob = new Job("Uncommitted changeset update"){
 			@Override
