@@ -17,6 +17,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -101,14 +102,14 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 				sb.append(" [").append(cset.getAuthor()).append(']');
 				sb.append(" (").append(cset.getAgeDate()).append(')');
-				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
-					sb.append(' ').append(cset.getBranch()).append(':');
-				}
 			} else {
 				sb.append(cset.getName());
 				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
-			sb.append(' ').append(getShortComment(cset));
+			if (!Branch.isDefault(cset.getBranch())) {
+				sb.append(' ').append(cset.getBranch());
+			}
+			sb.append(':').append(' ').append(getShortComment(cset));
 			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){
@@ -116,6 +117,16 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			String name = group.getName();
 			if(group.getChangesets().isEmpty()){
 				return name + " (empty)";
+			}
+			if(group.getDirection() == Direction.LOCAL) {
+				int files = 0;
+				for (ChangeSet cs : group.getChangesets()) {
+					files += cs.getChangesetFiles().length;
+				}
+				if(files == 0) {
+					return name + " (empty)";
+				}
+				return name + " (" + files + ')';
 			}
 			return name + " (" + group.getChangesets().size() + ')';
 		}
