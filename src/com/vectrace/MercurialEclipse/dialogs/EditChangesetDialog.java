@@ -37,6 +37,7 @@ public class EditChangesetDialog extends CommitDialog {
 	public EditChangesetDialog(Shell shell, HgRoot hgRoot, WorkingChangeSet changeset,
 			boolean isDefault) {
 		super(shell, hgRoot, new ArrayList<IResource>(changeset.getFiles()));
+		setBlockOnOpen(true);
 		this.changeset = changeset;
 		Assert.isNotNull(hgRoot);
 		options.defaultCommitMessage = changeset.getComment();
