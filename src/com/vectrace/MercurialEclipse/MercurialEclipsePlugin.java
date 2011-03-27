@@ -10,7 +10,7 @@
  *     Stefan Groschupf          - logError
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland)     - default encoding
  *     Philip Graf               - proxy support

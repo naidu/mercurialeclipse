@@ -9,7 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - additions for sync
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 

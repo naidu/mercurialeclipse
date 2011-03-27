@@ -8,12 +8,11 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch				- Adaption to Mercurial
- *     Andrei Loskutov              - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -21,42 +20,35 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
  * filter the selection and delegate its execution to the get operation.
  */
-public class PushPullSynchronizeAction extends SynchronizeModelAction {
+public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 
-	private final boolean update;
-	private final boolean isPull;
+	public static final String ID = "hg.editChangeset";
 
-	public PushPullSynchronizeAction(String text,
+	public EditChangesetSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
-			ISelectionProvider selectionProvider, boolean isPull, boolean update) {
+			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
-		this.isPull = isPull;
-		this.update = update;
-		if(isPull) {
-			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
-		} else {
-			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
-		}
+		setId(ID);
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("elcl16/changeset_obj.gif"));
 	}
 
 	@Override
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		IStructuredSelection sel = getStructuredSelection();
-		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
+		// it's guaranteed that we have exact one element
 		Object object = sel.getFirstElement();
-		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
+		if(object instanceof WorkingChangeSet){
+			return new EditChangesetSynchronizeOperation(configuration, elements,
+					(WorkingChangeSet) object);
+		}
+		return null;
 	}
 
 	@Override
@@ -72,31 +64,8 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		return updateSelection;
 	}
 
-	public boolean isPull() {
-		return isPull;
-	}
-
 	private boolean isSupported(Object object) {
-		if(object instanceof IProject){
-			return true;
-		}
-		if(object instanceof ChangesetGroup){
-			ChangesetGroup group = (ChangesetGroup) object;
-			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
-		}
-		if (object instanceof ChangeSet) {
-			ChangeSet changeSet = (ChangeSet) object;
-			return !(changeSet instanceof WorkingChangeSet) && isMatching(changeSet.getDirection())
-					&& (!update || !isPull || isMatchingBranch(changeSet));
-		}
-		return false;
+		return object instanceof WorkingChangeSet;
 	}
 
-	private boolean isMatching(Direction d) {
-		return (d == Direction.INCOMING && isPull) || (d == Direction.OUTGOING && !isPull);
-	}
-
-	private boolean isMatchingBranch(ChangeSet cs) {
-		return Branch.same(MercurialTeamProvider.getCurrentBranch(cs.getHgRoot()), cs.getBranch());
-	}
 }

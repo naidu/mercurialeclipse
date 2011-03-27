@@ -67,7 +67,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		event = new PropertyChangeEvent(this, "", null, "");
 	}
 
-	private boolean add(IFile file){
+	public boolean add(IFile file){
 		if(context != null && context.isHidden(file)){
 			return false;
 		}
@@ -265,6 +265,11 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	public void setContext(HgSubscriberMergeContext context) {
 		this.context = context;
+	}
+
+	@Override
+	public void setName(String name) {
+		super.setName(name);
 	}
 
 	@Override

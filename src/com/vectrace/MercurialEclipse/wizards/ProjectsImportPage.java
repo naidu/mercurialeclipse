@@ -14,7 +14,7 @@
  *          - Bug 187318[Wizards] "Import Existing Project" loops forever with cyclic symbolic links
  *     Remy Chi Jian Suen  (remy.suen@gmail.com)
  *          - Bug 210568 [Import/Export] [Import/Export] - Refresh button does not update list of projects
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *          - Stripped down all what we do not need in Mercurial
  *******************************************************************************/
 

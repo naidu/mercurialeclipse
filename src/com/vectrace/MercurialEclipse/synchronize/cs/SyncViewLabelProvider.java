@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -74,6 +74,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			FileFromChangeSet ffc = (FileFromChangeSet) element;
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
+		} else if (element instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) element;
+			if(group.getDirection() == Direction.LOCAL){
+				decoratedImage = getImageManager().getImage(base, Differencer.CHANGE);
+		} else {
+			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
+		}
 		} else {
 			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
@@ -97,10 +104,11 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
 					sb.append(' ').append(cset.getBranch()).append(':');
 				}
-				sb.append(' ').append(getShortComment(cset));
 			} else {
-				sb.append(cset.toString());
+				sb.append(cset.getName());
+				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
+			sb.append(' ').append(getShortComment(cset));
 			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){

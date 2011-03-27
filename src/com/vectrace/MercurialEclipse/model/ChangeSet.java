@@ -621,7 +621,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return firstParentChangedFiles;
 	}
 
-	private void setDescription(String description) {
+	public void setDescription(String description) {
 		if (description != null) {
 			this.description = description;
 		} else {
