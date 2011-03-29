@@ -78,7 +78,7 @@ public class EditChangesetDialog extends CommitDialog {
 
 	@Override
 	protected void okPressed() {
-		changeset.setDescription(getCommitMessage());
+		changeset.setComment(getCommitMessage());
 		changeset.setName(changesetNameText.getText());
 		setReturnCode(OK);
 		close();

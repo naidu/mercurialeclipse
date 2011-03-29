@@ -36,7 +36,10 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	private static final String MAPPINGS_SEPARATOR = ";";
 
-	private static final String KEY_PREFIX = "projectChangesets/";
+	private static final String KEY_FILES_PER_PROJECT_PREFIX = "projectFiles/";
+	private static final String KEY_CS_COMMENT_PREFIX = "changesetComment/";
+	private static final String KEY_CS_DEFAULT = "changesetIsDefault/";
+	private static final String KEY_CS_LIST = "changesets";
 
 	private WorkingChangeSet defaultChangeset;
 	private IProject[] projects;
@@ -48,35 +51,53 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	public UncommittedChangesetManager(HgChangeSetContentProvider provider) {
 		this.provider = provider;
 		group = new UncommittedChangesetGroup(this);
-		defaultChangeset = new WorkingChangeSet("Default Changeset", group);
+		loadSavedChangesets();
+	}
+
+	protected WorkingChangeSet createDefaultChangeset() {
+		WorkingChangeSet changeset = new WorkingChangeSet("Default Changeset", group);
+		changeset.setDefault(true);
+		changeset.setComment("(no commit message)");
+		return changeset;
 	}
 
 	public UncommittedChangesetGroup getUncommittedGroup(){
-		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
-		loadfromPreferences(sets);
-		assignRemainingFiles();
-		sets.add(defaultChangeset);
-		group.setChangesets(sets);
 		return group;
 	}
 
 	private void loadSavedChangesets(){
 		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
 		loadfromPreferences(sets);
-		assignRemainingFiles();
-		sets.add(defaultChangeset);
+		WorkingChangeSet defCs = getDefault(sets);
+		if(defCs == null) {
+			defCs = createDefaultChangeset();
+			sets.add(defCs);
+		}
+		defaultChangeset = defCs;
 		group.setChangesets(sets);
+		assignRemainingFiles();
 	}
 
 	private void assignRemainingFiles() {
-		// TODO Auto-generated method stub
+		if(projects == null) {
+			return;
+		}
+		group.update(null, null);
 	}
 
 	public void storeChangesets(){
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		Set<ChangeSet> changesets = group.getChangesets();
 		Map<IProject, Map<IFile, String>> projectMap = new HashMap<IProject, Map<IFile,String>>();
+		StringBuilder changesetNames = new StringBuilder();
 		for (ChangeSet changeSet : changesets) {
 			String name = changeSet.getName();
+			String comment = changeSet.getComment();
+			changesetNames.append(name).append(MAPPINGS_SEPARATOR);
+			store.putValue(KEY_CS_COMMENT_PREFIX + name, comment);
+			if(((WorkingChangeSet)changeSet).isDefault()) {
+				store.putValue(KEY_CS_DEFAULT + name, Boolean.TRUE.toString());
+			}
 			Set<IFile> files = changeSet.getFiles();
 			for (IFile file : files) {
 				IProject project = file.getProject();
@@ -88,10 +109,11 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 				fileToChangeset.put(file, name);
 			}
 		}
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		store.putValue(KEY_CS_LIST, changesetNames.toString());
+
 		Set<Entry<IProject,Map<IFile,String>>> entrySet = projectMap.entrySet();
 		for (Entry<IProject, Map<IFile, String>> entry : entrySet) {
-			store.putValue(KEY_PREFIX + entry.getKey().getName(), encode(entry.getValue()));
+			store.putValue(KEY_FILES_PER_PROJECT_PREFIX + entry.getKey().getName(), encode(entry.getValue()));
 		}
 	}
 
@@ -101,11 +123,29 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	private void loadfromPreferences(Set<WorkingChangeSet> sets) {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		String changesets = store.getString(KEY_CS_LIST);
+		if(!StringUtils.isEmpty(changesets)){
+			String[] names = changesets.split(MAPPINGS_SEPARATOR);
+			for (String name : names) {
+				if(!StringUtils.isEmpty(name)) {
+					WorkingChangeSet changeset = new WorkingChangeSet(name, group);
+					sets.add(changeset);
+				}
+			}
+		}
+		for (WorkingChangeSet changeSet : sets) {
+			String comment = store.getString(KEY_CS_COMMENT_PREFIX + changeSet.getName());
+			changeSet.setComment(comment);
+			boolean isDefault = store.getBoolean(KEY_CS_DEFAULT + changeSet.getName());
+			if(isDefault) {
+				changeSet.setDefault(true);
+			}
+		}
 		if(projects == null){
 			return;
 		}
 		for (IProject project : projects) {
-			String filesStr = store.getString(KEY_PREFIX + project.getName());
+			String filesStr = store.getString(KEY_FILES_PER_PROJECT_PREFIX + project.getName());
 			if(StringUtils.isEmpty(filesStr)){
 				continue;
 			}
@@ -118,8 +158,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 					changeset = new WorkingChangeSet(name, group);
 					sets.add(changeset);
 				}
-				// TODO
-//				changeset.addFile(entry.getKey());
+				changeset.add(entry.getKey());
 			}
 		}
 	}
@@ -127,6 +166,15 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	private static WorkingChangeSet getChangeset(String name, Set<WorkingChangeSet> sets){
 		for (WorkingChangeSet set : sets) {
 			if(name.equals(set.getName())){
+				return set;
+			}
+		}
+		return null;
+	}
+
+	private static WorkingChangeSet getDefault(Set<WorkingChangeSet> sets){
+		for (WorkingChangeSet set : sets) {
+			if(set.isDefault()){
 				return set;
 			}
 		}
@@ -170,7 +218,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	public void setProjects(IProject[] projects) {
 		this.projects = projects;
 		if(projects != null){
-			loadSavedChangesets();
+			assignRemainingFiles();
 		}
 	}
 
@@ -182,6 +230,8 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		if(set == null || !group.getChangesets().contains(set)){
 			return;
 		}
+		defaultChangeset.setDefault(false);
 		defaultChangeset = set;
+		defaultChangeset.setDefault(true);
 	}
 }

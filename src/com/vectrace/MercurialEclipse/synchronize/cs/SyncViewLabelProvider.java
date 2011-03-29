@@ -103,6 +103,9 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				sb.append(" [").append(cset.getAuthor()).append(']');
 				sb.append(" (").append(cset.getAgeDate()).append(')');
 			} else {
+				if (((WorkingChangeSet)cset).isDefault()) {
+					sb.append("* ");
+				}
 				sb.append(cset.getName());
 				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}

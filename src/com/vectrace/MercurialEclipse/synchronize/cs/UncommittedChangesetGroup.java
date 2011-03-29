@@ -65,6 +65,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		super("Uncommitted", Direction.LOCAL);
 		this.ucsManager = ucsManager;
 		cache = MercurialStatusCache.getInstance();
+		cache.addObserver(this);
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		event = new PropertyChangeEvent(this, "", null, "");
 		files = new HashSet<IFile>();
@@ -77,6 +78,10 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		Set<ChangeSet> changesets = getChangesets();
 		changesets.clear();
 		changesets.addAll(sets);
+		files.clear();
+		for (ChangeSet cs : changesets) {
+			files.addAll(cs.getFiles());
+		}
 	}
 
 	public void addListener(IPropertyChangeListener listener){
@@ -94,7 +99,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 	}
 
 	public void dispose() {
-		MercurialStatusCache.getInstance().deleteObserver(this);
+		cache.deleteObserver(this);
 		clear();
 	}
 
@@ -108,9 +113,21 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 
 
 	private boolean add(IFile file){
+		return add(file, ucsManager.getDefaultChangeset());
+	}
+
+	public boolean contains(IFile file) {
+		return files.contains(file);
+	}
+
+	public boolean add(IFile file, WorkingChangeSet set){
+		if(!getChangesets().contains(set)) {
+			return false;
+		}
 		if(context != null && context.isHidden(file)){
 			return false;
 		}
+
 		if(cache.isDirectory(file.getLocation())){
 			return false;
 		}
@@ -119,8 +136,8 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 			added = files.add(file);
 		}
 		if(added) {
-			// update files in the default changeset
-			ucsManager.getDefaultChangeset().add(file);
+			// update files in the given changeset
+			set.add(file);
 
 			// we need only one event
 			if(cachingOn){
@@ -230,6 +247,8 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 
 	public void changesetChanged(WorkingChangeSet set) {
 		// TODO: add argument to avoid too much updates?
+		ucsManager.storeChangesets();
+//		ucsManager.assignRemainingFiles();
 		notifyListeners();
 	}
 
