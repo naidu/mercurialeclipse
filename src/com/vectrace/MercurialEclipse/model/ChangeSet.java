@@ -75,7 +75,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final String date;
 	private String tagsStr;
 	private List<FileStatus> changedFiles;
-	private String description;
+	private String comment;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
@@ -186,7 +186,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 
 		public Builder description(String description) {
-			cs.setDescription(description);
+			cs.setComment(description);
 			return this;
 		}
 
@@ -239,7 +239,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		this.user = user;
 		this.date = date;
 		this.hgRoot = root;
-		setDescription(description);
+		setComment(description);
 		setParents(parents);
 		// remember index:fullchangesetid
 		setName(toString());
@@ -328,7 +328,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public String getComment() {
-		return description;
+		return comment;
 	}
 
 	public HgRevision getRevision() {
@@ -621,11 +621,11 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return firstParentChangedFiles;
 	}
 
-	public void setDescription(String description) {
-		if (description != null) {
-			this.description = description;
+	public void setComment(String comment) {
+		if (comment != null) {
+			this.comment = comment;
 		} else {
-			this.description = "";
+			this.comment = "";
 		}
 	}
 
