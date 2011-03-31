@@ -61,7 +61,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	 * @returns <code>true</code> if this file under this under Mercurial
 	 *          control.
 	 */
-	private boolean isInMercurialRepo(IResource file, IProgressMonitor monitor) {
+	private static boolean isInMercurialRepo(IResource file, IProgressMonitor monitor) {
 		return CACHE.isSupervised(file);
 	}
 
@@ -71,7 +71,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	 * @returns <code>true</code> if there are files under this folder that are
 	 *          under Mercurial control.
 	 */
-	private boolean folderHasMercurialFiles(IFolder folder,
+	private static boolean folderHasMercurialFiles(IFolder folder,
 			IProgressMonitor monitor) {
 		if (!isInMercurialRepo(folder, monitor)) {
 			// Resource could be inside a link or something do nothing
@@ -116,6 +116,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			return false;
 		}
 
+		boolean keepHistory = (updateFlags & IResource.KEEP_HISTORY) != 0;
+		if (keepHistory) {
+			tree.addToLocalHistory(file);
+		}
 		return deleteHgFiles(tree, file, monitor);
 	}
 
@@ -149,7 +153,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	 *          otherwise. This syntax is to match the desired return code for
 	 *          <code>deleteFile</code> and <code>deleteFolder</code>.
 	 */
-	private boolean deleteHgFiles(IResourceTree tree, IResource resource, IProgressMonitor monitor) {
+	private static boolean deleteHgFiles(IResourceTree tree, IResource resource, IProgressMonitor monitor) {
 		// TODO: Decide if we should have different Hg behaviour based on the
 		// force flag provided in updateFlags.
 		try {
@@ -260,7 +264,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	/**
 	 * @param project non null
 	 */
-	private void disconnect(final IProject project) {
+	private static void disconnect(final IProject project) {
 		if (RepositoryProvider.isShared(project)) {
 			try {
 				RepositoryProvider.unmap(project);
@@ -276,6 +280,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		if (!isInMercurialRepo(source, monitor)) {
 			return false;
 		}
+		boolean keepHistory = (updateFlags & IResource.KEEP_HISTORY) != 0;
+		if (keepHistory) {
+			tree.addToLocalHistory(source);
+		}
 
 		// Move the file in the Mercurial repository.
 		if (!moveHgFiles(source, destination, monitor)) {
@@ -284,6 +292,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
 		// We moved the file ourselves, need to tell.
 		tree.movedFile(source, destination);
+		tree.updateMovedFileTimestamp(destination, tree.computeTimestamp(destination));
 
 		// Returning true indicates that this method has moved resource in both
 		// the file system and eclipse.
@@ -322,13 +331,12 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	 * @returns <code>true</code> if the action succeeds, <code>false</code>
 	 *          otherwise.
 	 */
-	private boolean moveHgFiles(IResource source, IResource destination,
+	private static boolean moveHgFiles(IResource source, IResource destination,
 			IProgressMonitor monitor) {
 		// Rename the file in the Mercurial repository.
 
-		// TODO: Decide if we should have different Hg behaviour based on the
-		// force flag provided in
-		// updateFlags.
+		// TODO: Decide if we should have different Hg behavior based on the
+		// force flag provided in updateFlags.
 		try {
 			HgRenameClient.renameResource(source, destination, monitor);
 		} catch (final HgException e) {
