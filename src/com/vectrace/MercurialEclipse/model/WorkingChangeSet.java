@@ -80,6 +80,16 @@ public class WorkingChangeSet extends ChangeSet {
 		return added;
 	}
 
+	/**
+	 * @param file
+	 */
+	public void removeFile(IFile file) {
+		// TODO check group files
+//		boolean contains = group.contains(file);
+//		boolean added = contains;
+		files.remove(file);
+	}
+
 	@Override
 	public void remove(IResource file){
 		// simply not supported, as it may be called not only from our code
@@ -179,4 +189,6 @@ public class WorkingChangeSet extends ChangeSet {
 			return rule instanceof ExclusiveRule && cs.equals(((ExclusiveRule) rule).cs);
 		}
 	}
+
+
 }

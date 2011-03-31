@@ -1808,6 +1808,16 @@
          <actionProvider
                class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider"
                id="com.vectrace.MercurialEclipse.changeSetActions"/>
+         <dropAssistant
+               class="com.vectrace.MercurialEclipse.synchronize.HgDropAdapterAssistant"
+               id="MercurialEclipse.syncViewDropAssistant">
+            <possibleDropTargets>
+               <or>           
+                   <instanceof value="com.vectrace.MercurialEclipse.model.WorkingChangeSet" />
+                   <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup" />
+               </or>
+            </possibleDropTargets>
+         </dropAssistant>
        </navigatorContent>
    </extension>   
    
@@ -1883,5 +1893,12 @@
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
             label="Mercurial Search Query Provider">
       </textSearchQueryProvider>
+   </extension>
+   <extension
+         point="org.eclipse.ui.navigator.viewer">
+      <dragAssistant
+            class="com.vectrace.MercurialEclipse.synchronize.HgDragAdapterAssistant"
+            viewerId="org.eclipse.team.sync.views.SynchronizeView">
+      </dragAssistant>
    </extension>   
 </plugin>

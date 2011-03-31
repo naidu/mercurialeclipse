@@ -149,6 +149,24 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return added;
 	}
 
+	public void move(IFile[] files1, WorkingChangeSet to){
+		Set<ChangeSet> changesets = getChangesets();
+		for (ChangeSet cs : changesets) {
+			for (IFile file : files1) {
+				if (cs.contains(file)) {
+					((WorkingChangeSet)cs).removeFile(file);
+				}
+			}
+		}
+		if(!changesets.contains(to)) {
+			changesets.add(to);
+		}
+		for (IFile file : files1) {
+			to.add(file);
+		}
+		notifyListeners();
+	}
+
 	public void remove(IResource file){
 		// simply not supported, as it may be called not only from our code
 	}
