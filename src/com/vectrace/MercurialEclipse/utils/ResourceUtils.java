@@ -38,6 +38,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -472,7 +473,7 @@ public final class ResourceUtils {
 
 	/**
 	 * @param o
-	 *            some object which is or can be adopted to resource
+	 *            some object which is or can be adapted to resource
 	 * @return given object as resource, may return null
 	 */
 	public static IResource getResource(Object o) {
@@ -502,7 +503,7 @@ public final class ResourceUtils {
 				return adapter;
 			}
 		}
-		return null;
+		return (IResource) Platform.getAdapterManager().getAdapter(o, IResource.class);
 	}
 
 	public static void touch(final IResource res) {
