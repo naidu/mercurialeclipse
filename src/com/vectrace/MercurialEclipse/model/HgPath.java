@@ -150,25 +150,7 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 	 *         returns an empty string
 	 */
 	public String toRelative(File child) {
-		// first try with the unresolved path. In most cases it's enough
-		String fullPath = child.getAbsolutePath();
-		if (!fullPath.startsWith(getPath())) {
-			try {
-				// ok, now try to resolve all the links etc. this takes A LOT of time...
-				fullPath = child.getCanonicalPath();
-				if (!fullPath.startsWith(getPath())) {
-					return child.getPath();
-				}
-			} catch (IOException e) {
-				MercurialEclipsePlugin.logError(e);
-				return child.getPath();
-			}
-		}
-		if(fullPath.equals(getPath())){
-			return Path.EMPTY.toOSString();
-		}
-		// +1 is to remove the file separator / at the start of the relative path
-		return fullPath.substring(getPath().length() + 1);
+		return ResourceUtils.toRelative(this, child);
 	}
 
 	/**

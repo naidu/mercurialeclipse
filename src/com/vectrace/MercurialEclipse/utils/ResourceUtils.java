@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -110,6 +112,86 @@ public final class ResourceUtils {
 			MercurialEclipsePlugin.logWarning("Could not delete file '" + source + "'", null);
 		}
 		return result;
+	}
+
+	/**
+	 * Moves contents of one directory to another and deletes source directory if all files were
+	 * successfully moved to destination. If any target file with the same relative path exists in the
+	 * destination directory, it will be NOT overridden, and kept in the source directory.
+	 *
+	 * @param sourceDir
+	 *            - must already exist and be a directory
+	 * @param destinationDir
+	 *            - must already exist and be a directory
+	 * @return true if source was successfully moved to destination.
+	 */
+	public static boolean move(File sourceDir, File destinationDir) {
+		File[] files = sourceDir.listFiles();
+		if(files == null) {
+			// can't be ok
+			return false;
+		}
+		Set<File> fileSet = new LinkedHashSet<File>(Arrays.asList(files));
+		boolean result = true;
+		while (!fileSet.isEmpty()) {
+			File next = fileSet.iterator().next();
+			String relative = toRelative(sourceDir, next);
+			File dest = new File(destinationDir, relative);
+			if (!dest.exists()) {
+				result &= next.renameTo(dest);
+			} else if(next.isDirectory()){
+				files = next.listFiles();
+				if(files != null) {
+					fileSet.addAll(Arrays.asList(files));
+				}
+			} else {
+				// file exists in target
+				result = false;
+			}
+			fileSet.remove(next);
+		}
+		try {
+			if(result && !sourceDir.getCanonicalFile().equals(destinationDir.getCanonicalFile())) {
+				return ResourceUtils.delete(sourceDir, true);
+			}
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		return false;
+	}
+
+	/**
+	 * Converts given path to the relative
+	 *
+	 * @param parent
+	 *            parent path, non null
+	 * @param child
+	 *            a possible child path, non null
+	 * @return a parent relative path of a given child file, if the given child file is located
+	 *         under given parent, otherwise the given child path. If the given child path matches
+	 *         the parent, returns an empty string
+	 */
+	public static String toRelative(File parent, File child) {
+		// first try with the unresolved path. In most cases it's enough
+		String fullPath = child.getAbsolutePath();
+		String parentpath = parent.getPath();
+		if (!fullPath.startsWith(parentpath)) {
+			try {
+				// ok, now try to resolve all the links etc. this takes A LOT of time...
+				fullPath = child.getCanonicalPath();
+				if (!fullPath.startsWith(parentpath)) {
+					return child.getPath();
+				}
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+				return child.getPath();
+			}
+		}
+		if(fullPath.equals(parentpath)){
+			return Path.EMPTY.toOSString();
+		}
+		// +1 is to remove the file separator / at the start of the relative path
+		return fullPath.substring(parentpath.length() + 1);
 	}
 
 	/**

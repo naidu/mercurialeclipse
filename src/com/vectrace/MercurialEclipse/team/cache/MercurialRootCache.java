@@ -288,11 +288,28 @@ public class MercurialRootCache extends AbstractCache {
 		if(!project.exists()) {
 			return;
 		}
-		IPath projPath = ResourceUtils.getPath(project);
+		HgRoot hgRoot = getHgRoot(project, false);
+		if(hgRoot == null) {
+			return;
+		}
 
+		List<IProject> projects = MercurialTeamProvider.getKnownHgProjects(hgRoot);
+
+		// Fix for issue 14094: Refactor->Rename project throws lots of errors
+		uncache(project);
+
+		if(projects.size() > 1 && hgRoot.getIPath().equals(project.getLocation())) {
+			// See 14113: various actions fail for recursive projects if the root project is closed
+			// do not remove root as there are more then one project inside
+			return;
+		}
+
+		IPath projPath = ResourceUtils.getPath(project);
 		if (!projPath.isEmpty()) {
-			for (Iterator<HgRoot> it = knownRoots.values().iterator(); it.hasNext();) {
-				if (projPath.isPrefixOf(it.next().getIPath())) {
+			Iterator<HgRoot> it = knownRoots.values().iterator();
+			while (it.hasNext()) {
+				HgRoot root = it.next();
+				if (projPath.isPrefixOf(root.getIPath())) {
 					it.remove();
 				}
 			}
@@ -305,7 +322,7 @@ public class MercurialRootCache extends AbstractCache {
 	 * @param resource
 	 *            The resource to evict.
 	 */
-	public void uncache(IResource resource) {
+	public static void uncache(IResource resource) {
 		// A different more efficient approach would be to mark all contained hgroots (or just all
 		// known root) as obsolete and then when a resource is queried we can detect this and
 		// discard the cached result thereby making the invalidation lazy. But that would make
