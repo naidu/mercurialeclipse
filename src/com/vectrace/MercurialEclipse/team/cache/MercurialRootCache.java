@@ -224,7 +224,12 @@ public class MercurialRootCache extends AbstractCache {
 						if (s == null) {
 							canonicalMap.put(root.getIPath(), s = new HashSet<IPath>());
 						}
-						s.add(project.getLocation());
+						IPath projectPath = project.getLocation();
+						if (!root.getIPath().equals(projectPath)
+								&& !root.getIPath().isPrefixOf(projectPath)) {
+							// only add paths which are *different* and NOT children of the root
+							s.add(projectPath);
+						}
 					}
 				}
 			} catch (CoreException e) {
