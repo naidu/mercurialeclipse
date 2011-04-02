@@ -18,6 +18,7 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -687,7 +688,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				}
 				// clear status for project
 				if(knownStatus.contains(project)) {
-					projectDeletedOrClosed(project);
+					clear(project, false);
 				}
 				monitor.worked(1);
 				if(monitor.isCanceled()){
@@ -781,7 +782,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		synchronized (statusUpdateLock) {
 			// clear status for files, folders or project
 			if(res instanceof IProject && knownStatus.contains(project)){
-				projectDeletedOrClosed(project);
+				clear(project, false);
 			} else {
 				clearStatusCache(res);
 			}
@@ -1405,7 +1406,27 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
 		clear(project, false);
-		knownStatus.remove(project);
+
+		// dirty fix for issue 14113: various actions fail for recursive projects
+		// if the root project is closed: we simply refresh the state for remaining projects
+		IPath path = project.getLocation();
+		if(path == null) {
+			return;
+		}
+		Collection<HgRoot> hgRoots = MercurialRootCache.getInstance().getKnownHgRoots();
+		for (HgRoot hgRoot : hgRoots) {
+			// only start refresh for projects located at the repository root
+			if(!hgRoot.getIPath().equals(path)) {
+				continue;
+			}
+			List<IProject> projects = MercurialTeamProvider.getKnownHgProjects(hgRoot);
+			projects.remove(project);
+			// only start refresh if there is at least one project more in the repo
+			if(projects.size() > 0) {
+				new RefreshStatusJob("Status update", hgRoot).schedule();
+			}
+		}
+
 	}
 
 	public void clear(HgRoot root, boolean notify) {
@@ -1422,6 +1443,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public void clear(IProject project, boolean notify) {
 		clearMergeStatus(project);
 		clearStatusCache(project);
+		knownStatus.remove(project);
 		if(notify) {
 			notifyChanged(project, false);
 		}
