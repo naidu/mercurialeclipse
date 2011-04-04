@@ -408,6 +408,20 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 */
 	public Integer getStatus(IResource resource) {
 		IPath location = resource.getLocation();
+		return getStatus(location);
+	}
+
+
+	/**
+	 * Gets the status of the given path from cache. The returned BitSet contains a BitSet of the status flags set.
+	 *
+	 * The flags correspond to the BIT_* constants in this class.
+	 *
+	 * @param location
+	 *            the absolute file system path to get status for (can be null).
+	 * @return the BitSet with status flags, MAY RETURN NULL, if status is unknown yet
+	 */
+	private Integer getStatus(IPath location) {
 		return location != null? statusMap.get(location) : null;
 	}
 
@@ -493,13 +507,30 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public boolean isIgnored(IResource resource) {
 		Assert.isNotNull(resource);
 		Integer status = getStatus(resource);
-		if(status == null && isStatusKnown(resource.getProject())){
-			// it seems that original autors intentionally do not tracked status for
-			// ignored files. I guess the reason was performance: for a java project,
-			// including "ignored" class files would double the cache size...
-			return true;
+		if(status == null) {
+			if (isStatusKnown(resource.getProject())) {
+				// it seems that original autors intentionally do not tracked status for
+				// ignored files. I guess the reason was performance: for a java project,
+				// including "ignored" class files would double the cache size...
+				return true;
+			}
+			return false;
 		}
-		return false;
+
+		return Bits.contains(status.intValue(), BIT_IGNORE);
+	}
+
+	/**
+	 * @param location
+	 *            the absolute file system path to get status for (can be null).
+	 * @return true if the cache knows that the given path should be ignored by Mercurial
+	 */
+	public boolean isIgnored(IPath location) {
+		Integer status = getStatus(location);
+		if(status == null) {
+			return false;
+		}
+		return Bits.contains(status.intValue(), BIT_IGNORE);
 	}
 
 	/**
