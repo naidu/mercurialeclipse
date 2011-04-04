@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -39,7 +39,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 	public boolean select(Viewer viewer, Object parentElement, Object element) {
 
 		IResource resource = (IResource) element;
-		HgRoot hgRoot = MercurialTeamProvider.hasHgRoot(resource);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		if(hgRoot == null){
 			// paranoia
 			return false;
@@ -63,7 +63,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 	 * @param untrackedPaths known untracked files
 	 * @return true if the path to test matches one of known untracked paths
 	 */
-	private boolean matchesPath(String pathStrToTest, Set<IPath> untrackedPaths) {
+	private static boolean matchesPath(String pathStrToTest, Set<IPath> untrackedPaths) {
 		IPath pathToTest = new Path(pathStrToTest);
 		return untrackedPaths.contains(pathToTest);
 	}
