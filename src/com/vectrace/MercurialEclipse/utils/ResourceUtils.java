@@ -46,12 +46,17 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -250,7 +255,7 @@ public final class ResourceUtils {
 		return (IFile) getHandle(path, true);
 	}
 
-	private static IResource getHandle(IPath origPath, boolean isFile) {
+	private static IResource getHandle(final IPath origPath, boolean isFile) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		// origPath may be canonical but not necessarily.
 		// Eclipse allows a project to be symlinked or an arbitrary folder under a project
@@ -657,5 +662,27 @@ public final class ResourceUtils {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Opens appropriate editor
+	 * @param file must be not null
+	 * @param activePage can be null
+	 * @return
+	 */
+	public static IEditorPart openEditor(IWorkbenchPage activePage, IFile file) {
+		if(activePage == null) {
+			activePage = MercurialEclipsePlugin.getActivePage();
+		}
+		try {
+			if (file instanceof IHgResource) {
+				return IDE.openEditor(activePage, file.getLocationURI(),
+						EditorsUI.DEFAULT_TEXT_EDITOR_ID, true);
+			}
+			return IDE.openEditor(activePage, file);
+		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
 	}
 }

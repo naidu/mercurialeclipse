@@ -45,9 +45,7 @@ import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -213,11 +211,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				if(file == null){
 					return;
 				}
-				try {
-					IDE.openEditor(getSite().getPage(), file);
-				} catch (PartInitException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				ResourceUtils.openEditor(getSite().getPage(), file);
 			}
 		};
 
