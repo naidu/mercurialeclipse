@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
@@ -105,12 +106,11 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 		return null;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if (adapter == IWorkbenchAdapter.class) {
 			return this;
 		}
-		if (adapter == IResource.class || adapter == IFile.class) {
+		if (adapter == IResource.class || adapter == IFile.class || adapter == IProject.class) {
 			try {
 				IResource resource = ResourceUtils.convert(this);
 				if (adapter == IFile.class && !(resource instanceof IFile)) {
@@ -151,6 +151,10 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 	 */
 	public String toRelative(File child) {
 		return ResourceUtils.toRelative(this, child);
+	}
+
+	public IPath toRelative(IPath child) {
+		return child.makeRelativeTo(getIPath());
 	}
 
 	/**
