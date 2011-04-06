@@ -41,7 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -183,9 +183,9 @@ public class MercurialRootCache extends AbstractCache {
 	 *         team provider is not Mercurial or hg root is not found
 	 */
 	private HgRoot getHgRoot(IResource resource, boolean resolveIfNotKnown, boolean reportNotFoundRoot) {
-		if (resource instanceof HgRootContainer) {
+		if (resource instanceof IHgResource) {
 			// special case for HgRootContainers, they already know their HgRoot
-			return ((HgRootContainer) resource).getHgRoot();
+			return ((IHgResource) resource).getHgRoot();
 		}
 
 		IProject project = resource.getProject();

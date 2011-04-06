@@ -313,6 +313,35 @@ public final class ResourceUtils {
 				return best;
 			}
 		}
+		if(best == null) {
+			Collection<HgRoot> roots = MercurialRootCache.getInstance().getKnownHgRoots();
+			for (HgRoot hgRoot : roots) {
+				if(!hgRoot.getIPath().isPrefixOf(origPath)) {
+					continue;
+				}
+				IPath relative = hgRoot.toRelative(origPath);
+				if(relative.isEmpty()) {
+					if(!isFile) {
+						// same folder as root
+						return hgRoot.getResource();
+					}
+					// requested is file => some error!
+					return null;
+				}
+				best = hgRoot.getResource().findMember(relative);
+
+				if(best != null) {
+					if(isFile && best.getType() == IResource.FILE
+							|| ! isFile && best.getType() != IResource.FILE) {
+						return best;
+					}
+					if(isFile) {
+						return hgRoot.getResource().getFile(relative);
+					}
+					return hgRoot.getResource().getFolder(relative);
+				}
+			}
+		}
 		return best;
 	}
 

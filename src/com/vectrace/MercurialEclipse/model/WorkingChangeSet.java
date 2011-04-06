@@ -34,6 +34,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -251,6 +252,10 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			this.projects.clear();
 			for (IProject project : projects) {
 				this.projects.add(project);
+				HgRoot root = MercurialTeamProvider.getHgRoot(project);
+				if(root != null) {
+					this.projects.add(root.getResource());
+				}
 			}
 		}
 	}

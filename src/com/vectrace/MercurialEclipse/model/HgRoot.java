@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -68,17 +70,21 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	 */
 	private transient String user;
 
-	// constructors
+	private final IProject projectAdapter;
 
 	public HgRoot(String pathname) throws IOException {
-		super(pathname);
+		this(new File(pathname));
 	}
 
 	public HgRoot(File file) throws IOException {
 		super(file);
+		Object adapter = super.getAdapter(IProject.class);
+		if(adapter instanceof IProject) {
+			projectAdapter = (IProject) adapter;
+		} else {
+			projectAdapter = new HgRootContainer(this);
+		}
 	}
-
-	// operations
 
 	public void setEncoding(Charset charset) {
 		this.encoding = charset;
@@ -222,7 +228,12 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 				return projects;
 			}
 		}
-		return super.getChildren(o);
+		try {
+			return getResource().members();
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return new Object[0];
+		}
 	}
 
 	@Override
@@ -230,17 +241,34 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		return MercurialEclipsePlugin.getImageDescriptor("root.gif");
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public Object getAdapter(Class adapter) {
 		if(adapter == IHgRepositoryLocation.class){
 			return this;
 		}
-		return super.getAdapter(adapter);
+		Object object = super.getAdapter(adapter);
+		if (object == null && (adapter == IProject.class || adapter == IResource.class)) {
+			return getResource();
+		}
+		return object;
 	}
 
 	public boolean isLocal() {
 		return true;
+	}
+
+	public IProject getResource() {
+		if(projectAdapter instanceof HgRootContainer) {
+			HgRootContainer container = (HgRootContainer) projectAdapter;
+			container.init();
+		} else {
+			try {
+				projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		return projectAdapter;
 	}
 
 }
