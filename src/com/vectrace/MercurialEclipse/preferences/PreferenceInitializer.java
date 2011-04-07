@@ -91,7 +91,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_DECORATE_WITH_COLORS, true);
 		store.setDefault(PREF_SHOW_COMMENTS, true);
 		store.setDefault(PREF_SHOW_PATHS, true);
-		store.setDefault(PREF_SHOW_DIFFS, true);
+		// See issue #13662: do not show diffs per default: they may cause OOM on huge changesets
+		store.setDefault(PREF_SHOW_DIFFS, false);
 		store.setDefault(PREF_SHOW_ALL_TAGS, false);
 		store.setDefault(PREF_SHOW_GOTO_TEXT, true);
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
