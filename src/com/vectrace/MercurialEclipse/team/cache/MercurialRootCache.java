@@ -250,7 +250,8 @@ public class MercurialRootCache extends AbstractCache {
 							canonicalMap.put(root.getIPath(), s = new HashSet<IPath>());
 						}
 						IPath projectPath = project.getLocation();
-						if (!root.getIPath().equals(projectPath)
+						if (!resource.isLinked(IResource.CHECK_ANCESTORS)
+								&& !root.getIPath().equals(projectPath)
 								&& !root.getIPath().isPrefixOf(projectPath)) {
 							// only add paths which are *different* and NOT children of the root
 							s.add(projectPath);
@@ -275,7 +276,7 @@ public class MercurialRootCache extends AbstractCache {
 		resource.setSessionProperty(SESSION_KEY, value);
 		if(root == null) {
 			// mark all parents up to project as NOT in Mercurial
-			while(!(resource.getParent() instanceof IWorkspaceRoot)){
+			while(!(resource.getParent() instanceof IWorkspaceRoot) && !resource.isLinked()){
 				resource = resource.getParent();
 				if(value.equals(resource.getSessionProperty(SESSION_KEY))) {
 					return;
@@ -287,7 +288,7 @@ public class MercurialRootCache extends AbstractCache {
 			// can be properly detected by simple path compare
 			if(root.getIPath().isPrefixOf(resource.getLocation())){
 				// mark all parents up to the root location as IN Mercurial
-				while(!(resource.getParent() instanceof IWorkspaceRoot)
+				while(!(resource.getParent() instanceof IWorkspaceRoot) && !resource.isLinked()
 						&& !root.getIPath().equals(resource.getLocation())){
 					resource = resource.getParent();
 					if(value.equals(resource.getSessionProperty(SESSION_KEY))) {
