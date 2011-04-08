@@ -124,7 +124,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		 * system and eclipse.
 		 */
 
-		if (!isInMercurialRepo(file, monitor) || file.isDerived()) {
+		if (!isInMercurialRepo(file, monitor) || file.isDerived() || file.isLinked()) {
 			return false;
 		}
 
@@ -143,7 +143,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		 * Check that there is at least 1 file and if so there is Mercurial work
 		 * to do, otherwise there is no Mercurial work to be done.
 		 */
-		if (!folderHasMercurialFiles(folder, monitor)) {
+		if (!folderHasMercurialFiles(folder, monitor) || folder.isLinked()) {
 			return false;
 		}
 
@@ -170,7 +170,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		// force flag provided in updateFlags.
 		try {
 			// Delete the file(s) from the Mercurial repository.
-			HgRemoveClient.removeResource(resource, monitor);
+			if(!resource.isLinked()) {
+				HgRemoveClient.removeResource(resource, monitor);
+			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			return false;
@@ -212,7 +214,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
 		boolean isPartOfRepo = isContainedInRepository(project);
 		if(isPartOfRepo){
-			final Set<IResource> allFiles = ResourceUtils.getMembers(project);
+			final Set<IResource> allFiles = ResourceUtils.getMembers(project, false);
 			allFiles.remove(project);
 			try {
 				HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
@@ -328,18 +330,27 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		 * Check that there is at least 1 file and if so there is Mercurial work
 		 * to do, otherwise there is no Mercurial work to be done.
 		 */
-		if (!folderHasMercurialFiles(source, monitor)) {
+		if (!folderHasMercurialFiles(source, monitor) || source.isLinked()) {
 			return false;
 		}
 
 		// Move the folder (ie all subtending files) in the Mercurial
 		// repository.
 		if (!moveHgFiles(source, destination, monitor)) {
+			//the move could have been partially successful, so refresh to ensure we are in sync
+			try {
+				source.refreshLocal(IResource.DEPTH_INFINITE, null);
+				destination.refreshLocal(IResource.DEPTH_INFINITE, null);
+			} catch (CoreException e) {
+				//ignore secondary failures -we have already logged main failure
+			}
 			return true;
 		}
 
 		// We moved the file ourselves, need to tell.
 		tree.movedFolderSubtree(source, destination);
+		boolean isDeep = (updateFlags & IResource.SHALLOW) == 0;
+		updateTimestamps(destination, isDeep, tree);
 
 		// Returning true indicates that this method has moved resource in both
 		// the file system and eclipse.
@@ -461,7 +472,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 				}
 				boolean isDeep = (flags & IResource.SHALLOW) == 0;
 				IProject destination = source.getWorkspace().getRoot().getProject(description.getName());
-				updateTimestamps(destination, isDeep);
+				updateTimestamps(destination, isDeep, tree);
 				return true;
 			}
 		} catch (Exception e) {
@@ -513,7 +524,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 	 * Helper method to update all the timestamps in the tree to match
 	 * those in the file system. Used after a #move.
 	 */
-	private static void updateTimestamps(IResource root, final boolean isDeep) {
+	private static void updateTimestamps(IResource root, final boolean isDeep, final IResourceTree tree) {
 		IResourceVisitor visitor = new IResourceVisitor() {
 			public boolean visit(IResource resource) {
 				if (resource.isLinked()) {
@@ -523,6 +534,11 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 						info.clear(ICoreConstants.M_LINK);
 					}
 					return true;
+				}
+				//only needed if underlying file system does not preserve timestamps
+				if (resource.getType() == IResource.FILE) {
+					IFile file = (IFile) resource;
+					tree.updateMovedFileTimestamp(file, tree.computeTimestamp(file));
 				}
 				return true;
 			}

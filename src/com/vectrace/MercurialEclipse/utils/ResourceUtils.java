@@ -536,6 +536,10 @@ public final class ResourceUtils {
 	}
 
 	public static Set<IResource> getMembers(IResource r) {
+		return getMembers(r, true);
+	}
+
+	public static Set<IResource> getMembers(IResource r, boolean withLinks) {
 		HashSet<IResource> set = new HashSet<IResource>();
 		if (r instanceof IContainer && r.isAccessible()) {
 			IContainer cont = (IContainer) r;
@@ -543,6 +547,9 @@ public final class ResourceUtils {
 				IResource[] members = cont.members();
 				if (members != null) {
 					for (IResource member : members) {
+						if(!withLinks && member.isLinked()) {
+							continue;
+						}
 						if (member instanceof IContainer) {
 							set.addAll(getMembers(member));
 						} else {
