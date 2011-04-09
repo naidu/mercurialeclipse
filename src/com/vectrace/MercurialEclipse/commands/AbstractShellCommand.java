@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -65,7 +66,21 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	/**
 	 * File encoding to use. If not specified falls back to {@link HgRoot}'s encoding.
 	 */
-	private String encoding = null;
+	private String encoding;
+
+	/**
+	 * Should not be used by any command except commands needed for the initialization of hg
+	 * (debuginstall and version)
+	 *
+	 * @see MercurialEclipsePlugin#checkHgInstallation()
+	 */
+	protected boolean isInitialCommand;
+
+	/**
+	 * should not be used by any code except initialization of hg
+	 * @see MercurialEclipsePlugin#checkHgInstallation()
+	 */
+	protected static final CountDownLatch startSignal = new CountDownLatch(1);
 
 	/**
 	 * See http://msdn.microsoft.com/en-us/library/ms682425(VS.85).aspx The maximum command line
@@ -173,6 +188,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			}
 			started = true;
 			monitor2 = monitor;
+			waitForHgInitDone();
 			InputStream stream = null;
 			try {
 				process = builder.start();
@@ -216,6 +232,19 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				}
 			}
 			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+		}
+
+		/**
+		 * Waits until the gate is open (hg installation is checked etc)
+		 */
+		private void waitForHgInitDone() {
+			if(!isInitialCommand) {
+				try {
+					startSignal.await();
+				} catch (InterruptedException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+			}
 		}
 
 		private boolean isAlive() {
@@ -308,6 +337,15 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		this(uiName, hgRoot, workingDir, escapeFiles);
 
 		this.commands = commands;
+	}
+
+	/**
+	 * Should not be called by any code except for hg initialization job
+	 * Opens the command execution gate after hg installation is checked etc
+	 * @see MercurialEclipsePlugin#checkHgInstallation()
+	 */
+	public static void hgInitDone() {
+		startSignal.countDown();
 	}
 
 	/**

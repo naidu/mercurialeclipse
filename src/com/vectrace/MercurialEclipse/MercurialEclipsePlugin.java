@@ -199,6 +199,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			MercurialEclipsePlugin.showError(e);
 			hgVersion = Version.emptyVersion;
 		} finally {
+			AbstractShellCommand.hgInitDone();
 			if(isDebugging()) {
 				System.out.println(HgFeatures.printSummary());
 			}
@@ -221,8 +222,11 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	private Version checkHgVersion() throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version"); //$NON-NLS-1$
-		command.setShowOnConsole(true);
+		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version") {
+			{
+				isInitialCommand = startSignal.getCount() > 0;
+			}
+		};
 		Version preferredVersion = HgFeatures.getPreferredVersion();
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$
