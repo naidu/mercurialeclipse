@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 		Bastian Doetsch	implementation
- * 		Andrei Loskutov (Intland) - bugfixes
+ * 		Andrei Loskutov - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -62,8 +62,8 @@ final class ChangesetContentHandler implements ContentHandler {
 	private String author;
 	private String parents;
 	private String description;
-	private StringBuilder descriptionChars;
-	private boolean readDescription;
+	private StringBuilder cDataChars;
+	private boolean readCdata;
 	private final IPath res;
 	private final Direction direction;
 	private final IHgRepositoryLocation repository;
@@ -131,8 +131,8 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	public void characters(char[] ch, int start, int length) {
-		if(readDescription) {
-			descriptionChars.append(ch, start, length);
+		if(readCdata) {
+			cDataChars.append(ch, start, length);
 		}
 	}
 
@@ -142,7 +142,11 @@ final class ChangesetContentHandler implements ContentHandler {
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
 		if ("de".equals(name)) {
-			description = descriptionChars.toString();
+			description = cDataChars.toString();
+		} else if ("br".equals(name)) {
+			branchStr = cDataChars.toString();
+		} else if ("tg".equals(name)) {
+			tags = cDataChars.toString();
 		} else if ("cs".equals(name)) {
 			// only collect changesets from requested branch. Null is: collect everything.
 			if(expectedBranch == null || Branch.same(branchStr, expectedBranch)){
@@ -240,11 +244,15 @@ final class ChangesetContentHandler implements ContentHandler {
 		 * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
 		 * <de>{desc|escape|tabindent}</de>
 		 */
-		readDescription = false;
+		readCdata = false;
 		if ("br".equals(name)) {
-			branchStr = atts.getValue(0);
+			branchStr = null;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("tg".equals(name)) {
-			tags = atts.getValue(0);
+			tags = null;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("rv".equals(name)) {
 			rev = Integer.parseInt(atts.getValue(0));
 		} else if ("ns".equals(name)) {
@@ -259,8 +267,8 @@ final class ChangesetContentHandler implements ContentHandler {
 			parents = atts.getValue(0);
 		} else if ("de".equals(name)) {
 			description = null;
-			descriptionChars = new StringBuilder(42);
-			readDescription = true;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("fl".equals(name)) {
 			action = FileStatus.Action.MODIFIED;
 		} else if ("fa".equals(name)) {
