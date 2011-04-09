@@ -139,12 +139,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_USE_EXTERNAL_MERGE, false);
 		store.setDefault(PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES, false);
 		store.setDefault(PREF_CLONE_UNCOMPRESSED, false);
-		if(MercurialEclipsePlugin.DISABLED_OPTIONS.contains("--new-branch")) {
-			store.setDefault(PREF_PUSH_NEW_BRANCH, false);
-			store.setValue(PREF_PUSH_NEW_BRANCH, false);
-		} else {
-			store.setDefault(PREF_PUSH_NEW_BRANCH, true);
-		}
 
 		store.setDefault(PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG, false);
 
@@ -152,7 +146,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_SHOW_MULTIPLE_PROJECTS_DIALOG, MessageDialogWithToggle.PROMPT);
 	}
 
-	private File checkForPossibleHgExecutables() {
+	private static File checkForPossibleHgExecutables() {
 		File hgExecutable = null;
 
 		String envPath = System.getenv("PATH");
@@ -188,7 +182,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		return hgExecutable;
 	}
 
-	private void detectAndSetHgExecutable(IPreferenceStore store) {
+	private static void detectAndSetHgExecutable(IPreferenceStore store) {
 		// Currently only tested on Windows. The binary is expected to be found
 		// at "os\win32\x86\hg.exe" (relative to the plugin/fragment directory)
 		File hgExecutable = getIntegratedHgExecutable();

@@ -30,6 +30,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
+import com.vectrace.MercurialEclipse.HgOptions;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
@@ -176,7 +177,7 @@ IWorkbenchPreferencePage {
 				PREF_PUSH_NEW_BRANCH,
 				Messages.getString("GeneralPreferencePage.pushNewBranches"), getFieldEditorParent());
 		addField(editor);
-		if(MercurialEclipsePlugin.DISABLED_OPTIONS.contains("--new-branch")) {
+		if(!HgOptions.NEW_BRANCH.isEnabled()) {
 			editor.setEnabled(false, getFieldEditorParent());
 			editor.setLabelText(editor.getLabelText() + "\n(Option disabled due the unsupported hg version)");
 		}
