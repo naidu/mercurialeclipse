@@ -20,16 +20,16 @@ import org.osgi.framework.Version;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
- * Options for the mercurial executable. HgOptions are version dependent and so will be
+ * Features of the underlined mercurial executable. HgFeatures are version dependent and so will be
  * enabled/disabled based on the currently used mercurial binaries.
  * <p>
  * Note that the right enablement state will be set some time after plugin startup, so that in a
  * short time between plugin activation and {@link MercurialEclipsePlugin#checkHgInstallation()}
- * options might be not yet initialized properly. Initially all options are disabled.
+ * features might be not yet initialized properly. Initially all features are disabled.
  *
  * @author andrei
  */
-public enum HgOptions {
+public enum HgFeatures {
 
 	BRANCH (new Version(1,5,0), "--branch", true),
 	NEW_BRANCH (new Version(1,6,0), "--new-branch", false, MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH),
@@ -41,7 +41,7 @@ public enum HgOptions {
 	private final String cmd;
 	private final boolean mandatory;
 
-	private HgOptions(Version required, String cmd, boolean mandatory, String ... optionalPreferenceKeys) {
+	private HgFeatures(Version required, String cmd, boolean mandatory, String ... optionalPreferenceKeys) {
 		this.required = required;
 		this.cmd = cmd;
 		this.mandatory = mandatory;
@@ -92,7 +92,7 @@ public enum HgOptions {
 	/**
 	 * Note that the right enablement state will be set some time after plugin startup, so that in a
 	 * short time between plugin activation and {@link MercurialEclipsePlugin#checkHgInstallation()}
-	 * options might be not yet initialized properly. Initially all options are disabled.
+	 * features might be not yet initialized properly. Initially all features are disabled.
 	 *
 	 * @return true if the option is enabled (supported by mercurial)
 	 */
@@ -104,9 +104,9 @@ public enum HgOptions {
 	 * @param current observed mercurial version
 	 */
 	public static void setToVersion(Version current) {
-		HgOptions[] values = HgOptions.values();
-		for (HgOptions option : values) {
-			option.setEnabled(option.getRequired().compareTo(current)<= 0);
+		HgFeatures[] values = HgFeatures.values();
+		for (HgFeatures feature : values) {
+			feature.setEnabled(feature.getRequired().compareTo(current)<= 0);
 		}
 	}
 
@@ -117,13 +117,13 @@ public enum HgOptions {
 	 *         least one requires greater mercurial version
 	 */
 	public static boolean isSupported(Version current) {
-		HgOptions[] values = HgOptions.values();
+		HgFeatures[] values = HgFeatures.values();
 		boolean result = true;
-		for (HgOptions option : values) {
-			if(!option.isMandatory()) {
+		for (HgFeatures feature : values) {
+			if(!feature.isMandatory()) {
 				continue;
 			}
-			result &= option.getRequired().compareTo(current)<= 0;
+			result &= feature.getRequired().compareTo(current)<= 0;
 		}
 		return result;
 	}
@@ -131,36 +131,36 @@ public enum HgOptions {
 	/**
 	 * @param current
 	 *            observed mercurial version
-	 * @return true if <b>all</b> options are satisfied with given version, false if at
+	 * @return true if <b>all</b> features are satisfied with given version, false if at
 	 *         least one requires greater mercurial version
 	 */
 	public static boolean isHappyWith(Version current) {
-		HgOptions[] values = HgOptions.values();
+		HgFeatures[] values = HgFeatures.values();
 		boolean result = true;
-		for (HgOptions option : values) {
-			result &= option.getRequired().compareTo(current)<= 0;
+		for (HgFeatures feature : values) {
+			result &= feature.getRequired().compareTo(current)<= 0;
 		}
 		return result;
 	}
 
 	public static void applyAllTo(IPreferenceStore store) {
-		HgOptions[] values = HgOptions.values();
-		for (HgOptions option : values) {
-			option.applyTo(store);
+		HgFeatures[] values = HgFeatures.values();
+		for (HgFeatures feature : values) {
+			feature.applyTo(store);
 		}
 	}
 
 	public static Version getPreferredVersion() {
-		return Collections.max(Arrays.asList(HgOptions.values()), new Comparator<HgOptions>() {
-			public int compare(HgOptions o1, HgOptions o2) {
+		return Collections.max(Arrays.asList(HgFeatures.values()), new Comparator<HgFeatures>() {
+			public int compare(HgFeatures o1, HgFeatures o2) {
 				return o1.getRequired().compareTo(o2.getRequired());
 			}
 		}).getRequired();
 	}
 
 	public static Version getLowestWorkingVersion() {
-		return Collections.min(Arrays.asList(HgOptions.values()), new Comparator<HgOptions>() {
-			public int compare(HgOptions o1, HgOptions o2) {
+		return Collections.min(Arrays.asList(HgFeatures.values()), new Comparator<HgFeatures>() {
+			public int compare(HgFeatures o1, HgFeatures o2) {
 				if(o1.isMandatory() && !o2.isMandatory()) {
 					return -1;
 				} else if(!o1.isMandatory() && o2.isMandatory()){
@@ -173,9 +173,9 @@ public enum HgOptions {
 
 	public static String printSummary() {
 		StringBuilder sb = new StringBuilder();
-		HgOptions[] values = HgOptions.values();
-		for (HgOptions option : values) {
-			sb.append(option.toString()).append("\n");
+		HgFeatures[] values = HgFeatures.values();
+		for (HgFeatures feature : values) {
+			sb.append(feature.toString()).append("\n");
 		}
 		return sb.toString();
 	}

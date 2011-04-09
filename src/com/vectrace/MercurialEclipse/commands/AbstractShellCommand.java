@@ -18,10 +18,12 @@ package com.vectrace.MercurialEclipse.commands;
 import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.*;
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,6 +48,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -77,7 +80,10 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * So here we simply allow maximal 100 file paths to be used in one command. Why 100? Why not?
 	 * TODO The right way would be to construct the command and then check if the full command line
 	 * size is >= 32767.
+	 *
+	 * @deprecated for the new features please check {@link HgFeatures#LISTFILE} enablement
 	 */
+	@Deprecated
 	public static final int MAX_PARAMS = 100;
 
 	static {
@@ -274,8 +280,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 */
 	private final String uiName;
 
-	// constructors
-
 	/**
 	 * @param uiName
 	 *            Human readable name for this command
@@ -305,8 +309,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		this.commands = commands;
 	}
-
-	// operations
 
 	/**
 	 * Per default, a non-exclusive rule is created
@@ -358,63 +360,86 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		String jobName = obfuscateLoginData(getCommandInvoked(cmd));
 
+		File tmpFile = setupTmpFile(cmd);
+
 		ProcessBuilder builder = setupProcess(cmd);
 
-		// I see sometimes that hg has errors if it runs in parallel
-		// using a job with exclusive rule here serializes all hg access from plugin.
-		processWrapper = createProcessWrapper(output, uiName, builder);
-
-		logConsoleCommandInvoked(jobName);
-
-		// will start hg command as soon as job manager allows us to do it
-		processWrapper.schedule();
-
 		try {
-			waitForConsumer(timeout);
-		} catch (InterruptedException e) {
-			processWrapper.cancel();
-			throw new HgException("Process cancelled: " + jobName, e);
-		}
 
-		if (processWrapper.isAlive()) {
-			// command timeout
-			processWrapper.cancel();
-			throw new HgException("Process timeout: " + jobName);
-		}
+			// I see sometimes that hg has errors if it runs in parallel
+			// using a job with exclusive rule here serializes all hg access from plugin.
+			processWrapper = createProcessWrapper(output, uiName, builder);
 
-		IStatus result = processWrapper.getResult();
-		if (processWrapper.process == null) {
-			// process is either not started or we failed to create it
-			if(result == null){
-				// was not started at all => timeout?
+			logConsoleCommandInvoked(jobName);
+
+			// will start hg command as soon as job manager allows us to do it
+			processWrapper.schedule();
+
+			try {
+				waitForConsumer(timeout);
+			} catch (InterruptedException e) {
+				processWrapper.cancel();
+				throw new HgException("Process cancelled: " + jobName, e);
+			}
+
+			if (processWrapper.isAlive()) {
+				// command timeout
+				processWrapper.cancel();
 				throw new HgException("Process timeout: " + jobName);
 			}
-			if(processWrapper.error == null && result == Status.CANCEL_STATUS) {
-				throw new HgException(HgException.OPERATION_CANCELLED,
-						"Process cancelled: " + jobName, null);
-			}
-			throw new HgException("Process start failed: " + jobName, processWrapper.error);
-		}
 
-		final String msg = getMessage(output);
-		final int exitCode = processWrapper.exitCode;
-		long timeInMillis = debugExecTime? System.currentTimeMillis() - processWrapper.startTime : 0;
-		// everything fine
-		if (exitCode != 0 && expectPositiveReturnValue) {
-			Throwable rootCause = result != null ? result.getException() : null;
-			final HgException hgex = new HgException(exitCode,
-					msg + ". Command line: " + jobName, rootCause);
-			logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
-			throw hgex;
+			IStatus result = processWrapper.getResult();
+			if (processWrapper.process == null) {
+				// process is either not started or we failed to create it
+				if(result == null){
+					// was not started at all => timeout?
+					throw new HgException("Process timeout: " + jobName);
+				}
+				if(processWrapper.error == null && result == Status.CANCEL_STATUS) {
+					throw new HgException(HgException.OPERATION_CANCELLED,
+							"Process cancelled: " + jobName, null);
+				}
+				throw new HgException("Process start failed: " + jobName, processWrapper.error);
+			}
+
+			final String msg = getMessage(output);
+			final int exitCode = processWrapper.exitCode;
+			long timeInMillis = debugExecTime? System.currentTimeMillis() - processWrapper.startTime : 0;
+			// everything fine
+			if (exitCode != 0 && expectPositiveReturnValue) {
+				Throwable rootCause = result != null ? result.getException() : null;
+				final HgException hgex = new HgException(exitCode,
+						msg + ". Command line: " + jobName, rootCause);
+				logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
+				throw hgex;
+			}
+			if (debugExecTime || debugMode) {
+				logConsoleCompleted(timeInMillis, msg, exitCode, null);
+			}
+
+			return true;
+		} finally {
+			if (tmpFile != null && tmpFile.isFile()) {
+				tmpFile.delete();
+			}
 		}
-		if (debugExecTime || debugMode) {
-			logConsoleCompleted(timeInMillis, msg, exitCode, null);
-		}
-		return true;
 	}
 
 	protected ProzessWrapper createProcessWrapper(OutputStream output, String jobName, ProcessBuilder builder) {
 		return new ProzessWrapper(jobName, builder, output);
+	}
+
+	/**
+	 * @param cmd hg commands to run
+	 * @return temporary file path used to write {@link HgFeatures#LISTFILE} arguments
+	 */
+	private static File setupTmpFile(List<String> cmd) {
+		for (String line : cmd) {
+			if (line.startsWith(HgFeatures.LISTFILE.getHgCmd())) {
+				return new File(line.substring(HgFeatures.LISTFILE.getHgCmd().length()));
+			}
+		}
+		return null;
 	}
 
 	private ProcessBuilder setupProcess(List<String> cmd) {
@@ -591,20 +616,61 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		if (commands != null) {
 			return commands;
 		}
-		ArrayList<String> result = new ArrayList<String>();
+		List<String> result = new ArrayList<String>();
 		result.add(getExecutable());
 		result.add(command);
 		result.addAll(options);
-		if (escapeFiles && !files.isEmpty()) {
-			result.add("--"); //$NON-NLS-1$
-		}
-		result.addAll(files);
 
+		String listFilesFile = null;
+		if (HgFeatures.LISTFILE.isEnabled() && getCommandLineLength(files) > 8000) {
+			listFilesFile = createListFilesFile(files);
+		}
+		if(listFilesFile != null){
+			result.add(listFilesFile);
+		} else {
+			if (escapeFiles && !files.isEmpty()) {
+				result.add("--"); //$NON-NLS-1$
+			}
+			result.addAll(files);
+		}
 		customizeCommands(result);
 
-		// TODO check that length <= MAX_PARAMS
 		return commands = result;
 	}
+
+	private static String createListFilesFile(List<String> paths) {
+		BufferedWriter bw = null;
+		try {
+			File listFile = File.createTempFile("listfile_", "txt");
+			bw = new BufferedWriter(new FileWriter(listFile));
+			for (String file : paths) {
+				bw.write(file);
+				bw.newLine();
+			}
+			bw.flush();
+			return HgFeatures.LISTFILE.getHgCmd() + listFile.getAbsolutePath();
+		} catch (IOException ioe) {
+			MercurialEclipsePlugin.logError(ioe);
+			return null;
+		} finally {
+			if(bw != null) {
+				try {
+					bw.close();
+				} catch (IOException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		}
+	}
+
+	private static int getCommandLineLength(List<String> cmds) {
+		int length = 0;
+		for (String f : cmds) {
+			length += f.getBytes().length;
+		}
+		return length;
+	}
+
 
 	/**
 	 * Can be used after execution to get a list of paths needed to be updated
@@ -697,7 +763,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	private IConsole getConsole() {
+	private static IConsole getConsole() {
 		return HgClients.getConsole();
 	}
 

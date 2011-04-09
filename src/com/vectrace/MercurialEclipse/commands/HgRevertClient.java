@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005-2010 Andrei Loskutov (Intland) and others.
+ * Copyright (c) 2005-2010 Andrei Loskutov and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -67,14 +68,27 @@ public class HgRevertClient extends AbstractClient {
 				command.executeToString();
 				fileSet.addAll(command.getAffectedFiles());
 		} else {
-			int delta = AbstractShellCommand.MAX_PARAMS - 1;
-			for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
+			// if there are too many resources, do several calls
+			// From 1.8 hg can do it in one call
+			if(!HgFeatures.LISTFILE.isEnabled()) {
+				int delta = AbstractShellCommand.MAX_PARAMS - 1;
+				for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
+					// the last argument will be replaced with a path
+					HgCommand command = createRevertCommand(hgRoot, "Reverting resource " + i + " of " + size);
+					if (cs != null) {
+						command.addOptions("--rev", cs.getChangeset());
+					}
+					command.addFiles(resources.subList(i, Math.min(i + delta, size)));
+					command.executeToString();
+					fileSet.addAll(command.getAffectedFiles());
+				}
+			} else {
 				// the last argument will be replaced with a path
-				HgCommand command = createRevertCommand(hgRoot, "Reverting resource " + i + " of " + size);
+				HgCommand command = createRevertCommand(hgRoot, "Reverting " + size + " resources");
 				if (cs != null) {
 					command.addOptions("--rev", cs.getChangeset());
 				}
-				command.addFiles(resources.subList(i, Math.min(i + delta, size)));
+				command.addFiles(resources);
 				command.executeToString();
 				fileSet.addAll(command.getAffectedFiles());
 			}

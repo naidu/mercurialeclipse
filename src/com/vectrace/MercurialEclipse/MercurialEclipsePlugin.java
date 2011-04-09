@@ -198,6 +198,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 			hgVersion = Version.emptyVersion;
+		} finally {
+			if(isDebugging()) {
+				System.out.println(HgFeatures.printSummary());
+			}
 		}
 	}
 
@@ -219,7 +223,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	private Version checkHgVersion() throws HgException {
 		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version"); //$NON-NLS-1$
 		command.setShowOnConsole(true);
-		Version preferredVersion = HgOptions.getPreferredVersion();
+		Version preferredVersion = HgFeatures.getPreferredVersion();
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$
 		version = split.length > 0 ? split[0] : ""; //$NON-NLS-1$
@@ -227,24 +231,24 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		boolean failedToParse = !matcher.matches() || matcher.groupCount() <= 0
 				|| (version = matcher.group(1)) == null;
 		if (failedToParse) {
-			HgOptions.setToVersion(preferredVersion);
-			HgOptions.applyAllTo(getPreferenceStore());
+			HgFeatures.setToVersion(preferredVersion);
+			HgFeatures.applyAllTo(getPreferenceStore());
 			logWarning("Can't uderstand Mercurial version string: '" + version
 					+ "'. Assume that at least " + preferredVersion + " is available.", null);
 			return preferredVersion;
 		}
 		Version detectedVersion = new Version(version);
-		HgOptions.setToVersion(detectedVersion);
-		HgOptions.applyAllTo(getPreferenceStore());
-		if (!HgOptions.isSupported(detectedVersion)) {
+		HgFeatures.setToVersion(detectedVersion);
+		HgFeatures.applyAllTo(getPreferenceStore());
+		if (!HgFeatures.isSupported(detectedVersion)) {
 			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") //$NON-NLS-1$
 					+ version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$
-					+ HgOptions.getLowestWorkingVersion() + "."); //$NON-NLS-1$
+					+ HgFeatures.getLowestWorkingVersion() + "."); //$NON-NLS-1$
 		}
-		if (!HgOptions.isHappyWith(detectedVersion)) {
+		if (!HgFeatures.isHappyWith(detectedVersion)) {
 			logWarning("Can not use some of the new Mercurial features, "
 					+ "hg version greater equals " + preferredVersion + " required, but "
-					+ detectedVersion + " found. Options state:\n" + HgOptions.printSummary() + ".",
+					+ detectedVersion + " found. Features state:\n" + HgFeatures.printSummary() + ".",
 					null);
 		}
 		return detectedVersion;

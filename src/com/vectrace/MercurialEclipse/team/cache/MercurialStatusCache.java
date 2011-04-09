@@ -56,6 +56,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -1332,6 +1333,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
 
+		boolean listFileEnabled = HgFeatures.LISTFILE.isEnabled();
 		for (Iterator<IResource> iterator = resources.iterator(); iterator.hasNext();) {
 			IResource resource = iterator.next();
 
@@ -1339,43 +1341,54 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if (!resource.isTeamPrivateMember()) {
 				currentBatch.add(resource);
 			}
-			if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
-				// call hg with batch
-				synchronized (statusUpdateLock) {
-					for (IResource curr : currentBatch) {
-						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
-						clearStatusCache(curr);
-						if (unknown && !curr.exists()) {
-							// remember parents of deleted files: we must update their state
-							IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
-							while(directory != null) {
-								changed.add(directory);
-								IPath parentPath = directory.getLocation();
-								if(parentPath != null) {
-									bitMap.remove(parentPath);
-									statusMap.remove(parentPath);
-								}
-								directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
-							}
-							// recursive recalculate parents state
-							// TODO better to combine it with parse status below...
-							setStatusToAncestors(curr, CLEAN, true);
-						}
-					}
-					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-					String[] lines = NEWLINE.split(output);
-					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-					IPath projectLocation = project.getLocation();
-					if(projectLocation != null) {
-						pathMap.put(project, projectLocation);
-					}
-					changed.addAll(parseStatus(root, pathMap, lines, true));
+			if(!listFileEnabled) {
+				if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
+					// call hg with batch
+					updateStatusBatched(project, root, currentBatch, changed);
+					currentBatch.clear();
 				}
-				currentBatch.clear();
 			}
 		}
 
+		if(listFileEnabled) {
+			updateStatusBatched(project, root, currentBatch, changed);
+		}
+
 		return changed;
+	}
+
+	private void updateStatusBatched(IProject project, HgRoot root, List<IResource> currentBatch,
+			Set<IResource> changed) throws HgException {
+		synchronized (statusUpdateLock) {
+			for (IResource curr : currentBatch) {
+				boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
+				clearStatusCache(curr);
+				if (unknown && !curr.exists()) {
+					// remember parents of deleted files: we must update their state
+					IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
+					while(directory != null) {
+						changed.add(directory);
+						IPath parentPath = directory.getLocation();
+						if(parentPath != null) {
+							bitMap.remove(parentPath);
+							statusMap.remove(parentPath);
+						}
+						directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
+					}
+					// recursive recalculate parents state
+					// TODO better to combine it with parse status below...
+					setStatusToAncestors(curr, CLEAN, true);
+				}
+			}
+			String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
+			String[] lines = NEWLINE.split(output);
+			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+			IPath projectLocation = project.getLocation();
+			if(projectLocation != null) {
+				pathMap.put(project, projectLocation);
+			}
+			changed.addAll(parseStatus(root, pathMap, lines, true));
+		}
 	}
 
 	public void clearStatusCache(IResource resource) {
