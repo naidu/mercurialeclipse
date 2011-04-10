@@ -56,6 +56,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -1343,6 +1344,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
 
+		boolean listFileEnabled = HgFeatures.LISTFILE.isEnabled();
 		for (Iterator<IResource> iterator = resources.iterator(); iterator.hasNext();) {
 			IResource resource = iterator.next();
 
@@ -1350,8 +1352,24 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if (!resource.isTeamPrivateMember()) {
 				currentBatch.add(resource);
 			}
+			if(!listFileEnabled) {
 			if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
 				// call hg with batch
+					updateStatusBatched(project, root, currentBatch, changed);
+					currentBatch.clear();
+				}
+			}
+		}
+
+		if(listFileEnabled) {
+			updateStatusBatched(project, root, currentBatch, changed);
+		}
+
+		return changed;
+	}
+
+	private void updateStatusBatched(IProject project, HgRoot root, List<IResource> currentBatch,
+			Set<IResource> changed) throws HgException {
 				synchronized (statusUpdateLock) {
 					for (IResource curr : currentBatch) {
 						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
@@ -1382,11 +1400,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					}
 					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
-				currentBatch.clear();
-			}
-		}
-
-		return changed;
 	}
 
 	public void clearStatusCache(IResource resource) {
