@@ -1460,6 +1460,12 @@
        </factory>
        
       <factory
+             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>       
+       
+      <factory
              adaptableType="org.eclipse.team.internal.ui.history.GenericHistoryView"
              class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
           <adapter type="org.eclipse.ui.views.properties.IPropertySheetPage" />
