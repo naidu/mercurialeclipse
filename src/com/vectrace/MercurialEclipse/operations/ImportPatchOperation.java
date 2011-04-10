@@ -9,7 +9,7 @@
  * VecTrace (Zingo Andersen) - implementation
  * Stefan Groschupf          - logError
  * Stefan C                  - Code cleanup
- * Andrei Loskutov (Intland) - bug fixes
+ * Andrei Loskutov           - bug fixes
  * John Peberdy	             - Move from ImportPatchWizard
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.operations;

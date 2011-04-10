@@ -16,6 +16,7 @@
  *     Philip Graf               - proxy support
  *     Bastian Doetsch           - bug fixes and implementation
  *******************************************************************************/
+
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
@@ -204,7 +205,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				System.out.println(HgFeatures.printSummary());
 			}
 		}
-	}
+		}
 
 	/**
 	 * Plugin depends on native mercurial installation, which has to be checked at plugin startup.
@@ -248,15 +249,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") //$NON-NLS-1$
 					+ version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$
 					+ HgFeatures.getLowestWorkingVersion() + "."); //$NON-NLS-1$
-		}
+				}
 		if (!HgFeatures.isHappyWith(detectedVersion)) {
 			logWarning("Can not use some of the new Mercurial features, "
 					+ "hg version greater equals " + preferredVersion + " required, but "
 					+ detectedVersion + " found. Features state:\n" + HgFeatures.printSummary() + ".",
 					null);
-		}
+			}
 		return detectedVersion;
-	}
+		}
 
 	/**
 	 * @return the observer hg version, never null. Returns {@link Version#emptyVersion} in case the

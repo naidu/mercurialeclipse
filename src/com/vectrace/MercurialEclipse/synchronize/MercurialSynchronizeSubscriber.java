@@ -7,7 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
- * Andrei Loskutov (Intland) - bugfixes
+ * Andrei Loskutov - bugfixes
  * Adam Berkes (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;

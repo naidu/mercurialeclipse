@@ -109,11 +109,10 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
-	private CommitFilesChooser commitFilesList;
+	protected CommitFilesChooser commitFilesList;
 	private List<IResource> resourcesToAdd;
 	private List<IResource> resourcesToCommit;
 	private List<IResource> resourcesToRemove;
-	private String commitMessage;
 	private final IDocument commitTextDocument;
 	private SourceViewerDecorationSupport decorationSupport;
 	private final List<IResource> inResources;
@@ -166,7 +165,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	public String getCommitMessage() {
-		return commitMessage;
+		return commitTextDocument.get();
 	}
 
 	public List<IResource> getResourcesToCommit() {
@@ -248,8 +247,8 @@ public class CommitDialog extends TitleAreaDialog {
 		setCommitMessage(initialCommitMessage);
 
 		if (commitTextBox != null) {
-			commitTextBox.getTextWidget().setFocus();
-			commitTextBox.getTextWidget().selectAll();
+		commitTextBox.getTextWidget().setFocus();
+		commitTextBox.getTextWidget().selectAll();
 		}
 
 		return control;
@@ -454,7 +453,7 @@ public class CommitDialog extends TitleAreaDialog {
 		pm.worked(3);
 
 		// get commit message
-		commitMessage = commitTextDocument.get();
+		String commitMessage = getCommitMessage();
 
 		// get commit username
 		user = userTextField.getText();
@@ -643,8 +642,8 @@ public class CommitDialog extends TitleAreaDialog {
 		commitTextDocument.set(msg);
 
 		if (commitTextBox != null) {
-			commitTextBox.setSelectedRange(0, msg.length());
-		}
+		commitTextBox.setSelectedRange(0, msg.length());
+	}
 	}
 
 	public String getUser() {

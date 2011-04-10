@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
@@ -17,6 +17,7 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -74,6 +75,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			FileFromChangeSet ffc = (FileFromChangeSet) element;
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
+		} else if (element instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) element;
+			if(group.getDirection() == Direction.LOCAL){
+				decoratedImage = getImageManager().getImage(base, Differencer.CHANGE);
+		} else {
+			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
+		}
 		} else {
 			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
@@ -94,13 +102,17 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 				sb.append(" [").append(cset.getAuthor()).append(']');
 				sb.append(" (").append(cset.getAgeDate()).append(')');
-				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
-					sb.append(' ').append(cset.getBranch()).append(':');
-				}
-				sb.append(' ').append(getShortComment(cset));
 			} else {
-				sb.append(cset.toString());
+				if (((WorkingChangeSet)cset).isDefault()) {
+					sb.append("* ");
+				}
+				sb.append(cset.getName());
+				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
+			if (!Branch.isDefault(cset.getBranch())) {
+				sb.append(' ').append(cset.getBranch());
+			}
+			sb.append(':').append(' ').append(getShortComment(cset));
 			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){
@@ -108,6 +120,16 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			String name = group.getName();
 			if(group.getChangesets().isEmpty()){
 				return name + " (empty)";
+			}
+			if(group.getDirection() == Direction.LOCAL) {
+				int files = 0;
+				for (ChangeSet cs : group.getChangesets()) {
+					files += cs.getChangesetFiles().length;
+				}
+				if(files == 0) {
+					return name + " (empty)";
+				}
+				return name + " (" + files + ')';
 			}
 			return name + " (" + group.getChangesets().size() + ')';
 		}

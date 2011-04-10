@@ -10,7 +10,7 @@
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
