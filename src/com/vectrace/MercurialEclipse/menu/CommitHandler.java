@@ -12,8 +12,8 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 
@@ -31,6 +31,13 @@ public class CommitHandler extends MultipleResourcesHandler {
 
 	@Override
 	public void run(List<IResource> resources) throws HgException {
+
+		if(resources.isEmpty() && options != null && options.allowEmptyCommit && options.hgRoot != null) {
+			CommitDialog commitDialog = new CommitDialog(getShell(), options.hgRoot, resources);
+			commitDialog.setOptions(options);
+			commitDialog.setBlockOnOpen(true);
+			result = commitDialog.open();
+		} else {
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
 		Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
 
@@ -48,6 +55,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 			commitDialog.setBlockOnOpen(true);
 			result = commitDialog.open();
 		}
+	}
 	}
 
 	/**

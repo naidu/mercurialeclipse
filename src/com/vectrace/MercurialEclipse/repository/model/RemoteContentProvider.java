@@ -8,7 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
- *     Andrei Loskutov (Intland)    - bug fixes
+ *     Andrei Loskutov    - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.model;
 

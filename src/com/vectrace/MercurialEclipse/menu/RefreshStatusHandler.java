@@ -16,8 +16,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -39,10 +39,9 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 
 	@Override
 	protected void run(List<IResource> resources) throws Exception {
-		MercurialRootCache cache = MercurialRootCache.getInstance();
 
 		for (IResource res : resources) {
-			cache.uncache(res);
+			MercurialRootCache.uncache(res);
 		}
 
 		if(resources.size() == 1){
@@ -72,7 +71,7 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 		}
 	}
 
-	Set<IResource> collectSingleFiles(List<IResource> resources){
+	static Set<IResource> collectSingleFiles(List<IResource> resources){
 		Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(resources);
 		Set<Entry<IProject, List<IResource>>> resSet = byProject.entrySet();
 		Set<IResource> singleResources = new HashSet<IResource>();
@@ -96,7 +95,7 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 		return singleResources;
 	}
 
-	Set<IProject> collectSingleProjects(List<IResource> resources){
+	static Set<IProject> collectSingleProjects(List<IResource> resources){
 		Set<IProject> singleProjects = new HashSet<IProject>();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
 		Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
@@ -111,15 +110,15 @@ public class RefreshStatusHandler extends MultipleResourcesHandler {
 		return singleProjects;
 	}
 
-	private void refreshRoot(final HgRoot hgRoot) {
+	private static void refreshRoot(final HgRoot hgRoot) {
 		new RefreshStatusJob("Refreshing hg root " + hgRoot.getName(), hgRoot).schedule();
 	}
 
-	private void refreshSingleProject(final IProject project) {
+	private static void refreshSingleProject(final IProject project) {
 		new RefreshStatusJob("Refreshing project " + project.getName(), project).schedule();
 	}
 
-	private void refreshSingleResource(final IResource resource) {
+	private static void refreshSingleResource(final IResource resource) {
 		new Job(
 				Messages.getString("RefreshStatusHandler.refreshingResource") + " " + resource.getName() + "...") { //$NON-NLS-1$ //$NON-NLS-2$
 

@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -40,7 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -146,7 +147,26 @@ public class MercurialRootCache extends AbstractCache {
 	 *         team provider is not Mercurial or hg root is not found
 	 */
 	public HgRoot hasHgRoot(IResource resource, boolean resolveIfNotKnown) {
-		return getHgRoot(resource, resolveIfNotKnown);
+		return hasHgRoot(resource, resolveIfNotKnown, false);
+	}
+
+	/**
+	 * Find the hg root for the given resource. If the root could not be found, an error will be
+	 * reported.
+	 *
+	 * @param resource
+	 *            The resource, not null.
+	 * @param resolveIfNotKnown
+	 *            true to trigger hg root search or/and also possible team provider configuration
+	 *            operation, which may lead to locking
+	 * @param reportNotFoundRoot
+	 * 		      true to report an error if the root is not found
+	 *
+	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
+	 *         team provider is not Mercurial or hg root is not found
+	 */
+	public HgRoot hasHgRoot(IResource resource, boolean resolveIfNotKnown, boolean reportNotFoundRoot) {
+		return getHgRoot(resource, resolveIfNotKnown, reportNotFoundRoot);
 	}
 
 	/**
@@ -154,13 +174,18 @@ public class MercurialRootCache extends AbstractCache {
 	 *
 	 * @param resource
 	 *            The resource, not null.
+	 * @param resolveIfNotKnown
+	 *            true to trigger hg root search or/and also possible team provider configuration
+	 *            operation, which may lead to locking
+	 * @param reportNotFoundRoot
+	 * 		      true to report an error if the root is not found
 	 * @return The hg root, or null if an error occurred or enclosing project is closed or project
 	 *         team provider is not Mercurial or hg root is not found
 	 */
-	private HgRoot getHgRoot(IResource resource, boolean resolveIfNotKnown) {
-		if (resource instanceof HgRootContainer) {
+	private HgRoot getHgRoot(IResource resource, boolean resolveIfNotKnown, boolean reportNotFoundRoot) {
+		if (resource instanceof IHgResource) {
 			// special case for HgRootContainers, they already know their HgRoot
-			return ((HgRootContainer) resource).getHgRoot();
+			return ((IHgResource) resource).getHgRoot();
 		}
 
 		IProject project = resource.getProject();
@@ -213,10 +238,10 @@ public class MercurialRootCache extends AbstractCache {
 		if(fileHandle.getPath().length() == 0) {
 			return null;
 		}
-		HgRoot root = calculateHgRoot(fileHandle, true);
+		HgRoot root = calculateHgRoot(fileHandle, reportNotFoundRoot);
 		if (cacheResult) {
 			try {
-				resource.setSessionProperty(SESSION_KEY, root == null ? noRoot : root);
+				markAsCached(resource, root);
 
 				if (root != null) {
 					synchronized (canonicalMap) {
@@ -224,7 +249,13 @@ public class MercurialRootCache extends AbstractCache {
 						if (s == null) {
 							canonicalMap.put(root.getIPath(), s = new HashSet<IPath>());
 						}
-						s.add(project.getLocation());
+						IPath projectPath = project.getLocation();
+						if (!resource.isLinked(IResource.CHECK_ANCESTORS)
+								&& !root.getIPath().equals(projectPath)
+								&& !root.getIPath().isPrefixOf(projectPath)) {
+							// only add paths which are *different* and NOT children of the root
+							s.add(projectPath);
+						}
 					}
 				}
 			} catch (CoreException e) {
@@ -232,10 +263,41 @@ public class MercurialRootCache extends AbstractCache {
 				// - 2 reasons above, or
 				// - Resource changes are disallowed during certain types of resource change event
 				// notification. See IResourceChangeEvent for more details.
-				MercurialEclipsePlugin.logError(e);
+				if(reportNotFoundRoot) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		}
 		return root;
+	}
+
+	public static void markAsCached(IResource resource, HgRoot root) throws CoreException {
+		Object value = root == null ? getInstance().noRoot : root;
+		resource.setSessionProperty(SESSION_KEY, value);
+		if(root == null) {
+			// mark all parents up to project as NOT in Mercurial
+			while(!(resource.getParent() instanceof IWorkspaceRoot) && !resource.isLinked()){
+				resource = resource.getParent();
+				if(value.equals(resource.getSessionProperty(SESSION_KEY))) {
+					return;
+				}
+				resource.setSessionProperty(SESSION_KEY, value);
+			}
+		} else {
+			// only process if there are no links etc, means the root location
+			// can be properly detected by simple path compare
+			if(root.getIPath().isPrefixOf(resource.getLocation())){
+				// mark all parents up to the root location as IN Mercurial
+				while(!(resource.getParent() instanceof IWorkspaceRoot) && !resource.isLinked()
+						&& !root.getIPath().equals(resource.getLocation())){
+					resource = resource.getParent();
+					if(value.equals(resource.getSessionProperty(SESSION_KEY))) {
+						return;
+					}
+					resource.setSessionProperty(SESSION_KEY, value);
+				}
+			}
+		}
 	}
 
 	/**
@@ -271,7 +333,7 @@ public class MercurialRootCache extends AbstractCache {
 	 * @return The hgroot, or null if an error occurred or not found
 	 */
 	public HgRoot getHgRoot(IResource resource) {
-		return getHgRoot(resource, true);
+		return getHgRoot(resource, true, true);
 	}
 
 	public Collection<HgRoot> getKnownHgRoots(){
@@ -288,11 +350,28 @@ public class MercurialRootCache extends AbstractCache {
 		if(!project.exists()) {
 			return;
 		}
-		IPath projPath = ResourceUtils.getPath(project);
+		HgRoot hgRoot = getHgRoot(project, false, false);
+		if(hgRoot == null) {
+			return;
+		}
 
+		List<IProject> projects = MercurialTeamProvider.getKnownHgProjects(hgRoot);
+
+		// Fix for issue 14094: Refactor->Rename project throws lots of errors
+		uncache(project);
+
+		if(projects.size() > 1 && hgRoot.getIPath().equals(project.getLocation())) {
+			// See 14113: various actions fail for recursive projects if the root project is closed
+			// do not remove root as there are more then one project inside
+			return;
+		}
+
+		IPath projPath = ResourceUtils.getPath(project);
 		if (!projPath.isEmpty()) {
-			for (Iterator<HgRoot> it = knownRoots.values().iterator(); it.hasNext();) {
-				if (projPath.isPrefixOf(it.next().getIPath())) {
+			Iterator<HgRoot> it = knownRoots.values().iterator();
+			while (it.hasNext()) {
+				HgRoot root = it.next();
+				if (projPath.isPrefixOf(root.getIPath())) {
 					it.remove();
 				}
 			}
@@ -305,7 +384,7 @@ public class MercurialRootCache extends AbstractCache {
 	 * @param resource
 	 *            The resource to evict.
 	 */
-	public void uncache(IResource resource) {
+	public static void uncache(IResource resource) {
 		// A different more efficient approach would be to mark all contained hgroots (or just all
 		// known root) as obsolete and then when a resource is queried we can detect this and
 		// discard the cached result thereby making the invalidation lazy. But that would make

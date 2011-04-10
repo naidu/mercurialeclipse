@@ -18,6 +18,7 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,6 +56,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -407,6 +409,20 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 */
 	public Integer getStatus(IResource resource) {
 		IPath location = resource.getLocation();
+		return getStatus(location);
+	}
+
+
+	/**
+	 * Gets the status of the given path from cache. The returned BitSet contains a BitSet of the status flags set.
+	 *
+	 * The flags correspond to the BIT_* constants in this class.
+	 *
+	 * @param location
+	 *            the absolute file system path to get status for (can be null).
+	 * @return the BitSet with status flags, MAY RETURN NULL, if status is unknown yet
+	 */
+	private Integer getStatus(IPath location) {
 		return location != null? statusMap.get(location) : null;
 	}
 
@@ -492,13 +508,30 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public boolean isIgnored(IResource resource) {
 		Assert.isNotNull(resource);
 		Integer status = getStatus(resource);
-		if(status == null && isStatusKnown(resource.getProject())){
-			// it seems that original autors intentionally do not tracked status for
-			// ignored files. I guess the reason was performance: for a java project,
-			// including "ignored" class files would double the cache size...
-			return true;
+		if(status == null) {
+			if (isStatusKnown(resource.getProject())) {
+				// it seems that original autors intentionally do not tracked status for
+				// ignored files. I guess the reason was performance: for a java project,
+				// including "ignored" class files would double the cache size...
+				return true;
+			}
+			return false;
 		}
-		return false;
+
+		return Bits.contains(status.intValue(), BIT_IGNORE);
+	}
+
+	/**
+	 * @param location
+	 *            the absolute file system path to get status for (can be null).
+	 * @return true if the cache knows that the given path should be ignored by Mercurial
+	 */
+	public boolean isIgnored(IPath location) {
+		Integer status = getStatus(location);
+		if(status == null) {
+			return false;
+		}
+		return Bits.contains(status.intValue(), BIT_IGNORE);
 	}
 
 	/**
@@ -576,7 +609,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// Possible optimization: don't walk the entry set. Call folder.accept() and query statusMap
 		// individually for each.
 		Set<IResource> resources;
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(folder);
+		if(hgRoot == null) {
+			return Collections.emptySet();
+		}
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
 			&& Bits.cardinality(statusBits) == 1;
 		if(isMappedState){
@@ -594,14 +630,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				for (IPath path : children) {
 					// TODO try to use container.getFile (performance?)
 					// we don't know if it is a file or folder...
-					IFile tmp = root.getFileForLocation(path);
+					IResource tmp;
+					if(isDirectory(path)) {
+						tmp = hgRoot.getResource().getFolder(hgRoot.toRelative(path));
+					} else {
+						tmp = hgRoot.getResource().getFile(hgRoot.toRelative(path));
+					}
 					if(tmp != null) {
 						resources.add(tmp);
-					} else {
-						IContainer container = root.getContainerForLocation(path);
-						if(container != null) {
-							resources.add(container);
-						}
 					}
 				}
 			}
@@ -616,19 +652,23 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				Integer status = entry.getValue();
 				if(status != null && Bits.contains(status.intValue(), statusBits)){
 					IPath path = entry.getKey();
+					if(!ResourceUtils.isPrefixOf(parentPath, path)) {
+						continue;
+					}
 					// we don't know if it is a file or folder...
-					IFile tmp = root.getFileForLocation(path);
-					if(tmp != null) {
-						if(ResourceUtils.isPrefixOf(parentPath, path)) {
-							resources.add(tmp);
-						}
+					IPath relative = hgRoot.toRelative(path);
+					if(relative.isEmpty()) {
+						resources.add(hgRoot.getResource());
+						continue;
+					}
+					IResource tmp;
+					if(isDirectory(path)) {
+						tmp = hgRoot.getResource().getFolder(relative);
 					} else {
-						IContainer container = root.getContainerForLocation(path);
-						if(container != null) {
-							if(ResourceUtils.isPrefixOf(parentPath, path)) {
-								resources.add(container);
-							}
-						}
+						tmp = hgRoot.getResource().getFile(relative);
+					}
+					if(tmp != null) {
+						resources.add(tmp);
 					}
 				}
 			}
@@ -687,7 +727,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				}
 				// clear status for project
 				if(knownStatus.contains(project)) {
-					projectDeletedOrClosed(project);
+					clear(project, false);
 				}
 				monitor.worked(1);
 				if(monitor.isCanceled()){
@@ -738,6 +778,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					return;
 				}
 			}
+
+			knownStatus.add(root.getResource());
 		}
 
 		notifyChanged(changed, false);
@@ -781,7 +823,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		synchronized (statusUpdateLock) {
 			// clear status for files, folders or project
 			if(res instanceof IProject && knownStatus.contains(project)){
-				projectDeletedOrClosed(project);
+				clear(project, false);
 			} else {
 				clearStatusCache(res);
 			}
@@ -974,9 +1016,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			MercurialEclipsePlugin.logError("Unexpected error - paths should be canonicalizable", e);
 		}
 
-		// HgRoots are always canonical
-		IPath hgRootPath = new Path(root.getAbsolutePath());
-
 		for (String line : lines) {
 			if(line.length() <= 2){
 				strangeStates.add(line);
@@ -990,7 +1029,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				continue;
 			}
 			String localName = line.substring(2);
-			IResource member = findMember(pathMap, hgRootPath, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
+			IResource member = findMember(pathMap, root, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
 
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
@@ -1065,8 +1104,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/**
 	 * @return return null if resource is not known or linked and not under the same root
 	 */
-	private static IResource findMember(Map<IProject, IPath> pathMap, final IPath hgRootPath,
+	private static IResource findMember(Map<IProject, IPath> pathMap, final HgRoot hgRoot,
 			final String repoRelPath, final boolean allowForce) {
+		IPath hgRootPath = hgRoot.getIPath();
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
@@ -1085,7 +1125,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return result;
 			}
 		}
-		return null;
+		IPath rel = new Path(repoRelPath);
+		if(allowForce) {
+			return hgRoot.getResource().getFile(rel);
+		}
+		return hgRoot.getResource().findMember(rel);
 	}
 
 	private void setStatus(IPath location, Integer status, boolean isDir) {
@@ -1300,6 +1344,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
 
+		boolean listFileEnabled = HgFeatures.LISTFILE.isEnabled();
 		for (Iterator<IResource> iterator = resources.iterator(); iterator.hasNext();) {
 			IResource resource = iterator.next();
 
@@ -1307,8 +1352,24 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if (!resource.isTeamPrivateMember()) {
 				currentBatch.add(resource);
 			}
+			if(!listFileEnabled) {
 			if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
 				// call hg with batch
+					updateStatusBatched(project, root, currentBatch, changed);
+					currentBatch.clear();
+				}
+			}
+		}
+
+		if(listFileEnabled) {
+			updateStatusBatched(project, root, currentBatch, changed);
+		}
+
+		return changed;
+	}
+
+	private void updateStatusBatched(IProject project, HgRoot root, List<IResource> currentBatch,
+			Set<IResource> changed) throws HgException {
 				synchronized (statusUpdateLock) {
 					for (IResource curr : currentBatch) {
 						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
@@ -1339,11 +1400,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					}
 					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
-				currentBatch.clear();
-			}
-		}
-
-		return changed;
 	}
 
 	public void clearStatusCache(IResource resource) {
@@ -1405,7 +1461,27 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
 		clear(project, false);
-		knownStatus.remove(project);
+
+		// dirty fix for issue 14113: various actions fail for recursive projects
+		// if the root project is closed: we simply refresh the state for remaining projects
+		IPath path = project.getLocation();
+		if(path == null) {
+			return;
+		}
+		Collection<HgRoot> hgRoots = MercurialRootCache.getInstance().getKnownHgRoots();
+		for (HgRoot hgRoot : hgRoots) {
+			// only start refresh for projects located at the repository root
+			if(!hgRoot.getIPath().equals(path)) {
+				continue;
+			}
+			List<IProject> projects = MercurialTeamProvider.getKnownHgProjects(hgRoot);
+			projects.remove(project);
+			// only start refresh if there is at least one project more in the repo
+			if(projects.size() > 0) {
+				new RefreshStatusJob("Status update", hgRoot).schedule();
+			}
+		}
+
 	}
 
 	public void clear(HgRoot root, boolean notify) {
@@ -1422,6 +1498,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public void clear(IProject project, boolean notify) {
 		clearMergeStatus(project);
 		clearStatusCache(project);
+		knownStatus.remove(project);
 		if(notify) {
 			notifyChanged(project, false);
 		}

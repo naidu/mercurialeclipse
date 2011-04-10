@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.jface.util.IPropertyChangeListener;
 
 import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -139,6 +140,10 @@ public class WorkingChangeSet extends ChangeSet {
 			this.projects.clear();
 			for (IProject project : projects) {
 				this.projects.add(project);
+				HgRoot root = MercurialTeamProvider.getHgRoot(project);
+				if(root != null) {
+					this.projects.add(root.getResource());
+				}
 			}
 		}
 	}

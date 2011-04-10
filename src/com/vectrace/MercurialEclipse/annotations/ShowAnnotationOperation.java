@@ -46,7 +46,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
-import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
+import org.eclipse.ui.texteditor.ITextEditor;
+import org.eclipse.ui.texteditor.ITextEditorExtension4;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
@@ -55,6 +56,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ShowAnnotationOperation extends TeamOperation {
 	public static final class MercurialRevision extends Revision {
@@ -78,7 +80,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		public Object getHoverInfo() {
 			return entry.getUser()
 					+ " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					(entry != null ? entry.getComment() : ""); //$NON-NLS-1$
+					(entry.getComment() != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}
 
 		/**
@@ -137,15 +139,15 @@ public class ShowAnnotationOperation extends TeamOperation {
 				protected IStatus runSafe(IProgressMonitor moni) {
 					moni.beginTask(Messages.getString("ShowAnnotationOperation.beginAnnotation"), //$NON-NLS-1$
 							IProgressMonitor.UNKNOWN);
-					final AbstractDecoratedTextEditor editor = getEditor();
+					final ITextEditorExtension4 editor = getEditor();
 					if (editor != null) {
 						editor
 								.showRevisionInformation(
 										information,
 										HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER);
 						final IWorkbenchPage page= getPart().getSite().getPage();
-						showHistoryView(page, editor);
-						page.activate(editor);
+						showHistoryView(page, (ITextEditor)editor);
+						page.activate((ITextEditor)editor);
 					}
 					moni.done();
 					return super.runSafe(moni);
@@ -167,7 +169,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 	 * @return the history view
 	 * @throws PartInitException
 	 */
-	private IHistoryView showHistoryView(IWorkbenchPage page, AbstractDecoratedTextEditor editor) {
+	private IHistoryView showHistoryView(IWorkbenchPage page, ITextEditor editor) {
 		Object object = res;
 		if (object == null) {
 			object = editor.getEditorInput();
@@ -189,7 +191,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		return super.getGotoAction();
 	}
 
-	private AbstractDecoratedTextEditor getEditor() {
+	private ITextEditorExtension4 getEditor() {
 		IEditorReference[] references = MercurialEclipsePlugin.getActivePage()
 				.getEditorReferences();
 		IResource resource = res;
@@ -197,29 +199,29 @@ public class ShowAnnotationOperation extends TeamOperation {
 			return null;
 		}
 
+		IWorkbenchPage page = getPart().getSite().getPage();
 		for (int i = 0; i < references.length; i++) {
 			IEditorReference reference = references[i];
 			try {
 				if (resource.equals(reference.getEditorInput()
 								.getAdapter(IFile.class))) {
 					IEditorPart editor = reference.getEditor(false);
-					if (editor instanceof AbstractDecoratedTextEditor) {
-						return (AbstractDecoratedTextEditor) editor;
+					if (editor instanceof ITextEditorExtension4) {
+						return (ITextEditorExtension4) editor;
 					}
 					// editor opened is not a text editor - reopen file using
 					// the
 					// defualt text editor
-					IEditorPart part = getPart().getSite().getPage()
+					IEditorPart part = page
 							.openEditor(new FileEditorInput((IFile) resource),
 									DEFAULT_TEXT_EDITOR_ID, true,
 									IWorkbenchPage.MATCH_NONE);
-					if (part != null
-							&& part instanceof AbstractDecoratedTextEditor) {
-						return (AbstractDecoratedTextEditor) part;
+					if (part instanceof ITextEditorExtension4) {
+						return (ITextEditorExtension4) part;
 					}
 				}
 			} catch (PartInitException e) {
-				// ignore
+				MercurialEclipsePlugin.logError(e);
 			}
 		}
 
@@ -227,28 +229,26 @@ public class ShowAnnotationOperation extends TeamOperation {
 		// file
 
 		try {
-			IEditorDescriptor descrptr = IDE
-					.getEditorDescriptor((IFile) resource);
+			IEditorDescriptor descrptr = IDE.getEditorDescriptor((IFile) resource);
 			// try to open the associated editor only if its an internal
 			// editor
 			if (descrptr.isInternal()) {
-				IEditorPart part = IDE.openEditor(
-						getPart().getSite().getPage(), (IFile) resource);
-				if (part instanceof AbstractDecoratedTextEditor) {
-					return (AbstractDecoratedTextEditor) part;
+				IEditorPart part = ResourceUtils.openEditor(page, (IFile) resource);
+				if (part instanceof ITextEditorExtension4) {
+					return (ITextEditorExtension4) part;
 				}
-
 				// editor opened is not a text editor - close it
-				getPart().getSite().getPage().closeEditor(part, false);
+				// NB: editor should not be closed as it could be opened by user before
+				// page.closeEditor(part, false);
 			}
 			// open file in default text editor
-			IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
-					(IFile) resource, DEFAULT_TEXT_EDITOR_ID);
-			if (part != null && part instanceof AbstractDecoratedTextEditor) {
-				return (AbstractDecoratedTextEditor) part;
+			IEditorPart part = IDE.openEditor(page,	(IFile) resource, DEFAULT_TEXT_EDITOR_ID);
+			if (part instanceof ITextEditorExtension4) {
+				return (ITextEditorExtension4) part;
 			}
 
 		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 
 		return null;

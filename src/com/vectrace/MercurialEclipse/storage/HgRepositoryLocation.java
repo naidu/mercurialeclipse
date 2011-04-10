@@ -11,7 +11,7 @@
  *     Bastian Doetsch           - additions for repository view
  *     Subclipse contributors    - fromProperties() initial source
  *     Adam Berkes (Intland)     - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 

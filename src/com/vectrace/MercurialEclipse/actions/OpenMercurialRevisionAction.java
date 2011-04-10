@@ -46,7 +46,6 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.editors.text.EditorsUI;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.part.Page;
 
@@ -54,6 +53,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
@@ -220,7 +220,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
 							if (file instanceof IFile) {
 								// if this is the current workspace file, open it
-								IDE.openEditor(wPage, (IFile) file);
+								ResourceUtils.openEditor(wPage, (IFile) file);
 							} else {
 								// not current revision
 								MercurialRevisionEditorInput fileRevEditorInput =

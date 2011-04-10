@@ -8,7 +8,7 @@
  * Contributors:
  *     Zingo Andersen           - Save/Load commit messages using a xml file
  *     Adam Berkes (Intland)    - Fix encoding
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 

@@ -6,11 +6,14 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
+
+import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 
 /**
  * A rule which disallows parallel execution of jobs using it
@@ -21,6 +24,6 @@ public final class ExclusiveHistoryRule implements ISchedulingRule {
 	}
 
 	public boolean contains(ISchedulingRule rule) {
-		return rule instanceof ExclusiveHistoryRule;
+		return rule instanceof ExclusiveHistoryRule || rule instanceof IResource || rule instanceof HgRootRule;
 	}
 }

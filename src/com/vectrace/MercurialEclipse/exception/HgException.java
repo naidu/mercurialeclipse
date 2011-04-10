@@ -39,7 +39,7 @@ public class HgException extends TeamException {
 
 	public HgException(String message) {
 		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-				OPERATION_FAILED, message, null));
+				OPERATION_FAILED, message, new Exception(message)));
 	}
 
 	public HgException(CoreException e) {

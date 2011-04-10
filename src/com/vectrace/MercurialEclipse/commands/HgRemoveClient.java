@@ -18,6 +18,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -49,6 +50,8 @@ public class HgRemoveClient extends AbstractClient {
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
 			HgRoot hgRoot = mapEntry.getKey();
 			// if there are too many resources, do several calls
+			// From 1.8 hg can do it in one call
+			if(!HgFeatures.LISTFILE.isEnabled()) {
 			int size = mapEntry.getValue().size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
@@ -58,6 +61,13 @@ public class HgRemoveClient extends AbstractClient {
 				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
 				command.executeToBytes();
 			}
+			} else {
+				AbstractShellCommand command = new HgCommand("remove", "Removing resource", hgRoot, true); //$NON-NLS-1$
+				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+				command.addFiles(mapEntry.getValue());
+				command.executeToBytes();
+			}
 		}
 	}
 
@@ -65,7 +75,9 @@ public class HgRemoveClient extends AbstractClient {
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
 			HgRoot hgRoot = mapEntry.getKey();
 			// if there are too many resources, do several calls
+			// From 1.8 hg can do it in one call
 			int size = mapEntry.getValue().size();
+			if(!HgFeatures.LISTFILE.isEnabled()) {
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
 				final int j = Math.min(i + delta, size);
@@ -75,6 +87,15 @@ public class HgRemoveClient extends AbstractClient {
 				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
 				command.addFiles(mapEntry.getValue().subList(i, j));
+				command.executeToBytes();
+			}
+			} else {
+				AbstractShellCommand command = new HgCommand("remove", //$NON-NLS-1$
+						"Removing " + size + " resources", hgRoot, true);
+				command.addOptions("-Af");
+				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+				command.addFiles(mapEntry.getValue());
 				command.executeToBytes();
 			}
 		}

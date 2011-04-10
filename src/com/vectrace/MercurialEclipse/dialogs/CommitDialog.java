@@ -141,6 +141,8 @@ public class CommitDialog extends TitleAreaDialog {
 		public String defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
 		public boolean showCommitMessage = true;
 		public boolean allowEmptyCommit = false;
+		/** optional to use if no files are specified and allowEmptyCommit is true */
+		public HgRoot hgRoot = null;
 	}
 
 	/**
