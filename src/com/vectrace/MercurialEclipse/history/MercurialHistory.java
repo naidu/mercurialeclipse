@@ -48,7 +48,6 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -286,7 +285,7 @@ public class MercurialHistory extends FileHistory {
 		}
 		IResource revisionResource;
 		if(isRootHistory()){
-			revisionResource = new HgRootContainer(hgRoot);
+			revisionResource = hgRoot.getResource();
 		} else {
 			revisionResource = resource;
 		}

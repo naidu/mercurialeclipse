@@ -611,7 +611,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// Possible optimization: don't walk the entry set. Call folder.accept() and query statusMap
 		// individually for each.
 		Set<IResource> resources;
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(folder);
+		if(hgRoot == null) {
+			return Collections.emptySet();
+		}
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
 			&& Bits.cardinality(statusBits) == 1;
 		if(isMappedState){
@@ -629,14 +632,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				for (IPath path : children) {
 					// TODO try to use container.getFile (performance?)
 					// we don't know if it is a file or folder...
-					IFile tmp = root.getFileForLocation(path);
+					IResource tmp;
+					if(isDirectory(path)) {
+						tmp = hgRoot.getResource().getFolder(hgRoot.toRelative(path));
+					} else {
+						tmp = hgRoot.getResource().getFile(hgRoot.toRelative(path));
+					}
 					if(tmp != null) {
 						resources.add(tmp);
-					} else {
-						IContainer container = root.getContainerForLocation(path);
-						if(container != null) {
-							resources.add(container);
-						}
 					}
 				}
 			}
@@ -651,19 +654,23 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				Integer status = entry.getValue();
 				if(status != null && Bits.contains(status.intValue(), statusBits)){
 					IPath path = entry.getKey();
+					if(!ResourceUtils.isPrefixOf(parentPath, path)) {
+						continue;
+					}
 					// we don't know if it is a file or folder...
-					IFile tmp = root.getFileForLocation(path);
-					if(tmp != null) {
-						if(ResourceUtils.isPrefixOf(parentPath, path)) {
-							resources.add(tmp);
-						}
+					IPath relative = hgRoot.toRelative(path);
+					if(relative.isEmpty()) {
+						resources.add(hgRoot.getResource());
+						continue;
+					}
+					IResource tmp;
+					if(isDirectory(path)) {
+						tmp = hgRoot.getResource().getFolder(relative);
 					} else {
-						IContainer container = root.getContainerForLocation(path);
-						if(container != null) {
-							if(ResourceUtils.isPrefixOf(parentPath, path)) {
-								resources.add(container);
-							}
-						}
+						tmp = hgRoot.getResource().getFile(relative);
+					}
+					if(tmp != null) {
+						resources.add(tmp);
 					}
 				}
 			}
@@ -773,6 +780,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					return;
 				}
 			}
+
+			knownStatus.add(root.getResource());
 		}
 
 		notifyChanged(changed, false);
@@ -1009,9 +1018,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			MercurialEclipsePlugin.logError("Unexpected error - paths should be canonicalizable", e);
 		}
 
-		// HgRoots are always canonical
-		IPath hgRootPath = new Path(root.getAbsolutePath());
-
 		for (String line : lines) {
 			if(line.length() <= 2){
 				strangeStates.add(line);
@@ -1025,7 +1031,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				continue;
 			}
 			String localName = line.substring(2);
-			IResource member = findMember(pathMap, hgRootPath, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
+			IResource member = findMember(pathMap, root, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
 
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
@@ -1100,8 +1106,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/**
 	 * @return return null if resource is not known or linked and not under the same root
 	 */
-	private static IResource findMember(Map<IProject, IPath> pathMap, final IPath hgRootPath,
+	private static IResource findMember(Map<IProject, IPath> pathMap, final HgRoot hgRoot,
 			final String repoRelPath, final boolean allowForce) {
+		IPath hgRootPath = hgRoot.getIPath();
 		// determine absolute path
 		IPath path = hgRootPath.append(repoRelPath);
 		Set<Entry<IProject, IPath>> set = pathMap.entrySet();
@@ -1120,7 +1127,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return result;
 			}
 		}
-		return null;
+		IPath rel = new Path(repoRelPath);
+		if(allowForce) {
+			return hgRoot.getResource().getFile(rel);
+		}
+		return hgRoot.getResource().findMember(rel);
 	}
 
 	private void setStatus(IPath location, Integer status, boolean isDir) {
@@ -1312,7 +1323,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// project status wanted, no batching needed
 		if(resources.remove(project) && resources.isEmpty()){
 			return;
-		}
+			}
 
 		Set<IResource> changed = new HashSet<IResource>();
 		for(Map.Entry<HgRoot, Set<IResource>> entry : resources.entrySet()){
@@ -1341,8 +1352,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				currentBatch.add(resource);
 			}
 			if(!listFileEnabled) {
-				if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
-					// call hg with batch
+			if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
+				// call hg with batch
 					updateStatusBatched(project, root, currentBatch, changed);
 					currentBatch.clear();
 				}
@@ -1358,36 +1369,36 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private void updateStatusBatched(IProject project, HgRoot root, List<IResource> currentBatch,
 			Set<IResource> changed) throws HgException {
-		synchronized (statusUpdateLock) {
-			for (IResource curr : currentBatch) {
-				boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
-				clearStatusCache(curr);
-				if (unknown && !curr.exists()) {
-					// remember parents of deleted files: we must update their state
-					IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
-					while(directory != null) {
-						changed.add(directory);
-						IPath parentPath = directory.getLocation();
-						if(parentPath != null) {
-							bitMap.remove(parentPath);
-							statusMap.remove(parentPath);
+				synchronized (statusUpdateLock) {
+					for (IResource curr : currentBatch) {
+						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
+						clearStatusCache(curr);
+						if (unknown && !curr.exists()) {
+							// remember parents of deleted files: we must update their state
+							IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
+							while(directory != null) {
+								changed.add(directory);
+								IPath parentPath = directory.getLocation();
+								if(parentPath != null) {
+									bitMap.remove(parentPath);
+									statusMap.remove(parentPath);
+								}
+								directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
+							}
+							// recursive recalculate parents state
+							// TODO better to combine it with parse status below...
+							setStatusToAncestors(curr, CLEAN, true);
 						}
-						directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
 					}
-					// recursive recalculate parents state
-					// TODO better to combine it with parse status below...
-					setStatusToAncestors(curr, CLEAN, true);
+					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
+					String[] lines = NEWLINE.split(output);
+					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+					IPath projectLocation = project.getLocation();
+					if(projectLocation != null) {
+						pathMap.put(project, projectLocation);
+					}
+					changed.addAll(parseStatus(root, pathMap, lines, true));
 				}
-			}
-			String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-			String[] lines = NEWLINE.split(output);
-			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-			IPath projectLocation = project.getLocation();
-			if(projectLocation != null) {
-				pathMap.put(project, projectLocation);
-			}
-			changed.addAll(parseStatus(root, pathMap, lines, true));
-		}
 	}
 
 	public void clearStatusCache(IResource resource) {
