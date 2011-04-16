@@ -14,11 +14,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.FileInfoMatcherDescription;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceFilterDescription;
 import org.eclipse.core.resources.IResourceProxyVisitor;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -221,4 +223,15 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 		throwEx();
 	}
 
+	// 3.6 API
+	public IResourceFilterDescription createFilter(int type,
+			FileInfoMatcherDescription matcherDescription, int updateFlags, IProgressMonitor monitor)
+			throws CoreException {
+		return throwCoreEx();
+	}
+
+	// 3.6 API
+	public IResourceFilterDescription[] getFilters() throws CoreException {
+		return new IResourceFilterDescription[0];
+	}
 }
