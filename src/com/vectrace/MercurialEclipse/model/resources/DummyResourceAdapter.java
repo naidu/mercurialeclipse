@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IPathVariableManager;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourceAttributes;
@@ -188,5 +189,19 @@ public abstract class DummyResourceAdapter implements IResource {
 		return -1;
 	}
 
+	// 3.6 API
+	public IPathVariableManager getPathVariableManager() {
+		return null;
+	}
+
+	// 3.7 API
+	public boolean isVirtual() {
+		return false;
+	}
+
+	// 3.6 API
+	public void setDerived(boolean isDerived, IProgressMonitor monitor) throws CoreException {
+		throwCoreEx();
+	}
 
 }

@@ -10,9 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model.resources;
 
+import java.net.URI;
 import java.util.Map;
 
 import org.eclipse.core.internal.resources.ProjectDescription;
+import org.eclipse.core.resources.IBuildConfiguration;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IProjectNature;
@@ -40,11 +42,6 @@ public class HgProjectAdapter extends HgContainerAdapter implements IProject {
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-	}
-
-	public void build(int kind, String builderName, Map args, IProgressMonitor monitor)
-			throws CoreException {
-		return;
 	}
 
 	public void build(int kind, IProgressMonitor monitor) throws CoreException {
@@ -168,6 +165,56 @@ public class HgProjectAdapter extends HgContainerAdapter implements IProject {
 	public void setDescription(IProjectDescription description, int updateFlags,
 			IProgressMonitor monitor) throws CoreException {
 		throwEx();
+	}
+
+	// Map/*<String, String>*/ is 3.6 API...
+	public void build(int kind, String builderName, Map/*<String, String>*/ args,
+			IProgressMonitor monitor) throws CoreException {
+		throwCoreEx();
+	}
+
+	// 3.6 API
+	public void build(IBuildConfiguration config, int kind, IProgressMonitor monitor)
+			throws CoreException {
+		throwCoreEx();
+	}
+
+	// 3.7 API
+	public IBuildConfiguration getActiveBuildConfig() throws CoreException {
+		return throwCoreEx();
+	}
+
+	// 3.7 API
+	public IBuildConfiguration getBuildConfig(String configName) throws CoreException {
+		return throwCoreEx();
+	}
+
+	// 3.7 API
+	public IBuildConfiguration[] getBuildConfigs() throws CoreException {
+		return throwCoreEx();
+	}
+
+	// 3.7 API
+	public IBuildConfiguration[] getReferencedBuildConfigs(String configName, boolean includeMissing)
+			throws CoreException {
+		return throwCoreEx();
+	}
+
+	// 3.7 API
+	public boolean hasBuildConfig(String configName) throws CoreException {
+		return false;
+	}
+
+	// 3.6 API
+	public void loadSnapshot(int options, URI snapshotLocation, IProgressMonitor monitor)
+			throws CoreException {
+		throwCoreEx();
+	}
+
+	// 3.6 API
+	public void saveSnapshot(int options, URI snapshotLocation, IProgressMonitor monitor)
+			throws CoreException {
+		throwCoreEx();
 	}
 
 }
