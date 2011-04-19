@@ -47,7 +47,8 @@ public class EditChangesetDialog extends CommitDialog {
 		options.showCloseBranch = false;
 		options.showRevert = false;
 		options.showDiff = true;
-		options.filesSelectable = !isDefault;
+		options.filesSelectable = true;
+		options.allowEmptyCommit = true;
 	}
 
 	@Override
@@ -72,8 +73,9 @@ public class EditChangesetDialog extends CommitDialog {
 
 	@Override
 	protected CommitFilesChooser createFilesList(Composite container) {
-		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		return new CommitFilesChooser(root, container, options.filesSelectable, true, true, false);
+		return super.createFilesList(container);
+//		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
+//		return new CommitFilesChooser(root, container, options.filesSelectable, true, true, false);
 	}
 
 	@Override
