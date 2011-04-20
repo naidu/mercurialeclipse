@@ -817,7 +817,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		StringBuilder sb = new StringBuilder();
 		if(workingDir != null){
 			sb.append(workingDir);
-			sb.append(File.separatorChar);
+			sb.append(':');
 		}
 		String exec = cmd.get(0);
 		exec = exec.replace('\\', '/');
