@@ -241,17 +241,21 @@ public class CommitDialog extends TitleAreaDialog {
 	@Override
 	protected Control createContents(Composite parent) {
 		Control control = super.createContents(parent);
-		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
-				.getCurrentTaskComment(
-						inResources == null ? null : inResources.toArray(new IResource[0]));
+		final String initialCommitMessage = getInitialCommitMessage();
 		setCommitMessage(initialCommitMessage);
 
 		if (commitTextBox != null) {
-		commitTextBox.getTextWidget().setFocus();
-		commitTextBox.getTextWidget().selectAll();
+			commitTextBox.getTextWidget().setFocus();
+			commitTextBox.getTextWidget().selectAll();
 		}
 
 		return control;
+	}
+
+	protected String getInitialCommitMessage() {
+		return MylynFacadeFactory.getMylynFacade()
+				.getCurrentTaskComment(
+						inResources == null ? null : inResources.toArray(new IResource[0]));
 	}
 
 	private void validateControls() {
@@ -304,8 +308,8 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		String branch = MercurialTeamProvider.getCurrentBranch(root);
 		String label = Messages.getString("CommitDialog.amendCurrentChangeset1")
-			+ currentChangeset.getChangesetIndex()
-			+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				+ currentChangeset.getChangesetIndex()
+				+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
 		amendCheckbox.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
@@ -424,9 +428,9 @@ public class CommitDialog extends TitleAreaDialog {
 				public void widgetSelected(SelectionEvent e) {
 					if (oldCommitComboBox.getSelectionIndex() != 0) {
 						commitTextDocument
-								.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
+						.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
 						commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox
-								.getSelectionIndex() - 1].length());
+																	.getSelectionIndex() - 1].length());
 					}
 
 				}
@@ -558,13 +562,13 @@ public class CommitDialog extends TitleAreaDialog {
 				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
 				null,
 				Messages.getString("CommitDialog.amendWarning1") 				//$NON-NLS-1$
-					+ Messages.getString("CommitDialog.amendWarning2")			//$NON-NLS-1$
-					+ Messages.getString("CommitDialog.amendWarning3"),			//$NON-NLS-1$
+				+ Messages.getString("CommitDialog.amendWarning2")			//$NON-NLS-1$
+				+ Messages.getString("CommitDialog.amendWarning3"),			//$NON-NLS-1$
 				MessageDialog.CONFIRM,
 				new String[]{
 					IDialogConstants.YES_LABEL,
 					IDialogConstants.CANCEL_LABEL},
-				1 // default index - cancel
+					1 // default index - cancel
 				);
 		dialog.setBlockOnOpen(true); // if false then may show in background
 		return  dialog.open() == 0; // 0 means yes
@@ -598,8 +602,8 @@ public class CommitDialog extends TitleAreaDialog {
 			pm.worked(1);
 			new RefreshRootJob(
 					Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
-							+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
-					.schedule();
+					+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
+			.schedule();
 			return result;
 		}
 
@@ -635,15 +639,15 @@ public class CommitDialog extends TitleAreaDialog {
 		return resourcesToRemove;
 	}
 
-	private void setCommitMessage(String msg) {
+	protected void setCommitMessage(String msg) {
 		if (msg == null) {
 			msg = options.defaultCommitMessage;
 		}
 		commitTextDocument.set(msg);
 
 		if (commitTextBox != null) {
-		commitTextBox.setSelectedRange(0, msg.length());
-	}
+			commitTextBox.setSelectedRange(0, msg.length());
+		}
 	}
 
 	public String getUser() {
