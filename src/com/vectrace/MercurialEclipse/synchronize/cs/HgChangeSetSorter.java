@@ -65,7 +65,21 @@ public class HgChangeSetSorter extends ViewerSorter {
 			return cat1 - cat2;
 		}
 		if(e1 instanceof ChangeSet && e2 instanceof ChangeSet){
-			return csComparator.compare((ChangeSet) e1, (ChangeSet) e2);
+			ChangeSet cs1 = (ChangeSet) e1;
+			ChangeSet cs2 = (ChangeSet) e2;
+			if(cs1 instanceof WorkingChangeSet) {
+				WorkingChangeSet wcs1 = (WorkingChangeSet) cs1;
+				if(wcs1.isDefault()) {
+					return -1;
+				}
+			}
+			if(cs2 instanceof WorkingChangeSet) {
+				WorkingChangeSet wcs2 = (WorkingChangeSet) cs2;
+				if(wcs2.isDefault()) {
+					return 1;
+				}
+			}
+			return csComparator.compare(cs1, cs2);
 		}
 		if(e1 instanceof ChangesetGroup && e2 instanceof ChangesetGroup){
 			ChangesetGroup group1 = (ChangesetGroup) e1;
