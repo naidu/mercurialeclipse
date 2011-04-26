@@ -50,7 +50,7 @@ public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				// TODO get hg root and get the changeset type
-				boolean isDefaultChangeset = false;
+				boolean isDefaultChangeset = changeset.isDefault();
 				HgRoot hgRoot;
 				Set<IFile> files = changeset.getFiles();
 				if(files.isEmpty()){
@@ -65,16 +65,7 @@ public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation
 				if(Window.OK != ok){
 					return;
 				}
-
 				changeset.getGroup().changesetChanged(changeset);
-//				Viewer viewer = configuration.getPage().getViewer();
-//				if(!(viewer instanceof ContentViewer)){
-//					return;
-//				}
-//				CommonViewer commonViewer = (CommonViewer) viewer;
-//				final HgChangeSetContentProvider csProvider = OpenAction.getProvider(commonViewer.getNavigatorContentService());
-
-				// TODO apply changes
 			}
 		});
 		monitor.done();
