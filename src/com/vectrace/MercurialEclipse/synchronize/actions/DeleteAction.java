@@ -6,15 +6,18 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * adam.berkes	implementation
+ * 		adam.berkes	- implementation
+ * 		Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -50,6 +53,15 @@ public class DeleteAction extends SynchronizeModelAction {
 			IDiffElement[] elements) {
 		List<IResource> selectedResources = new ArrayList<IResource>();
 		IStructuredSelection sel = getStructuredSelection();
+		if(sel.size() == 1 && sel.getFirstElement() instanceof WorkingChangeSet) {
+			final WorkingChangeSet changeSet = (WorkingChangeSet) sel.getFirstElement();
+			return new SynchronizeModelOperation(config, elements) {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException,
+						InterruptedException {
+					changeSet.getGroup().delete(changeSet);
+				}
+			};
+		}
 		Object[] objects = sel.toArray();
 		for (Object object : objects) {
 			if (object instanceof WorkingChangeSet){
@@ -70,6 +82,13 @@ public class DeleteAction extends SynchronizeModelAction {
 	protected final boolean updateSelection(IStructuredSelection selection) {
 		boolean updateSelection = super.updateSelection(selection);
 		if(!updateSelection){
+			if(selection.size() == 1 && selection.getFirstElement() instanceof WorkingChangeSet) {
+				WorkingChangeSet changeSet = (WorkingChangeSet) selection.getFirstElement();
+				if(changeSet.isDefault()) {
+					return false;
+				}
+				return true;
+			}
 			Object[] array = selection.toArray();
 			for (Object object : array) {
 				if(!isSupported(object)){
