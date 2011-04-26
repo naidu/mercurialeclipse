@@ -12,7 +12,9 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
@@ -24,17 +26,22 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 	private final IResource[] resources;
+	private final List<WorkingChangeSet> changesets;
 
 	public CommitSynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, IResource[] resources) {
+			IDiffElement[] elements, IResource[] resources, List<WorkingChangeSet> changesets) {
 		super(configuration, elements);
 		this.resources = resources;
+		this.changesets = changesets;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
@@ -44,18 +51,32 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 
 			@Override
 			protected IStatus runSafe(IProgressMonitor moni) {
-				if (resources.length == 0) {
+				if (resources.length == 0 && !hasFiles(changesets)) {
 					MessageDialog.openInformation(getShell(), "Mercurial Commit", //$NON-NLS-1$
 							"Please select at least one file to commit!"); //$NON-NLS-1$
 					return super.runSafe(moni);
 				}
-				try {
-					final CommitHandler commitAction = new CommitHandler();
-					commitAction.run(Arrays.asList(resources));
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
+				if(resources.length == 0) {
+					for (WorkingChangeSet cs : changesets) {
+						if(cs.getFiles().isEmpty()) {
+							continue;
+						}
+						CommitHandler commithandler = new CommitHandler();
+						Options options = new Options();
+						if(!StringUtils.isEmpty(cs.getComment())) {
+							options.defaultCommitMessage = cs.getComment();
+						} else {
+							options.defaultCommitMessage = cs.getName();
+						}
+						commithandler.setOptions(options);
+						List<IResource> files = new ArrayList<IResource>();
+						files.addAll(cs.getFiles());
+						commit(commithandler, files.toArray(new IResource[0]));
+					}
+				} else {
+					final CommitHandler commithandler = new CommitHandler();
+					commit(commithandler, resources);
 				}
-
 				return super.runSafe(moni);
 			}
 
@@ -63,4 +84,20 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 		monitor.done();
 	}
 
+	protected void commit(final CommitHandler commithandler, IResource[] resources) {
+		try {
+			commithandler.run(Arrays.asList(resources));
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
+
+	private static boolean hasFiles(List<WorkingChangeSet> set) {
+		for (WorkingChangeSet cs : set) {
+			if(!cs.getFiles().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

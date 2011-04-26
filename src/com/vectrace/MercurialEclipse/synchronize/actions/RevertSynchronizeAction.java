@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.List;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -18,11 +20,12 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * @author Andrei
  */
-public class RevertSynchronizeAction  extends CommitSynchronizeAction {
+public class RevertSynchronizeAction  extends AbstractResourceSynchronizeAction {
 
 	public RevertSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
@@ -38,7 +41,7 @@ public class RevertSynchronizeAction  extends CommitSynchronizeAction {
 	@Override
 	protected SynchronizeModelOperation createOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements,
-			IResource[] resources) {
+			IResource[] resources, List<WorkingChangeSet> changesets) {
 		return new RevertSynchronizeOperation(configuration, elements, resources);
 	}
 }
