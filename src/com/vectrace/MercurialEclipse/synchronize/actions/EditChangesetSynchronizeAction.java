@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -35,7 +36,8 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
 		setId(ID);
-		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("elcl16/changeset_obj.gif"));
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("elcl16/uncommitted_cs.gif", "ovr/edited_ovr.gif",
+				IDecoration.TOP_RIGHT));
 	}
 
 	@Override

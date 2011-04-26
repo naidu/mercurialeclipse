@@ -11,6 +11,9 @@
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.compare.structuremergeviewer.Differencer;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider;
 import org.eclipse.ui.ISharedImages;
@@ -79,13 +82,30 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			ChangesetGroup group = (ChangesetGroup) element;
 			if(group.getDirection() == Direction.LOCAL){
 				decoratedImage = getImageManager().getImage(base, Differencer.CHANGE);
-		} else {
-			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
-		}
+			} else {
+				decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
+			}
+		} else if(element instanceof WorkingChangeSet) {
+			WorkingChangeSet cs = (WorkingChangeSet) element;
+			if(cs.isDefault()) {
+				decoratedImage = getDefaultChangesetIcon();
+			} else {
+				decoratedImage = getWorkingChangesetIcon();
+			}
 		} else {
 			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
 		return decoratedImage;
+	}
+
+	public static Image getDefaultChangesetIcon() {
+		return MercurialEclipsePlugin.getImage("elcl16/uncommitted_cs.gif", "ovr/pinned_ovr.gif",
+				IDecoration.TOP_RIGHT);
+	}
+
+	public static Image getWorkingChangesetIcon() {
+		return MercurialEclipsePlugin.getImage("elcl16/uncommitted_cs.gif", "ovr/edited_ovr.gif",
+				IDecoration.TOP_RIGHT);
 	}
 
 	@Override
@@ -103,9 +123,6 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				sb.append(" [").append(cset.getAuthor()).append(']');
 				sb.append(" (").append(cset.getAgeDate()).append(')');
 			} else {
-				if (((WorkingChangeSet)cset).isDefault()) {
-					sb.append("* ");
-				}
 				sb.append(cset.getName());
 				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
@@ -172,4 +189,17 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		return comment;
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeLabelProvider#getFont(java.lang.Object)
+	 */
+	@Override
+	public Font getFont(Object element) {
+		if(element instanceof WorkingChangeSet) {
+			WorkingChangeSet cs = (WorkingChangeSet) element;
+			if(cs.isDefault()) {
+				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
+			}
+		}
+		return super.getFont(element);
+	}
 }
