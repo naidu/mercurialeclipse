@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -60,6 +61,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 	private final MercurialStatusCache cache;
 	private final Set<IFile> files;
 	private final UncommittedChangesetManager ucsManager;
+	private static final String DEFAULT_NAME = "New changeset";
 
 	public UncommittedChangesetGroup(UncommittedChangesetManager ucsManager) {
 		super("Uncommitted", Direction.LOCAL);
@@ -69,19 +71,6 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		event = new PropertyChangeEvent(this, "", null, "");
 		files = new HashSet<IFile>();
-	}
-
-	/**
-	 * @param sets non null
-	 */
-	public void setChangesets(Set<WorkingChangeSet> sets) {
-		Set<ChangeSet> changesets = getChangesets();
-		changesets.clear();
-		changesets.addAll(sets);
-		files.clear();
-		for (ChangeSet cs : changesets) {
-			files.addAll(cs.getFiles());
-		}
 	}
 
 	public void addListener(IPropertyChangeListener listener){
@@ -104,10 +93,18 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 	}
 
 	public void clear(){
-		files.clear();
+		Set<IFile> files2 = ucsManager.getDefaultChangeset().getFiles();
+		files.removeAll(files2);
+		ucsManager.getDefaultChangeset().clear();
 		Set<ChangeSet> set = getChangesets();
-		for (ChangeSet changeSet : set) {
-			((WorkingChangeSet) changeSet).clear();
+		for (ChangeSet cs : set) {
+			Iterator<IFile> iterator = cs.getFiles().iterator();
+			while(iterator.hasNext()) {
+				IFile file = iterator.next();
+				if(cache.isClean(file)) {
+					iterator.remove();
+				}
+			}
 		}
 	}
 
@@ -149,6 +146,57 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return added;
 	}
 
+	public boolean add(WorkingChangeSet cs) {
+		if(getChangesets().contains(cs)) {
+			return false;
+		}
+		getChangesets().add(cs);
+		Set<IFile> files2 = cs.getFiles();
+		for (IFile file : files2) {
+			if(!files.add(file)) {
+				cs.remove(file);
+			}
+		}
+		changesetChanged(cs);
+		return true;
+	}
+
+	public boolean delete(WorkingChangeSet cs) {
+		if(cs.isDefault()) {
+			return false;
+		}
+		getChangesets().remove(cs);
+		move(cs.getFiles().toArray(new IFile[0]), ucsManager.getDefaultChangeset());
+		return true;
+	}
+
+	public WorkingChangeSet create(IFile[] filesToAdd) {
+		WorkingChangeSet cs = new WorkingChangeSet(generateNewChangesetName(), this);
+		move(filesToAdd, cs);
+		return cs;
+	}
+
+	/**
+	 * @return
+	 */
+	private String generateNewChangesetName() {
+		Set<ChangeSet> allSets = getChangesets();
+		int count = 0;
+		String name = DEFAULT_NAME;
+		main: for (ChangeSet cs : allSets) {
+			if(cs.getName().equals(name)) {
+				if(count > 10000) {
+					// stop looping, user is crazy anyway
+					return DEFAULT_NAME;
+				}
+				count ++;
+				name = DEFAULT_NAME + " #" + count;
+				continue main;
+			}
+		}
+		return name;
+	}
+
 	public void move(IFile[] files1, WorkingChangeSet to){
 		Set<ChangeSet> changesets = getChangesets();
 		for (ChangeSet cs : changesets) {
@@ -164,7 +212,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		for (IFile file : files1) {
 			to.add(file);
 		}
-		notifyListeners();
+		changesetChanged(to);
 	}
 
 	public void remove(IResource file){

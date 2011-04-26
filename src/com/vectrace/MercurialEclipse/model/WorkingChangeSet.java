@@ -53,6 +53,7 @@ public class WorkingChangeSet extends ChangeSet {
 		projects = new HashSet<IProject>();
 		files = new HashSet<IFile>();
 		setName(name);
+		group.add(this);
 	}
 
 	public void setDefault(boolean isDefault) {

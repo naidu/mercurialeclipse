@@ -10,17 +10,22 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.dnd.DragSourceEvent;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.ui.navigator.CommonDragAdapterAssistant;
 import org.eclipse.ui.part.ResourceTransfer;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -55,12 +60,26 @@ public class HgDragAdapterAssistant extends CommonDragAdapterAssistant {
 
 	private static IFile[] getSelectedResources(IStructuredSelection selection) {
 		List<IResource> resources = ResourceUtils.getResources(selection);
-		List<IFile> files = new ArrayList<IFile>();
+		final Set<IFile> files = new HashSet<IFile>();
 		for (IResource resource : resources) {
 			if(resource instanceof IFile) {
 				// TODO how to deal with folders in a sync tree? We have to
 				// add only those files from the folder which are shown in particular changeset
 				files.add((IFile) resource);
+			} else if(resource instanceof IContainer) {
+				IContainer folder = (IContainer) resource;
+				try {
+					folder.accept(new IResourceVisitor() {
+						public boolean visit(IResource child) throws CoreException {
+							if(child instanceof IFile) {
+								files.add((IFile) child);
+							}
+							return true;
+						}
+					});
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		}
 		return files.toArray(new IFile[0]);

@@ -776,4 +776,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return result;
 		}
 	}
+
+	public UncommittedChangesetManager getUncommittedCsManager() {
+		return uncommittedCsManager;
+	}
 }
