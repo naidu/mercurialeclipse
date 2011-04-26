@@ -159,12 +159,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_CHANGESETS_GROUP,
-				new EditChangesetSynchronizeAction("Set as Default Change Set",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				HG_CHANGESETS_GROUP,
-				new EditChangesetSynchronizeAction("Reassign Changes To",
+				new SetDefaultChangesetSynchronizeAction("Set as Default Change Set",
 						configuration, getVisibleRootsSelectionProvider()));
 	}
 
