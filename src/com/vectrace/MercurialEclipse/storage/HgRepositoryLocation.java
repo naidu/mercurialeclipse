@@ -11,7 +11,7 @@
  *     Bastian Doetsch           - additions for repository view
  *     Subclipse contributors    - fromProperties() initial source
  *     Adam Berkes (Intland)     - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -211,15 +211,25 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 	}
 
 	public Object[] getChildren(Object o) {
+		HgRoot hgRoot = toHgRoot();
+		if(hgRoot != null){
+			// local repo with one single root
+			return new Object[]{ hgRoot };
+		}
+		// remote repo with possible multiple roots on local file system
+		return MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(this).toArray(
+				new IHgRepositoryLocation[0]);
+	}
+
+	public HgRoot toHgRoot() {
 		if(isLocal()){
 			try {
-				return new Object[]{ new HgRoot(getLocation())};
+				return new HgRoot(getLocation());
 			} catch (IOException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
-		return MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(this).toArray(
-				new IHgRepositoryLocation[0]);
+		return null;
 	}
 
 	public String getLocation() {
@@ -268,4 +278,5 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 	public boolean isLocal() {
 		return isLocal;
 	}
+
 }

@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -171,6 +172,12 @@ public class HgRepositoryLocationManager {
 			Set<IHgRepositoryLocation> set = entry.getValue();
 			if (set != null && set.contains(repo)) {
 				projects.addAll(ResourceUtils.getProjects(entry.getKey()));
+			}
+		}
+		if(projects.isEmpty() && repo.isLocal()) {
+			HgRoot hgRoot = repo.toHgRoot();
+			if(hgRoot != null) {
+				projects.addAll(MercurialTeamProvider.getKnownHgProjects(hgRoot));
 			}
 		}
 		return projects;

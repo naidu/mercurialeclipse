@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * 		Andrei Loskutov (Intland)	- implementation
+ * 		Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -59,4 +59,11 @@ public interface IHgRepositoryLocation extends IWorkbenchAdapter, IAdaptable {
 	 * @return true if the repository is on a local file system
 	 */
 	boolean isLocal();
+
+	/**
+	 *
+	 * @return null if the repository is NOT local, otherwise the corresponding hg root on the file
+	 *         system (representing same absolute (but <b>resolved, canonical</b>) file path)
+	 */
+	HgRoot toHgRoot();
 }

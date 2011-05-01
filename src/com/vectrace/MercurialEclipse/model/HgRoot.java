@@ -271,4 +271,8 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		return projectAdapter;
 	}
 
+	public HgRoot toHgRoot() {
+		return this;
+	}
+
 }
