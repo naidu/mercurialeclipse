@@ -7,7 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
- * Andrei Loskutov (Intland) - bugfixes
+ * Andrei Loskutov - bugfixes
  * Adam Berkes (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
@@ -479,14 +479,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			if (!repoLocationProjects.contains(project)) {
 				continue;
 			}
-			monitor.beginTask(getName(), 4);
 			// clear caches in any case, but refresh them only if project exists
-			boolean forceRefresh = project.exists();
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 
 			if(repositoryLocation.isLocal() && hgRoot.equals(repositoryLocation)) {
 				continue;
 			}
+			monitor.beginTask(getName(), 2);
+			boolean forceRefresh = project.exists();
 			String syncBranch = getSyncBranch(hgRoot);
 
 			try {

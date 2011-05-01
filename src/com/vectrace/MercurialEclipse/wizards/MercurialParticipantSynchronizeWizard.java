@@ -7,7 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -207,17 +207,17 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			}
 		}
 		if(performFinish && createdParticipant != null) {
-			startSync();
+			openSyncView(createdParticipant);
 		}
 		return performFinish;
 	}
 
-	private void startSync() {
+	public static void openSyncView(MercurialSynchronizeParticipant participant) {
 		TeamUI.getSynchronizeManager().addSynchronizeParticipants(
-				new ISynchronizeParticipant[] { createdParticipant });
+				new ISynchronizeParticipant[] { participant });
 		// We don't know in which site to show progress because a participant could actually be
 		// shown in multiple sites.
-		createdParticipant.run(null /* no site */);
+		participant.run(null /* no site */);
 	}
 
 	protected MercurialSynchronizeParticipant createParticipant(Properties properties, IProject[] selectedProjects) {
@@ -258,6 +258,11 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			MercurialEclipsePlugin.logError(e);
 		}
 
+		return createParticipant(repo, selectedProjects);
+	}
+
+	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo,
+			IProject[] selectedProjects) {
 		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
 				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
 
