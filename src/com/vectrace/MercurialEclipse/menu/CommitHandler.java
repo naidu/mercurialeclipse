@@ -38,24 +38,24 @@ public class CommitHandler extends MultipleResourcesHandler {
 			commitDialog.setBlockOnOpen(true);
 			result = commitDialog.open();
 		} else {
-		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
-		Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
+			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
+			Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
 
-		for (Entry<HgRoot, List<IResource>> entry : entrySet) {
-			HgRoot hgRoot = entry.getKey();
-			if(MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)){
-				new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
-				return;
+			for (Entry<HgRoot, List<IResource>> entry : entrySet) {
+				HgRoot hgRoot = entry.getKey();
+				if(MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)){
+					new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
+					return;
+				}
+				if(options == null){
+					options = new Options();
+				}
+				CommitDialog commitDialog = new CommitDialog(getShell(), hgRoot, entry.getValue());
+				commitDialog.setOptions(options);
+				commitDialog.setBlockOnOpen(true);
+				result = commitDialog.open();
 			}
-			if(options == null){
-				options = new Options();
-			}
-			CommitDialog commitDialog = new CommitDialog(getShell(), hgRoot, entry.getValue());
-			commitDialog.setOptions(options);
-			commitDialog.setBlockOnOpen(true);
-			result = commitDialog.open();
 		}
-	}
 	}
 
 	/**
