@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -242,7 +242,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		setComment(description);
 		setParents(parents);
 		// remember index:fullchangesetid
-		setName(toString());
+		setName(getIndexAndName());
 	}
 
 	private ChangeSet(int changesetIndex, String changeSet, String user, String date,
@@ -337,11 +337,15 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public String toString() {
-		if (nodeShort != null) {
-			return this.changesetIndex + ":" + this.nodeShort; //$NON-NLS-1$
-		}
-		return this.changesetIndex + ":" + this.changeset; //$NON-NLS-1$
+		return getIndexAndName();
 
+	}
+
+	protected String getIndexAndName() {
+		if (nodeShort != null) {
+			return changesetIndex + ":" + nodeShort; //$NON-NLS-1$
+		}
+		return changesetIndex + ":" + changeset; //$NON-NLS-1$
 	}
 
 	/**
@@ -737,7 +741,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		if (files != null) {
 			return files;
 		}
-		Set<IFile> files1 = new HashSet<IFile>();
+		Set<IFile> files1 = new LinkedHashSet<IFile>();
 		if (changedFiles != null) {
 			for (FileStatus fileStatus : changedFiles) {
 				IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());

@@ -11,7 +11,8 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -50,8 +51,8 @@ public class WorkingChangeSet extends ChangeSet {
 		this.group = group;
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
-		projects = new HashSet<IProject>();
-		files = new HashSet<IFile>();
+		projects = new LinkedHashSet<IProject>();
+		files = new LinkedHashSet<IFile>();
 		setName(name);
 		group.add(this);
 	}
@@ -82,14 +83,18 @@ public class WorkingChangeSet extends ChangeSet {
 		return added;
 	}
 
-	/**
-	 * @param file
-	 */
+	@Override
+	public Set<IFile> getFiles() {
+		return Collections.unmodifiableSet(files);
+	}
+
 	public void removeFile(IFile file) {
 		// TODO check group files
 //		boolean contains = group.contains(file);
 //		boolean added = contains;
-		files.remove(file);
+		synchronized (files){
+			files.remove(file);
+		}
 	}
 
 	@Override

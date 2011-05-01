@@ -15,12 +15,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.window.Window;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
@@ -30,6 +33,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class CommitSynchronizeOperation extends SynchronizeModelOperation {
@@ -71,7 +75,10 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 						commithandler.setOptions(options);
 						List<IResource> files = new ArrayList<IResource>();
 						files.addAll(cs.getFiles());
-						commit(commithandler, files.toArray(new IResource[0]));
+						boolean done = commit(commithandler, files.toArray(new IResource[0]));
+						if(done) {
+							cs.getGroup().committed(cs);
+						}
 					}
 				} else {
 					final CommitHandler commithandler = new CommitHandler();
@@ -84,12 +91,14 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 		monitor.done();
 	}
 
-	protected void commit(final CommitHandler commithandler, IResource[] resources) {
+	protected boolean commit(final CommitHandler commithandler, IResource[] resources) {
 		try {
 			commithandler.run(Arrays.asList(resources));
+			return commithandler.getResult() == Window.OK;
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+		return false;
 	}
 
 	private static boolean hasFiles(List<WorkingChangeSet> set) {

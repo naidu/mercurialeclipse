@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.synchronize.cs;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -161,6 +162,21 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return true;
 	}
 
+	public void committed(WorkingChangeSet cs) {
+		Set<IFile> set = new LinkedHashSet<IFile>(cs.getFiles());
+		for (IFile file : set) {
+			remove(file, cs);
+		}
+		if(cs.isDefault()) {
+			cs.setName(generateNewChangesetName());
+			cs.setComment("");
+			changesetChanged(cs);
+			return;
+		}
+		getChangesets().remove(cs);
+		move(cs.getFiles().toArray(new IFile[0]), ucsManager.getDefaultChangeset());
+	}
+
 	public boolean delete(WorkingChangeSet cs) {
 		if(cs.isDefault()) {
 			return false;
@@ -215,8 +231,11 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		changesetChanged(to);
 	}
 
-	public void remove(IResource file){
-		// simply not supported, as it may be called not only from our code
+	public void remove(IResource file, WorkingChangeSet set){
+		if(file instanceof IFile) {
+			set.removeFile((IFile) file);
+		}
+		files.remove(file);
 	}
 
 	/**
