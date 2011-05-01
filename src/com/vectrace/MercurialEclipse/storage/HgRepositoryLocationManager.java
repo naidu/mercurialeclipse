@@ -18,15 +18,13 @@ package com.vectrace.MercurialEclipse.storage;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -68,15 +66,20 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  * names which may exist for different repositories (like 'hgeclipse' or 'iloveeclipse' for
  * bitbucket or javaforge). See {@link HgCommitMessageManager}.
  * <p>
- *
+ * P.S.
+ * All sets which contain IHgRepositoryLocation are implemented NOT as SortedSet's due the
+ * fact that SortedSet/TreeMap are using compareTo(Object) for 'get' operations.
+ * HgRoot extends File which contains synthetic compareTo(Object). Unfortunately,
+ * this method can NOT be overridden and unfortunately it is used instead of compareTo(File).
+ * So to avoid ClassCastExceptions we can't use SortedSet's for IHgRepositoryLocation's.
  */
 public class HgRepositoryLocationManager {
 
 	private static final String KEY_REPOS_PREFIX = "repo_"; //$NON-NLS-1$
 	private static final String KEY_DEF_REPO_PREFIX = "def_" + KEY_REPOS_PREFIX; //$NON-NLS-1$
 
-	private final Map<HgRoot, SortedSet<IHgRepositoryLocation>> rootRepos;
-	private final SortedSet<IHgRepositoryLocation> repoHistory;
+	private final Map<HgRoot, Set<IHgRepositoryLocation>> rootRepos;
+	private final Set<IHgRepositoryLocation> repoHistory;
 	private final HgRepositoryLocationParserDelegator delegator;
 	private final Object entriesLock;
 
@@ -87,8 +90,8 @@ public class HgRepositoryLocationManager {
 		super();
 		entriesLock = new Object();
 		repositoryListeners = new ArrayList<IRepositoryListener>();
-		rootRepos = new ConcurrentHashMap<HgRoot, SortedSet<IHgRepositoryLocation>>();
-		repoHistory = new TreeSet<IHgRepositoryLocation>();
+		rootRepos = new ConcurrentHashMap<HgRoot, Set<IHgRepositoryLocation>>();
+		repoHistory = new LinkedHashSet<IHgRepositoryLocation>();
 		delegator = new HgRepositoryLocationParserDelegator();
 	}
 
@@ -114,11 +117,11 @@ public class HgRepositoryLocationManager {
 	 * Return an ordered list of all repository locations that are presently
 	 * known.
 	 */
-	public SortedSet<IHgRepositoryLocation> getAllRepoLocations() {
-		SortedSet<IHgRepositoryLocation> allRepos = new TreeSet<IHgRepositoryLocation>();
+	public Set<IHgRepositoryLocation> getAllRepoLocations() {
+		Set<IHgRepositoryLocation> allRepos = new LinkedHashSet<IHgRepositoryLocation>();
 		rootRepos.keySet();
 		synchronized (entriesLock){
-			for (SortedSet<IHgRepositoryLocation> locations : rootRepos.values()) {
+			for (Set<IHgRepositoryLocation> locations : rootRepos.values()) {
 				allRepos.addAll(locations);
 			}
 		}
@@ -130,8 +133,8 @@ public class HgRepositoryLocationManager {
 
 	// TODO ME doesn't update rootRepos map until workbench restart.
 	// Map should be updated after every clone operation
-	public SortedSet<HgRoot> getAllRepoRoots() {
-		SortedSet<HgRoot> allRoots = new TreeSet<HgRoot>();
+	public Set<HgRoot> getAllRepoRoots() {
+		Set<HgRoot> allRoots = new LinkedHashSet<HgRoot>();
 		synchronized (entriesLock) {
 			allRoots.addAll(rootRepos.keySet());
 		}
@@ -139,15 +142,15 @@ public class HgRepositoryLocationManager {
 	}
 
 
-	public SortedSet<IHgRepositoryLocation> getAllRepoLocations(HgRoot hgRoot) {
+	public Set<IHgRepositoryLocation> getAllRepoLocations(HgRoot hgRoot) {
 		if(hgRoot == null){
-			return new TreeSet<IHgRepositoryLocation>();
+			return new LinkedHashSet<IHgRepositoryLocation>();
 		}
-		SortedSet<IHgRepositoryLocation> loc = rootRepos.get(hgRoot);
+		Set<IHgRepositoryLocation> loc = rootRepos.get(hgRoot);
 		if(loc != null) {
-			return Collections.unmodifiableSortedSet(loc);
+			return Collections.unmodifiableSet(loc);
 		}
-		return new TreeSet<IHgRepositoryLocation>();
+		return new LinkedHashSet<IHgRepositoryLocation>();
 	}
 
 	/**
@@ -155,7 +158,7 @@ public class HgRepositoryLocationManager {
 	 * @return a set of projects we know managed at given location, never null
 	 */
 	public Set<IProject> getAllRepoLocationProjects(IHgRepositoryLocation repo) {
-		Set<IProject> projects = new HashSet<IProject>();
+		Set<IProject> projects = new LinkedHashSet<IProject>();
 
 		try {
 			getProjectRepos();
@@ -163,9 +166,9 @@ public class HgRepositoryLocationManager {
 			MercurialEclipsePlugin.logError(e);
 		}
 
-		Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
-		for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
-			SortedSet<IHgRepositoryLocation> set = entry.getValue();
+		Set<Entry<HgRoot, Set<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+		for (Entry<HgRoot, Set<IHgRepositoryLocation>> entry : entrySet) {
+			Set<IHgRepositoryLocation> set = entry.getValue();
 			if (set != null && set.contains(repo)) {
 				projects.addAll(ResourceUtils.getProjects(entry.getKey()));
 			}
@@ -178,7 +181,7 @@ public class HgRepositoryLocationManager {
 	 * @return a set of projects we know managed at given location, never null
 	 */
 	public Set<HgRoot> getAllRepoLocationRoots(IHgRepositoryLocation repo) {
-		Set<HgRoot> roots = new HashSet<HgRoot>();
+		Set<HgRoot> roots = new LinkedHashSet<HgRoot>();
 
 		try {
 			getProjectRepos();
@@ -186,9 +189,9 @@ public class HgRepositoryLocationManager {
 			MercurialEclipsePlugin.logError(e);
 		}
 
-		Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
-		for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
-			SortedSet<IHgRepositoryLocation> set = entry.getValue();
+		Set<Entry<HgRoot, Set<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+		for (Entry<HgRoot, Set<IHgRepositoryLocation>> entry : entrySet) {
+			Set<IHgRepositoryLocation> set = entry.getValue();
 			if(set != null && set.contains(repo)){
 				roots.add(entry.getKey());
 			}
@@ -212,9 +215,9 @@ public class HgRepositoryLocationManager {
 		}
 
 		if (hgRoot != null) {
-			SortedSet<IHgRepositoryLocation> repoSet = rootRepos.get(hgRoot);
+			Set<IHgRepositoryLocation> repoSet = rootRepos.get(hgRoot);
 			if (repoSet == null) {
-				repoSet = new TreeSet<IHgRepositoryLocation>();
+				repoSet = new LinkedHashSet<IHgRepositoryLocation>();
 			}
 			synchronized (entriesLock){
 				repoSet.remove(loc);
@@ -303,14 +306,14 @@ public class HgRepositoryLocationManager {
 				}
 			}
 		}
-		SortedSet<IHgRepositoryLocation> locations = loadRepositories(getRootKey(hgRoot));
+		Set<IHgRepositoryLocation> locations = loadRepositories(getRootKey(hgRoot));
 		for(IHgRepositoryLocation loc : locations) {
 			internalAddRepoLocation(hgRoot, loc);
 		}
-		IHgRepositoryLocation defRepo = getDefaultRepoLocation(hgRoot);
-		if(defRepo == null && !locations.isEmpty()){
-			setDefaultRepository(hgRoot, locations.first());
-		}
+//		IHgRepositoryLocation defRepo = getDefaultRepoLocation(hgRoot);
+//		if(defRepo == null && !locations.isEmpty()){
+//			setDefaultRepository(hgRoot, locations.first());
+//		}
 	}
 
 	private void loadRepositoryHistory() {
@@ -318,9 +321,9 @@ public class HgRepositoryLocationManager {
 		for (IHgRepositoryLocation loc : locations) {
 			boolean usedByProject = false;
 
-			Set<Entry<HgRoot, SortedSet<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
-			for (Entry<HgRoot, SortedSet<IHgRepositoryLocation>> entry : entrySet) {
-				SortedSet<IHgRepositoryLocation> set = entry.getValue();
+			Set<Entry<HgRoot, Set<IHgRepositoryLocation>>> entrySet = rootRepos.entrySet();
+			for (Entry<HgRoot, Set<IHgRepositoryLocation>> entry : entrySet) {
+				Set<IHgRepositoryLocation> set = entry.getValue();
 				if (set != null && set.contains(loc)) {
 					usedByProject = true;
 					break;
@@ -337,8 +340,8 @@ public class HgRepositoryLocationManager {
 		}
 	}
 
-	private SortedSet<IHgRepositoryLocation> loadRepositories(String key) {
-		SortedSet<IHgRepositoryLocation> locations = new TreeSet<IHgRepositoryLocation>();
+	private Set<IHgRepositoryLocation> loadRepositories(String key) {
+		Set<IHgRepositoryLocation> locations = new LinkedHashSet<IHgRepositoryLocation>();
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		String allReposLine = store.getString(key);
 		if(StringUtils.isEmpty(allReposLine)){
@@ -370,7 +373,7 @@ public class HgRepositoryLocationManager {
 	public void setDefaultRepository(HgRoot hgRoot,	IHgRepositoryLocation loc) {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(loc);
-		SortedSet<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
+		Set<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		store.setValue(KEY_DEF_REPO_PREFIX + getRootKey(hgRoot), loc.getLocation());
 		if (locations != null && !locations.contains(loc)) {
@@ -392,7 +395,7 @@ public class HgRepositoryLocationManager {
 		if(StringUtils.isEmpty(defLoc)){
 			return null;
 		}
-		SortedSet<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
+		Set<IHgRepositoryLocation> locations = rootRepos.get(hgRoot);
 		if (locations != null && !locations.isEmpty()) {
 			synchronized (entriesLock){
 				for (IHgRepositoryLocation repo : locations) {
@@ -423,12 +426,12 @@ public class HgRepositoryLocationManager {
 
 		for (HgRoot hgRoot : roots) {
 			String key = getRootKey(hgRoot);
-			SortedSet<IHgRepositoryLocation> repoSet = rootRepos.get(hgRoot);
+			Set<IHgRepositoryLocation> repoSet = rootRepos.get(hgRoot);
 			if(repoSet == null){
 				continue;
 			}
 			synchronized (entriesLock){
-				repoSet = new TreeSet<IHgRepositoryLocation>(repoSet);
+				repoSet = new LinkedHashSet<IHgRepositoryLocation>(repoSet);
 			}
 			saveRepositories(key, repoSet);
 		}
@@ -571,7 +574,7 @@ public class HgRepositoryLocationManager {
 					loc.getLocation(), myUser, myPass);
 
 			synchronized (entriesLock){
-				for (SortedSet<IHgRepositoryLocation> locs : rootRepos.values()) {
+				for (Set<IHgRepositoryLocation> locs : rootRepos.values()) {
 					if (locs.remove(updated)) {
 						locs.add(updated);
 					}
@@ -638,7 +641,7 @@ public class HgRepositoryLocationManager {
 	public void disposeRepository(IHgRepositoryLocation hgRepo) {
 		Assert.isNotNull(hgRepo);
 		for (HgRoot hgRoot : rootRepos.keySet()) {
-			SortedSet<IHgRepositoryLocation> pRepos = rootRepos.get(hgRoot);
+			Set<IHgRepositoryLocation> pRepos = rootRepos.get(hgRoot);
 			if (pRepos != null) {
 				boolean removed = false;
 				synchronized (entriesLock){
