@@ -153,6 +153,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_CHANGESETS_GROUP,
+				new CreateNewChangesetSynchronizeAction("Create New Change Set",
+						configuration, getVisibleRootsSelectionProvider()));
 
 		EditChangesetSynchronizeAction editAction = new EditChangesetSynchronizeAction("Edit Change Set...",
 				configuration, getVisibleRootsSelectionProvider());
