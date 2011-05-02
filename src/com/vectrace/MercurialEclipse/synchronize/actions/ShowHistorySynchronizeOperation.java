@@ -8,7 +8,7 @@
  * Contributors:
  *     Bastian Doetsch				- implementation
  *     Subclipse                    - original impl.o
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov              - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 

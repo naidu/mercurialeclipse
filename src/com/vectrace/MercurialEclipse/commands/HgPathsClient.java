@@ -8,7 +8,7 @@
  * Contributors:
  *     Bastian Doetsch - implementation
  *     Zsolt Koppany (Intland) - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;

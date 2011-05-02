@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -75,7 +75,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final String date;
 	private String tagsStr;
 	private List<FileStatus> changedFiles;
-	private String description;
+	private String comment;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
@@ -186,7 +186,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 
 		public Builder description(String description) {
-			cs.setDescription(description);
+			cs.setComment(description);
 			return this;
 		}
 
@@ -239,10 +239,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		this.user = user;
 		this.date = date;
 		this.hgRoot = root;
-		setDescription(description);
+		setComment(description);
 		setParents(parents);
 		// remember index:fullchangesetid
-		setName(toString());
+		setName(getIndexAndName());
 	}
 
 	private ChangeSet(int changesetIndex, String changeSet, String user, String date,
@@ -328,7 +328,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public String getComment() {
-		return description;
+		return comment;
 	}
 
 	public HgRevision getRevision() {
@@ -337,11 +337,15 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public String toString() {
-		if (nodeShort != null) {
-			return this.changesetIndex + ":" + this.nodeShort; //$NON-NLS-1$
-		}
-		return this.changesetIndex + ":" + this.changeset; //$NON-NLS-1$
+		return getIndexAndName();
 
+	}
+
+	protected String getIndexAndName() {
+		if (nodeShort != null) {
+			return changesetIndex + ":" + nodeShort; //$NON-NLS-1$
+		}
+		return changesetIndex + ":" + changeset; //$NON-NLS-1$
 	}
 
 	/**
@@ -621,11 +625,11 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return firstParentChangedFiles;
 	}
 
-	private void setDescription(String description) {
-		if (description != null) {
-			this.description = description;
+	public void setComment(String comment) {
+		if (comment != null) {
+			this.comment = comment;
 		} else {
-			this.description = "";
+			this.comment = "";
 		}
 	}
 
@@ -737,7 +741,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		if (files != null) {
 			return files;
 		}
-		Set<IFile> files1 = new HashSet<IFile>();
+		Set<IFile> files1 = new LinkedHashSet<IFile>();
 		if (changedFiles != null) {
 			for (FileStatus fileStatus : changedFiles) {
 				IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());

@@ -10,7 +10,7 @@
  *     Bastian Doetsch              - adaptions&additions
  *     Adam Berkes (Intland)        - repository location handling
  *     Zsolt Koppany (Intland)		- bug fixes
- *     Andrei Loskutov (Intland)	- bug fixes
+ *     Andrei Loskutov	- bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 

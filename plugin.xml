@@ -119,12 +119,12 @@
         <definition id="com.vectrace.MercurialEclipse.def.mercurial">
             <iterate ifEmpty="false" operator="or">
                 <or>
-                    <adapt type="org.eclipse.core.resources.IResource">
-                        <test
-                              property="org.eclipse.core.resources.projectPersistentProperty"
-                              args="org.eclipse.team.core.repository,com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-                        </test>
-                    </adapt>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <test
+                          property="org.eclipse.core.resources.projectPersistentProperty"
+                          args="org.eclipse.team.core.repository,com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+                    </test>
+                </adapt>
                     <instanceof
                           value="com.vectrace.MercurialEclipse.model.IHgResource">
                     </instanceof>
@@ -135,14 +135,14 @@
         <!-- Must be file -->
         <definition id="com.vectrace.MercurialEclipse.def.file">
             <iterate ifEmpty="false">
-                 <adapt type="org.eclipse.core.resources.IFile"/>
+                    <adapt type="org.eclipse.core.resources.IFile"/>
             </iterate>
         </definition>
 
         <!-- Must be project -->
         <definition id="com.vectrace.MercurialEclipse.def.project">
             <iterate ifEmpty="false">
-                 <adapt type="org.eclipse.core.resources.IProject"/>
+                    <adapt type="org.eclipse.core.resources.IProject"/>
             </iterate>
         </definition>
 
@@ -161,12 +161,12 @@
         <!-- project is NOT hg root -->
         <definition id="com.vectrace.MercurialEclipse.def.notRoot">
             <iterate ifEmpty="false">
-                  <adapt type="org.eclipse.core.resources.IProject">
-                       <test
+                    <adapt type="org.eclipse.core.resources.IProject">
+                           <test
                               property="com.vectrace.MercurialEclipse.propertyTester.root"
                               args="false">
-                       </test>                    
-                   </adapt>
+                        </test>                    
+                    </adapt>
             </iterate>
         </definition>
 
@@ -1486,6 +1486,12 @@
        </factory>
        
       <factory
+             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup"
+             class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
+          <adapter type="org.eclipse.ui.views.properties.IPropertySource" />
+       </factory>       
+       
+      <factory
              adaptableType="org.eclipse.team.internal.ui.history.GenericHistoryView"
              class="com.vectrace.MercurialEclipse.properties.PropertyPageAdapterFactory">
           <adapter type="org.eclipse.ui.views.properties.IPropertySheetPage" />
@@ -1833,6 +1839,16 @@
          <actionProvider
                class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider"
                id="com.vectrace.MercurialEclipse.changeSetActions"/>
+         <dropAssistant
+               class="com.vectrace.MercurialEclipse.synchronize.HgDropAdapterAssistant"
+               id="MercurialEclipse.syncViewDropAssistant">
+            <possibleDropTargets>
+               <or>           
+                   <instanceof value="com.vectrace.MercurialEclipse.model.WorkingChangeSet" />
+                   <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup" />
+               </or>
+            </possibleDropTargets>
+         </dropAssistant>
        </navigatorContent>
    </extension>   
    
@@ -1908,5 +1924,12 @@
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
             label="Mercurial Search Query Provider">
       </textSearchQueryProvider>
+   </extension>
+   <extension
+         point="org.eclipse.ui.navigator.viewer">
+      <dragAssistant
+            class="com.vectrace.MercurialEclipse.synchronize.HgDragAdapterAssistant"
+            viewerId="org.eclipse.team.sync.views.SynchronizeView">
+      </dragAssistant>
    </extension>   
 </plugin>

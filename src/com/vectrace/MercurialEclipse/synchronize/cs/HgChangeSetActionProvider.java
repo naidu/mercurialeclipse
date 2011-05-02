@@ -120,13 +120,18 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 		if(element instanceof ChangeSet && !(element instanceof WorkingChangeSet)){
 			return;
 		}
-		IResource resource = ResourceUtils.getResource(element);
-		if ((!(resource instanceof IFile) && !(resource instanceof IFolder)) || !resource.exists()) {
-			return;
+		Object selected;
+		if(element instanceof WorkingChangeSet && !((WorkingChangeSet)element).isDefault()) {
+			selected = element;
+		} else {
+			IResource resource = ResourceUtils.getResource(element);
+			if ((!(resource instanceof IFile) && !(resource instanceof IFolder)) || !resource.exists()) {
+				return;
+			}
+			selected = resource;
 		}
-
 		if (deleteAction != null) {
-			deleteAction.selectionChanged(new StructuredSelection(resource));
+			deleteAction.selectionChanged(new StructuredSelection(selected));
 			menu.appendToGroup(groupId, deleteAction);
 		}
 	}
