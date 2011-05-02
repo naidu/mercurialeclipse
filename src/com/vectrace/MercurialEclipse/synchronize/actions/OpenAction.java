@@ -80,6 +80,9 @@ public class OpenAction extends Action {
 		}
 		Object object = selection2.getFirstElement();
 		if(!(object instanceof FileFromChangeSet)){
+			if(object instanceof WorkingChangeSet) {
+				tryToEditChangeset(selection2);
+			}
 			return;
 		}
 		FileFromChangeSet fcs = (FileFromChangeSet) object;
@@ -180,6 +183,17 @@ public class OpenAction extends Action {
 
 		};
 		job.schedule();
+	}
+
+	protected void tryToEditChangeset(IStructuredSelection selection) {
+		Object property = configuration.getProperty(MercurialSynchronizePageActionGroup.EDIT_CHANGESET_ACTION);
+		if(property instanceof EditChangesetSynchronizeAction) {
+			EditChangesetSynchronizeAction editAction = (EditChangesetSynchronizeAction) property;
+			editAction.selectionChanged(selection);
+			if(editAction.isEnabled()) {
+				editAction.run();
+			}
+		}
 	}
 
 	public static HgChangeSetContentProvider getProvider(INavigatorContentService service) {

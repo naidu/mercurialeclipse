@@ -53,6 +53,8 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
+
+	static final String EDIT_CHANGESET_ACTION = "hg.editChangeset";
 	private static final String HG_COMMIT_GROUP = "hg.commit";
 	private static final String HG_PUSH_PULL_GROUP = "hg.push.pull";
 
@@ -152,10 +154,14 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
 
+		EditChangesetSynchronizeAction editAction = new EditChangesetSynchronizeAction("Edit Change Set...",
+				configuration, getVisibleRootsSelectionProvider());
+
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_CHANGESETS_GROUP,
-				new EditChangesetSynchronizeAction("Edit Change Set...",
-						configuration, getVisibleRootsSelectionProvider()));
+				editAction);
+		// remember action to allow OpenAction re-use it on double click
+		configuration.setProperty(EDIT_CHANGESET_ACTION, editAction);
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_CHANGESETS_GROUP,
