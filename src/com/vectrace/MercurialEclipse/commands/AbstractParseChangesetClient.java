@@ -191,7 +191,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 
-		if (input == null || input.length() == 0) {
+		if (input == null || input.length() == 0 || hgRoot == null) {
 			return fileRevisions;
 		}
 		ChangesetContentHandler xmlHandler = parseInput(path, true, input, direction, repository,

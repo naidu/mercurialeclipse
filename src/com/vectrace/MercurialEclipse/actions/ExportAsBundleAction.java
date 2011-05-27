@@ -55,6 +55,10 @@ public class ExportAsBundleAction extends Action {
 				monitor.subTask(Messages
 						.getString("ExportAsBundleAction.determiningRepositoryRoot")); //$NON-NLS-1$
 				HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
+				if(root == null) {
+					MercurialEclipsePlugin.logError(new IllegalStateException("Hg root not found for: " + rev));
+					return Status.CANCEL_STATUS;
+				}
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ExportAsBundleAction.callingMercurial")); //$NON-NLS-1$
 

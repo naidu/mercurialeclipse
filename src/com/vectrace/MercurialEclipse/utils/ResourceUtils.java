@@ -602,6 +602,9 @@ public final class ResourceUtils {
 	 * @return given object as resource, may return null
 	 */
 	public static IResource getResource(Object o) {
+		if(o == null) {
+			return null;
+		}
 		if (o instanceof IResource) {
 			return (IResource) o;
 		}

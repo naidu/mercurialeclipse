@@ -375,6 +375,9 @@ public final class LocalChangesetCache extends AbstractCache {
 	 */
 	public ChangeSet getChangesetByRootId(IResource res) throws HgException {
 		HgRoot root = MercurialTeamProvider.getHgRoot(res);
+		if(root == null) {
+			return null;
+		}
 		return getChangesetForRoot(root);
 	}
 
@@ -449,6 +452,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			return;
 		}
 		HgRoot root = MercurialTeamProvider.getHgRoot(res);
+		Assert.isNotNull(root);
 
 		Map<IPath, Set<ChangeSet>> revisions;
 		// now we may change cache state, so lock

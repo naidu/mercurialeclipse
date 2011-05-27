@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.menu;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
@@ -30,6 +31,10 @@ public class ExportPatchHandler extends MultipleResourcesHandler {
 	public void openWizard(List<IResource> resources, Shell shell)
 			throws Exception {
 		HgRoot root = ensureSameRoot(resources);
+		if(root == null) {
+			MessageDialog.openError(getShell(), "Export patch", "No hg root found");
+			return;
+		}
 		ExportPatchWizard wizard = new ExportPatchWizard(resources, root);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.setBlockOnOpen(true);

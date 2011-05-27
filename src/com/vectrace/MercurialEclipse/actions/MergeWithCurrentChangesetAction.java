@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.actions;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -58,6 +59,10 @@ public class MergeWithCurrentChangesetAction extends Action {
 							+ Messages.getString("MergeWithCurrentChangesetAction.3"), 3); //$NON-NLS-1$
 					monitor.subTask(Messages.getString("MergeWithCurrentChangesetAction.4")); //$NON-NLS-1$
 					final HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
+					if(root == null) {
+						MercurialEclipsePlugin.logError(new IllegalStateException("Hg root not found for: " + rev));
+						return Status.CANCEL_STATUS;
+					}
 					monitor.worked(1);
 					monitor.subTask(Messages.getString("MergeWithCurrentChangesetAction.5")); //$NON-NLS-1$
 					new SafeUiJob("Merging...") { //$NON-NLS-1$

@@ -806,7 +806,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// find all the subrepos that are inside the resource
 		Set<HgRoot> repos;
 		HgRoot root = MercurialTeamProvider.getHgRoot(res);
-		if(enableSubrepos){
+		if(enableSubrepos && root != null){
 			// find the reposoritory in which the resource is
 			repos = HgSubreposClient.findSubrepositoriesRecursivelyWithin(root, res);
 		} else {

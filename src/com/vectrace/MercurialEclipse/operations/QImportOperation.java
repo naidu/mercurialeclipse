@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 
@@ -65,7 +66,12 @@ public class QImportOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.call")); //$NON-NLS-1$
-			HgQImportClient.qimport(MercurialTeamProvider.getHgRoot(resource), force, git, existing, changesets,
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+			if(hgRoot == null) {
+				throw new InvocationTargetException(new IllegalStateException(
+						"No hg root found for: " + resource));
+			}
+			HgQImportClient.qimport(hgRoot, force, git, existing, changesets,
 					patchFile);
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$
@@ -80,8 +86,9 @@ public class QImportOperation extends HgOperation {
 			monitor.worked(1);
 		} catch (HgException e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
+		} finally {
+			monitor.done();
 		}
-		monitor.done();
 	}
 
 	@Override

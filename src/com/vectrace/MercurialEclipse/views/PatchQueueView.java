@@ -345,6 +345,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				if (newResource != null && newResource.isAccessible()
 						&& MercurialTeamProvider.isHgTeamProviderFor(newResource)) {
 					HgRoot newRoot = MercurialTeamProvider.getHgRoot(newResource);
+					if(newRoot == null) {
+						return;
+					}
 					if (!newRoot.equals(currentHgRoot)) {
 						currentHgRoot = newRoot;
 						resource = newResource;
