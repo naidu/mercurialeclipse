@@ -25,6 +25,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.IUncommittedChangesetManager;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -41,6 +42,8 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	private static final String KEY_CS_DEFAULT = "changesetIsDefault/";
 	private static final String KEY_CS_LIST = "changesets";
 
+	private boolean loadingFromPrefs;
+
 	private WorkingChangeSet defaultChangeset;
 	private IProject[] projects;
 
@@ -51,6 +54,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	public UncommittedChangesetManager(HgChangeSetContentProvider provider) {
 		this.provider = provider;
 		group = new UncommittedChangesetGroup(this);
+//		defaultChangeset = createDefaultChangeset();
 	}
 
 	protected WorkingChangeSet createDefaultChangeset() {
@@ -67,12 +71,6 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	private void loadSavedChangesets(){
 		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
 		loadfromPreferences(sets);
-		WorkingChangeSet defCs = getDefault(sets);
-		if(defCs == null) {
-			defCs = createDefaultChangeset();
-			sets.add(defCs);
-		}
-		defaultChangeset = defCs;
 		assignRemainingFiles();
 	}
 
@@ -84,6 +82,9 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	}
 
 	public void storeChangesets(){
+		if(loadingFromPrefs) {
+			return;
+		}
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		Set<ChangeSet> changesets = group.getChangesets();
 		Map<IProject, Map<IFile, String>> projectMap = new HashMap<IProject, Map<IFile,String>>();
@@ -118,63 +119,63 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	}
 
 	public WorkingChangeSet getDefaultChangeset(){
+		if(defaultChangeset == null) {
+			defaultChangeset = createDefaultChangeset();
+		}
 		return defaultChangeset;
 	}
 
 	private void loadfromPreferences(Set<WorkingChangeSet> sets) {
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		String changesets = store.getString(KEY_CS_LIST);
-		if(!StringUtils.isEmpty(changesets)){
-			String[] names = changesets.split(MAPPINGS_SEPARATOR);
-			for (String name : names) {
-				if(!StringUtils.isEmpty(name)) {
-					WorkingChangeSet changeset = new WorkingChangeSet(name, group);
-					sets.add(changeset);
-				}
-			}
-		}
-		for (WorkingChangeSet changeSet : sets) {
-			String comment = store.getString(KEY_CS_COMMENT_PREFIX + changeSet.getName());
-			changeSet.setComment(comment);
+		loadingFromPrefs = true;
+		try {
+			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+			String changesets = store.getString(KEY_CS_LIST);
 			String defName = store.getString(KEY_CS_DEFAULT);
-			if(changeSet.getName().equals(defName)) {
-				changeSet.setDefault(true);
-			}
-		}
-		if(projects == null){
-			return;
-		}
-		for (IProject project : projects) {
-			String filesStr = store.getString(KEY_FILES_PER_PROJECT_PREFIX + project.getName());
-			if(StringUtils.isEmpty(filesStr)){
-				continue;
-			}
-			Map<IFile, String> fileToChangeset = decode(filesStr, project);
-			Set<Entry<IFile,String>> entrySet = fileToChangeset.entrySet();
-			for (Entry<IFile, String> entry : entrySet) {
-				String name = entry.getValue();
-				WorkingChangeSet changeset = getChangeset(name, sets);
-				if(changeset == null){
-					changeset = new WorkingChangeSet(name, group);
-					sets.add(changeset);
+			if(!StringUtils.isEmpty(changesets)){
+				String[] names = changesets.split(MAPPINGS_SEPARATOR);
+				for (String name : names) {
+					if(!StringUtils.isEmpty(name)) {
+						WorkingChangeSet changeset = new WorkingChangeSet(name, group);
+						sets.add(changeset);
+					}
 				}
-				changeset.add(entry.getKey());
 			}
+			for (WorkingChangeSet changeSet : sets) {
+				String comment = store.getString(KEY_CS_COMMENT_PREFIX + changeSet.getName());
+				changeSet.setComment(comment);
+				if(changeSet.getName().equals(defName)) {
+					makeDefault(changeSet);
+				}
+			}
+			if(projects == null){
+				return;
+			}
+			for (IProject project : projects) {
+				String filesStr = store.getString(KEY_FILES_PER_PROJECT_PREFIX + project.getName());
+				if(StringUtils.isEmpty(filesStr)){
+					continue;
+				}
+				Map<IFile, String> fileToChangeset = decode(filesStr, project);
+				Set<Entry<IFile,String>> entrySet = fileToChangeset.entrySet();
+				for (Entry<IFile, String> entry : entrySet) {
+					String name = entry.getValue();
+					WorkingChangeSet changeset = getChangeset(name, sets);
+					if(changeset == null){
+						continue;
+						//					changeset = new WorkingChangeSet(name, group);
+						//					sets.add(changeset);
+					}
+					changeset.add(entry.getKey());
+				}
+			}
+		} finally {
+			loadingFromPrefs = false;
 		}
 	}
 
 	private static WorkingChangeSet getChangeset(String name, Set<WorkingChangeSet> sets){
 		for (WorkingChangeSet set : sets) {
 			if(name.equals(set.getName())){
-				return set;
-			}
-		}
-		return null;
-	}
-
-	private static WorkingChangeSet getDefault(Set<WorkingChangeSet> sets){
-		for (WorkingChangeSet set : sets) {
-			if(set.isDefault()){
 				return set;
 			}
 		}
@@ -223,6 +224,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		if(projects != null){
 			assignRemainingFiles();
 		}
+		MercurialStatusCache.getInstance().addObserver(group);
 	}
 
 	public IProject[] getProjects() {
@@ -233,7 +235,9 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		if(set == null || !group.getChangesets().contains(set)){
 			return;
 		}
-		defaultChangeset.setDefault(false);
+		if(defaultChangeset != null) {
+			defaultChangeset.setDefault(false);
+		}
 		defaultChangeset = set;
 		defaultChangeset.setDefault(true);
 		group.changesetChanged(set);

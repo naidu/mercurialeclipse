@@ -68,7 +68,6 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		super("Uncommitted", Direction.LOCAL);
 		this.ucsManager = ucsManager;
 		cache = MercurialStatusCache.getInstance();
-		cache.addObserver(this);
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		event = new PropertyChangeEvent(this, "", null, "");
 		files = new HashSet<IFile>();
