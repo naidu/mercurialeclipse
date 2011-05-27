@@ -43,6 +43,9 @@ public class SyncHandler extends MultipleResourcesHandler {
 		if(showLocalChanges || !shouldShowWizard(wizard)) {
 			if(showLocalChanges) {
 				HgRoot root = MercurialTeamProvider.getHgRoot(resources.get(0));
+				if(root == null) {
+					return;
+				}
 				IProject[] projects = MercurialTeamProvider.getKnownHgProjects(root).toArray(new IProject[0]);
 				MercurialSynchronizeParticipant participant = MercurialParticipantSynchronizeWizard.createParticipant(root, projects);
 				MercurialParticipantSynchronizeWizard.openSyncView(participant);

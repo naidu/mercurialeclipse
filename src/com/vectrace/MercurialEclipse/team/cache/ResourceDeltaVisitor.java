@@ -84,6 +84,9 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		} else {
 			currentRoot = MercurialTeamProvider.getHgRoot(project);
 		}
+		if(currentRoot == null) {
+			return true;
+		}
 
 		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){
 			addResource(changed, project, currentRoot, project);

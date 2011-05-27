@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch  implementation
- *     Andrei Loskutov (Intland) - bugfixes
+ *     Andrei Loskutov - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
@@ -233,7 +234,7 @@ public final class CompareUtils {
 		return rev == null ? null : new RevisionNode(rev);
 	}
 
-	private static ResourceNode findCommonAncestorIfExists(IFile file, ResourceNode l, ResourceNode r) {
+	private static ResourceNode findCommonAncestorIfExists(final IFile file, ResourceNode l, ResourceNode r) {
 		if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
 			return null;
 		}
@@ -242,10 +243,11 @@ public final class CompareUtils {
 
 		try {
 			int commonAncestor = -1;
-			if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+			if(hgRoot != null && lNode.getChangeSet() != null && rNode.getChangeSet() != null){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
+							hgRoot,
 							lNode.getChangeSet(), rNode.getChangeSet());
 				} catch (HgException e) {
 					// continue
@@ -255,23 +257,20 @@ public final class CompareUtils {
 			int lId = lNode.getRevision();
 			int rId = rNode.getRevision();
 
-			if(commonAncestor == -1){
+			if(hgRoot != null && commonAncestor == -1){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
+							hgRoot,
 							Integer.toString(lId), Integer.toString(rId));
 				} catch (HgException e) {
 					// continue: no changeset in the local repo, se issue #10616
 				}
 			}
 
-			if (commonAncestor == lId) {
+			if (commonAncestor == lId || commonAncestor == rId || hgRoot == null) {
 				return null;
 			}
-			if (commonAncestor == rId) {
-				return null;
-			}
-			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(file));
+			ChangeSet tip = HgLogClient.getTip(hgRoot);
 			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
 			if(!localKnown){
 				// no common ancestor
