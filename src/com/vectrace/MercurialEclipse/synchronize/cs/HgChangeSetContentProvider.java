@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,7 +25,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -55,7 +55,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.HgDragAdapterAssistant;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -83,7 +85,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
-						treeViewer.refresh(uncommittedSet, true);
+						treeViewer.refresh(uncommitted, true);
+						for (ChangeSet cs : uncommitted.getChangesets()) {
+							treeViewer.refresh(cs, true);
+						}
 						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());
@@ -100,7 +105,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
 						treeViewer.getTree().setRedraw(false);
-						treeViewer.refresh(uncommittedSet, true);
+						treeViewer.refresh(uncommitted, true);
 						treeViewer.refresh(outgoing, true);
 						treeViewer.refresh(incoming, true);
 						treeViewer.getTree().setRedraw(true);
@@ -169,7 +174,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private HgChangesetsCollector csCollector;
 	private boolean collectorInitialized;
-	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
 	private final IPropertyChangeListener uncommittedSetListener;
 	private final IPropertyChangeListener preferenceListener;
@@ -177,16 +181,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	private final ChangesetGroup outgoing;
 	private WorkbenchContentProvider provider;
 
+	private final UncommittedChangesetManager uncommittedCsManager;
+
+	private final UncommittedChangesetGroup uncommitted;
+
 	public HgChangeSetContentProvider() {
 		super();
-		uncommittedSet = new WorkingChangeSet("Uncommitted");
 		incoming = new ChangesetGroup("Incoming", Direction.INCOMING);
 		outgoing = new ChangesetGroup("Outgoing", Direction.OUTGOING);
 		collectorListener = new CollectorListener();
 		uncommittedSetListener = new UcommittedSetListener();
 		preferenceListener = new PreferenceListener();
-
 		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(preferenceListener);
+		uncommittedCsManager = new UncommittedChangesetManager(this);
+		uncommitted = uncommittedCsManager.getUncommittedGroup();
 	}
 
 	@Override
@@ -241,6 +249,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				return group.getChangesets().toArray();
 			}
 			if(isIncomingVisible() && direction == Direction.INCOMING){
+				return group.getChangesets().toArray();
+			}
+			if(direction == Direction.LOCAL){
 				return group.getChangesets().toArray();
 			}
 		} else if (parent instanceof ChangeSet) {
@@ -370,7 +381,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 		}
 		addAllUnassignedToUnassignedSet();
-		return new Object[]{uncommittedSet, outgoing, incoming};
+		return new Object[]{uncommitted, outgoing, incoming};
 	}
 
 	private synchronized void initCollector() {
@@ -381,7 +392,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private void addAllUnassignedToUnassignedSet() {
-		uncommittedSet.update(STATUS_CACHE, null);
+		uncommitted.update(STATUS_CACHE, null);
 	}
 
 
@@ -452,16 +463,16 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return true;
 	}
 
-	private boolean isOutgoing(Direction direction) {
+	private static boolean isOutgoing(Direction direction) {
 		return direction == Direction.OUTGOING || direction == Direction.LOCAL;
 	}
 
-	private boolean hasConflicts(ChangeSet cs) {
+	private static boolean hasConflicts(ChangeSet cs) {
 		// Conflict mode not meaningful in a DVCS
 		return false;
 	}
 
-	private boolean containsConflicts(ChangeSet cs) {
+	private static boolean containsConflicts(ChangeSet cs) {
 		// Conflict mode not meaningful in a DVCS
 		return false;
 	}
@@ -491,7 +502,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			sorter.setConfiguration(getConfiguration());
 		}
 		MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) getConfiguration().getParticipant();
-		uncommittedSet.setContext((HgSubscriberMergeContext) participant.getContext());
+		uncommitted.setContext((HgSubscriberMergeContext) participant.getContext());
+		getExtensionSite().getService().getDnDService().bindDragAssistant(new HgDragAdapterAssistant());
 	}
 
 	private HgChangeSetSorter getSorter() {
@@ -513,9 +525,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector = ((HgChangeSetCapability) csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			csCollector.addListener(collectorListener);
 			IProject[] projects = csCollector.getSubscriber().getProjects();
-			uncommittedSet.setRoots(projects);
-			uncommittedSet.addListener(uncommittedSetListener);
-			STATUS_CACHE.addObserver(uncommittedSet);
+			uncommittedCsManager.setProjects(projects);
+			uncommitted.addListener(uncommittedSetListener);
+			STATUS_CACHE.addObserver(uncommitted);
 		}
 	}
 
@@ -526,9 +538,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector.dispose();
 		}
 		MercurialEclipsePlugin.getDefault().getPreferenceStore().removePropertyChangeListener(preferenceListener);
-		uncommittedSet.removeListener(uncommittedSetListener);
-		STATUS_CACHE.deleteObserver(uncommittedSet);
-		uncommittedSet.dispose();
+		uncommitted.removeListener(uncommittedSetListener);
+		STATUS_CACHE.deleteObserver(uncommitted);
+		uncommitted.dispose();
 		outgoing.getChangesets().clear();
 		incoming.getChangesets().clear();
 		super.dispose();
@@ -640,85 +652,15 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			builder.append(outgoing);
 			builder.append(", ");
 		}
-		if (uncommittedSet != null) {
-			builder.append("uncommittedSet=");
-			builder.append(uncommittedSet);
+		if (uncommitted != null) {
+			builder.append("uncommitted=");
+			builder.append(uncommitted);
 		}
 		builder.append("]");
 		return builder.toString();
 	}
 
-	// inner types
-
-	public abstract static class PathFromChangeSet {
-
-		private final Object parent;
-
-		private final String display;
-
-		protected IResource resource;
-
-		/**
-		 * Constructor for tree mode
-		 *
-		 * @param seg
-		 *            The leading segment
-		 */
-		protected PathFromChangeSet(Object prnt, String seg) {
-			parent = prnt;
-			display = seg;
-		}
-
-		@Override
-		public String toString() {
-			if(isProjectClosed()) {
-				return display + " (closed!)";
-			}
-			return display;
-		}
-
-		public boolean isProjectClosed() {
-			return resource!= null && !resource.getProject().isOpen();
-		}
-
-		/**
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(Object other) {
-			if (other instanceof PathFromChangeSet) {
-				PathFromChangeSet o = (PathFromChangeSet)other;
-
-				if (o.display.equals(display) && o.parent.equals(parent))
-				{
-					if (o.resource == null) {
-						return resource == null;
-					}
-					return o.resource.equals(resource);
-				}
-			}
-			return false;
-		}
-
-		/**
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			return 73 ^ display.hashCode() + parent.hashCode();
-		}
-
-		public final Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
-			if (IResource.class.equals(adapter)) {
-				return resource;
-			}
-			return null;
-		}
-
-		public abstract Object[] getChildren();
-	}
-
-	private class CompressedTreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+	private class CompressedTreePathFromChangeSet extends PathFromChangeSet {
 
 		protected final List<FileFromChangeSet> data;
 
@@ -736,9 +678,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public Object[] getChildren() {
 			return data.toArray(new FileFromChangeSet[data.size()]);
 		}
+
+		@Override
+		public Set<FileFromChangeSet> getFiles() {
+			return new LinkedHashSet<FileFromChangeSet>(data);
+		}
 	}
 
-	private class TreePathFromChangeSet extends PathFromChangeSet implements IAdaptable {
+	private class TreePathFromChangeSet extends PathFromChangeSet {
 
 		protected final List<Object> data;
 
@@ -773,5 +720,20 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 			return result;
 		}
+
+		@Override
+		public Set<FileFromChangeSet> getFiles() {
+			Set<FileFromChangeSet> files = new LinkedHashSet<FileFromChangeSet>();
+			for (Object o : data) {
+				if(o instanceof FileFromChangeSet) {
+					files.add((FileFromChangeSet) o);
+				}
+			}
+			return files;
+		}
+	}
+
+	public UncommittedChangesetManager getUncommittedCsManager() {
+		return uncommittedCsManager;
 	}
 }

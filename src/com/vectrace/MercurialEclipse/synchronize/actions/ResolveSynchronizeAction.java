@@ -7,23 +7,26 @@
  *
  * Contributors:
  * John Peberdy	implementation
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
+
+import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * Handles resolve from the synchronize view
  */
-public class ResolveSynchronizeAction extends CommitSynchronizeAction {
+public class ResolveSynchronizeAction extends AbstractResourceSynchronizeAction {
 
 	public ResolveSynchronizeAction(String text, ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
@@ -31,14 +34,9 @@ public class ResolveSynchronizeAction extends CommitSynchronizeAction {
 	}
 
 	@Override
-	protected ImageDescriptor createImageDescriptor() {
-		return null;
-	}
-
-	@Override
 	protected SynchronizeModelOperation createOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements,
-			IResource[] resources) {
+			IResource[] resources, List<WorkingChangeSet> changesets) {
 
 		return new ResolveSynchronizeOperation(configuration, elements, resources);
 	}

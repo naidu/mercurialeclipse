@@ -54,13 +54,13 @@ public abstract class RootHandler extends AbstractHandler {
 					IAdaptable adaptable = (IAdaptable) listEntry;
 					selection = MercurialEclipsePlugin.getAdapter(adaptable, HgRoot.class);
 				}
-				if(selection == null){
+					if(selection == null){
 					IResource resource = ResourceUtils.getResource(listEntry);
-					if(resource != null){
-						selection = MercurialTeamProvider.getHgRoot(resource);
+						if(resource != null){
+							selection = MercurialTeamProvider.getHgRoot(resource);
+						}
 					}
 				}
-			}
 			if (selection == null) {
 				IFile file = ResourceUtils.getActiveResourceFromEditor();
 				if(file != null){

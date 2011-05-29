@@ -16,6 +16,7 @@
  *     Philip Graf               - proxy support
  *     Bastian Doetsch           - bug fixes and implementation
  *******************************************************************************/
+
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
@@ -40,6 +41,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.DecorationOverlayIcon;
+import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
@@ -204,7 +207,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				System.out.println(HgFeatures.printSummary());
 			}
 		}
-	}
+		}
 
 	/**
 	 * Plugin depends on native mercurial installation, which has to be checked at plugin startup.
@@ -248,15 +251,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") //$NON-NLS-1$
 					+ version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$
 					+ HgFeatures.getLowestWorkingVersion() + "."); //$NON-NLS-1$
-		}
+				}
 		if (!HgFeatures.isHappyWith(detectedVersion)) {
 			logWarning("Can not use some of the new Mercurial features, "
 					+ "hg version greater equals " + preferredVersion + " required, but "
 					+ detectedVersion + " found. Features state:\n" + HgFeatures.printSummary() + ".",
 					null);
-		}
+			}
 		return detectedVersion;
-	}
+		}
 
 	/**
 	 * @return the observer hg version, never null. Returns {@link Version#emptyVersion} in case the
@@ -325,13 +328,54 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * @return the image
 	 */
 	public static Image getImage(String path) {
-		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
-		if (descriptor == null) {
-			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
-			getDefault().getImageRegistry().put(path, descriptor);
-		}
+		// make sure descriptor is created
+		getImageDescriptor(path);
 		return getDefault().getImageRegistry().get(path);
 	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static Image getImage(String basePath, String overlayPath, int quadrant) {
+		getImageDescriptor(basePath, overlayPath, quadrant);
+		return getDefault().getImageRegistry().get(basePath + overlayPath + quadrant);
+	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static ImageDescriptor getImageDescriptor(String basePath, String overlayPath, int quadrant) {
+		String key = basePath + overlayPath + quadrant;
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(key);
+		if(descriptor == null) {
+			Image base = getImage(basePath);
+			ImageDescriptor overlay = getImageDescriptor(overlayPath);
+			descriptor = new DecorationOverlayIcon(base, overlay, quadrant);
+			getDefault().getImageRegistry().put(key, descriptor);
+		}
+		return descriptor;
+	}
+
 
 	public static final void logError(String message, Throwable error) {
 		getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));

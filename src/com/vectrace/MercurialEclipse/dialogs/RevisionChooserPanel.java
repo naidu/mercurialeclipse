@@ -10,7 +10,7 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - small changes
  *     Adam Berkes (Intland)     - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - Field assistance for revision field and bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;

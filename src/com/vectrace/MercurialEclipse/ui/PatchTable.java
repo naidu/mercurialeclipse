@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - adaptation to patches
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Philip Graf               - refactoring: replaced Table with TableViewer
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;

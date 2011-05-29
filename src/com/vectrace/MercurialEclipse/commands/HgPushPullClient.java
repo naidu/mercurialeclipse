@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Ilya Ivanov (Intland) 	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
