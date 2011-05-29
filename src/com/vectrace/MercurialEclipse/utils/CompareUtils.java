@@ -19,9 +19,11 @@ import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
@@ -116,6 +118,26 @@ public final class CompareUtils {
 	public static void openEditor(final IResource left, final MercurialRevisionStorage right,
 			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
+		if(!left.getProject().isOpen()) {
+			final boolean [] open = new boolean[1];
+			Runnable runnable = new Runnable() {
+				public void run() {
+					open[0] = MessageDialog.openQuestion(null, "Compare",
+							"To compare selected file, enclosing project must be opened.\n" +
+							"Open the appropriate project (may take time)?");
+				}
+			};
+			Display.getDefault().syncExec(runnable);
+			if(open[0]) {
+				try {
+					left.getProject().open(null);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			} else {
+				return;
+			}
+		}
 		if (dialog) {
 			// TODO: is it intentional the config is ignored?
 			openCompareDialog(getPrecomputedCompareInput(null, left, null, right));

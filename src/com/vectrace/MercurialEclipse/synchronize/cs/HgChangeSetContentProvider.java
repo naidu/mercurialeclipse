@@ -671,7 +671,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		@Override
 		public String toString() {
+			if(isProjectClosed()) {
+				return display + " (closed!)";
+			}
 			return display;
+		}
+
+		public boolean isProjectClosed() {
+			return resource!= null && !resource.getProject().isOpen();
 		}
 
 		/**
