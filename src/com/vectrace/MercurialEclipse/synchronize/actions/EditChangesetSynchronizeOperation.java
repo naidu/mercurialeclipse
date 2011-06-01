@@ -54,8 +54,7 @@ public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation
 				HgRoot hgRoot;
 				Set<IFile> files = changeset.getFiles();
 				if(files.isEmpty()){
-					// TODO how to get hg root? Should we allow null?
-					hgRoot = null;
+					hgRoot = HgRoot.NO_ROOT;
 				} else {
 					// TODO not elegant. Should we restrict changesets to one root only?
 					hgRoot = ResourceUtils.groupByRoot(files).keySet().iterator().next();

@@ -40,15 +40,24 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  */
 public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
-	// constants
-
 	private static final String PATHS_SECTION = "paths";
 
 	private static final String HG_HGRC = ".hg/hgrc";
 
 	private static final long serialVersionUID = 3L;
 
-	// attributes
+	/** Place holder for a (not valid) hg root object */
+	public static final HgRoot NO_ROOT;
+	static {
+		HgRoot root = null;
+		try {
+			root = new HgRoot("");
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+		} finally {
+			NO_ROOT = root;
+		}
+	}
 
 	/**
 	 * Preferred encoding
