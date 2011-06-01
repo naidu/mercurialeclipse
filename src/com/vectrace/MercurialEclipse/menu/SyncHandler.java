@@ -46,7 +46,12 @@ public class SyncHandler extends MultipleResourcesHandler {
 				if(root == null) {
 					return;
 				}
-				IProject[] projects = MercurialTeamProvider.getKnownHgProjects(root).toArray(new IProject[0]);
+				IProject[] projects;
+				if(syncAllProjectsInRepo()) {
+					projects = new IProject[] { root.getResource() };
+				} else {
+					projects = MercurialTeamProvider.getKnownHgProjects(root).toArray(new IProject[0]);
+				}
 				MercurialSynchronizeParticipant participant = MercurialParticipantSynchronizeWizard.createParticipant(root, projects);
 				MercurialParticipantSynchronizeWizard.openSyncView(participant);
 			} else {
@@ -74,15 +79,20 @@ public class SyncHandler extends MultipleResourcesHandler {
 	@Override
 	protected List<IResource> getSelectedResources() {
 		List<IResource> resources = super.getSelectedResources();
-		if(MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_ALL_PROJECTS_IN_REPO)) {
+		if(syncAllProjectsInRepo()) {
 			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
 			resources.clear();
 			Set<HgRoot> roots = byRoot.keySet();
 			for (HgRoot root : roots) {
-				Set<IProject> projects = ResourceUtils.getProjects(root);
-				resources.addAll(projects);
+				IProject rootProj = root.getResource();
+				resources.add(rootProj);
 			}
 		}
 		return resources;
+	}
+
+	private static boolean syncAllProjectsInRepo() {
+		return MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_SYNC_ALL_PROJECTS_IN_REPO);
 	}
 }
