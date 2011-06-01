@@ -42,6 +42,6 @@ public class RevertSynchronizeAction  extends AbstractResourceSynchronizeAction 
 	protected SynchronizeModelOperation createOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements,
 			IResource[] resources, List<WorkingChangeSet> changesets) {
-		return new RevertSynchronizeOperation(configuration, elements, resources);
+		return new RevertSynchronizeOperation(configuration, elements, resources, changesets);
 	}
 }

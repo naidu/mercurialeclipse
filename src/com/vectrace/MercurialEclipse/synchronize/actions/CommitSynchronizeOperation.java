@@ -15,10 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -33,7 +31,6 @@ import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class CommitSynchronizeOperation extends SynchronizeModelOperation {
@@ -101,7 +98,7 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 		return false;
 	}
 
-	private static boolean hasFiles(List<WorkingChangeSet> set) {
+	static boolean hasFiles(List<WorkingChangeSet> set) {
 		for (WorkingChangeSet cs : set) {
 			if(!cs.getFiles().isEmpty()) {
 				return true;
