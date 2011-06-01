@@ -312,6 +312,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 							roots.add(project);
 						}
 					}
+					if(roots.isEmpty()) {
+						roots.add((IProject) iResource);
+					}
 				}
 			}
 			projects = roots.toArray(new IProject[roots.size()]);
