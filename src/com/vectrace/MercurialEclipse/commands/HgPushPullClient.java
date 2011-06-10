@@ -13,6 +13,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.regex.Pattern;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
@@ -102,10 +104,15 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
-			if (update && result != null && result.contains("not updating, since new heads added")
-					&& !merge && !rebase) {
-				// inform user about new heads and ask if he wants to merge or rebase
-				UpdateJob.handleMultipleHeads(hgRoot, false);
+			if (update && result != null && !merge && !rebase) {
+				// different messages from hg depending on if branch was set or not
+				if(result.contains("not updating, since new heads added") ||
+						(branch != null &&
+								Pattern.compile("\\(\\+\\d+\\sheads\\)").matcher(result).find())){
+
+					// inform user about new heads and ask if he wants to merge or rebase
+					UpdateJob.handleMultipleHeads(hgRoot, false);
+				}
 			}
 
 			// doesn't matter how far we were: we have to trigger update of caches in case
