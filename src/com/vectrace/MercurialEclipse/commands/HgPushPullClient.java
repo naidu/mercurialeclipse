@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Ilya Ivanov (Intland) 	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -26,6 +26,11 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgPushPullClient extends AbstractClient {
+
+	/**
+	 * matches ("number" "heads") message
+	 */
+	private static final Pattern HEADS_PATTERN = Pattern.compile("\\(\\+\\d+\\sheads\\)");
 
 	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout) throws HgException {
@@ -108,7 +113,7 @@ public class HgPushPullClient extends AbstractClient {
 				// different messages from hg depending on if branch was set or not
 				if(result.contains("not updating, since new heads added") ||
 						(branch != null &&
-								Pattern.compile("\\(\\+\\d+\\sheads\\)").matcher(result).find())){
+								HEADS_PATTERN.matcher(result).find())){
 
 					// inform user about new heads and ask if he wants to merge or rebase
 					UpdateJob.handleMultipleHeads(hgRoot, false);
