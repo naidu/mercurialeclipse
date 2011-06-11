@@ -288,6 +288,14 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
 				.getString("CommitDialog.closeBranch"));
+
+		closeBranchCheckBox.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				validateControls();
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
 	}
 
 	private void createAmendCheckBox(Composite container) {
