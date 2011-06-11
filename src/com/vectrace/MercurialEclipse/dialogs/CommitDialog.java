@@ -40,7 +40,6 @@ import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.ProgressMonitorPart;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -288,6 +287,14 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
 				.getString("CommitDialog.closeBranch"));
+
+		closeBranchCheckBox.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				validateControls();
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
 	}
 
 	private void createAmendCheckBox(Composite container) {
@@ -695,8 +702,7 @@ public class CommitDialog extends TitleAreaDialog {
 				+ sash.computeSize(SWT.DEFAULT, clientArea.height).x
 				+ rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
 		Rectangle bounds = shell.getBounds();
-		shell.setBounds(bounds.x
-				- ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0),
+		shell.setBounds(bounds.x - trayWidth / 2,
 				bounds.y, bounds.width + trayWidth, bounds.height);
 		sash.addListener(SWT.Selection, new Listener() {
 			public void handleEvent(Event event) {
@@ -747,8 +753,7 @@ public class CommitDialog extends TitleAreaDialog {
 		sash = null;
 		Shell shell = getShell();
 		Rectangle bounds = shell.getBounds();
-		shell.setBounds(bounds.x
-				+ ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0),
+		shell.setBounds(bounds.x + trayWidth / 2,
 				bounds.y, bounds.width - trayWidth, bounds.height);
 	}
 

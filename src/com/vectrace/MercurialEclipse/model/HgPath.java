@@ -153,6 +153,15 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 		return ResourceUtils.toRelative(this, child);
 	}
 
+	/**
+	 * Converts given path to the relative
+	 *
+	 * @param child
+	 *            a possible child path, non null
+	 * @return a hg root relative path of a given file, if the given file is located under this
+	 *         root, otherwise the path of a given file. If the given path matches the root,
+	 *         returns an empty string
+	 */
 	public IPath toRelative(IPath child) {
 		return child.makeRelativeTo(getIPath());
 	}

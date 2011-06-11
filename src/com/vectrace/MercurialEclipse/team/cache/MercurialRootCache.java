@@ -198,6 +198,19 @@ public class MercurialRootCache extends AbstractCache {
 		// case if the hg root is there but project is NOT configured for MercurialEclipse
 		// as team provider. See issue 13448.
 		if(resolveIfNotKnown) {
+			if(!project.isOpen()) {
+				IPath path = ResourceUtils.getPath(project);
+				if(canonicalMap.containsKey(path)) {
+					return knownRoots.get(path.toFile());
+				} else if(path.segmentCount() > 1) {
+					// last try: the root directory of the project?
+					path = path.removeLastSegments(1);
+					if(canonicalMap.containsKey(path)) {
+						return knownRoots.get(path.toFile());
+					}
+				}
+			}
+
 			RepositoryProvider provider = RepositoryProvider.getProvider(project,
 					MercurialTeamProvider.ID);
 			if (!(provider instanceof MercurialTeamProvider)) {

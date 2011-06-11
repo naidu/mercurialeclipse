@@ -650,6 +650,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if(parentPath.isEmpty()) {
 				return Collections.emptySet();
 			}
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			for (Entry<IPath, Integer> entry : entrySet) {
 				Integer status = entry.getValue();
 				if(status != null && Bits.contains(status.intValue(), statusBits)){
@@ -667,7 +668,29 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					if(isDirectory(path)) {
 						tmp = hgRoot.getResource().getFolder(relative);
 					} else {
-						tmp = hgRoot.getResource().getFile(relative);
+						tmp = root.getFileForLocation(path);
+						if(tmp != null) {
+							if(!ResourceUtils.isPrefixOf(parentPath, path)) {
+								tmp = null;
+							}
+						} else {
+							tmp = root.getContainerForLocation(path);
+							if(tmp != null) {
+								if(!ResourceUtils.isPrefixOf(parentPath, path)) {
+									tmp = null;
+								} else {
+									setStatus(path, status, true);
+								}
+							}
+						}
+						if(tmp == null) {
+							if(path.toFile().isDirectory()) {
+								setStatus(path, status, true);
+								tmp = hgRoot.getResource().getFolder(relative);
+							} else {
+								tmp = hgRoot.getResource().getFile(relative);
+							}
+						}
 					}
 					if(tmp != null) {
 						resources.add(tmp);
