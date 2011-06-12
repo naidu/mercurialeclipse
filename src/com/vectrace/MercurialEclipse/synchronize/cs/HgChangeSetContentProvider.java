@@ -69,12 +69,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
-	private final ChangeSet.Listener changeSetListener = new ChangeSet.Listener() {
-		public void changeSetChanged(ChangeSet cs) {
-			getTreeViewer().refresh(cs);
-		}
-	};
-
 	private final class UcommittedSetListener implements IPropertyChangeListener {
 		public void propertyChange(PropertyChangeEvent event) {
 			Object input = getTreeViewer().getInput();
@@ -115,7 +109,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
 			ChangeSet set = (ChangeSet)cs;
 
-			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
 						: outgoing;
@@ -133,7 +126,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public void setRemoved(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
 			ChangeSet set = (ChangeSet)cs;
 
-			set.removeListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
 						: outgoing;

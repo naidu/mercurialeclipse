@@ -31,11 +31,11 @@ import org.xml.sax.SAXException;
 
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
@@ -70,11 +70,11 @@ final class ChangesetContentHandler implements ContentHandler {
 	private final File bundleFile;
 	private final HgRoot hgRoot;
 	private final Map<IPath, Set<ChangeSet>> fileRevisions;
-	private final Set<String> filesModified;
-	private final Set<String> filesAdded;
-	private final Set<String> filesRemoved;
-	private final Map<String, String> filesCopied; // destination -> source
-	private final Map<String, String> filesMoved; // destination -> source
+	private Set<String> filesModified;
+	private Set<String> filesAdded;
+	private Set<String> filesRemoved;
+	private Map<String, String> filesCopied; // destination -> source
+	private Map<String, String> filesMoved; // destination -> source
 	private Action action;
 	private String prevNodeShort;
 	private int prevRev;
@@ -95,11 +95,23 @@ final class ChangesetContentHandler implements ContentHandler {
 		this.expectedBranch = branch;
 		repoPath = new Path(hgRoot.getPath());
 		fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
-		filesModified = new TreeSet<String>();
-		filesAdded = new TreeSet<String>();
-		filesRemoved = new TreeSet<String>();
-		filesCopied = new TreeMap<String, String>();
-		filesMoved = new TreeMap<String, String>();
+	}
+
+	private boolean hasFileData()
+	{
+		return filesModified != null;
+	}
+
+	private void initFileData()
+	{
+		if (!hasFileData())
+		{
+			filesModified = new TreeSet<String>();
+			filesAdded = new TreeSet<String>();
+			filesRemoved = new TreeSet<String>();
+			filesCopied = new TreeMap<String, String>();
+			filesMoved = new TreeMap<String, String>();
+		}
 	}
 
 	private static String replaceAll(Pattern p, String source, String replacement){
@@ -161,25 +173,28 @@ final class ChangesetContentHandler implements ContentHandler {
 				csb.direction(direction);
 				csb.repository(repository);
 
-				List<FileStatus> list = new ArrayList<FileStatus>(
-						filesModified.size() + filesAdded.size() + filesRemoved.size());
-				for (String file : filesModified) {
-					list.add(new FileStatus(FileStatus.Action.MODIFIED, file, hgRoot));
-				}
-				for (String file : filesAdded) {
-					list.add(new FileStatus(FileStatus.Action.ADDED, file, hgRoot));
-				}
-				for (String file : filesRemoved) {
-					list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
-				}
-				for(Map.Entry<String, String> entry : filesCopied.entrySet()){
-					list.add(new FileStatus(FileStatus.Action.COPIED, entry.getKey(), entry.getValue(), hgRoot));
-				}
+				if (hasFileData())
+				{
+					List<FileStatus> list = new ArrayList<FileStatus>(
+							filesModified.size() + filesAdded.size() + filesRemoved.size());
+					for (String file : filesModified) {
+						list.add(new FileStatus(FileStatus.Action.MODIFIED, file, hgRoot));
+					}
+					for (String file : filesAdded) {
+						list.add(new FileStatus(FileStatus.Action.ADDED, file, hgRoot));
+					}
+					for (String file : filesRemoved) {
+						list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
+					}
+					for(Map.Entry<String, String> entry : filesCopied.entrySet()){
+						list.add(new FileStatus(FileStatus.Action.COPIED, entry.getKey(), entry.getValue(), hgRoot));
+					}
 
-				for(Map.Entry<String, String> entry : filesMoved.entrySet()){
-					list.add(new FileStatus(FileStatus.Action.MOVED, entry.getKey(), entry.getValue(), hgRoot));
+					for(Map.Entry<String, String> entry : filesMoved.entrySet()){
+						list.add(new FileStatus(FileStatus.Action.MOVED, entry.getKey(), entry.getValue(), hgRoot));
+					}
+					csb.changedFiles(list.toArray(new FileStatus[list.size()]));
 				}
-				csb.changedFiles(list.toArray(new FileStatus[list.size()]));
 
 				ChangeSet changeSet = csb.build();
 
@@ -187,11 +202,13 @@ final class ChangesetContentHandler implements ContentHandler {
 				addChangesetToResourceMap(changeSet);
 			}
 
-			filesModified.clear();
-			filesAdded.clear();
-			filesRemoved.clear();
-			filesCopied.clear();
-			filesMoved.clear();
+			if (hasFileData()) {
+				filesModified.clear();
+				filesAdded.clear();
+				filesRemoved.clear();
+				filesCopied.clear();
+				filesMoved.clear();
+			}
 			prevRev = rev;
 			prevNodeShort = nodeShort;
 		}
@@ -270,12 +287,16 @@ final class ChangesetContentHandler implements ContentHandler {
 			cDataChars = new StringBuilder(42);
 			readCdata = true;
 		} else if ("fl".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.MODIFIED;
 		} else if ("fa".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.ADDED;
 		} else if ("fd".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.REMOVED;
 		} else if ("fc".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.COPIED;
 		} else if ("f".equals(name)) {
 			if (action == Action.MODIFIED) {
