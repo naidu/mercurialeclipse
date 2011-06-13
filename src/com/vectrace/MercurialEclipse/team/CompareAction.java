@@ -98,7 +98,7 @@ public class CompareAction extends SingleFileAction {
 					return Status.OK_STATUS;
 				}
 				try {
-					ChangeSet cs = LocalChangesetCache.getInstance().getNewestChangeSet(file);
+					ChangeSet cs = LocalChangesetCache.getInstance().getChangesetByRootId(file);
 
 					if (cs != null) {
 						CompareUtils.openEditor(file, MercurialUtilities.getParentRevision(cs, file), false, null);
