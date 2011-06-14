@@ -147,7 +147,7 @@ public final class HgRepositoryLocationParser {
 			if (userInfo.contains(ALIAS_TOKEN)) {
 				userInfo = userInfo.substring(0, userInfo.indexOf(ALIAS_TOKEN));
 			}
-			String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN);
+			String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN, 2);
 			user = splitUserInfo[0];
 			if (splitUserInfo.length > 1) {
 				password = splitUserInfo[1];
@@ -194,7 +194,7 @@ public final class HgRepositoryLocationParser {
 			String userInfo = null;
 			if (uri.getUserInfo() != null) {
 				// extract user and password from given URI
-				String[] authorization = uri.getUserInfo().split(":"); //$NON-NLS-1$
+				String[] authorization = uri.getUserInfo().split(":", 2); //$NON-NLS-1$
 				user = authorization[0];
 				if (authorization.length > 1) {
 					password = authorization[1];

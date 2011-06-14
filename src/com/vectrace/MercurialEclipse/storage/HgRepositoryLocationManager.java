@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -481,7 +481,8 @@ public class HgRepositoryLocationManager {
 		getProjectRepos();
 		IHgRepositoryLocation location = matchRepoLocation(url);
 		if (location != null) {
-			if (user == null || user.length() == 0 || user.equals(location.getUser())) {
+			if (user == null || user.length() == 0 ||
+				(user.equals(location.getUser()) && (pass == null || pass.equals(location.getPassword())))) {
 				return location;
 			}
 		}
@@ -512,7 +513,8 @@ public class HgRepositoryLocationManager {
 
 		IHgRepositoryLocation location = matchRepoLocation(url);
 		if (location != null) {
-			if (user == null || user.length() == 0 || user.equals(location.getUser())) {
+			if (user == null || user.length() == 0 ||
+			    (user.equals(location.getUser()) && (password == null || password.equals(location.getPassword())))) {
 				return location;
 			}
 		}
