@@ -179,7 +179,7 @@ IWorkbenchPreferencePage {
 		addField(editor);
 		if(!HgFeatures.NEW_BRANCH.isEnabled()) {
 			editor.setEnabled(false, getFieldEditorParent());
-			editor.setLabelText(editor.getLabelText() + "\n(Option disabled due the unsupported hg version)");
+			editor.setLabelText(editor.getLabelText() + " " + Messages.getString("GeneralPreferencePage.optionDisabled"));
 		}
 
 		addField(new LabelDecoratorRadioGroupFieldEditor(
@@ -204,10 +204,21 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
+
 		addField(new BooleanFieldEditor(
 				PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG,
 				Messages.getString("GeneralPreferencePage.preselectUntrackedInCommitDialog"), //$NON-NLS-1$
 				getFieldEditorParent()));
+
+		BooleanFieldEditor cert_editor = new BooleanFieldEditor(
+				PREF_VERIFY_SERVER_CERTIFICATE,
+				Messages.getString("GeneralPreferencePage.verifyServerCertificate"), //$NON-NLS-1$
+				getFieldEditorParent());
+		addField(cert_editor);
+		if(!HgFeatures.INSECURE.isEnabled()) {
+			cert_editor.setEnabled(false, getFieldEditorParent());
+			cert_editor.setLabelText(cert_editor.getLabelText() + " " + Messages.getString("GeneralPreferencePage.optionDisabled"));
+		}
 
 		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
 				COMMIT_MESSAGE_BATCH_SIZE,

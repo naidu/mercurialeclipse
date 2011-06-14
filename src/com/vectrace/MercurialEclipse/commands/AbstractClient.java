@@ -230,4 +230,14 @@ public abstract class AbstractClient {
 			command.addOptions("--config", "ui.merge=internal:fail"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
+
+	protected static void addInsecureToHgCommand(AbstractShellCommand command) {
+		boolean verify = Boolean.valueOf(
+				HgClients.getPreference(MercurialPreferenceConstants.PREF_VERIFY_SERVER_CERTIFICATE,
+						"true")).booleanValue(); //$NON-NLS-1$
+
+		if (!verify) {
+			command.addOptions("--insecure"); //$NON-NLS-1$
+		}
+	}
 }

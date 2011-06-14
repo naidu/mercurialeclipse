@@ -29,6 +29,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	 */
 	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
 		AbstractShellCommand command = getCommand(key);
+		addInsecureToHgCommand(command);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		try {
