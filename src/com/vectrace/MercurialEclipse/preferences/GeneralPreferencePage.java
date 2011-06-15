@@ -204,7 +204,6 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
-
 		addField(new BooleanFieldEditor(
 				PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG,
 				Messages.getString("GeneralPreferencePage.preselectUntrackedInCommitDialog"), //$NON-NLS-1$

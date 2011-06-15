@@ -482,7 +482,7 @@ public class HgRepositoryLocationManager {
 		IHgRepositoryLocation location = matchRepoLocation(url);
 		if (location != null) {
 			if (user == null || user.length() == 0 ||
-				(user.equals(location.getUser()) && (pass == null || pass.equals(location.getPassword())))) {
+					(user.equals(location.getUser()) && (pass == null || pass.equals(location.getPassword())))) {
 				return location;
 			}
 		}
@@ -514,7 +514,7 @@ public class HgRepositoryLocationManager {
 		IHgRepositoryLocation location = matchRepoLocation(url);
 		if (location != null) {
 			if (user == null || user.length() == 0 ||
-			    (user.equals(location.getUser()) && (password == null || password.equals(location.getPassword())))) {
+					(user.equals(location.getUser()) && (password == null || password.equals(location.getPassword())))) {
 				return location;
 			}
 		}

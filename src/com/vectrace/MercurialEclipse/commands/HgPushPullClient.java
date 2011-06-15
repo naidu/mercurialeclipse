@@ -44,7 +44,7 @@ public class HgPushPullClient extends AbstractClient {
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
-		addInsecureToHgCommand(command);
+		addInsecurePreference(command);
 
 		if (force) {
 			command.addOptions("--force"); //$NON-NLS-1$
@@ -81,7 +81,7 @@ public class HgPushPullClient extends AbstractClient {
 				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
-		addInsecureToHgCommand(command);
+		addInsecurePreference(command);
 
 		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$

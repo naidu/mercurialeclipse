@@ -231,7 +231,7 @@ public abstract class AbstractClient {
 		}
 	}
 
-	protected static void addInsecureToHgCommand(AbstractShellCommand command) {
+	protected static void addInsecurePreference(AbstractShellCommand command) {
 		boolean verify = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_VERIFY_SERVER_CERTIFICATE,
 						"true")).booleanValue(); //$NON-NLS-1$
