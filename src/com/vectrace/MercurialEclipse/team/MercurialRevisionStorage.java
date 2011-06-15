@@ -82,7 +82,7 @@ public class MercurialRevisionStorage implements IStorage {
 			this(null, null, t, null);
 		}
 
-		private InputStream createStreamContent(String result) throws HgException {
+		private InputStream createStreamContent(String result) {
 			try {
 				if(encoding != null) {
 					return new ByteArrayInputStream(result.getBytes(encoding));
@@ -107,7 +107,7 @@ public class MercurialRevisionStorage implements IStorage {
 			}
 		}
 
-		public InputStream createStream() throws HgException {
+		public InputStream createStream() {
 			if (bytes != null) {
 				return new ByteArrayInputStream(bytes);
 			} else if(string != null && error == null){

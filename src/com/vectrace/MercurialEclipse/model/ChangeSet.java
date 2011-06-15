@@ -31,19 +31,16 @@ import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -85,14 +82,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final HgRoot hgRoot;
 	Set<IFile> files;
 	private Tag[] tags;
-
-	/**
-	 * Lazy loaded list of files changed. Only applicable to merge changesets when {@link #showFirstParentChanges} is true.
-	 * @see #getChangesetFiles()
-	 */
-	private List<FileStatus> firstParentChangedFiles;
-
-	private ListenerList listenerList;
 
 	/**
 	 * A "dummy" changeset containing no additional information except given data
@@ -360,6 +349,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 				.unmodifiableList(changedFiles));
 	}
 
+	public boolean hasFileStatus() {
+		return changedFiles != null;
+	}
+
 	/**
 	 * @param resource
 	 *            non null
@@ -409,7 +402,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		if(path.isEmpty()) {
 			return null;
 		}
-		for (FileStatus fileStatus : changedFiles) {
+		for (FileStatus fileStatus : getChangedFiles()) {
 			if (path.equals(fileStatus.getAbsolutePath())) {
 				return fileStatus;
 			}
@@ -430,7 +423,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 		boolean match = false;
 		IPath path = null;
-		for (FileStatus fileStatus : changedFiles) {
+		for (FileStatus fileStatus : getChangedFiles()) {
 			if (fileStatus.getAction() == action) {
 				if (path == null) {
 					path = ResourceUtils.getPath(resource);
@@ -604,21 +597,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public boolean isMerge() {
 		return parents != null && 1 < parents.length && !StringUtils.isEmpty(parents[0])
 				&& !StringUtils.isEmpty(parents[1]);
-	}
-
-	private List<FileStatus> getFirstParentChangedFiles() {
-		if (firstParentChangedFiles == null) {
-			// Query for this data. Takes 300 - 500ms for me.
-			// Note: For non-merge changesets this should return identical to changedFiles.
-			try {
-				firstParentChangedFiles = MercurialStatusCache.parseStatus(HgStatusClient.getStatusForChangeset(this), getHgRoot());
-			} catch (Throwable t) {
-				firstParentChangedFiles = EMPTY_STATUS;
-				MercurialEclipsePlugin.logError("Failed to get changeset files changed wrt first parent", t);
-			}
-		}
-
-		return firstParentChangedFiles;
 	}
 
 	private void setDescription(String description) {
@@ -802,31 +780,5 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	@Override
 	public void rootRemoved(IResource resource, int depth) {
 		// not supported
-	}
-
-	private void fireChanged() {
-		if (listenerList != null) {
-			for (Object listener : listenerList.getListeners()) {
-				((Listener) listener).changeSetChanged(this);
-			}
-		}
-	}
-
-	public void addListener(Listener listener) {
-		if (listenerList == null) {
-			listenerList = new ListenerList();
-		}
-
-		listenerList.add(listener);
-	}
-
-	public void removeListener(Listener listener) {
-		if (listenerList != null) {
-			listenerList.remove(listener);
-		}
-	}
-
-	public interface Listener {
-		public void changeSetChanged(ChangeSet cs);
 	}
 }

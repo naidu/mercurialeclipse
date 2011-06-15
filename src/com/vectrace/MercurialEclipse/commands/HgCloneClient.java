@@ -25,6 +25,7 @@ public class HgCloneClient extends AbstractClient {
 			boolean timeout, String rev, String cloneName) throws HgException {
 		AbstractShellCommand command = new RootlessHgCommand("clone", "Cloning", parentDirectory); //$NON-NLS-1$
 
+		addInsecurePreference(command);
 		if (noUpdate) {
 			command.addOptions("--noupdate"); //$NON-NLS-1$
 		}

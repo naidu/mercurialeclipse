@@ -354,7 +354,7 @@ public final class ResourceUtils {
 	 *            a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource, might be {@link Path#EMPTY} in case the
 	 *         resource location and project location are both unknown. {@link Path#EMPTY} return
-	 *         value will be always logged as error.
+	 *         value will be logged as error unless virtual.
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();

@@ -20,9 +20,10 @@ import org.eclipse.ui.ide.IDE;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.FilteredPlaceholder;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -142,6 +143,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 			return delegateText;
 		} else if (elementOrPath instanceof PathFromChangeSet) {
+			return elementOrPath.toString();
+		} else if (elementOrPath instanceof FilteredPlaceholder) {
 			return elementOrPath.toString();
 		}
 		String delegateText = super.getDelegateText(elementOrPath);

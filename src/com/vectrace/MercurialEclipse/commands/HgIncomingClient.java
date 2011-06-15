@@ -42,6 +42,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		HgCommand command = new HgCommand("incoming", "Calculating incoming changesets", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+
+		addInsecurePreference(command);
 		String branch = key.getBranch();
 		if (!Branch.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
 			// this branch is not known remote, so there can be NO incoming changes

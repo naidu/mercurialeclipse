@@ -37,8 +37,8 @@ import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
-import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
+import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
@@ -53,9 +53,9 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
@@ -68,12 +68,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	public static final String ID = "com.vectrace.MercurialEclipse.changeSetContent";
 
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
-
-	private final ChangeSet.Listener changeSetListener = new ChangeSet.Listener() {
-		public void changeSetChanged(ChangeSet cs) {
-			getTreeViewer().refresh(cs);
-		}
-	};
 
 	private final class UcommittedSetListener implements IPropertyChangeListener {
 		public void propertyChange(PropertyChangeEvent event) {
@@ -115,7 +109,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
 			ChangeSet set = (ChangeSet)cs;
 
-			set.addListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
 						: outgoing;
@@ -133,7 +126,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		public void setRemoved(final org.eclipse.team.internal.core.subscribers.ChangeSet cs) {
 			ChangeSet set = (ChangeSet)cs;
 
-			set.removeListener(changeSetListener);
 			if (isVisibleInMode(set)) {
 				final ChangesetGroup toRefresh = set.getDirection() == Direction.INCOMING ? incoming
 						: outgoing;
@@ -237,11 +229,17 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		} else if (parent instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) parent;
 			Direction direction = group.getDirection();
-			if (isOutgoingVisible()	&& isOutgoing(direction)) {
-				return group.getChangesets().toArray();
+			if (isOutgoing(direction)) {
+				if (isOutgoingVisible()) {
+					return group.getChangesets().toArray();
+				}
+				return new Object[] {new FilteredPlaceholder()};
 			}
-			if(isIncomingVisible() && direction == Direction.INCOMING){
-				return group.getChangesets().toArray();
+			if(direction == Direction.INCOMING){
+				if (isIncomingVisible()) {
+					return group.getChangesets().toArray();
+				}
+				return new Object[] {new FilteredPlaceholder()};
 			}
 		} else if (parent instanceof ChangeSet) {
 			FileFromChangeSet[] files = ((ChangeSet) parent).getChangesetFiles();
@@ -772,6 +770,17 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				}
 			}
 			return result;
+		}
+	}
+
+	protected static class FilteredPlaceholder
+	{
+		/**
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return "<Filtered>";
 		}
 	}
 }

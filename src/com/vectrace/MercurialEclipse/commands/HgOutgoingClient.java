@@ -31,6 +31,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		AbstractShellCommand command = getCommand(key);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
+		addInsecurePreference(command);
 		try {
 			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
 					.getStyleFile(style).getCanonicalPath());
