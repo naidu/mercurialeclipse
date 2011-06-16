@@ -34,7 +34,7 @@ public enum HgFeatures {
 	BRANCH (new Version(1,5,0), "--branch", true),
 	NEW_BRANCH (new Version(1,6,0), "--new-branch", false, MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH),
 	LISTFILE (new Version(1,8,0), "listfile:", false),
-	INSECURE (new Version(1,7,5), "--insecure", false, MercurialPreferenceConstants.PREF_VERIFY_SERVER_CERTIFICATE);
+	INSECURE (new Version(1,7,5), "--insecure", false);
 
 	private final Version required;
 	private final String[] optionalPreferenceKeys;
