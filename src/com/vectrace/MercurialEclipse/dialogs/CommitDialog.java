@@ -697,7 +697,7 @@ public class CommitDialog extends TitleAreaDialog {
 		// calculate width
 		Rectangle clientArea = shell.getClientArea();
 		final GridData data = new GridData(GridData.FILL_VERTICAL);
-		data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
+		data.widthHint = trayControl.computeSize(clientArea.width*3/4, clientArea.height).x;
 		trayControl.setLayoutData(data);
 		int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
 				+ sash.computeSize(SWT.DEFAULT, clientArea.height).x
