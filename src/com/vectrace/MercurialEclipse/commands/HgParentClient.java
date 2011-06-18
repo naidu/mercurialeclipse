@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 public class HgParentClient extends AbstractClient {
 
 	private static final Pattern ANCESTOR_PATTERN = Pattern
-			.compile("^([0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
+			.compile("^(-?[0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
 	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
@@ -85,6 +85,10 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
+	/**
+	 * @return The revision index or -1 for unrelated
+	 * @throws HgException
+	 */
 	public static int findCommonAncestor(HgRoot hgRoot, String node1, String node2)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$

@@ -91,6 +91,13 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		if (showForce) {
 			forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					getForceCheckBoxLabel());
+			forceCheckBox.addSelectionListener(new SelectionListener() {
+				public void widgetDefaultSelected(SelectionEvent e) {
+				}
+				public void widgetSelected(SelectionEvent e) {
+					optionChanged();
+				}
+			});
 		}
 		if (showRevisionTable) {
 			createRevisionTable(composite);

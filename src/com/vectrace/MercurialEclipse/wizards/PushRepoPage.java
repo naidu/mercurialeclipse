@@ -48,6 +48,7 @@ public class PushRepoPage extends PushPullPage {
 								getPasswordText());
 				outgoingPage.setLocation(loc);
 				outgoingPage.setSvn(isSvnSelected());
+				outgoingPage.setForce(isForceSelected());
 				setErrorMessage(null);
 				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}

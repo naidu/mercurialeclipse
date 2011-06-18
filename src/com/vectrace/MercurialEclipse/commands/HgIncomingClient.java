@@ -55,6 +55,10 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 			command.addOptions("--branch", branch);
 		}
 
+		if (key.isAllowUnrelated()) {
+			command.addOptions("-f");
+		}
+
 		File bundleFile = null;
 		try {
 			try {

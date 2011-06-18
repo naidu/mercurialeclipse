@@ -39,6 +39,10 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
 
+		if (key.isAllowUnrelated()) {
+			command.addOptions("-f");
+		}
+
 		addRepoToHgCommand(key.getRepo(), command);
 
 		String result = getResult(command);

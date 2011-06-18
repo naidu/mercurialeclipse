@@ -520,6 +520,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		this.showBundleButton = showBundleButton;
 	}
 
+	protected boolean optionChanged() {
+		return urlChanged();
+	}
+
 	/**
 	 * Triggered if the user has changed repository url. Override to implement additional
 	 * checks after it.

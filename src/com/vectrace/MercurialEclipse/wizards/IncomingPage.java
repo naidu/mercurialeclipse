@@ -45,10 +45,10 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.SimpleLabelImageProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -67,6 +67,7 @@ public class IncomingPage extends HgWizardPage {
 	private ChangeSet revision;
 	private SortedSet<ChangeSet> changesets;
 	private boolean svn;
+	private boolean force;
 
 	private class GetIncomingOperation extends HgOperation {
 
@@ -98,7 +99,7 @@ public class IncomingPage extends HgWizardPage {
 			IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
 			try {
 				cache.clear(hgRoot, false);
-				Set<ChangeSet> set = cache.getChangeSets(hgRoot, location, null);
+				Set<ChangeSet> set = cache.getChangeSets(hgRoot, location, null, isForce());
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(set);
 				return revertedSet;
@@ -337,6 +338,14 @@ public class IncomingPage extends HgWizardPage {
 
 	public boolean isSvn() {
 		return svn;
+	}
+
+	public void setForce(boolean force) {
+		this.force = force;
+	}
+
+	public boolean isForce() {
+		return force;
 	}
 
 	protected IDoubleClickListener getDoubleClickListener() {

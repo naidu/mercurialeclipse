@@ -76,7 +76,7 @@ public class OutgoingPage extends IncomingPage {
 			IHgRepositoryLocation remote = getLocation();
 			try {
 				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
-						getHgRoot(), remote, null);
+						getHgRoot(), remote, null, isForce());
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;
@@ -85,7 +85,6 @@ public class OutgoingPage extends IncomingPage {
 				return new TreeSet<ChangeSet>();
 			}
 		}
-
 	}
 
 	protected class OutgoingDoubleClickListener implements IDoubleClickListener {

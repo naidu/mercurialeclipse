@@ -289,7 +289,7 @@ public final class CompareUtils {
 				}
 			}
 
-			if (commonAncestor == lId || commonAncestor == rId || hgRoot == null) {
+			if (commonAncestor <= 0 || commonAncestor == lId || commonAncestor == rId || hgRoot == null) {
 				return null;
 			}
 			ChangeSet tip = HgLogClient.getTip(hgRoot);

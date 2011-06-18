@@ -163,7 +163,7 @@ public class CompareAction extends SingleFileAction {
 				int ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
 
 				mergeNode = new MercurialRevisionStorage(file, mergeNodeId);
-				ancestorNode = new MercurialRevisionStorage(file, ancestor);
+				ancestorNode = (ancestor <= 0) ? null : new MercurialRevisionStorage(file, ancestor);
 			}
 
 			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,

@@ -75,6 +75,7 @@ public class PullPage extends PushPullPage {
 								getPasswordText());
 				incomingPage.setLocation(loc);
 				incomingPage.setSvn(isSvnSelected());
+				incomingPage.setForce(isForceSelected());
 
 				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
