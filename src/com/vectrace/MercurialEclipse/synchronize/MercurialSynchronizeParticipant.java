@@ -12,6 +12,8 @@
 package com.vectrace.MercurialEclipse.synchronize;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
@@ -42,10 +44,13 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
@@ -126,13 +131,24 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
 				repositoryLocation);
 		restoredProjects = new HashSet<IProject>();
+
 		for (String pName : projectNames) {
 			if(pName.length() == 0){
 				continue;
 			}
 			IProject project = root.getProject(pName);
-			if(project != null && (repoProjects.contains(project) || !project.isOpen())){
+			if(project != null && (repoProjects.contains(project) || (!project.isOpen() && project.exists()))){
 				restoredProjects.add(project);
+			}
+		}
+
+		boolean addRoot = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getBoolean(MercurialPreferenceConstants.PREF_SYNC_ALL_PROJECTS_IN_REPO);
+		if(restoredProjects.isEmpty() && addRoot) {
+			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(repoProjects);
+			Set<HgRoot> roots = byRoot.keySet();
+			for (HgRoot hgRoot : roots) {
+				restoredProjects.add(hgRoot.getResource());
 			}
 		}
 	}
