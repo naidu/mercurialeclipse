@@ -163,7 +163,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					String nodeId = getCurrentChangesetId(root);
 
 					// try to get from cache (without loading)
-					csOutgoing =  LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
+					csOutgoing =  getChangeset(file, nodeId, root);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return null;
@@ -226,13 +226,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					if(parents.length > 0){
 						parentCs = parents[0];
 					} else {
-						ChangeSet tmpCs = LOCAL_CACHE.getOrFetchChangeSetById(file, first.getChangeset());
+						ChangeSet tmpCs = getChangeset(file, first.getChangeset(), null);
 						if(tmpCs != null && tmpCs.getParents().length > 0){
 							parentCs = tmpCs.getParents()[0];
 						}
 					}
 					if(parentCs != null){
-						ChangeSet baseChangeset = LOCAL_CACHE.getOrFetchChangeSetById(file, parentCs);
+						ChangeSet baseChangeset = getChangeset(file, parentCs, null);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
 						outgoing = new MercurialResourceVariant(incomingIStorage);
@@ -265,6 +265,20 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			return null;
+		}
+	}
+
+	protected static ChangeSet getChangeset(IResource file, String nodeId, HgRoot root) throws HgException {
+		try {
+			return LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
+		} catch (HgException e) {
+			// workaround for the case where the root version is not up-to-date anymore
+			// simply clear the cache and restart
+			if(root != null && e.getMessage() != null && e.getMessage().contains("unknown revision")) {
+				CURRENT_CS_MAP.remove(root);
+				return getChangeset(file, nodeId, null);
+			}
+			throw e;
 		}
 	}
 
