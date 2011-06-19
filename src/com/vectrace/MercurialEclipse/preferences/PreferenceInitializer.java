@@ -132,7 +132,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			};
 			job.setPriority(Job.INTERACTIVE);
 			job.setSystem(true);
-			job.schedule();
+			job.schedule(200);
 		}
 		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
