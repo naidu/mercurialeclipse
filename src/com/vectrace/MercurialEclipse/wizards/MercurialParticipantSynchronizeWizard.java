@@ -116,7 +116,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	public IWizardPage getStartingPage() {
-		return  getRootResources().length > 0? selectionPage : importWizard.getStartingPage();
+		return  selectionPage;
 	}
 
 	private ConfigurationWizardMainPage createrepositoryConfigPage() {
