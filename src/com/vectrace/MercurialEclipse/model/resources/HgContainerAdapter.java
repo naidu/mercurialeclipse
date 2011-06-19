@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public abstract class HgContainerAdapter extends HgResourceAdapter implements IContainer {
@@ -103,44 +102,37 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 		return getChild(IFolder.class, path);
 	}
 
-	<V> V getChild(Class<V> clazz, IPath child) {
+	private <V> V getChild(Class<V> clazz, IPath child) {
 		if(child.isEmpty()) {
 			if(!clazz.isAssignableFrom(getClass())) {
 				return null;
 			}
 			return clazz.cast(this);
 		}
-		IResource[] members;
-		try {
-			members = members();
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
+
+		String name = child.segment(0);
+
+		File memberFile = getLocation().append(name).toFile();
+		if (!memberFile.exists()) {
 			return null;
 		}
-		String name = child.segment(0);
-		for (IResource resource : members) {
-			if(!name.equals(resource.getName())){
-				continue;
-			}
-			if(child.segmentCount() == 1) {
-				if(!clazz.isAssignableFrom(resource.getClass())) {
-					return null;
+
+		if (child.segmentCount() == 1) {
+			if (memberFile.isFile()) {
+				if (clazz == IFile.class) {
+					return clazz.cast(getFile(name));
 				}
-				return clazz.cast(resource);
-			}
-			if(resource.getType() == IResource.FILE) {
+				return null;
+			} else if(clazz == IFolder.class) {
+				return clazz.cast(getFolder(name));
+			} else {
 				return null;
 			}
-			child = child.removeFirstSegments(1);
-			if(clazz == IFolder.class) {
-				return clazz.cast(((IContainer)resource).getFolder(child));
-			}
-			return clazz.cast(((IContainer)resource).getFile(child));
 		}
-		if(clazz == IFolder.class) {
-			return clazz.cast(getFolder(name));
-		}
-		return clazz.cast(getFile(name));
+
+		IFolder folder = getFolder(name);
+		child = child.removeFirstSegments(1);
+		return ((HgContainerAdapter) folder).getChild(clazz, child);
 	}
 
 	public IFile getFile(String name) {
@@ -155,13 +147,14 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 
 	public IResource[] members() throws CoreException {
 		File[] files = toFile().listFiles();
-		if(files == null) {
+		if(files == null || files.length == 0) {
 			return new IResource[0];
 		}
 		List<IResource> members = new ArrayList<IResource>(files.length);
 		// Intentionally NOT using MercurialTeamProvider.getProjects(getRoot())
 		// to get ALL projects containing in this root, even if they are not configured yet
-		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		IProject[] projects = null;
+		IPath[] projectLocations = null;
 		for (int i = 0; i < files.length; i++) {
 			if (files[i].isFile()) {
 				members.add(new HgFileAdapter(files[i], getHgRoot(), this));
@@ -169,8 +162,16 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 				if(files[i].getName().equals(".hg")) {
 					continue;
 				}
+				if (projects == null) {
+					projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+					projectLocations = new IPath[projects.length];
+					int j = 0;
+					for (IProject project : projects) {
+						projectLocations[j++] = project.getLocation();
+					}
+				}
 				HgFolderAdapter folder = new HgFolderAdapter(files[i], getHgRoot(), this);
-				IProject project = getProject(folder, projects);
+				IProject project = getProject(folder, projects, projectLocations);
 				if(project != null) {
 					members.add(project);
 				} else {
@@ -181,9 +182,10 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 		return members.toArray(new IResource[members.size()]);
 	}
 
-	static IProject getProject(HgFolderAdapter folder, IProject[] projects) {
+	static IProject getProject(HgFolderAdapter folder, IProject[] projects, IPath[] projectLocations) {
+		int i = 0;
 		for (IProject project : projects) {
-			if(folder.getLocation().equals(project.getLocation())) {
+			if(folder.getLocation().equals(projectLocations[i++])) {
 				return project;
 			}
 		}
