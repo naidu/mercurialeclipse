@@ -18,11 +18,12 @@ import java.util.List;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.handlers.HandlerUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -54,18 +55,10 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 
 	public Object execute(ExecutionEvent event1) throws ExecutionException {
 		this.event = event1;
-		Object selectionObject = ((EvaluationContext) event
-				.getApplicationContext()).getDefaultVariable();
+		ISelection selectionObject = HandlerUtil.getCurrentSelection(event);
 		selection.clear();
-		if (selectionObject != null && selectionObject instanceof List) {
-			List<?> list = (List) selectionObject;
-			for (Object listEntry : list) {
-				if (listEntry != null && listEntry instanceof IAdaptable) {
-					IAdaptable selectionAdaptable = (IAdaptable) listEntry;
-					selection.add((IResource) selectionAdaptable
-							.getAdapter(IResource.class));
-				}
-			}
+		if (selectionObject instanceof IStructuredSelection) {
+			selection.addAll(ResourceUtils.getResources((IStructuredSelection) selectionObject));
 		}
 		if (selection.isEmpty()) {
 			selection.add(ResourceUtils.getActiveResourceFromEditor());
