@@ -28,6 +28,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -264,6 +265,13 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		} else {
 			try {
 				projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
+				if(!MercurialRootCache.isHgTeamProviderFor(projectAdapter)) {
+					try {
+						MercurialRootCache.markAsCached(projectAdapter, this);
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
