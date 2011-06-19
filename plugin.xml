@@ -107,7 +107,7 @@
              class="com.vectrace.MercurialEclipse.menu.FlagPropertyTester"
              id="com.vectrace.MercurialEclipse.propertyTester"
              namespace="com.vectrace.MercurialEclipse.propertyTester"
-             properties="status, root"
+             properties="status, root, hasDefaultRepo"
              type="org.eclipse.core.resources.IResource">
           </propertyTester>
     </extension>
@@ -166,6 +166,17 @@
                               property="com.vectrace.MercurialEclipse.propertyTester.root"
                               args="false">
                        </test>                    
+                   </adapt>
+            </iterate>
+        </definition>
+        
+        <definition id="com.vectrace.MercurialEclipse.def.hasDefaultRepo">
+            <iterate ifEmpty="false">
+                  <adapt type="org.eclipse.core.resources.IProject">
+                        <test
+                              property="com.vectrace.MercurialEclipse.propertyTester.hasDefaultRepo"
+                              args="true">
+                        </test>                           
                    </adapt>
             </iterate>
         </definition>
@@ -760,6 +771,9 @@
                          </reference>
                          <reference
                                definitionId="com.vectrace.MercurialEclipse.def.project">
+                         </reference>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.hasDefaultRepo">
                          </reference>
                       </and>
                    </visibleWhen>
