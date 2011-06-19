@@ -55,8 +55,10 @@ import org.eclipse.ui.ide.ResourceUtil;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -659,9 +661,28 @@ public final class ResourceUtils {
 		List<IResource> resources = new ArrayList<IResource>();
 		List<?> list = selection.toList();
 		for (Object object : list) {
-			IResource resource = getResource(object);
-			if(resource != null && !resources.contains(resource)){
-				resources.add(resource);
+			if(object instanceof ChangeSet) {
+				Set<IFile> files = ((ChangeSet)object).getFiles();
+				for (IFile file : files) {
+					if(!resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+			} else if(object instanceof PathFromChangeSet) {
+				PathFromChangeSet pathFromChangeSet = (PathFromChangeSet) object;
+				Set<FileFromChangeSet> files = pathFromChangeSet.getFiles();
+				for (FileFromChangeSet ffc : files) {
+					IFile file = ffc.getFile();
+					if(file != null && !resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+
+			} else {
+				IResource resource = getResource(object);
+				if(resource != null && !resources.contains(resource)){
+					resources.add(resource);
+				}
 			}
 		}
 		return resources;

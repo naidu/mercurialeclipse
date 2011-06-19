@@ -6,7 +6,7 @@
  *
  * Contributors: Bastian Doetsch - implementation
  *     Zsolt Koppany (Intland)   - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - proxy support
  ******************************************************************************/
 

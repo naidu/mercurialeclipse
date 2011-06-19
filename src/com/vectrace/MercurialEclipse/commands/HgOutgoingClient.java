@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - implementation
- *     Andrei Loskutov (Intland) - bugfixes
+ *     Andrei Loskutov           - bugfixes
  *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;

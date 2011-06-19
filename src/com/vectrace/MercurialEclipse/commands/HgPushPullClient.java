@@ -119,9 +119,9 @@ public class HgPushPullClient extends AbstractClient {
 						(branch != null &&
 								HEADS_PATTERN.matcher(result).find())){
 
-					// inform user about new heads and ask if he wants to merge or rebase
-					UpdateJob.handleMultipleHeads(hgRoot, false);
-				}
+				// inform user about new heads and ask if he wants to merge or rebase
+				UpdateJob.handleMultipleHeads(hgRoot, false);
+			}
 			}
 
 			// doesn't matter how far we were: we have to trigger update of caches in case

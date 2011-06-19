@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 		bastian					  - implementation
- * 		Andrei Loskutov (Intland) - bugfixes
+ * 		Andrei Loskutov           - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -85,6 +85,7 @@ public class OutgoingPage extends IncomingPage {
 				return new TreeSet<ChangeSet>();
 			}
 		}
+
 	}
 
 	protected class OutgoingDoubleClickListener implements IDoubleClickListener {

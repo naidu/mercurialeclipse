@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *     Adam Berkes (Intland) - repository location handling
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 

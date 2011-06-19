@@ -53,6 +53,7 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 			if (selection == null) {
 				selection = ResourceUtils.getActiveResourceFromEditor();
 			}
+
 			run(getSelectedResource());
 		} catch (Exception e) {
 			MessageDialog

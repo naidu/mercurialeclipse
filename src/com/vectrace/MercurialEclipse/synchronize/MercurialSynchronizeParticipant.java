@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch				- implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov              - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -131,7 +131,6 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
 				repositoryLocation);
 		restoredProjects = new HashSet<IProject>();
-
 		for (String pName : projectNames) {
 			if(pName.length() == 0){
 				continue;
