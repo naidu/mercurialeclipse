@@ -499,6 +499,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
 		}
 
+		env.put("HGE_RUNDIR", getRunDir());
+
 		// removing to allow using eclipse merge editor
 		builder.environment().remove("HGMERGE");
 
@@ -729,6 +731,24 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	protected abstract String getExecutable();
+
+	private String getRunDir()
+	{
+		String sDir = getExecutable();
+		int i;
+
+		if (sDir != null)
+		{
+			i = Math.max(sDir.lastIndexOf('\\'), sDir.lastIndexOf('/'));
+
+			if (i >= 0)
+			{
+				return sDir.substring(0, i);
+			}
+		}
+
+		return "";
+	}
 
 	/**
 	 * Add a file. Need not be canonical, but will try transform to canonical.
