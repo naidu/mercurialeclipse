@@ -41,10 +41,16 @@ which are bad for Eclipse plugin, because it relies sometimes on EXACT hg output
 On a german PC it would simply sometimes not work... Default *hardcoded* hg language
 used by plugin is english and does not require anything from "locale".
 
-8) Also delete unins000.dat file, which is created by the installer and which contains
+8) (For Hg 1.7.3 and above) Open hgeclipseFragment_win32/os/win32/hgrc.d/Paths.rc. 
+Repace the line, "cacerts=...\cacert.pem", with
+"cacerts=%HGE_RUNDIR%\hgrc.d\cacert.pem" (without quote)
+This line sets the path to CA root certificates. MercurialEclipse will set environment variable
+%HGE_RUNDIR% to the hg.exe install path at runtime.
+
+9) Also delete unins000.dat file, which is created by the installer and which contains
 local PC data required to uninstall hg.
 
-9) Check the META-INF/MANIFEST.MF file in the fragment project. The file should look like:
+10) Check the META-INF/MANIFEST.MF file in the fragment project. The file should look like:
 -------------
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
@@ -61,11 +67,11 @@ Please notice 3 important things:
 - "Fragment-Host: ... " - must match hgeclipse plugin version
 - "Eclipse-PlatformFilter: (osgi.os=win32)" -  it MUST contain right platform filter
 
-10) Create a "feature" project with Eclipse wizard. This is required for the update site.
+11) Create a "feature" project with Eclipse wizard. This is required for the update site.
 As name, use something like "hgeclipseFragmentFeature_win32". Feature ID must be unique,
 so it can be something like "hgeclipse_win32".
 
-11) Check the feature.xml in the feature project. The file should look like:
+12) Check the feature.xml in the feature project. The file should look like:
 -------------
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
@@ -100,7 +106,7 @@ Please notice 4 important things:
 	hg binaries in a jar and deploy it so to the target Eclipse platform. In this case
 	hg will not be able to find all required files etc. So we MUST set unpack="true".
 
-12) Now, in the update site of your choice, add something like this:
+13) Now, in the update site of your choice, add something like this:
 
 <feature url="features/hgeclipse_win32_1.3.1.jar" id="hgeclipse_win32" version="1.3.1" os="win32">
 	<category name="HgEclipse"/>
@@ -123,7 +129,7 @@ Again, important to consider is:
 - feature must have a platform filter, like os="win32". Otherwise Linux users would try to
 	install the Windows version, which will be a little bit disappointing for them at the end.
 
-13) So now we are ready to build: open site.xml with Eclipse default site editor, click
+14) So now we are ready to build: open site.xml with Eclipse default site editor, click
 on "hgeclipse_win32" entry and then on "Build" button. This would trigger the generation
 of the fragment and feature jars.
 
