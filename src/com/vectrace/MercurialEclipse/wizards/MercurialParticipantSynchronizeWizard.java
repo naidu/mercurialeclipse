@@ -7,12 +7,13 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -123,7 +124,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	public IWizardPage getStartingPage() {
-		return  /*getRootResources().length > 0 ?*/ selectionPage; // : importWizard.getStartingPage();
+		return  selectionPage;
 	}
 
 	private ConfigurationWizardMainPage createrepositoryConfigPage() {
@@ -240,24 +241,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			}
 		}
 		if(performFinish && createdParticipant != null) {
-			startSync();
+			openSyncView(createdParticipant);
 		}
 		return performFinish;
 	}
 
-	private void startSync() {
+	public static void openSyncView(MercurialSynchronizeParticipant participant) {
 		TeamUI.getSynchronizeManager().addSynchronizeParticipants(
-				new ISynchronizeParticipant[] { createdParticipant });
+				new ISynchronizeParticipant[] { participant });
 		// We don't know in which site to show progress because a participant could actually be
 		// shown in multiple sites.
-		createdParticipant.run(null /* no site */);
+		participant.run(null /* no site */);
 	}
 
 	protected MercurialSynchronizeParticipant createParticipant(List<Map<String, Object>> properties, IProject[] selectedProjects) {
 
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
-		Set<HgRoot> roots = byRoot.keySet();
 
 		Set<IHgRepositoryLocation> repos = new TreeSet<IHgRepositoryLocation>();
 		for (Map<String, Object> prop : properties) {
@@ -290,6 +289,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			}
 		}
 
+		return createParticipant(repos, selectedProjects);
+	}
+
+	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo,
+			IProject[] selectedProjects) {
+		return createParticipant(Collections.singleton(repo), selectedProjects);
+	}
+
+	public static MercurialSynchronizeParticipant createParticipant(Set<IHgRepositoryLocation> repos,
+			IProject[] selectedProjects) {
+
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
+		Set<HgRoot> roots = byRoot.keySet();
+
+		/*ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
+				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());*/
 		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
 
 		// do not reuse participants which may already existing, not doing this would lead to the state where many sync. participants would listen
@@ -339,6 +354,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 							// add project as a root of resource
 							roots.add(project);
 						}
+					}
+					if(roots.isEmpty()) {
+						roots.add((IProject) iResource);
 					}
 				}
 			}

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -17,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -27,21 +29,33 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 public class HgQRefreshClient extends AbstractClient {
 	public static String refresh(HgRoot root, boolean shortFlag, List<IResource> files,
 			String message, boolean currentDate) throws HgException {
-		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
+		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		if (shortFlag) {
 			command.addOptions("-s"); //$NON-NLS-1$
 		}
+
+		File messageFile = null;
+
 		if (message != null && message.length() > 0) {
-			command.addOptions("-m", message); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, message);
 		}
+
 		if (currentDate) {
 			command.addOptions("--currentdate");
 		}
 		command.addFiles(files);
-		return command.executeToString();
+
+		try
+		{
+			return command.executeToString();
+		}
+		finally
+		{
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 
 	public static String refresh(IResource resource, String commitMessage, boolean force,

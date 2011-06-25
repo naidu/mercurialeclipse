@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 		Bastian Doetsch	implementation
- * 		Andrei Loskutov (Intland) - bugfixes
+ * 		Andrei Loskutov - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -31,11 +31,11 @@ import org.xml.sax.SAXException;
 
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
@@ -62,19 +62,19 @@ final class ChangesetContentHandler implements ContentHandler {
 	private String author;
 	private String parents;
 	private String description;
-	private StringBuilder descriptionChars;
-	private boolean readDescription;
+	private StringBuilder cDataChars;
+	private boolean readCdata;
 	private final IPath res;
 	private final Direction direction;
 	private final IHgRepositoryLocation repository;
 	private final File bundleFile;
 	private final HgRoot hgRoot;
 	private final Map<IPath, Set<ChangeSet>> fileRevisions;
-	private final Set<String> filesModified;
-	private final Set<String> filesAdded;
-	private final Set<String> filesRemoved;
-	private final Map<String, String> filesCopied; // destination -> source
-	private final Map<String, String> filesMoved; // destination -> source
+	private Set<String> filesModified;
+	private Set<String> filesAdded;
+	private Set<String> filesRemoved;
+	private Map<String, String> filesCopied; // destination -> source
+	private Map<String, String> filesMoved; // destination -> source
 	private Action action;
 	private String prevNodeShort;
 	private int prevRev;
@@ -95,11 +95,23 @@ final class ChangesetContentHandler implements ContentHandler {
 		this.expectedBranch = branch;
 		repoPath = new Path(hgRoot.getPath());
 		fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
+	}
+
+	private boolean hasFileData()
+	{
+		return filesModified != null;
+	}
+
+	private void initFileData()
+	{
+		if (!hasFileData())
+		{
 		filesModified = new TreeSet<String>();
 		filesAdded = new TreeSet<String>();
 		filesRemoved = new TreeSet<String>();
 		filesCopied = new TreeMap<String, String>();
 		filesMoved = new TreeMap<String, String>();
+	}
 	}
 
 	private static String replaceAll(Pattern p, String source, String replacement){
@@ -131,8 +143,8 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	public void characters(char[] ch, int start, int length) {
-		if(readDescription) {
-			descriptionChars.append(ch, start, length);
+		if(readCdata) {
+			cDataChars.append(ch, start, length);
 		}
 	}
 
@@ -142,7 +154,11 @@ final class ChangesetContentHandler implements ContentHandler {
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
 		if ("de".equals(name)) {
-			description = descriptionChars.toString();
+			description = cDataChars.toString();
+		} else if ("br".equals(name)) {
+			branchStr = cDataChars.toString();
+		} else if ("tg".equals(name)) {
+			tags = cDataChars.toString();
 		} else if ("cs".equals(name)) {
 			// only collect changesets from requested branch. Null is: collect everything.
 			if(expectedBranch == null || Branch.same(branchStr, expectedBranch)){
@@ -157,6 +173,8 @@ final class ChangesetContentHandler implements ContentHandler {
 				csb.direction(direction);
 				csb.repository(repository);
 
+				if (hasFileData())
+				{
 				List<FileStatus> list = new ArrayList<FileStatus>(
 						filesModified.size() + filesAdded.size() + filesRemoved.size());
 				for (String file : filesModified) {
@@ -176,6 +194,7 @@ final class ChangesetContentHandler implements ContentHandler {
 					list.add(new FileStatus(FileStatus.Action.MOVED, entry.getKey(), entry.getValue(), hgRoot));
 				}
 				csb.changedFiles(list.toArray(new FileStatus[list.size()]));
+				}
 
 				ChangeSet changeSet = csb.build();
 
@@ -183,11 +202,13 @@ final class ChangesetContentHandler implements ContentHandler {
 				addChangesetToResourceMap(changeSet);
 			}
 
+			if (hasFileData()) {
 			filesModified.clear();
 			filesAdded.clear();
 			filesRemoved.clear();
 			filesCopied.clear();
 			filesMoved.clear();
+			}
 			prevRev = rev;
 			prevNodeShort = nodeShort;
 		}
@@ -240,11 +261,15 @@ final class ChangesetContentHandler implements ContentHandler {
 		 * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
 		 * <de>{desc|escape|tabindent}</de>
 		 */
-		readDescription = false;
+		readCdata = false;
 		if ("br".equals(name)) {
-			branchStr = atts.getValue(0);
+			branchStr = null;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("tg".equals(name)) {
-			tags = atts.getValue(0);
+			tags = null;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("rv".equals(name)) {
 			rev = Integer.parseInt(atts.getValue(0));
 		} else if ("ns".equals(name)) {
@@ -259,15 +284,19 @@ final class ChangesetContentHandler implements ContentHandler {
 			parents = atts.getValue(0);
 		} else if ("de".equals(name)) {
 			description = null;
-			descriptionChars = new StringBuilder(42);
-			readDescription = true;
+			cDataChars = new StringBuilder(42);
+			readCdata = true;
 		} else if ("fl".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.MODIFIED;
 		} else if ("fa".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.ADDED;
 		} else if ("fd".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.REMOVED;
 		} else if ("fc".equals(name)) {
+			initFileData();
 			action = FileStatus.Action.COPIED;
 		} else if ("f".equals(name)) {
 			if (action == Action.MODIFIED) {

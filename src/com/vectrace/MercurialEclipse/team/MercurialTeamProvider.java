@@ -50,6 +50,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -124,6 +125,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	public void configureProject() throws CoreException {
 		IProject project = getProject();
 		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(project);
+		if(hgRoot == null) {
+			String msg = "No hg repository found for project '" + project.getName() + "', "
+					+ "located at: " + project.getLocation();
+			throw new CoreException(MercurialEclipsePlugin.createStatus(
+					msg, 0, IStatus.ERROR, new IllegalStateException(msg)));
+		}
 		setRepositoryEncoding(project, hgRoot);
 		// try to find .hg directory to set it as private member
 		final IResource hgDir = project.getFolder(".hg"); //$NON-NLS-1$
@@ -139,7 +146,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		}
 	}
 
-	private void setTeamPrivate(final IResource hgDir) throws CoreException {
+	private static void setTeamPrivate(final IResource hgDir) throws CoreException {
 		if (!hgDir.exists()) {
 			if (ResourceUtils.getFileHandle(hgDir).exists()) {
 				Job refreshJob = new Job("Refreshing .hg folder") {
@@ -170,7 +177,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	/**
 	 * @param hgRoot non null
 	 */
-	private void loadRootRepos(final HgRoot hgRoot) {
+	private static void loadRootRepos(final HgRoot hgRoot) {
 		Job job = new Job("Reading root repositories") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -218,7 +225,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 *         (if an error occurred or project is closed).
 	 */
 	public static boolean isHgTeamProviderFor(IProject project){
-		return MercurialRootCache.isHgTeamProviderFor(project);
+		return project instanceof IHgResource
+				|| MercurialRootCache.isHgTeamProviderFor(project);
 	}
 
 	/**
@@ -239,7 +247,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		}
 
 		// if we are team provider, this project can't be linked :-).
-		if (resource instanceof IProject) {
+		if (resource instanceof IProject || resource instanceof IHgResource) {
 			return true;
 		}
 
@@ -385,7 +393,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return null;
 		}
 
-		return MercurialRootCache.getInstance().hasHgRoot(resource, false);
+		return MercurialRootCache.getInstance().hasHgRoot(resource, true);
 	}
 
 	/**

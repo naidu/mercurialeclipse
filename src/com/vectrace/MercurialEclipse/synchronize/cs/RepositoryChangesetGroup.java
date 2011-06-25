@@ -21,7 +21,6 @@ import org.eclipse.team.internal.core.subscribers.ChangeSet;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * @author Soren Mathiasen
@@ -32,15 +31,12 @@ public class RepositoryChangesetGroup implements IAdaptable {
 	private final String name;
 	private ChangesetGroup incoming;
 	private ChangesetGroup outgoing;
-	private final WorkingChangeSet uncommittedSet;
 	private final IHgRepositoryLocation location;
 	private List<IProject> projects;
 
-	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location,
-			WorkingChangeSet uncommittedSet) {
+	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location) {
 		this.name = name;
 		this.location = location;
-		this.uncommittedSet = uncommittedSet;
 	}
 
 	public String getName() {
@@ -108,13 +104,6 @@ public class RepositoryChangesetGroup implements IAdaptable {
 	 */
 	public IHgRepositoryLocation getLocation() {
 		return location;
-	}
-
-	/**
-	 * @return the uncommittedSet
-	 */
-	public WorkingChangeSet getUncommittedSet() {
-		return uncommittedSet;
 	}
 
 	/**

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)   - bug fixes
  *     Philip Graf               - bug fix
  *******************************************************************************/

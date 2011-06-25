@@ -6,22 +6,29 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.compare.structuremergeviewer.Differencer;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.FilteredPlaceholder;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
@@ -38,34 +45,38 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		Image image = null;
 		if (element instanceof ChangeSet) {
 			image = MercurialEclipsePlugin.getImage("elcl16/changeset_obj.gif");
-		} else if (element instanceof ChangesetGroup) {
+		} else if (element instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) element;
-			if (group.getDirection() == Direction.OUTGOING) {
+			if(group.getDirection() == Direction.OUTGOING){
 				image = MercurialEclipsePlugin.getImage("actions/commit.gif");
 			} else {
 				image = MercurialEclipsePlugin.getImage("actions/update.gif");
 			}
-		} else {
-			ISharedImages sharedImages = PlatformUI.getWorkbench().getSharedImages();
-			if (element instanceof FileFromChangeSet) {
-				FileFromChangeSet file = (FileFromChangeSet) element;
-				if (file.getFile() != null) {
-					image = getDelegateLabelProvider().getImage(file.getFile());
-				} else {
-					image = sharedImages.getImage(ISharedImages.IMG_OBJ_FILE);
-				}
-			} else if (element instanceof PathFromChangeSet) {
-				image = sharedImages.getImage(ISharedImages.IMG_OBJ_FOLDER);
-			} else if (element instanceof RepositoryChangesetGroup) {
-				image = sharedImages.getImage(org.eclipse.ui.ide.IDE.SharedImages.IMG_OBJ_PROJECT);
+		} else if(element instanceof FileFromChangeSet){
+			FileFromChangeSet file = (FileFromChangeSet) element;
+			if(file.getFile() != null){
+				image = getDelegateLabelProvider().getImage(file.getFile());
 			} else {
-				try {
-					image = super.getDelegateImage(element);
-				} catch (NullPointerException npex) {
-					// if element is invalid or not yet fully handled
-					// NPE is possible
-					MercurialEclipsePlugin.logError(npex);
-				}
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
+			}
+		} else if (element instanceof PathFromChangeSet) {
+			PathFromChangeSet path = (PathFromChangeSet) element;
+			if(path.isProjectClosed()) {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(
+						IDE.SharedImages.IMG_OBJ_PROJECT_CLOSED);
+			} else {
+			image = PlatformUI.getWorkbench().getSharedImages().getImage(
+					ISharedImages.IMG_OBJ_FOLDER);
+			}
+		} else if (element instanceof RepositoryChangesetGroup) {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(org.eclipse.ui.ide.IDE.SharedImages.IMG_OBJ_PROJECT);
+		} else {
+			try {
+				image = super.getDelegateImage(element);
+			} catch (NullPointerException npex) {
+				// if element is invalid or not yet fully handled
+				// NPE is possible
+				MercurialEclipsePlugin.logError(npex);
 			}
 		}
 		return image;
@@ -78,10 +89,34 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			FileFromChangeSet ffc = (FileFromChangeSet) element;
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
+		} else if (element instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) element;
+			if(group.getDirection() == Direction.LOCAL){
+				decoratedImage = getImageManager().getImage(base, Differencer.CHANGE);
+			} else {
+				decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
+			}
+		} else if(element instanceof WorkingChangeSet) {
+			WorkingChangeSet cs = (WorkingChangeSet) element;
+			if(cs.isDefault()) {
+				decoratedImage = getDefaultChangesetIcon();
+			} else {
+				decoratedImage = getWorkingChangesetIcon();
+			}
 		} else {
 			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
 		return decoratedImage;
+	}
+
+	public static Image getDefaultChangesetIcon() {
+		return MercurialEclipsePlugin.getImage("elcl16/uncommitted_cs.gif", "ovr/pinned_ovr.gif",
+				IDecoration.TOP_RIGHT);
+	}
+
+	public static Image getWorkingChangesetIcon() {
+		return MercurialEclipsePlugin.getImage("elcl16/uncommitted_cs.gif", "ovr/edited_ovr.gif",
+				IDecoration.TOP_RIGHT);
 	}
 
 	@Override
@@ -98,13 +133,14 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 				sb.append(" [").append(cset.getAuthor()).append(']');
 				sb.append(" (").append(cset.getAgeDate()).append(')');
-				if (!StringUtils.isEmpty(cset.getBranch()) && !"default".equals(cset.getBranch())) {
-					sb.append(' ').append(cset.getBranch()).append(':');
-				}
-				sb.append(' ').append(getShortComment(cset));
 			} else {
-				sb.append(cset.toString());
+				sb.append(cset.getName());
+				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
+			if (!Branch.isDefault(cset.getBranch())) {
+				sb.append(' ').append(cset.getBranch());
+			}
+			sb.append(':').append(' ').append(getShortComment(cset));
 			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){
@@ -113,12 +149,22 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			if(group.getChangesets().isEmpty()){
 				return name + " (empty)";
 			}
+			if(group.getDirection() == Direction.LOCAL) {
+				int files = 0;
+				for (ChangeSet cs : group.getChangesets()) {
+					files += cs.getChangesetFiles().length;
+				}
+				if(files == 0) {
+					return name + " (empty)";
+				}
+				return name + " (" + files + ')';
+			}
 			return name + " (" + group.getChangesets().size() + ')';
 		}
 		if(elementOrPath instanceof RepositoryChangesetGroup){
 			RepositoryChangesetGroup group = (RepositoryChangesetGroup) elementOrPath;
 			String name = group.getName();
-			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty() && group.getUncommittedSet().getChangesetFiles().length == 0){
+			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
 				return name + " (empty)";
 			}
 			name += "   [ ";
@@ -127,9 +173,6 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 			if(!group.getOutgoing().getChangesets().isEmpty()) {
 				name += " outgoing("+group.getOutgoing().getChangesets().size()+")";
-			}
-			if(group.getUncommittedSet().getChangesetFiles().length > 0) {
-				name += " Uncommited("+group.getUncommittedSet().getChangesetFiles().length+")";
 			}
 			name += " ]";
 			return name;
@@ -140,6 +183,10 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			String delegateText;
 			if(file.getFile() != null) {
 				delegateText = super.getDelegateText(file.getFile());
+				IProject project = file.getFile().getProject();
+				if(!project.isOpen()) {
+					delegateText += " (closed!)";
+				}
 			} else {
 				delegateText = file.toString();
 			}
@@ -153,6 +200,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 			return delegateText;
 		} else if (elementOrPath instanceof PathFromChangeSet) {
+			return elementOrPath.toString();
+		} else if (elementOrPath instanceof FilteredPlaceholder) {
 			return elementOrPath.toString();
 		}
 		String delegateText = super.getDelegateText(elementOrPath);
@@ -173,4 +222,17 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		return comment;
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.synchronize.AbstractSynchronizeLabelProvider#getFont(java.lang.Object)
+	 */
+	@Override
+	public Font getFont(Object element) {
+		if(element instanceof WorkingChangeSet) {
+			WorkingChangeSet cs = (WorkingChangeSet) element;
+			if(cs.isDefault()) {
+				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
+			}
+		}
+		return super.getFont(element);
+	}
 }

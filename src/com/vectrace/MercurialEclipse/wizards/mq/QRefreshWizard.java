@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQHeaderClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
@@ -69,10 +70,14 @@ public class QRefreshWizard extends HgWizard {
 								.getUserTextField().getText(), page.getDate()
 								.getText());
 				monitor.worked(1);
-				new RefreshRootJob(MercurialTeamProvider.getHgRoot(resource), RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
-				monitor.done();
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+				if(hgRoot != null) {
+					new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+				}
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
+			} finally {
+				monitor.done();
 			}
 		}
 

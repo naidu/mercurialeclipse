@@ -8,13 +8,12 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Ilya Ivanov (Intland) 	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.ui.PlatformUI;
+import java.util.regex.Pattern;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -28,6 +27,11 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgPushPullClient extends AbstractClient {
 
+	/**
+	 * matches ("number" "heads") message
+	 */
+	private static final Pattern HEADS_PATTERN = Pattern.compile("\\(\\+\\d+\\sheads\\)");
+
 	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout) throws HgException {
 		return push(hgRoot, repo, force, changeset, timeout, null);
@@ -39,6 +43,8 @@ public class HgPushPullClient extends AbstractClient {
 				makeDescription("Pushing", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
+
+		addInsecurePreference(command);
 
 		if (force) {
 			command.addOptions("--force"); //$NON-NLS-1$
@@ -67,18 +73,20 @@ public class HgPushPullClient extends AbstractClient {
 		return pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null);
 	}
 
-	public static String pull(final HgRoot hgRoot, ChangeSet changeset,
+	public static String pull(HgRoot hgRoot, ChangeSet changeset,
 			IHgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout, boolean merge, String branch) throws HgException {
-		//TODO Add fetch like behavior
+
 		HgCommand command = new HgCommand("pull", //$NON-NLS-1$
 				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
-		/*if (update) {
+		addInsecurePreference(command);
+
+		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
 			addMergeToolPreference(command);
-		} else */if (rebase) {
+		} else if (rebase) {
 			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 			command.addOptions("--rebase"); //$NON-NLS-1$
 			addMergeToolPreference(command);
@@ -105,20 +113,15 @@ public class HgPushPullClient extends AbstractClient {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
 		} finally {
-			HgUpdateClient.update(hgRoot, null, false);
-			if (result != null && result.contains("use 'hg resolve' to retry unresolved file merges")) {
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			if (update && result != null && !merge && !rebase) {
+				// different messages from hg depending on if branch was set or not
+				if(result.contains("not updating, since new heads added") ||
+						(branch != null &&
+								HEADS_PATTERN.matcher(result).find())){
 
-					public void run() {
-						MessageDialog.openInformation(null, "Unresolved conflicts",
-								"You have unresolved conflicts after update. Use Synchronize View to edit conflicts");
-					}
-				});
-			}
-			if (update && result != null && result.contains("not updating, since new heads added")
-					&& !merge && !rebase) {
 				// inform user about new heads and ask if he wants to merge or rebase
 				UpdateJob.handleMultipleHeads(hgRoot, false);
+			}
 			}
 
 			// doesn't matter how far we were: we have to trigger update of caches in case

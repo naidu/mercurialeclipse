@@ -13,10 +13,10 @@ package com.vectrace.MercurialEclipse.team.cache;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * Exclusive rule for locking access to the resources related to same hg root.
@@ -36,6 +36,13 @@ public class HgRootRule implements ISchedulingRule {
 	}
 
 	public boolean contains(ISchedulingRule rule) {
+		if (rule instanceof IResource) {
+			IResource resource = (IResource) rule;
+			IPath location = resource.getLocation();
+			if(location != null) {
+				return hgRoot.getIPath().isPrefixOf(location);
+			}
+		}
 		return isConflicting(rule);
 	}
 
@@ -51,7 +58,7 @@ public class HgRootRule implements ISchedulingRule {
 			if (rule instanceof IResource) {
 				// hasHgRoot() returns cached value, if any (see issue 13474, 13497)
 				// if the value is not yet cached, we don't care
-				HgRoot resourceRoot = MercurialTeamProvider.hasHgRoot((IResource) rule);
+				HgRoot resourceRoot = MercurialRootCache.getInstance().hasHgRoot((IResource) rule, false, false);
 				if(resourceRoot == null) {
 					return false;
 				}

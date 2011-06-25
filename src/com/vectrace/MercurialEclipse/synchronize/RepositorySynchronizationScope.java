@@ -6,9 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *     Martin Olsen (Schantz) 	 - Synchronization of Multiple repositories
-
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 

@@ -53,6 +53,8 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
+
+	static final String EDIT_CHANGESET_ACTION = "hg.editChangeset";
 	private static final String HG_COMMIT_GROUP = "hg.commit";
 	private static final String HG_PUSH_PULL_GROUP = "hg.push.pull";
 
@@ -61,6 +63,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
 	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 
+	public static final String HG_CHANGESETS_GROUP = "hg.changesets";
 	private final IAction expandAction;
 
 	private IAction pullUpdateAllAction;
@@ -104,7 +107,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		for (PresentationMode mode : PresentationMode.values()) {
 			presentationModeActions.add(new PresentationModeAction(mode, MercurialEclipsePlugin
 					.getDefault().getPreferenceStore()));
-		}
+	}
 
 		allBranchesAction = new PreferenceAction("Synchronize all branches", IAction.AS_CHECK_BOX, MercurialEclipsePlugin
 				.getDefault().getPreferenceStore(), MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH) {
@@ -165,17 +168,39 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		pullUpdateAllAction = new PushPullSynchronizeAction("Pull and Update", configuration, getVisibleRootsSelectionProvider(), true, true);
 		pushAllAction = new PushPullSynchronizeAction("Push all", configuration, getVisibleRootsSelectionProvider(), false, false);
-	}
+		
+		
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_CHANGESETS_GROUP,
+				new CreateNewChangesetSynchronizeAction("Create New Change Set",
+						configuration, getVisibleRootsSelectionProvider()));
 
+		EditChangesetSynchronizeAction editAction = new EditChangesetSynchronizeAction("Edit Change Set...",
+				configuration, getVisibleRootsSelectionProvider());
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_CHANGESETS_GROUP,
+				editAction);
+		// remember action to allow OpenAction re-use it on double click
+		configuration.setProperty(EDIT_CHANGESET_ACTION, editAction);
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_CHANGESETS_GROUP,
+				new SetDefaultChangesetSynchronizeAction("Set as Default Change Set",
+						configuration, getVisibleRootsSelectionProvider()));
+	}
 
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
-		if (menu.find(DeleteAction.HG_DELETE_GROUP) == null) {
+		if(menu.find(DeleteAction.HG_DELETE_GROUP) == null){
 			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
 					DeleteAction.HG_DELETE_GROUP));
 		}
-		if (menu.find(HG_COMMIT_GROUP) == null) {
+		if(menu.find(HG_COMMIT_GROUP) == null){
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
+		}
+		if(menu.find(HG_CHANGESETS_GROUP) == null){
+			menu.insertAfter(ISynchronizePageConfiguration.EDIT_GROUP, new Separator(HG_CHANGESETS_GROUP));
 		}
 		if (menu.find(HG_PUSH_PULL_GROUP) == null) {
 			menu.insertAfter(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(HG_PUSH_PULL_GROUP));

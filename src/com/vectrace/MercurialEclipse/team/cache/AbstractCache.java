@@ -7,7 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -137,7 +137,7 @@ public abstract class AbstractCache extends Observable {
 	protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
 		class ExclusiveRule implements ISchedulingRule {
 			public boolean contains(ISchedulingRule rule) {
-				return isConflicting(rule);
+				return isConflicting(rule) || rule instanceof IResource || rule instanceof HgRootRule;
 			}
 			public boolean isConflicting(ISchedulingRule rule) {
 				return rule instanceof ExclusiveRule;

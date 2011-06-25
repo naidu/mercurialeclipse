@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch	- implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Ilya Ivanov (Intland) - modifications
  *     Zsolt Koppany (Intland)
  *******************************************************************************/

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Andrei Loskutov (Intland).
+ * Copyright (c) 2010 Andrei Loskutov.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
@@ -105,12 +106,11 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 		return null;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if (adapter == IWorkbenchAdapter.class) {
 			return this;
 		}
-		if (adapter == IResource.class || adapter == IFile.class) {
+		if (adapter == IResource.class || adapter == IFile.class || adapter == IProject.class) {
 			try {
 				IResource resource = ResourceUtils.convert(this);
 				if (adapter == IFile.class && !(resource instanceof IFile)) {
@@ -150,25 +150,20 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 	 *         returns an empty string
 	 */
 	public String toRelative(File child) {
-		// first try with the unresolved path. In most cases it's enough
-		String fullPath = child.getAbsolutePath();
-		if (!fullPath.startsWith(getPath())) {
-			try {
-				// ok, now try to resolve all the links etc. this takes A LOT of time...
-				fullPath = child.getCanonicalPath();
-				if (!fullPath.startsWith(getPath())) {
-					return child.getPath();
-				}
-			} catch (IOException e) {
-				MercurialEclipsePlugin.logError(e);
-				return child.getPath();
-			}
-		}
-		if(fullPath.equals(getPath())){
-			return Path.EMPTY.toOSString();
-		}
-		// +1 is to remove the file separator / at the start of the relative path
-		return fullPath.substring(getPath().length() + 1);
+		return ResourceUtils.toRelative(this, child);
+	}
+
+	/**
+	 * Converts given path to the relative
+	 *
+	 * @param child
+	 *            a possible child path, non null
+	 * @return a hg root relative path of a given file, if the given file is located under this
+	 *         root, otherwise the path of a given file. If the given path matches the root,
+	 *         returns an empty string
+	 */
+	public IPath toRelative(IPath child) {
+		return child.makeRelativeTo(getIPath());
 	}
 
 	/**

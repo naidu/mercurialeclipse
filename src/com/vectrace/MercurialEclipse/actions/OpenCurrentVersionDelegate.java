@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Ilya Ivanov	implementation
+ *     Andrei Loskutov         - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -16,11 +17,9 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.ide.IDE;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * This delegate is used for object contribution to context menus.
@@ -32,16 +31,9 @@ public class OpenCurrentVersionDelegate implements IObjectActionDelegate {
 	private IWorkbenchPart targetPart;
 
 	public void run(IAction action) {
-		try {
-			IDE.openEditor(targetPart.getSite().getPage(), fileFromChangeSet.getFile());
-		} catch (PartInitException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		ResourceUtils.openEditor(targetPart.getSite().getPage(), fileFromChangeSet.getFile());
 	}
 
-	/**
-	 * @see org.eclipse.ui.IActionDelegate#selectionChanged(org.eclipse.jface.action.IAction, org.eclipse.jface.viewers.ISelection)
-	 */
 	public void selectionChanged(IAction action, ISelection newSelection) {
 		action.setEnabled(false);
 		if (newSelection instanceof IStructuredSelection) {
@@ -58,9 +50,6 @@ public class OpenCurrentVersionDelegate implements IObjectActionDelegate {
 		}
 	}
 
-	/**
-	 * @see org.eclipse.ui.IObjectActionDelegate#setActivePart(org.eclipse.jface.action.IAction, org.eclipse.ui.IWorkbenchPart)
-	 */
 	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
 		this.targetPart = targetPart;
 	}

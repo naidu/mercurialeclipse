@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Andrei Loskutov (Intland) - implementation
+ *     Andrei Loskutov - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 

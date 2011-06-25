@@ -10,7 +10,7 @@
  *     Bastian Doetsch              - adaptions&additions
  *     Adam Berkes (Intland)        - repository location handling
  *     Zsolt Koppany (Intland)		- bug fixes
- *     Andrei Loskutov (Intland)	- bug fixes
+ *     Andrei Loskutov	- bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -518,6 +518,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 	public void setShowBundleButton(boolean showBundleButton) {
 		this.showBundleButton = showBundleButton;
+	}
+
+	protected boolean optionChanged() {
+		return urlChanged();
 	}
 
 	/**

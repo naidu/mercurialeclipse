@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 		Bastian Doetsch  -  implementation
- * 		Andrei Loskutov (Intland) - bug fixes
+ * 		Andrei Loskutov  - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -31,7 +31,11 @@ public class HgDebugInstallClient extends AbstractClient {
 	}
 
 	private static AbstractShellCommand getDebugInstallCommand() {
-		return new RootlessHgCommand("debuginstall", "Checking Mercurial installation");
+		return new RootlessHgCommand("debuginstall", "Checking Mercurial installation") {
+			{
+				isInitialCommand = startSignal.getCount() > 0;
+			}
+		};
 	}
 
 	/**

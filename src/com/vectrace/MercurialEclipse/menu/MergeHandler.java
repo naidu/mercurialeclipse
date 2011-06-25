@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Ilya Ivanov (Intland) - modification
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;

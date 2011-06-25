@@ -10,7 +10,7 @@
  *     Stefan Groschupf          - logError
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland)     - default encoding
  *     Philip Graf               - proxy support
@@ -19,14 +19,10 @@
 
 package com.vectrace.MercurialEclipse;
 
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH;
-
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,8 +40,9 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.operation.IRunnableWithProgress;
-import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.DecorationOverlayIcon;
+import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
@@ -114,18 +111,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private ServiceTracker proxyServiceTracker;
 
-	/**
-	 * The minimum hg version plugin needs, inclusive.
-	 * Please document new requirements here.
-	 * See also http://mercurial.selenic.com/wiki/WhatsNew.
-	 * --new-branch for push requires 1.6.0, but this is optional feature
-	 * --branch for incoming/outgoing/pull/push requires 1.5.0 (must have)
-	 */
-	private static final Version LOWEST_WORKING_VERSION = new Version(1, 5, 0);
-	private static final Version PREFERRED_VERSION = new Version(1, 6, 0);
-
-	/** permanently disabled hg options (due version limitations)*/
-	public static final Set<String> DISABLED_OPTIONS = new HashSet<String>();
+	/** Observed hg version */
+	public /*final*/ Version hgVersion = Version.emptyVersion;
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
@@ -142,7 +129,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		HgClients.initialize(cfg, cfg, cfg);
 		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
 		proxyServiceTracker.open();
-		Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
+
+		final Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
@@ -165,7 +153,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 					monitor.done();
 					return new Status(IStatus.OK, ID, Messages
 							.getString("MercurialEclipsePlugin.startedSuccessfully")); //$NON-NLS-1$
-				} catch (HgException e) {
+				} catch (Throwable e) {
 					hgUsable = false;
 					logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
 					return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);
@@ -193,8 +181,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			});
 		}
 
-		// start plugin
+		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
+		// Why JFaceResources wasn't initialized I don't know.
+		new SafeUiJob(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) {
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				try {
+					getImageRegistry();
+				} finally {
 		job.schedule();
+	}
+				return super.runSafe(monitor);
+			}
+		}.schedule();
 	}
 
 	/**
@@ -205,47 +204,81 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			hgUsable = true;
 			MercurialUtilities.getHGExecutable(true);
 			String result = HgDebugInstallClient.debugInstall();
-			if (result.endsWith("No problems detected")) { //$NON-NLS-1$
-				checkHgVersion();
-				hgUsable = true;
-				return;
+			hgVersion = checkHgVersion();
+			if (!result.endsWith("No problems detected")) { //$NON-NLS-1$
+				logInfo(result, null);
 			}
-		} catch (Exception e) {
+		} catch (Throwable e) {
+			hgUsable = false;
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
-			hgUsable = false;
+			hgVersion = Version.emptyVersion;
+		} finally {
+			AbstractShellCommand.hgInitDone();
+			if(isDebugging()) {
+				System.out.println(HgFeatures.printSummary());
+			}
 		}
+		}
+
+	/**
+	 * Plugin depends on native mercurial installation, which has to be checked at plugin startup.
+	 * Note that the right plugin state will be set only some time after plugin startup, so that in
+	 * a short time between plugin activation and
+	 * {@link MercurialEclipsePlugin#checkHgInstallation()} call plugin state might be not yet
+	 * initialized properly.
+	 *
+	 * @return true if we have already tried to identify mercurial version (independently if the
+	 *         check fails or not), false if plugin is still not yet initialized properly
+	 */
+	public static boolean isVersionCheckDone() {
+		MercurialEclipsePlugin mep = MercurialEclipsePlugin.getDefault();
+		return !mep.isHgUsable() || !mep.getHgVersion().equals(Version.emptyVersion);
 	}
 
-	private void checkHgVersion() throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version"); //$NON-NLS-1$
-		command.setShowOnConsole(false);
+	private Version checkHgVersion() throws HgException {
+		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version") {
+			{
+				isInitialCommand = startSignal.getCount() > 0;
+			}
+		};
+		Version preferredVersion = HgFeatures.getPreferredVersion();
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$
 		version = split.length > 0 ? split[0] : ""; //$NON-NLS-1$
 		Matcher matcher = VERSION_PATTERN.matcher(version);
-		if (matcher.matches()) {
-			version = matcher.group(1);
-			if (version != null && LOWEST_WORKING_VERSION.compareTo(new Version(version)) <= 0) {
-				if(PREFERRED_VERSION.compareTo(new Version(version)) <= 0) {
-					return;
-				}
-				DISABLED_OPTIONS.add("--new-branch");
-				IPreferenceStore store = getPreferenceStore();
-				store.setDefault(PREF_PUSH_NEW_BRANCH, false);
-				store.setValue(PREF_PUSH_NEW_BRANCH, false);
-				MercurialEclipsePlugin
-						.logWarning(
-								"Can not use some of the new Mercurial features, hg version greater equals "
-										+ PREFERRED_VERSION + " required, but " + version
-										+ " found. Permanently disabled options: "
-										+ DISABLED_OPTIONS + ".", null);
-				return;
-			}
-			throw new HgException(
-					Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") + version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$ //$NON-NLS-2$
-							+ LOWEST_WORKING_VERSION + "."); //$NON-NLS-1$
+		boolean failedToParse = !matcher.matches() || matcher.groupCount() <= 0
+				|| (version = matcher.group(1)) == null;
+		if (failedToParse) {
+			HgFeatures.setToVersion(preferredVersion);
+			HgFeatures.applyAllTo(getPreferenceStore());
+			logWarning("Can't uderstand Mercurial version string: '" + version
+					+ "'. Assume that at least " + preferredVersion + " is available.", null);
+			return preferredVersion;
 		}
+		Version detectedVersion = new Version(version);
+		HgFeatures.setToVersion(detectedVersion);
+		HgFeatures.applyAllTo(getPreferenceStore());
+		if (!HgFeatures.isSupported(detectedVersion)) {
+			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") //$NON-NLS-1$
+					+ version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$
+					+ HgFeatures.getLowestWorkingVersion() + "."); //$NON-NLS-1$
+				}
+		if (!HgFeatures.isHappyWith(detectedVersion)) {
+			logWarning("Can not use some of the new Mercurial features, "
+					+ "hg version greater equals " + preferredVersion + " required, but "
+					+ detectedVersion + " found. Features state:\n" + HgFeatures.printSummary() + ".",
+					null);
+			}
+		return detectedVersion;
+		}
+
+	/**
+	 * @return the observer hg version, never null. Returns {@link Version#emptyVersion} in case the
+	 *         hg version is either not detected yet or can't be parsed properly
+	 */
+	public Version getHgVersion() {
+		return hgVersion;
 	}
 
 	/**
@@ -307,13 +340,54 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * @return the image
 	 */
 	public static Image getImage(String path) {
-		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
-		if (descriptor == null) {
-			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
-			getDefault().getImageRegistry().put(path, descriptor);
-		}
+		// make sure descriptor is created
+		getImageDescriptor(path);
 		return getDefault().getImageRegistry().get(path);
 	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static Image getImage(String basePath, String overlayPath, int quadrant) {
+		getImageDescriptor(basePath, overlayPath, quadrant);
+		return getDefault().getImageRegistry().get(basePath + overlayPath + quadrant);
+	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static ImageDescriptor getImageDescriptor(String basePath, String overlayPath, int quadrant) {
+		String key = basePath + overlayPath + quadrant;
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(key);
+		if(descriptor == null) {
+			Image base = getImage(basePath);
+			ImageDescriptor overlay = getImageDescriptor(overlayPath);
+			descriptor = new DecorationOverlayIcon(base, overlay, quadrant);
+			getDefault().getImageRegistry().put(key, descriptor);
+		}
+		return descriptor;
+	}
+
 
 	public static final void logError(String message, Throwable error) {
 		getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));

@@ -7,7 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -48,6 +48,7 @@ public class PushRepoPage extends PushPullPage {
 								getPasswordText());
 				outgoingPage.setLocation(loc);
 				outgoingPage.setSvn(isSvnSelected());
+				outgoingPage.setForce(isForceSelected());
 				setErrorMessage(null);
 				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}

@@ -98,12 +98,10 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IStorageEditorInput;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -1020,11 +1018,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				if(file == null){
 					return;
 				}
-				try {
-					IDE.openEditor(getSite().getPage(), file);
-				} catch (PartInitException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				ResourceUtils.openEditor(getSite().getPage(), file);
 			}
 		};
 		return openEditorAction;

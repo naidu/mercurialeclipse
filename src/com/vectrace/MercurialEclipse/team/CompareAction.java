@@ -98,23 +98,11 @@ public class CompareAction extends SingleFileAction {
 					return Status.OK_STATUS;
 				}
 				try {
-					// get the predecessor version and compare current version with it
-					String[] parents = HgParentClient.getParentNodeIds(file);
-					ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file,
-							parents[0]);
-					if (cs != null && cs.getChangesetIndex() != 0) {
-						parents = cs.getParents();
-						if (parents == null || parents.length == 0) {
-							parents = HgParentClient.getParentNodeIds(file, cs);
-						}
-						if (parents != null && parents.length > 0) {
-							ChangeSet cs2 = LocalChangesetCache.getInstance()
-									.getOrFetchChangeSetById(file, parents[0]);
-							if (cs2 != null) {
-								CompareUtils.openEditor(file, cs2);
-								return Status.OK_STATUS;
-							}
-						}
+					ChangeSet cs = LocalChangesetCache.getInstance().getChangesetByRootId(file);
+
+					if (cs != null) {
+						CompareUtils.openEditor(file, MercurialUtilities.getParentRevision(cs, file), false, null);
+						return Status.OK_STATUS;
 					}
 				} catch (TeamException e) {
 					MercurialEclipsePlugin.logError(e);
@@ -157,7 +145,7 @@ public class CompareAction extends SingleFileAction {
 						}
 					});
 
-					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id otherId="+otherId+", ancestorId="+ancestorId+" file="+file.getName()));
+					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id"));
 					return;
 				}
 
@@ -175,7 +163,7 @@ public class CompareAction extends SingleFileAction {
 				int ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
 
 				mergeNode = new MercurialRevisionStorage(file, mergeNodeId);
-				ancestorNode = new MercurialRevisionStorage(file, ancestor);
+				ancestorNode = (ancestor <= 0) ? null : new MercurialRevisionStorage(file, ancestor);
 			}
 
 			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,

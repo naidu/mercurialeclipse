@@ -17,6 +17,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
@@ -37,13 +39,15 @@ public class CompareWithParentDelegate implements IObjectActionDelegate {
 		}
 		ChangeSet cs = fileFromChangeSet.getChangeset();
 		MercurialRevisionStorage left = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
-		MercurialRevisionStorage right;
-		if(fileFromChangeSet.isCopy()){
-			right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getCopySourceFile());
-		}else{
-			right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getFile());
+
+		try {
+			MercurialRevisionStorage right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getFile());
+
+			CompareUtils.openEditor(left, right, false);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
 		}
-		CompareUtils.openEditor(left, right, false);
 	}
 
 	/**

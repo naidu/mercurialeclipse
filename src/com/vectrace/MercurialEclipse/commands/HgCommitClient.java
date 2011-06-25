@@ -87,9 +87,8 @@ public class HgCommitClient extends AbstractClient {
 		if (closeBranch) {
 			command.addOptions("--close-branch");
 		}
-		File messageFile = saveMessage(message, command);
+		File messageFile = addMessage(command, message);
 		try {
-			addMessage(command, messageFile, message);
 			command.addFiles(files);
 			String result = command.executeToString();
 			command.rememberUserName();
@@ -99,11 +98,21 @@ public class HgCommitClient extends AbstractClient {
 		}
 	}
 
-	private static void addMessage(HgCommand command, File messageFile, String message) {
+	/**
+	 * Add the message to the command. If possible a file is created to do this (assumes the command
+	 * accepts the -l parameter)
+	 *
+	 * @return The file that must be deleted
+	 * @see #deleteMessage(File)
+	 */
+	public static File addMessage(HgCommand command, String message) {
+		File messageFile = saveMessage(message, command);
+
 		if (messageFile != null && messageFile.isFile()) {
 			command.addOptions("-l", messageFile.getAbsolutePath());
-			return;
+			return messageFile;
 		}
+
 		// fallback in case of unavailable message file
 		message = quote(message.trim());
 		if (message.length() != 0) {
@@ -113,6 +122,8 @@ public class HgCommitClient extends AbstractClient {
 					com.vectrace.MercurialEclipse.dialogs.Messages
 							.getString("CommitDialog.defaultCommitMessage"));
 		}
+
+		return messageFile;
 	}
 
 	/**
@@ -124,9 +135,8 @@ public class HgCommitClient extends AbstractClient {
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(user);
-		File messageFile = saveMessage(message, command);
+		File messageFile = addMessage(command, message);
 		try {
-			addMessage(command, messageFile, message);
 			MercurialUtilities.setMergeViewDialogShown(false);
 			String result = command.executeToString();
 			command.rememberUserName();
@@ -170,11 +180,11 @@ public class HgCommitClient extends AbstractClient {
 		}
 	}
 
-	private static void deleteMessage(File messageFile) {
+	public static void deleteMessage(File messageFile) {
 		// Try to delete normally, and if not successful
 		// leave it for the JVM exit - I use it in case
 		// mercurial accidentally locks the file.
-		if (!messageFile.delete()) {
+		if (messageFile != null && !messageFile.delete()) {
 			messageFile.deleteOnExit();
 		}
 	}

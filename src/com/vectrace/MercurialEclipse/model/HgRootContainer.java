@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 Andrei Loskutov (Intland)
+ * Copyright (c) 2010 Andrei Loskutov
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,85 +10,66 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
-import java.net.URI;
-
-import org.eclipse.core.internal.resources.Container;
-import org.eclipse.core.internal.resources.Workspace;
-import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.resources.HgProjectAdapter;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 
 /**
  * @author Andrei
  */
-@SuppressWarnings("restriction")
-public final class HgRootContainer extends Container {
-	private final HgRoot hgRoot;
+public final class HgRootContainer extends HgProjectAdapter {
+
+	private boolean initDone;
 
 	public HgRootContainer(HgRoot hgRoot) {
-		super(hgRoot.getIPath(), (Workspace) ResourcesPlugin.getWorkspace());
-		this.hgRoot = hgRoot;
+		super(hgRoot);
+		init();
 	}
 
-	public String getDefaultCharset(boolean checkImplicit) throws CoreException {
-		return hgRoot.getEncoding().toString();
-	}
+	public void init() {
+		// TODO implement REAL project/folders for each hg root
+		// things to think about (inspired by ExternalFoldersManager in JDT):
+		// - refresh on startup or first access
+		// - cleanup on shutdown (to avoid endless growth of non existent roots)
+		// - traversal of REAL tree instead of faked one in members() call
+		if(true) {
+			return;
+		}
+		if(initDone || !getHgRoot().exists()) {
+			return;
+		}
 
-	@Override
-	public int getType() {
-		return IResource.FOLDER;
-	}
-
-	/**
-	 * @return the hgRoot, never null
-	 */
-	public HgRoot getHgRoot() {
-		return hgRoot;
-	}
-
-	@Override
-	public String getName() {
-		return hgRoot.getName();
-	}
-
-	@Override
-	public IPath getLocation() {
-		return hgRoot.getIPath();
-	}
-
-	@Override
-	public URI getLocationURI() {
-		return hgRoot.toURI();
-	}
-
-	@Override
-	public long getLocalTimeStamp() {
-		return hgRoot.lastModified();
-	}
-
-	@Override
-	public long getModificationStamp() {
-		return getLocalTimeStamp();
-	}
-
-	@Override
-	public IContainer getParent() {
-		return ResourcesPlugin.getWorkspace().getRoot();
-	}
-
-	@Override
-	public IProject getProject() {
-		return null;
-	}
-
-	@Override
-	public IPath getFullPath() {
-		return new Path("");
+		final IProject project = getWorkspace().getRoot().getProject(".hg_repo_roots");
+		try {
+			if(!project.exists()) {
+				IProjectDescription description = getWorkspace().newProjectDescription(project.getName());
+				IPath location = MercurialEclipsePlugin.getDefault().getStateLocation().append(project.getName());
+				description.setLocation(location);
+				project.create(description, IResource.HIDDEN, null);
+			}
+			if(!project.isOpen()) {
+				project.open(IResource.BACKGROUND_REFRESH, null);
+			}
+			IFolder folder = project.getFolder(getName());
+			if (!folder.exists()) {
+				folder.createLink(getLocation(), IResource.ALLOW_MISSING_LOCAL, null);
+			} else {
+				folder.refreshLocal(DEPTH_INFINITE, null);
+			}
+			MercurialRootCache.markAsCached(folder, getHgRoot());
+			MercurialRootCache.markAsCached(project, getHgRoot());
+			initDone = true;
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 }

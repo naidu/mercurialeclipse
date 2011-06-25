@@ -72,14 +72,14 @@ public class FileStatus {
 	}
 
 	public IPath getAbsolutePath(){
-		if(absPath == null){
+		if(absPath == null && getRootRelativePath() != null){
 			absPath = hgRoot.toAbsolute(getRootRelativePath());
 		}
 		return absPath;
 	}
 
 	public IPath getAbsoluteCopySourcePath(){
-		if(absCopySourcePath == null){
+		if(absCopySourcePath == null && getRootRelativeCopySourcePath() != null){
 			absCopySourcePath = hgRoot.toAbsolute(getRootRelativeCopySourcePath());
 		}
 		return absCopySourcePath;

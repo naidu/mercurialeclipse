@@ -17,9 +17,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,17 +40,25 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -112,6 +122,86 @@ public final class ResourceUtils {
 	}
 
 	/**
+	 * Moves contents of one directory to another and deletes source directory if all files were
+	 * successfully moved to destination. If any target file with the same relative path exists in the
+	 * destination directory, it will be NOT overridden, and kept in the source directory.
+	 *
+	 * @param sourceDir
+	 *            - must already exist and be a directory
+	 * @param destinationDir
+	 *            - must already exist and be a directory
+	 * @return true if source was successfully moved to destination.
+	 */
+	public static boolean move(File sourceDir, File destinationDir) {
+		File[] files = sourceDir.listFiles();
+		if(files == null) {
+			// can't be ok
+			return false;
+		}
+		Set<File> fileSet = new LinkedHashSet<File>(Arrays.asList(files));
+		boolean result = true;
+		while (!fileSet.isEmpty()) {
+			File next = fileSet.iterator().next();
+			String relative = toRelative(sourceDir, next);
+			File dest = new File(destinationDir, relative);
+			if (!dest.exists()) {
+				result &= next.renameTo(dest);
+			} else if(next.isDirectory()){
+				files = next.listFiles();
+				if(files != null) {
+					fileSet.addAll(Arrays.asList(files));
+				}
+			} else {
+				// file exists in target
+				result = false;
+			}
+			fileSet.remove(next);
+		}
+		try {
+			if(result && !sourceDir.getCanonicalFile().equals(destinationDir.getCanonicalFile())) {
+				return ResourceUtils.delete(sourceDir, true);
+			}
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		return false;
+	}
+
+	/**
+	 * Converts given path to the relative
+	 *
+	 * @param parent
+	 *            parent path, non null
+	 * @param child
+	 *            a possible child path, non null
+	 * @return a parent relative path of a given child file, if the given child file is located
+	 *         under given parent, otherwise the given child path. If the given child path matches
+	 *         the parent, returns an empty string
+	 */
+	public static String toRelative(File parent, File child) {
+		// first try with the unresolved path. In most cases it's enough
+		String fullPath = child.getAbsolutePath();
+		String parentpath = parent.getPath();
+		if (!fullPath.startsWith(parentpath)) {
+			try {
+				// ok, now try to resolve all the links etc. this takes A LOT of time...
+				fullPath = child.getCanonicalPath();
+				if (!fullPath.startsWith(parentpath)) {
+					return child.getPath();
+				}
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+				return child.getPath();
+			}
+		}
+		if(fullPath.equals(parentpath)){
+			return Path.EMPTY.toOSString();
+		}
+		// +1 is to remove the file separator / at the start of the relative path
+		return fullPath.substring(parentpath.length() + 1);
+	}
+
+	/**
 	 * Checks which editor is active an determines the IResource that is edited.
 	 */
 	public static IFile getActiveResourceFromEditor() {
@@ -167,7 +257,7 @@ public final class ResourceUtils {
 		return (IFile) getHandle(path, true);
 	}
 
-	private static IResource getHandle(IPath origPath, boolean isFile) {
+	private static IResource getHandle(final IPath origPath, boolean isFile) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		// origPath may be canonical but not necessarily.
 		// Eclipse allows a project to be symlinked or an arbitrary folder under a project
@@ -225,6 +315,35 @@ public final class ResourceUtils {
 				return best;
 			}
 		}
+		if(best == null) {
+			Collection<HgRoot> roots = MercurialRootCache.getInstance().getKnownHgRoots();
+			for (HgRoot hgRoot : roots) {
+				if(!hgRoot.getIPath().isPrefixOf(origPath)) {
+					continue;
+				}
+				IPath relative = hgRoot.toRelative(origPath);
+				if(relative.isEmpty()) {
+					if(!isFile) {
+						// same folder as root
+						return hgRoot.getResource();
+					}
+					// requested is file => some error!
+					return null;
+				}
+				best = hgRoot.getResource().findMember(relative);
+
+				if(best != null) {
+					if(isFile && best.getType() == IResource.FILE
+							|| ! isFile && best.getType() != IResource.FILE) {
+						return best;
+					}
+					if(isFile) {
+						return hgRoot.getResource().getFile(relative);
+					}
+					return hgRoot.getResource().getFolder(relative);
+				}
+			}
+		}
 		return best;
 	}
 
@@ -237,7 +356,7 @@ public final class ResourceUtils {
 	 *            a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource, might be {@link Path#EMPTY} in case the
 	 *         resource location and project location are both unknown. {@link Path#EMPTY} return
-	 *         value will be always logged as error.
+	 *         value will be logged as error unless virtual.
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();
@@ -448,6 +567,10 @@ public final class ResourceUtils {
 	}
 
 	public static Set<IResource> getMembers(IResource r) {
+		return getMembers(r, true);
+	}
+
+	public static Set<IResource> getMembers(IResource r, boolean withLinks) {
 		HashSet<IResource> set = new HashSet<IResource>();
 		if (r instanceof IContainer && r.isAccessible()) {
 			IContainer cont = (IContainer) r;
@@ -455,6 +578,9 @@ public final class ResourceUtils {
 				IResource[] members = cont.members();
 				if (members != null) {
 					for (IResource member : members) {
+						if(!withLinks && member.isLinked()) {
+							continue;
+						}
 						if (member instanceof IContainer) {
 							set.addAll(getMembers(member));
 						} else {
@@ -472,10 +598,13 @@ public final class ResourceUtils {
 
 	/**
 	 * @param o
-	 *            some object which is or can be adopted to resource
+	 *            some object which is or can be adapted to resource
 	 * @return given object as resource, may return null
 	 */
 	public static IResource getResource(Object o) {
+		if(o == null) {
+			return null;
+		}
 		if (o instanceof IResource) {
 			return (IResource) o;
 		}
@@ -502,7 +631,7 @@ public final class ResourceUtils {
 				return adapter;
 			}
 		}
-		return null;
+		return (IResource) Platform.getAdapterManager().getAdapter(o, IResource.class);
 	}
 
 	public static void touch(final IResource res) {
@@ -532,9 +661,28 @@ public final class ResourceUtils {
 		List<IResource> resources = new ArrayList<IResource>();
 		List<?> list = selection.toList();
 		for (Object object : list) {
-			IResource resource = getResource(object);
-			if(resource != null && !resources.contains(resource)){
-				resources.add(resource);
+			if(object instanceof ChangeSet) {
+				Set<IFile> files = ((ChangeSet)object).getFiles();
+				for (IFile file : files) {
+					if(!resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+			} else if(object instanceof PathFromChangeSet) {
+				PathFromChangeSet pathFromChangeSet = (PathFromChangeSet) object;
+				Set<FileFromChangeSet> files = pathFromChangeSet.getFiles();
+				for (FileFromChangeSet ffc : files) {
+					IFile file = ffc.getFile();
+					if(file != null && !resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+
+			} else {
+				IResource resource = getResource(object);
+				if(resource != null && !resources.contains(resource)){
+					resources.add(resource);
+				}
 			}
 		}
 		return resources;
@@ -574,5 +722,27 @@ public final class ResourceUtils {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Opens appropriate editor
+	 * @param file must be not null
+	 * @param activePage can be null
+	 * @return
+	 */
+	public static IEditorPart openEditor(IWorkbenchPage activePage, IFile file) {
+		if(activePage == null) {
+			activePage = MercurialEclipsePlugin.getActivePage();
+		}
+		try {
+			if (file instanceof IHgResource) {
+				return IDE.openEditor(activePage, file.getLocationURI(),
+						EditorsUI.DEFAULT_TEXT_EDITOR_ID, true);
+			}
+			return IDE.openEditor(activePage, file);
+		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
 	}
 }

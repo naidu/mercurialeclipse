@@ -14,7 +14,7 @@
  *          - Bug 187318[Wizards] "Import Existing Project" loops forever with cyclic symbolic links
  *     Remy Chi Jian Suen  (remy.suen@gmail.com)
  *          - Bug 210568 [Import/Export] [Import/Export] - Refresh button does not update list of projects
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *          - Stripped down all what we do not need in Mercurial
  *******************************************************************************/
 
@@ -138,12 +138,19 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		}
 	}
 
+	/**
+	 * The project name is initialized the first available of:
+	 * - The name in the project file
+	 * - The name of the last segment of the path
+	 * - The name of the project file with integers appended.
+	 */
 	private static class ProjectRecord {
 
 		private final File projectSystemFile;
 		final IProjectDescription description;
 
 		String projectName;
+		String fallbackProjectName;
 
 		boolean hasConflicts;
 
@@ -152,10 +159,10 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		 *
 		 * @param file
 		 */
-		ProjectRecord(File file) {
+		ProjectRecord(File file, ProjectNameScope scope) {
 			projectSystemFile = file;
 			description = createDescription();
-			projectName = description.getName();
+			projectName = scope.getAvailableName(description.getName(), fallbackProjectName);
 		}
 
 		/**
@@ -164,12 +171,12 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		 */
 		private IProjectDescription createDescription() {
 			IProjectDescription tmpDescription;
-			String tmpProjectName;
+
 			// If we don't have the project name try again
 			IWorkspace workspace = ResourcesPlugin.getWorkspace();
 			if (projectSystemFile.isDirectory()) {
-				tmpProjectName = projectSystemFile.getName();
-				tmpDescription = workspace.newProjectDescription(tmpProjectName);
+				fallbackProjectName = projectSystemFile.getName();
+				tmpDescription = workspace.newProjectDescription(fallbackProjectName);
 				// check if the directory matches the default location?
 				// if yes, should NOT set location, as in the "else" branch below
 				File wsRoot = workspace.getRoot().getLocation().toFile();
@@ -178,7 +185,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				}
 			} else {
 				IPath path = new Path(projectSystemFile.getPath());
-				tmpProjectName = path.segment(path.segmentCount() - 2);
+				fallbackProjectName = path.segment(path.segmentCount() - 2);
 				try {
 					tmpDescription = workspace.loadProjectDescription(path);
 					if (isDefaultLocation(path)){
@@ -189,7 +196,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 					}
 				} catch (CoreException e) {
 					// no good, couldn't load
-					tmpDescription = workspace.newProjectDescription(tmpProjectName);
+					tmpDescription = workspace.newProjectDescription(fallbackProjectName);
 				}
 			}
 			return tmpDescription;
@@ -594,6 +601,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 			getContainer().run(true, true, new IRunnableWithProgress() {
 
 				public void run(IProgressMonitor monitor) {
+					ProjectNameScope namer = new ProjectNameScope();
 
 					monitor.beginTask("Searching for projects", 100);
 					selectedProjects = new ProjectRecord[0];
@@ -616,17 +624,17 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 							File file = filesIterator.next();
 							File dir = file.getParentFile();
 							if (dir.isDirectory() && dir.equals(destinationDir)){
-								prj.add(new ProjectRecord(file));
+								prj.add(new ProjectRecord(file, namer));
 							}else{
 								filesIterator = files.iterator(); /* reset iterator */
 							}
 						}
 						if (prj.isEmpty()){
-							prj.add(new ProjectRecord(destinationDir));
+							prj.add(new ProjectRecord(destinationDir, namer));
 						}
 						while (filesIterator.hasNext()) {
 							File file = filesIterator.next();
-							prj.add(new ProjectRecord(file));
+							prj.add(new ProjectRecord(file, namer));
 						}
 						selectedProjects = prj.toArray(new ProjectRecord[prj.size()]);
 
@@ -1129,4 +1137,35 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		}
 	}
 
+	private class ProjectNameScope
+	{
+		private final Set<String> names = new HashSet<String>();
+
+		public String getAvailableName(String name, String fallbackName)
+		{
+			if (!isAvailable(name)) {
+				if (isAvailable(fallbackName)) {
+					name = fallbackName;
+				} else {
+					for (int i = 1; i <= 50; i++) {
+						String cur = name + i;
+
+						if (isAvailable(cur)) {
+							name = cur;
+							break;
+						}
+					}
+				}
+			}
+
+			names.add(name);
+
+			return name;
+		}
+
+		private boolean isAvailable(String name)
+		{
+			return name != null && !names.contains(name) && !isProjectInWorkspace(name);
+		}
+	}
 }

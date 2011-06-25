@@ -92,7 +92,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_DECORATE_WITH_COLORS, true);
 		store.setDefault(PREF_SHOW_COMMENTS, true);
 		store.setDefault(PREF_SHOW_PATHS, true);
-		store.setDefault(PREF_SHOW_DIFFS, true);
+		// See issue #13662: do not show diffs per default: they may cause OOM on huge changesets
+		store.setDefault(PREF_SHOW_DIFFS, false);
 		store.setDefault(PREF_SHOW_ALL_TAGS, false);
 		store.setDefault(PREF_SHOW_GOTO_TEXT, true);
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
@@ -132,27 +133,22 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			};
 			job.setPriority(Job.INTERACTIVE);
 			job.setSystem(true);
-			job.schedule();
+			job.schedule(200);
 		}
 		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
 		store.setDefault(PREF_USE_EXTERNAL_MERGE, false);
 		store.setDefault(PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES, false);
 		store.setDefault(PREF_CLONE_UNCOMPRESSED, false);
-		if(MercurialEclipsePlugin.DISABLED_OPTIONS.contains("--new-branch")) {
-			store.setDefault(PREF_PUSH_NEW_BRANCH, false);
-			store.setValue(PREF_PUSH_NEW_BRANCH, false);
-		} else {
-			store.setDefault(PREF_PUSH_NEW_BRANCH, true);
-		}
 
 		store.setDefault(PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG, false);
+		store.setDefault(PREF_VERIFY_SERVER_CERTIFICATE, true);
 
 		store.setDefault(PREF_SHOW_PULL_WARNING_DIALOG, MessageDialogWithToggle.PROMPT);
 		store.setDefault(PREF_SHOW_MULTIPLE_PROJECTS_DIALOG, MessageDialogWithToggle.PROMPT);
 	}
 
-	private File checkForPossibleHgExecutables() {
+	private static File checkForPossibleHgExecutables() {
 		File hgExecutable = null;
 
 		String envPath = System.getenv("PATH");
@@ -188,7 +184,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		return hgExecutable;
 	}
 
-	private void detectAndSetHgExecutable(IPreferenceStore store) {
+	private static void detectAndSetHgExecutable(IPreferenceStore store) {
 		// Currently only tested on Windows. The binary is expected to be found
 		// at "os\win32\x86\hg.exe" (relative to the plugin/fragment directory)
 		File hgExecutable = getIntegratedHgExecutable();

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch  implementation
- *     Andrei Loskutov (Intland) - bugfixes
+ *     Andrei Loskutov - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -19,9 +19,11 @@ import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
@@ -45,6 +47,7 @@ import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
@@ -115,6 +118,26 @@ public final class CompareUtils {
 	public static void openEditor(final IResource left, final MercurialRevisionStorage right,
 			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
+		if(!left.getProject().isOpen()) {
+			final boolean [] open = new boolean[1];
+			Runnable runnable = new Runnable() {
+				public void run() {
+					open[0] = MessageDialog.openQuestion(null, "Compare",
+							"To compare selected file, enclosing project must be opened.\n" +
+							"Open the appropriate project (may take time)?");
+				}
+			};
+			Display.getDefault().syncExec(runnable);
+			if(open[0]) {
+				try {
+					left.getProject().open(null);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			} else {
+				return;
+			}
+		}
 		if (dialog) {
 			// TODO: is it intentional the config is ignored?
 			openCompareDialog(getPrecomputedCompareInput(null, left, null, right));
@@ -233,7 +256,7 @@ public final class CompareUtils {
 		return rev == null ? null : new RevisionNode(rev);
 	}
 
-	private static ResourceNode findCommonAncestorIfExists(IFile file, ResourceNode l, ResourceNode r) {
+	private static ResourceNode findCommonAncestorIfExists(final IFile file, ResourceNode l, ResourceNode r) {
 		if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
 			return null;
 		}
@@ -242,10 +265,11 @@ public final class CompareUtils {
 
 		try {
 			int commonAncestor = -1;
-			if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+			if(hgRoot != null && lNode.getChangeSet() != null && rNode.getChangeSet() != null){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
+							hgRoot,
 							lNode.getChangeSet(), rNode.getChangeSet());
 				} catch (HgException e) {
 					// continue
@@ -255,23 +279,20 @@ public final class CompareUtils {
 			int lId = lNode.getRevision();
 			int rId = rNode.getRevision();
 
-			if(commonAncestor == -1){
+			if(hgRoot != null && commonAncestor == -1){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							MercurialTeamProvider.getHgRoot(file),
+							hgRoot,
 							Integer.toString(lId), Integer.toString(rId));
 				} catch (HgException e) {
 					// continue: no changeset in the local repo, se issue #10616
 				}
 			}
 
-			if (commonAncestor == lId) {
+			if (commonAncestor <= 0 || commonAncestor == lId || commonAncestor == rId || hgRoot == null) {
 				return null;
 			}
-			if (commonAncestor == rId) {
-				return null;
-			}
-			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(file));
+			ChangeSet tip = HgLogClient.getTip(hgRoot);
 			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
 			if(!localKnown){
 				// no common ancestor

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -44,11 +44,12 @@ public class AddHandler extends MultipleResourcesHandler {
 	@Override
 	public void run(final List<IResource> resources) throws HgException {
 
+		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		if(resources.size() == 1 && resources.get(0) instanceof IFile){
 			// shortcut for the single file "add..." operation.
 			// we do not need any dialogs here.
 			IResource resource = resources.get(0);
-			if(MercurialStatusCache.getInstance().isUnknown(resource)) {
+			if(cache.isUnknown(resource)) {
 				HgAddClient.addResources(resources, null);
 				new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), resource
 						.getProject()).schedule();
@@ -60,7 +61,6 @@ public class AddHandler extends MultipleResourcesHandler {
 
 		Map<HgRoot, Set<IPath>> untrackedFiles = new HashMap<HgRoot, Set<IPath>>();
 		Map<HgRoot, Set<IPath>> untrackedFolders = new HashMap<HgRoot, Set<IPath>>();
-
 		for (HgRoot hgRoot : byRoot.keySet()) {
 			String[] rawFiles = HgStatusClient.getUntrackedFiles(hgRoot);
 			Set<IPath> files = new HashSet<IPath>();
@@ -68,6 +68,9 @@ public class AddHandler extends MultipleResourcesHandler {
 
 			for (String raw : rawFiles) {
 				IPath path = new Path(raw);
+				if(cache.isIgnored(hgRoot.toAbsolute(path))) {
+					continue;
+				}
 				files.add(path);
 				int count = path.segmentCount();
 				for (int i = 1; i < count; i++) {
