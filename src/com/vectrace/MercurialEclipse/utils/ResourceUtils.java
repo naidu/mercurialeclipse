@@ -55,8 +55,10 @@ import org.eclipse.ui.ide.ResourceUtil;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -313,6 +315,35 @@ public final class ResourceUtils {
 				return best;
 			}
 		}
+		if(best == null) {
+			Collection<HgRoot> roots = MercurialRootCache.getInstance().getKnownHgRoots();
+			for (HgRoot hgRoot : roots) {
+				if(!hgRoot.getIPath().isPrefixOf(origPath)) {
+					continue;
+				}
+				IPath relative = hgRoot.toRelative(origPath);
+				if(relative.isEmpty()) {
+					if(!isFile) {
+						// same folder as root
+						return hgRoot.getResource();
+					}
+					// requested is file => some error!
+					return null;
+				}
+				best = hgRoot.getResource().findMember(relative);
+
+				if(best != null) {
+					if(isFile && best.getType() == IResource.FILE
+							|| ! isFile && best.getType() != IResource.FILE) {
+						return best;
+					}
+					if(isFile) {
+						return hgRoot.getResource().getFile(relative);
+					}
+					return hgRoot.getResource().getFolder(relative);
+				}
+			}
+		}
 		return best;
 	}
 
@@ -325,7 +356,7 @@ public final class ResourceUtils {
 	 *            a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource, might be {@link Path#EMPTY} in case the
 	 *         resource location and project location are both unknown. {@link Path#EMPTY} return
-	 *         value will be always logged as error.
+	 *         value will be logged as error unless virtual.
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();
@@ -571,6 +602,9 @@ public final class ResourceUtils {
 	 * @return given object as resource, may return null
 	 */
 	public static IResource getResource(Object o) {
+		if(o == null) {
+			return null;
+		}
 		if (o instanceof IResource) {
 			return (IResource) o;
 		}
@@ -627,9 +661,28 @@ public final class ResourceUtils {
 		List<IResource> resources = new ArrayList<IResource>();
 		List<?> list = selection.toList();
 		for (Object object : list) {
-			IResource resource = getResource(object);
-			if(resource != null && !resources.contains(resource)){
-				resources.add(resource);
+			if(object instanceof ChangeSet) {
+				Set<IFile> files = ((ChangeSet)object).getFiles();
+				for (IFile file : files) {
+					if(!resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+			} else if(object instanceof PathFromChangeSet) {
+				PathFromChangeSet pathFromChangeSet = (PathFromChangeSet) object;
+				Set<FileFromChangeSet> files = pathFromChangeSet.getFiles();
+				for (FileFromChangeSet ffc : files) {
+					IFile file = ffc.getFile();
+					if(file != null && !resources.contains(file)) {
+						resources.add(file);
+					}
+				}
+
+			} else {
+				IResource resource = getResource(object);
+				if(resource != null && !resources.contains(resource)){
+					resources.add(resource);
+				}
 			}
 		}
 		return resources;

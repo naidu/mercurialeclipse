@@ -41,7 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -183,9 +183,9 @@ public class MercurialRootCache extends AbstractCache {
 	 *         team provider is not Mercurial or hg root is not found
 	 */
 	private HgRoot getHgRoot(IResource resource, boolean resolveIfNotKnown, boolean reportNotFoundRoot) {
-		if (resource instanceof HgRootContainer) {
+		if (resource instanceof IHgResource) {
 			// special case for HgRootContainers, they already know their HgRoot
-			return ((HgRootContainer) resource).getHgRoot();
+			return ((IHgResource) resource).getHgRoot();
 		}
 
 		IProject project = resource.getProject();
@@ -198,9 +198,34 @@ public class MercurialRootCache extends AbstractCache {
 		// case if the hg root is there but project is NOT configured for MercurialEclipse
 		// as team provider. See issue 13448.
 		if(resolveIfNotKnown) {
+			boolean projectIsOpen = project.isOpen();
+			if(!projectIsOpen) {
+				IPath path = ResourceUtils.getPath(project);
+				if(canonicalMap.containsKey(path)) {
+					return knownRoots.get(path.toFile());
+				} else if(path.segmentCount() > 1) {
+					// last try: the root directory of the project?
+					path = path.removeLastSegments(1);
+					if(canonicalMap.containsKey(path)) {
+						return knownRoots.get(path.toFile());
+					}
+				}
+			}
+
 			RepositoryProvider provider = RepositoryProvider.getProvider(project,
 					MercurialTeamProvider.ID);
 			if (!(provider instanceof MercurialTeamProvider)) {
+				if(provider == null && projectIsOpen && project.isHidden()) {
+					Object cachedRoot;
+					try {
+						cachedRoot = project.getSessionProperty(SESSION_KEY);
+						if(cachedRoot instanceof HgRoot) {
+							return (HgRoot) cachedRoot;
+						}
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
 				return null;
 			}
 		} else {

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - implementation
- *     Andrei Loskutov (Intland) - bugfixes
+ *     Andrei Loskutov           - bugfixes
  *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -31,11 +31,16 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		AbstractShellCommand command = getCommand(key);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
+		addInsecurePreference(command);
 		try {
 			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
 					.getStyleFile(style).getCanonicalPath());
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
+		}
+
+		if (key.isAllowUnrelated()) {
+			command.addOptions("-f");
 		}
 
 		addRepoToHgCommand(key.getRepo(), command);

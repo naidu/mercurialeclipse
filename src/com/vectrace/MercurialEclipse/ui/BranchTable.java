@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Brian Wallis              - adaptation to branches
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Zsolt Kopany (Intland)    - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;

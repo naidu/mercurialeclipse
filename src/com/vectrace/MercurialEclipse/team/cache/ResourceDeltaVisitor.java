@@ -76,13 +76,12 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			return false;
 		}
 
-		boolean subrepoEnabled = cache.isSubrepoSupportEnabled();
-		if(subrepoEnabled){
-			// We should re-set currentRoot each time because the delta resources may be
-			// from different projects AND from different UNRELATED roots too
-			currentRoot = MercurialTeamProvider.getHgRoot(res);
-		} else {
-			currentRoot = MercurialTeamProvider.getHgRoot(project);
+		// We should re-set currentRoot each time because the delta resources may be
+		// from different projects AND from different UNRELATED roots too.
+		currentRoot = MercurialTeamProvider.getHgRoot(res);
+
+		if(currentRoot == null) {
+			return true;
 		}
 
 		if((res == project && openOrClosedOrDeleted) || isCompleteStatusRequested()){

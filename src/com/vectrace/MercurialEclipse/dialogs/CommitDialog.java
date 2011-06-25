@@ -109,11 +109,10 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
-	private CommitFilesChooser commitFilesList;
+	protected CommitFilesChooser commitFilesList;
 	private List<IResource> resourcesToAdd;
 	private List<IResource> resourcesToCommit;
 	private List<IResource> resourcesToRemove;
-	private String commitMessage;
 	private final IDocument commitTextDocument;
 	private SourceViewerDecorationSupport decorationSupport;
 	private final List<IResource> inResources;
@@ -166,7 +165,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	public String getCommitMessage() {
-		return commitMessage;
+		return commitTextDocument.get();
 	}
 
 	public List<IResource> getResourcesToCommit() {
@@ -242,9 +241,7 @@ public class CommitDialog extends TitleAreaDialog {
 	@Override
 	protected Control createContents(Composite parent) {
 		Control control = super.createContents(parent);
-		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
-				.getCurrentTaskComment(
-						inResources == null ? null : inResources.toArray(new IResource[0]));
+		final String initialCommitMessage = getInitialCommitMessage();
 		setCommitMessage(initialCommitMessage);
 
 		if (commitTextBox != null) {
@@ -253,6 +250,12 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 
 		return control;
+	}
+
+	protected String getInitialCommitMessage() {
+		return MylynFacadeFactory.getMylynFacade()
+				.getCurrentTaskComment(
+						inResources == null ? null : inResources.toArray(new IResource[0]));
 	}
 
 	private void validateControls() {
@@ -288,6 +291,14 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
 				.getString("CommitDialog.closeBranch"));
+
+		closeBranchCheckBox.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				validateControls();
+			}
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
 	}
 
 	private void createAmendCheckBox(Composite container) {
@@ -305,8 +316,8 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		String branch = MercurialTeamProvider.getCurrentBranch(root);
 		String label = Messages.getString("CommitDialog.amendCurrentChangeset1")
-			+ currentChangeset.getChangesetIndex()
-			+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				+ currentChangeset.getChangesetIndex()
+				+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
 		amendCheckbox.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
@@ -425,9 +436,9 @@ public class CommitDialog extends TitleAreaDialog {
 				public void widgetSelected(SelectionEvent e) {
 					if (oldCommitComboBox.getSelectionIndex() != 0) {
 						commitTextDocument
-								.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
+						.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
 						commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox
-								.getSelectionIndex() - 1].length());
+																	.getSelectionIndex() - 1].length());
 					}
 
 				}
@@ -454,7 +465,7 @@ public class CommitDialog extends TitleAreaDialog {
 		pm.worked(3);
 
 		// get commit message
-		commitMessage = commitTextDocument.get();
+		String commitMessage = getCommitMessage();
 
 		// get commit username
 		user = userTextField.getText();
@@ -559,13 +570,13 @@ public class CommitDialog extends TitleAreaDialog {
 				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
 				null,
 				Messages.getString("CommitDialog.amendWarning1") 				//$NON-NLS-1$
-					+ Messages.getString("CommitDialog.amendWarning2")			//$NON-NLS-1$
-					+ Messages.getString("CommitDialog.amendWarning3"),			//$NON-NLS-1$
+				+ Messages.getString("CommitDialog.amendWarning2")			//$NON-NLS-1$
+				+ Messages.getString("CommitDialog.amendWarning3"),			//$NON-NLS-1$
 				MessageDialog.CONFIRM,
 				new String[]{
 					IDialogConstants.YES_LABEL,
 					IDialogConstants.CANCEL_LABEL},
-				1 // default index - cancel
+					1 // default index - cancel
 				);
 		dialog.setBlockOnOpen(true); // if false then may show in background
 		return  dialog.open() == 0; // 0 means yes
@@ -599,8 +610,8 @@ public class CommitDialog extends TitleAreaDialog {
 			pm.worked(1);
 			new RefreshRootJob(
 					Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
-							+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
-					.schedule();
+					+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
+			.schedule();
 			return result;
 		}
 
@@ -636,7 +647,7 @@ public class CommitDialog extends TitleAreaDialog {
 		return resourcesToRemove;
 	}
 
-	private void setCommitMessage(String msg) {
+	protected void setCommitMessage(String msg) {
 		if (msg == null) {
 			msg = options.defaultCommitMessage;
 		}
@@ -689,7 +700,7 @@ public class CommitDialog extends TitleAreaDialog {
 		// calculate width
 		Rectangle clientArea = shell.getClientArea();
 		final GridData data = new GridData(GridData.FILL_VERTICAL);
-		data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
+		data.widthHint = trayControl.computeSize(clientArea.width*3/4, clientArea.height).x;
 		trayControl.setLayoutData(data);
 		int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
 				+ sash.computeSize(SWT.DEFAULT, clientArea.height).x
