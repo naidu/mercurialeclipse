@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -294,7 +293,10 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo,
 			IProject[] selectedProjects) {
-		return createParticipant(Collections.singleton(repo), selectedProjects);
+		Set<IHgRepositoryLocation> s = new HashSet(1);
+		s.add(repo);
+
+		return createParticipant(s, selectedProjects);
 	}
 
 	public static MercurialSynchronizeParticipant createParticipant(Set<IHgRepositoryLocation> repos,

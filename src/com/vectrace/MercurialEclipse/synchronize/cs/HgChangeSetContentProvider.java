@@ -628,6 +628,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			uncommittedCsManager.setProjects(projects);
 			uncommitted.addListener(uncommittedSetListener);
 			STATUS_CACHE.addObserver(uncommitted);
+			initProjects(csCollector.getSubscriber());
 		}
 	}
 
