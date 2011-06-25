@@ -45,13 +45,16 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.utils.IniFile;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -361,11 +364,20 @@ public final class MercurialUtilities {
 		return getFont(data);
 	}
 
-	public static MercurialRevisionStorage getParentRevision(ChangeSet cs, IFile file) {
-		MercurialRevisionStorage parentRev;
+	/**
+	 * Get the parent revision. Is aware of file renames.
+	 *
+	 * Note: May query and update the file status of cs.
+	 *
+	 * @param cs The changeset to query for
+	 * @param file The file as of cs's revision
+	 * @return Storage for the parent revision
+	 * @throws HgException
+	 */
+	public static MercurialRevisionStorage getParentRevision(ChangeSet cs, IFile file) throws HgException {
 		String[] parents = cs.getParents();
 		if(cs.getRevision().getRevision() == 0){
-			parentRev = new NullRevision(file, cs);
+			return new NullRevision(file, cs);
 		} else if (parents.length == 0) {
 			// TODO for some reason, we do not always have right parent info in the changesets
 			// If we are on the different branch then the changeset? or if the changeset
@@ -379,14 +391,30 @@ public final class MercurialUtilities {
 				MercurialEclipsePlugin.logError(e);
 			}
 			if (parents.length == 0) {
-				parentRev = new NullRevision(file, cs);
-			} else {
-				parentRev = new MercurialRevisionStorage(file, parents[0]);
+				return new NullRevision(file, cs);
 			}
-		} else {
-			parentRev = new MercurialRevisionStorage(file, parents[0]);
 		}
-		return parentRev;
+
+		if (!cs.hasFileStatus()) {
+			ChangeSet newCs = HgLogClient.getChangeset(cs.getHgRoot(), cs.getChangeset(), true);
+
+			if (newCs != null) {
+				assert newCs.hasFileStatus();
+				cs.setChangedFiles(newCs.getChangedFiles());
+				assert cs.hasFileStatus();
+			}
+		}
+
+		FileStatus stat = cs.getStatus(file);
+
+		if (stat == null) {
+			// TODO: throw an exception instead?
+			MercurialEclipsePlugin.logWarning("Cannot correctly calculate parent changeset", new IllegalStateException());
+		} else if (stat.isCopied()) {
+			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
+		}
+
+		return new MercurialRevisionStorage(file, parents[0]);
 	}
 
 	public static void setMergeViewDialogShown(boolean shown) {

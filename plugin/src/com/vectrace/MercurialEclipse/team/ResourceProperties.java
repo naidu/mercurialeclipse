@@ -8,7 +8,7 @@
  * Contributors:
  *     Jerome Negre - implementation
  *     Bastian Doetsch - javadocs and new qualified name MERGE_COMMIT_OFFERED
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 

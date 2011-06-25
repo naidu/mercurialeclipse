@@ -8,7 +8,7 @@
  * Contributors:
  * 		Jerome Negre		- 	Initial implementation
  * 		Bastian Doetsch	-	implemented some safeguards for the ok button
- *     	Andrei Loskutov (Intland) - bug fixes
+ *     	Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 

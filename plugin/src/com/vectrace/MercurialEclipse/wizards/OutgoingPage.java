@@ -7,7 +7,7 @@
  *
  * Contributors:
  * 		bastian					  - implementation
- * 		Andrei Loskutov (Intland) - bugfixes
+ * 		Andrei Loskutov           - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -76,7 +76,7 @@ public class OutgoingPage extends IncomingPage {
 			IHgRepositoryLocation remote = getLocation();
 			try {
 				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
-						getHgRoot(), remote, null);
+						getHgRoot(), remote, null, isForce());
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;

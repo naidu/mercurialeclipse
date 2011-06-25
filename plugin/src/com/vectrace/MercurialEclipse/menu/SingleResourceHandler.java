@@ -7,20 +7,19 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
-
-import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.handlers.HandlerUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -43,19 +42,13 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 		return selection;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		Object selectionObject = ((EvaluationContext) event
-				.getApplicationContext()).getDefaultVariable();
+		selection = null;
+		ISelection selectionObject = HandlerUtil.getCurrentSelection(event);
 		try {
-			if (selectionObject != null && selectionObject instanceof List) {
-				List list = (List) selectionObject;
-				Object listEntry = list.get(0);
-				if (listEntry != null && listEntry instanceof IAdaptable) {
-					IAdaptable selectionAdaptable = (IAdaptable) listEntry;
-					selection = (IResource) selectionAdaptable
-							.getAdapter(IResource.class);
-				}
+			if (selectionObject instanceof IStructuredSelection) {
+				IStructuredSelection ssel = (IStructuredSelection) selectionObject;
+				selection = ResourceUtils.getResource(ssel.getFirstElement());
 			}
 			if (selection == null) {
 				selection = ResourceUtils.getActiveResourceFromEditor();

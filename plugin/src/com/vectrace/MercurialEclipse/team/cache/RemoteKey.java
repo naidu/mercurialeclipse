@@ -33,12 +33,22 @@ public class RemoteKey {
 	private final String branch;
 
 	/**
+	 * True if unrelated compare is not an error
+	 */
+	private final boolean allowUnrelated;
+
+	/**
 	 * @param branch can be null (means all branches)
 	 */
 	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch) {
+		this(root, repo, branch, false);
+	}
+
+	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch, boolean force) {
 		this.root = root;
 		this.repo = repo;
 		this.branch = branch != null && Branch.isDefault(branch)? Branch.DEFAULT : branch;
+		this.allowUnrelated = force;
 	}
 
 	public static RemoteKey create(IResource res, IHgRepositoryLocation repo, String branch){
@@ -57,6 +67,10 @@ public class RemoteKey {
 		return root;
 	}
 
+	public boolean isAllowUnrelated() {
+		return allowUnrelated;
+	}
+
 	/**
 	 * Can be null (means all branches)
 	 */
@@ -71,6 +85,7 @@ public class RemoteKey {
 		result = prime * result + ((repo == null) ? 0 : repo.hashCode());
 		result = prime * result + ((root == null) ? 0 : root.hashCode());
 		result = prime * result + ((branch == null) ? 0 : branch.hashCode());
+		result = prime * result + (allowUnrelated ? 0 : 73);
 		return result;
 	}
 
@@ -87,7 +102,7 @@ public class RemoteKey {
 			if (other.repo != null) {
 				return false;
 			}
-		} else if (!repo.equals(other.repo)) {
+		} else if (!repo.equals(other.repo) || allowUnrelated != other.allowUnrelated) {
 			return false;
 		}
 		if (root == null) {
@@ -117,9 +132,13 @@ public class RemoteKey {
 		if (root != null) {
 			builder.append("root=");
 			builder.append(root);
+			builder.append(", ");
 		}
+
+		builder.append("force=");
+		builder.append(allowUnrelated);
+
 		builder.append("]");
 		return builder.toString();
 	}
-
 }

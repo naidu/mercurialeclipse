@@ -40,6 +40,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 		} else {
 			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
 			Set<Entry<HgRoot, List<IResource>>> entrySet = byRoot.entrySet();
+
 			for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 				HgRoot hgRoot = entry.getKey();
 				if(MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)){

@@ -9,7 +9,7 @@
  *     IBM Corporation   - initial API and implementation
  *     Charles O'Farrell - copy from subclipse
  *     StefanC           - code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 

@@ -7,7 +7,7 @@
  *
  * Contributors:
  * wleggette	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Zsolt Koppany (Intland)
  *     Philip Graf               - Fixed bugs which FindBugs found
  *******************************************************************************/

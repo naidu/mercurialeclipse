@@ -8,7 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov              - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository;
 
@@ -54,11 +54,9 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.SelectionProviderAction;
-import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.PropertyDialog;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.part.DrillDownAdapter;
@@ -547,38 +545,20 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	private void handleDoubleClick(DoubleClickEvent e) {
 		// Only act on single selection
 		ISelection selection = e.getSelection();
-		if (selection instanceof IStructuredSelection) {
-			IStructuredSelection structured = (IStructuredSelection) selection;
-			if (structured.size() == 1) {
-				Object firstElement = structured.getFirstElement();
-				HgPath hgPath = MercurialEclipsePlugin.getAdapter(firstElement, HgPath.class);
-				if (hgPath != null && hgPath.isFile()) {
-					try {
-						IDE.openEditor(MercurialEclipsePlugin.getActivePage(), hgPath.toURI(),
-								"org.eclipse.ui.DefaultTextEditor", true);
-						return;
-					} catch (PartInitException e1) {
-						MercurialEclipsePlugin.logError(e1);
-					}
-				}
-				IResource resource = ResourceUtils.getResource(firstElement);
-				if (resource != null) {
-					if (resource.exists()) {
-						if (resource.getType() == IResource.FILE) {
-							try {
-								IDE.openEditor(MercurialEclipsePlugin.getActivePage(),
-										(IFile) resource);
-								return;
-							} catch (PartInitException e1) {
-								// TODO Auto-generated catch block
-								MercurialEclipsePlugin.logError(e1);
-							}
-						}
-					}
-				}
-				propertiesAction.run();
-			}
+		if (!(selection instanceof IStructuredSelection)) {
+			return;
 		}
+		IStructuredSelection structured = (IStructuredSelection) selection;
+		if (structured.size() != 1) {
+			return;
+		}
+		Object firstElement = structured.getFirstElement();
+		IResource resource = ResourceUtils.getResource(firstElement);
+		if (resource != null && resource.exists() && resource.getType() == IResource.FILE) {
+			ResourceUtils.openEditor(null, (IFile) resource);
+			return;
+		}
+		propertiesAction.run();
 	}
 
 	@Override

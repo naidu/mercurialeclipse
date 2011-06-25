@@ -140,6 +140,9 @@ public class QImportWizardPage extends HgWizardPage {
 	private void checkExisting(File file) throws IOException, HgException {
 		setMessage(null);
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if(hgRoot == null) {
+			throw new HgException("No hg root found for: " + resource);
+		}
 		File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
 		File[] patches = patchDir.listFiles();
 		if (patches != null) {
