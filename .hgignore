@@ -1,17 +1,17 @@
 
 syntax: regexp
-^bin$
+^plugin/bin$
 
 syntax: regexp
 ^@dot$
 
 syntax: regexp
-^\.settings/org\.eclipse\.jdt\.core\.prefs\.orig$
-^javaCompiler\.\.\.args$
-^scratchpad\.txt$
+^plugin/\.settings/org\.eclipse\.jdt\.core\.prefs\.orig$
+^plugin/javaCompiler\.\.\.args$
+^plugin/scratchpad\.txt$
 
 syntax: regexp
-^\.settings/org\.eclipse\.jdt\.ui\.prefs$
+^plugin/\.settings/org\.eclipse\.jdt\.ui\.prefs$
 
 syntax: regexp
 \.orig$
