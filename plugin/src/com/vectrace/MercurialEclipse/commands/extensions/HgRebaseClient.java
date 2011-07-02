@@ -12,6 +12,7 @@
 package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.io.File;
+import java.util.regex.Pattern;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
@@ -28,6 +29,8 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
  *
  */
 public class HgRebaseClient extends AbstractClient {
+
+	private static final Pattern REBASING_CONFLICT = Pattern.compile("^abort:.*unresolved conflicts", Pattern.MULTILINE);
 
 	/**
 	 * Calls hg rebase.
@@ -62,7 +65,7 @@ public class HgRebaseClient extends AbstractClient {
 		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (!useExternalMergeTool) {
-			// we use simplemerge, so no tool is started. We
+			// we use (non-existent) simplemerge, so no tool is started. We
 			// need this option, though, as we still want the Mercurial merge to
 			// take place.
 			c.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -159,6 +162,7 @@ public class HgRebaseClient extends AbstractClient {
 		String message = e.getMessage();
 
 		// Conflicts are expected:
+		// 1.6.x:
 		// /bin/sh: simplemerge: command not found
 		// merging file1.txt
 		// merging file1.txt
@@ -168,6 +172,15 @@ public class HgRebaseClient extends AbstractClient {
 		// rebase --config ui.merge=simplemerge --config ui.editor=echo --config
 		// extensions.hgext.rebase= --config ui.username=john --base 8 --dest 5, error
 		// code: 255
-		return (message != null && message.contains("fix unresolved conflicts with hg resolve then run hg rebase --continue"));
+
+		// 1.8.3 and 1.8.4
+		// merging file1-4.txt
+		// /bin/sh: simplemerge: command not found
+		// merging file1-4.txt failed!
+		// abort: unresolved conflicts (see hg resolve, then hg rebase --continue).
+		// Command line: /home/john/runtime-New_configuration/hgtest:hg -y rebase --config
+		// ui.merge=simplemerge --config ui.editor=echo --config extensions.hgext.rebase= --source
+		// 3442 --dest 3441, error code: 255
+		return (message != null && REBASING_CONFLICT.matcher(message).find());
 	}
 }
