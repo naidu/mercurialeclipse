@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -494,9 +493,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// HGPLAIN normalizes output in Mercurial 1.5+
 		env.put("HGPLAIN", "set by MercurialEclipse"); //$NON-NLS-1$ //$NON-NLS-2$
-		Charset charset = setupEncoding(cmd);
+		String charset = setupEncoding(cmd);
 		if (charset != null) {
-			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
+			env.put("HGENCODING", charset); //$NON-NLS-1$
 		}
 
 		env.put("HGE_RUNDIR", getRunDir());
@@ -511,13 +510,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return builder;
 	}
 
-	private Charset setupEncoding(List<String> cmd) {
+	private String setupEncoding(List<String> cmd) {
 		if(hgRoot == null){
 			return null;
 		}
-		Charset charset = hgRoot.getEncoding();
+		String charset = hgRoot.getEncoding();
 		// Enforce strict command line encoding
-		cmd.add(1, charset.name());
+		cmd.add(1, charset);
 		cmd.add(1, "--encoding");
 		// Enforce fallback encoding for UI (command output)
 		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
@@ -597,9 +596,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private String getEncoding() {
 		if(encoding == null){
 			if (hgRoot != null) {
-				encoding = hgRoot.getEncoding().name();
+				encoding = hgRoot.getEncoding();
 			} else {
-				encoding = getDefaultEncoding().name();
+				encoding = getDefaultEncoding();
 			}
 		}
 		return encoding;

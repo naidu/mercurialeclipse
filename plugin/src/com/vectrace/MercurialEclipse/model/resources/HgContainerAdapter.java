@@ -193,7 +193,7 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 	}
 
 	public final String getDefaultCharset() throws CoreException {
-		return getHgRoot().getEncoding().name();
+		return getHgRoot().getEncoding();
 	}
 
 	public String getDefaultCharset(boolean checkImplicit) throws CoreException {

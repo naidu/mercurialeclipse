@@ -79,7 +79,7 @@ public class HgFileAdapter extends HgResourceAdapter implements IFile {
 	}
 
 	public String getCharset() throws CoreException {
-		return getHgRoot().getEncoding().name();
+		return getHgRoot().getEncoding();
 	}
 
 	public String getCharset(boolean checkImplicit) throws CoreException {

@@ -322,7 +322,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
-					hgRoot.setEncoding(Charset.forName(defaultCharset));
+					hgRoot.setEncoding(defaultCharset);
 				}
 				monitor.done();
 				return Status.OK_STATUS;
@@ -331,7 +331,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			public boolean shouldSchedule() {
 				Boolean supports = HgDebugInstallClient.ENCODINGS.get(defaultCharset);
 				if(supports != null && supports.booleanValue()){
-					hgRoot.setEncoding(Charset.forName(defaultCharset));
+					hgRoot.setEncoding(defaultCharset);
 				}
 				return supports == null;
 			}

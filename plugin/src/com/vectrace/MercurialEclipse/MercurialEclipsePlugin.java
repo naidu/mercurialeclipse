@@ -83,7 +83,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	// The shared instance.
 	private static MercurialEclipsePlugin plugin;
 
-	private static final Charset HGENCODING;
+	private static final String HGENCODING;
 
 	static {
 		// next in line is HGENCODING in environment
@@ -91,12 +91,12 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 		// next is platform encoding as available in JDK
 		if (!StringUtils.isEmpty(enc) && Charset.isSupported(enc)) {
-			HGENCODING = Charset.forName(enc);
+			HGENCODING = enc;
 		} else {
 			if(Charset.isSupported("UTF-8")){
-				HGENCODING = Charset.forName("UTF-8");
+				HGENCODING = Charset.forName("UTF-8").name();
 			} else {
-				HGENCODING = Charset.defaultCharset();
+				HGENCODING = Charset.defaultCharset().name();
 			}
 		}
 	}
@@ -526,11 +526,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	/**
 	 * The default encoding which is used by the current environment.
 	 * <p>
-	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each
-	 * repository may use it's own encoding
-	 * @return a valid {@link Charset} encoding, never null.
+	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each repository
+	 * may use it's own encoding
+	 * <p>
+	 * <b>Note</b>: Python's encoding isn't 1-1 with Charset.name() so do not store
+	 * {@link java.nio.charset.Charset}.
+	 *
+	 * @return a valid encoding name, never null.
 	 */
-	public static Charset getDefaultEncoding() {
+	public static String getDefaultEncoding() {
 		return HGENCODING;
 	}
 

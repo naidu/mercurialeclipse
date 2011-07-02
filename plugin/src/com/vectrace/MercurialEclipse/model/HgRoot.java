@@ -63,7 +63,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	/**
 	 * Preferred encoding
 	 */
-	private Charset encoding;
+	private String encoding;
 
 	/**
 	 * Cached encoding fall back encoding as specified in the config file
@@ -96,14 +96,14 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		}
 	}
 
-	public void setEncoding(Charset charset) {
+	public void setEncoding(String charset) {
 		this.encoding = charset;
 	}
 
 	/**
 	 * @return never null, root specific encoding (may differ from the OS default encoding)
 	 */
-	public Charset getEncoding() {
+	public String getEncoding() {
 		if(encoding == null){
 			setEncoding(MercurialEclipsePlugin.getDefaultEncoding());
 		}

@@ -179,7 +179,7 @@ public class HgCommitMessageManager {
 			TransformerHandler transformerHandler = transformerFactory.newTransformerHandler();
 			Transformer transformer = transformerHandler.getTransformer();
 			transformer.setOutputProperty(OutputKeys.ENCODING, MercurialEclipsePlugin
-					.getDefaultEncoding().name());
+					.getDefaultEncoding());
 			/*
 			 * transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"mercurialeclipse_commitmessage.dtd"
 			 * ); //$NON-NLS-1$

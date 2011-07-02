@@ -97,7 +97,7 @@ public class MercurialRevisionStorage implements IStorage {
 							+ MercurialRevisionStorage.this.toString(), error);
 					return EMPTY_STREAM;
 				}
-				return new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
+				return new ByteArrayInputStream(result.getBytes(root.getEncoding()));
 			} catch (UnsupportedEncodingException e) {
 				error = e;
 				// core API ignores exceptions from this method, so we need to log them here
