@@ -20,6 +20,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
@@ -105,8 +108,11 @@ public class QNewWizard extends HgWizard {
 			MercurialEclipsePlugin.logError(e);
 			page.setErrorMessage(e.getLocalizedMessage());
 			return false;
+		} finally {
+			PatchQueueView.getView().populateTable();
+			new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
+					RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		}
-		PatchQueueView.getView().populateTable();
 		return true;
 	}
 
