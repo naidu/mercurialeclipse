@@ -11,12 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
-
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient.TransplantOptions;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -30,7 +28,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  * @author bastian
  *
  */
-public class TransplantWizard extends HgWizard {
+public class TransplantWizard extends HgOperationWizard {
 
 	private final HgRoot hgRoot;
 
@@ -58,43 +56,37 @@ public class TransplantWizard extends HgWizard {
 		addPage(optionsPage);
 	}
 
+	/**
+	 * @throws HgException
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
+	 */
 	@Override
-	public boolean performFinish() {
-		try {
-			page.finish(new NullProgressMonitor());
-			HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-			TransplantOptions options = createOptions();
+	protected HgOperation initOperation() throws HgException {
 
-			IHgRepositoryLocation repo;
-			if (options.branch) {
-				repo = null;
-			} else {
-				repo = repoManager.fromProperties(hgRoot, page.getProperties());
-			}
+		page.finish(new NullProgressMonitor());
+		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+		TransplantOptions options = createOptions();
 
-			TransplantOperation runnable = new TransplantOperation(getContainer(), hgRoot,
-					options, repo);
-
-			getContainer().run(true, true, runnable);
-
-			// It appears good. Stash the repo location.
-			if(repo != null) {
-				repoManager.addRepoLocation(hgRoot,	repo);
-			}
-		} catch (HgException e) {
-			if(!(e.getCause() instanceof URISyntaxException)) {
-				MercurialEclipsePlugin.logError(e);
-			}
-			MercurialEclipsePlugin.showError(e);
-			return false;
-		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.showError(e.getTargetException());
-			return false;
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-			return false;
+		IHgRepositoryLocation repo;
+		if (options.branch) {
+			repo = null;
+		} else {
+			repo = repoManager.fromProperties(hgRoot, page.getProperties());
 		}
-		return true;
+
+		return new TransplantOperation(getContainer(), hgRoot, options, repo);
+	}
+
+	@Override
+	protected boolean operationSucceeded(HgOperation operation) throws HgException {
+		TransplantOperation top = (TransplantOperation) operation;
+
+		// It appears good. Stash the repo location.
+		if (top.getRepo() != null) {
+			MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, top.getRepo());
+		}
+
+		return super.operationSucceeded(operation);
 	}
 
 	private HgTransplantClient.TransplantOptions createOptions() {

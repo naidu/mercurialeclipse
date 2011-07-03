@@ -30,13 +30,12 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  */
-public class QRefreshWizard extends HgWizard {
-	private final QNewWizardPage page;
+public class QRefreshWizard extends HgOperationWizard {
 
 	private static class RefreshOperation extends HgOperation {
 
@@ -102,28 +101,29 @@ public class QRefreshWizard extends HgWizard {
 
 		initPage(Messages.getString("QRefreshWizard.pageDescription"), page); //$NON-NLS-1$
 		try {
-			page.setCommitTextDocument(new Document(HgQHeaderClient.getHeader(resource)));
+			((QNewWizardPage)page).setCommitTextDocument(new Document(HgQHeaderClient.getHeader(resource)));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logWarning("Cannot read header of current patch.", e);
 		}
 		addPage(page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
+	 */
 	@Override
-	public boolean performFinish() {
-		RefreshOperation refreshOperation = new RefreshOperation(getContainer(), resource, page);
-		try {
-			getContainer().run(true, false, refreshOperation);
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		} finally {
-			PatchQueueView.getView().populateTable();
-			new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
-					RefreshRootJob.WORKSPACE).schedule();
-		}
-		return true;
+	protected HgOperation initOperation() {
+		return new RefreshOperation(getContainer(), resource, (QNewWizardPage) page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		super.operationFinished();
+		PatchQueueView.getView().populateTable();
+		new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
+				RefreshRootJob.WORKSPACE).schedule();
+	}
 }

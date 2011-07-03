@@ -14,18 +14,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.operations.QImportOperation;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  *
  */
-public class QImportWizard extends HgWizard {
-	private final QImportWizardPage page;
+public class QImportWizard extends HgOperationWizard {
 
 	private IResource resource;
 
@@ -45,43 +44,39 @@ public class QImportWizard extends HgWizard {
 		addPage(page);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-	 */
 	@Override
-	public boolean performFinish() {
-		page.setErrorMessage(null);
-		ChangeSet[] changesets = page.getRevisions();
+	protected HgOperation initOperation() {
+		final QImportWizardPage importPage = (QImportWizardPage) page;
+
+		ChangeSet[] changesets = importPage.getRevisions();
 		IPath patchFile = null;
 		if (changesets == null) {
-			if (page.getPatchFile().getText().length()==0) {
-				page.setErrorMessage(Messages.getString("QImportWizard.page.error.mustSelectChangesetOrFile")); //$NON-NLS-1$
-				return false;
+			if (importPage.getPatchFile().getText().length()==0) {
+				importPage.setErrorMessage(Messages.getString("QImportWizard.page.error.mustSelectChangesetOrFile")); //$NON-NLS-1$
+				return null;
 			}
 
-			patchFile = new Path(page.getPatchFile().getText());
+			patchFile = new Path(importPage.getPatchFile().getText());
 			if (!patchFile.toFile().exists()) {
-				page.setErrorMessage(Messages.getString("QImportWizard.page.error.patchFileNotExists")); //$NON-NLS-1$
-				return false;
+				importPage.setErrorMessage(Messages.getString("QImportWizard.page.error.patchFileNotExists")); //$NON-NLS-1$
+				return null;
 			}
 		}
 
-		boolean existing = page.isExisting();
-		boolean force = page.getForceCheckBox().getSelection();
+		boolean existing = importPage.isExisting();
+		boolean force = importPage.getForceCheckBox().getSelection();
 
-		QImportOperation impOperation = new QImportOperation(getContainer(),
-				patchFile, changesets, existing, force, resource);
-		try {
-			getContainer().run(true, false, impOperation);
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		}
+		return new QImportOperation(getContainer(), patchFile, changesets, existing, force,
+				resource);
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		super.operationFinished();
 		PatchQueueView.getView().populateTable();
-		return true;
 	}
 
 	/**
@@ -98,5 +93,4 @@ public class QImportWizard extends HgWizard {
 	public void setResource(IResource resource) {
 		this.resource = resource;
 	}
-
 }

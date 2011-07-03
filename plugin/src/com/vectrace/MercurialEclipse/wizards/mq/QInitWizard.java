@@ -16,19 +16,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  *
  */
-public class QInitWizard extends HgWizard {
-	private final QInitWizardPage page;
+public class QInitWizard extends HgOperationWizard {
 
 	private static class InitOperation extends HgOperation {
 
@@ -93,20 +91,19 @@ public class QInitWizard extends HgWizard {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
 	 */
 	@Override
-	public boolean performFinish() {
-		InitOperation initOperation = new InitOperation(getContainer(), resource, page);
-		try {
-			getContainer().run(true, false, initOperation);
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		}
-		PatchQueueView.getView().populateTable();
-		return true;
+	protected HgOperation initOperation() {
+		return new InitOperation(getContainer(), resource, (QInitWizardPage) page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		super.operationFinished();
+		PatchQueueView.getView().populateTable();
+	}
 }

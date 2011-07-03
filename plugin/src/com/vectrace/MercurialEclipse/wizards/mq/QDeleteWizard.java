@@ -18,21 +18,19 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQDeleteClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  *
  */
-public class QDeleteWizard extends HgWizard {
-	private final QDeletePage page;
+public class QDeleteWizard extends HgOperationWizard {
 
 	private static class DeleteOperation extends HgOperation {
 
@@ -91,26 +89,23 @@ public class QDeleteWizard extends HgWizard {
 		setNeedsProgressMonitor(true);
 		page = new QDeletePage(Messages.getString("QDeleteWizard.pageName"), Messages.getString("QDeleteWizard.pageTitle"), null, //$NON-NLS-1$ //$NON-NLS-2$
 				Messages.getString("QDeleteWizard.pageDescription"), resource, showRevSelector); //$NON-NLS-1$
-		initPage(Messages.getString("QDeleteWizard.pageDescription"), //$NON-NLS-1$
-				page);
+		initPage(Messages.getString("QDeleteWizard.pageDescription"), page); //$NON-NLS-1$
 		addPage(page);
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
 	 */
 	@Override
-	public boolean performFinish() {
-		DeleteOperation delOperation = new DeleteOperation(getContainer(), resource, page);
-		try {
-			getContainer().run(true, false, delOperation);
-			PatchQueueView.getView().populateTable();
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		}
-		return true;
+	protected HgOperation initOperation() {
+		return new DeleteOperation(getContainer(), resource, (QDeletePage) page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		PatchQueueView.getView().populateTable();
+	}
 }

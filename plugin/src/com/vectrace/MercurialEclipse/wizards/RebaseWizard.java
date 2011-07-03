@@ -12,14 +12,16 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.RebaseOperation;
 
 /**
  * @author bastian
  */
-public class RebaseWizard extends HgWizard {
+public class RebaseWizard extends HgOperationWizard {
 
 	private final HgRoot hgRoot;
 	private RebasePage rebasePage;
@@ -31,7 +33,7 @@ public class RebaseWizard extends HgWizard {
 	}
 
 	@Override
-	public boolean performFinish() {
+	protected HgOperation initOperation() {
 		int srcRev = -1;
 		int baseRev = -1;
 		int destRev = -1;
@@ -51,18 +53,18 @@ public class RebaseWizard extends HgWizard {
 		op.setKeepBranches(rebasePage.isKeepBranchesSelected());
 		op.setKeep(rebasePage.isKeepSelected());
 
-		try {
-			getContainer().run(true, false, op);
-			if (op.getResult().length() != 0) {
-				HgClients.getConsole().printMessage(op.getResult(), null);
-			}
-			return true;
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e.getCause());
-			rebasePage.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		}
+		return op;
+	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationSucceeded(com.vectrace.MercurialEclipse.actions.HgOperation)
+	 */
+	@Override
+	protected boolean operationSucceeded(HgOperation op) throws HgException {
+		if (op.getResult().length() != 0) {
+			HgClients.getConsole().printMessage(op.getResult(), null);
+		}
+		return super.operationSucceeded(op);
 	}
 
 	@Override

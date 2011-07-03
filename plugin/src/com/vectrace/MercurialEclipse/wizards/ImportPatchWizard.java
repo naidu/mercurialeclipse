@@ -13,15 +13,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.jface.dialogs.MessageDialog;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.ImportPatchOperation;
 
-public class ImportPatchWizard extends HgWizard {
+public class ImportPatchWizard extends HgOperationWizard {
 
 	private final ImportPatchPage sourcePage;
 	private final ImportOptionsPage optionsPage;
@@ -42,36 +41,27 @@ public class ImportPatchWizard extends HgWizard {
 		initPage(Messages.getString("ImportPatchWizard.optionsPageDescription"), optionsPage);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
+	 */
 	@Override
-	public boolean performFinish() {
+	protected HgOperation initOperation() {
 		sourcePage.finish(null);
-		try {
-			ImportPatchOperation operation = new ImportPatchOperation(getContainer(), hgRoot,
-					sourcePage.getLocation(), optionsPage.getOptions());
-
-			getContainer().run(true, false, operation);
-
-			if (operation.isConflict()) {
-				MessageDialog.openInformation(getShell(),
-						Messages.getString("ImportPatchWizard.WizardTitle"),
-						Messages.getString("ImportPatchWizard.conflict") + "\n" +  operation.getResult());
-			}
-
-			return true;
-		} catch (InvocationTargetException e) {
-			handleError(e.getTargetException());
-		} catch (InterruptedException e) {
-			handleError(e);
-		}
-
-		return false;
+		return new ImportPatchOperation(getContainer(), hgRoot, sourcePage.getLocation(),
+				optionsPage.getOptions());
 	}
 
-	private void handleError(Throwable e) {
-		MercurialEclipsePlugin.logError(e);
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationSucceeded(HgOperation)
+	 */
+	@Override
+	protected boolean operationSucceeded(HgOperation operation) throws HgException {
+		if (((ImportPatchOperation) operation).isConflict()) {
+			MessageDialog.openInformation(getShell(),
+					Messages.getString("ImportPatchWizard.WizardTitle"),
+					Messages.getString("ImportPatchWizard.conflict") + "\n" +  operation.getResult());
+		}
 
-		// The user might be on either page
-		optionsPage.setErrorMessage(e.getLocalizedMessage());
-		sourcePage.setErrorMessage(e.getLocalizedMessage());
+		return super.operationSucceeded(operation);
 	}
 }

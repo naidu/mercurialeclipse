@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -24,14 +23,13 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  *
  */
-public class QNewWizard extends HgWizard {
-	private final QNewWizardPage page;
+public class QNewWizard extends HgOperationWizard {
 
 	private static class NewOperation extends HgOperation {
 
@@ -97,23 +95,21 @@ public class QNewWizard extends HgWizard {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
 	 */
 	@Override
-	public boolean performFinish() {
-		NewOperation initOperation = new NewOperation(getContainer(), resource, page);
-		try {
-			getContainer().run(true, false, initOperation);
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		} finally {
-			PatchQueueView.getView().populateTable();
-			new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
-					RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
-		}
-		return true;
+	protected HgOperation initOperation() {
+		return new NewOperation(getContainer(), resource, (QNewWizardPage) page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		super.operationFinished();
+		PatchQueueView.getView().populateTable();
+		new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
+				RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+	}
 }
