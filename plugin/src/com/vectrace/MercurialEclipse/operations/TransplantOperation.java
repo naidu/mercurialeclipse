@@ -38,6 +38,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class TransplantOperation extends HgOperation {
+	private static final Pattern HAS_REJECTS_PATTERN = Pattern.compile("abort:.*run hg transplant --continue");
 	private static final Pattern REJECT_PATTERN = Pattern.compile("saving rejects to file (.*)\\s");
 	private static final Pattern CHANGESET_PATTERN = Pattern.compile("applying ([a-z0-9]*)\\s");
 
@@ -102,7 +103,7 @@ public class TransplantOperation extends HgOperation {
 
 	private boolean handleTransplantException(HgException e) {
 		final String message = e.getMessage();
-		if (!message.contains("abort: Fix up the merge and run hg transplant --continue")) {
+		if (!HAS_REJECTS_PATTERN.matcher(message).find()) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 			return false;
