@@ -30,16 +30,22 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 public class QInitWizard extends HgWizard {
 	private final QInitWizardPage page;
 
-	private class InitOperation extends HgOperation {
+	private static class InitOperation extends HgOperation {
+
+		private final boolean isRepository;
+		private final IResource resource;
 
 		/**
 		 * @param context
 		 */
-		public InitOperation(IRunnableContext context) {
+		public InitOperation(IRunnableContext context, IResource resource, QInitWizardPage page) {
 			super(context);
+
+			this.isRepository = page.getCheckBox().getSelection();
+			this.resource = resource;
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
 		 */
 		@Override
@@ -57,7 +63,7 @@ public class QInitWizard extends HgWizard {
 			monitor.subTask(Messages.getString("QInitWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQInitClient.init(resource, page.getCheckBox().getSelection());
+				HgQInitClient.init(resource, isRepository);
 				monitor.worked(1);
 				monitor.done();
 			} catch (HgException e) {
@@ -86,14 +92,14 @@ public class QInitWizard extends HgWizard {
 		addPage(page);
 	}
 
-	/* (non-Javadoc)
+	/**
 	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
 	 */
 	@Override
 	public boolean performFinish() {
-		InitOperation initOperation = new InitOperation(getContainer());
+		InitOperation initOperation = new InitOperation(getContainer(), resource, page);
 		try {
-			getContainer().run(false, false, initOperation);
+			getContainer().run(true, false, initOperation);
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 			page.setErrorMessage(e.getLocalizedMessage());

@@ -38,10 +38,24 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 public class QRefreshWizard extends HgWizard {
 	private final QNewWizardPage page;
 
-	private class RefreshOperation extends HgOperation {
+	private static class RefreshOperation extends HgOperation {
 
-		public RefreshOperation(IRunnableContext context) {
+		private final IResource resource;
+		private final String message;
+		private final String includes;
+		private final String excludes;
+		private final String user;
+		private final String date;
+
+		public RefreshOperation(IRunnableContext context, IResource resource, QNewWizardPage page) {
 			super(context);
+
+			this.resource = resource;
+			this.message = page.getCommitTextDocument().get();
+			this.includes = page.getIncludeTextField().getText();
+			this.excludes = page.getExcludeTextField().getText();
+			this.user = page.getUserTextField().getText();
+			this.date = page.getDate().getText();
 		}
 
 		@Override
@@ -62,12 +76,7 @@ public class QRefreshWizard extends HgWizard {
 					.getString("QRefreshWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQRefreshClient
-						.refresh(resource, page.getCommitTextDocument().get(),
-								page.getIncludeTextField().getText(), page
-								.getExcludeTextField().getText(), page
-								.getUserTextField().getText(), page.getDate()
-								.getText());
+				HgQRefreshClient.refresh(resource, message, includes, excludes, user, date);
 				monitor.worked(1);
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 				if(hgRoot != null) {
@@ -79,7 +88,6 @@ public class QRefreshWizard extends HgWizard {
 				monitor.done();
 			}
 		}
-
 	}
 
 	private final IResource resource;
@@ -103,9 +111,9 @@ public class QRefreshWizard extends HgWizard {
 
 	@Override
 	public boolean performFinish() {
-		RefreshOperation refreshOperation = new RefreshOperation(getContainer());
+		RefreshOperation refreshOperation = new RefreshOperation(getContainer(), resource, page);
 		try {
-			getContainer().run(false, false, refreshOperation);
+			getContainer().run(true, false, refreshOperation);
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 			page.setErrorMessage(e.getLocalizedMessage());

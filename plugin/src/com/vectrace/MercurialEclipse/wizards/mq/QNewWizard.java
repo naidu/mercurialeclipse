@@ -33,19 +33,30 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 public class QNewWizard extends HgWizard {
 	private final QNewWizardPage page;
 
-	private class NewOperation extends HgOperation {
+	private static class NewOperation extends HgOperation {
 
-		/**
-		 * @param context
-		 */
-		public NewOperation(IRunnableContext context) {
+		private final IResource resource;
+		private final String message;
+		private final String includes;
+		private final String excludes;
+		private final String user;
+		private final String date;
+		private final String patchName;
+
+		public NewOperation(IRunnableContext context, IResource resource, QNewWizardPage page) {
 			super(context);
+
+			this.resource = resource;
+			this.message = page.getCommitTextDocument().get();
+			this.includes = page.getIncludeTextField().getText();
+			this.excludes = page.getExcludeTextField().getText();
+			this.user = page.getUserTextField().getText();
+			this.date = page.getDate().getText();
+			this.patchName = page.getPatchNameTextField().getText();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+		/**
+		 *  @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
 		 */
 		@Override
 		protected String getActionDescription() {
@@ -62,27 +73,18 @@ public class QNewWizard extends HgWizard {
 			monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQNewClient.createNewPatch(resource, page
-						.getCommitTextDocument().get(), page
-						.getIncludeTextField().getText(), page
-						.getExcludeTextField().getText(), page
-						.getUserTextField().getText(), page.getDate().getText(),
-						page.getPatchNameTextField()
-								.getText());
+				HgQNewClient.createNewPatch(resource, message, includes, excludes, user, date,
+						patchName);
 				monitor.worked(1);
 				monitor.done();
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
 			}
 		}
-
 	}
 
 	private final IResource resource;
 
-	/**
-	 * @param windowTitle
-	 */
 	public QNewWizard(IResource resource) {
 		super(Messages.getString("QNewWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
@@ -94,16 +96,14 @@ public class QNewWizard extends HgWizard {
 		addPage(page);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
+	/**
 	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
 	 */
 	@Override
 	public boolean performFinish() {
-		NewOperation initOperation = new NewOperation(getContainer());
+		NewOperation initOperation = new NewOperation(getContainer(), resource, page);
 		try {
-			getContainer().run(false, false, initOperation);
+			getContainer().run(true, false, initOperation);
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 			page.setErrorMessage(e.getLocalizedMessage());
