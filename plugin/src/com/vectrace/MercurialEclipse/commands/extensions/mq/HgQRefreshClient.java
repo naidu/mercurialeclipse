@@ -16,7 +16,6 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -61,13 +60,14 @@ public class HgQRefreshClient extends AbstractClient {
 	public static String refresh(IResource resource, String commitMessage,
 			String include, String exclude, String user, String date)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
+		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", resource, true);
+		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			command.addOptions("--message", commitMessage); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, commitMessage);
 		}
 
 		command.addOptions("--git"); //$NON-NLS-1$
@@ -90,6 +90,13 @@ public class HgQRefreshClient extends AbstractClient {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
 		}
 
-		return command.executeToString();
+		try
+		{
+			return command.executeToString();
+		}
+		finally
+		{
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 }
