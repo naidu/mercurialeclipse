@@ -501,8 +501,8 @@ public class CommitDialog extends TitleAreaDialog {
 				boolean ok = confirmHistoryRewrite();
 				if (ok) {
 					pm.subTask("Importing changeset into MQ.");
-					HgQImportClient.qimport(root, true, true, false,
-							new ChangeSet[] { currentChangeset }, null);
+					HgQImportClient.qimport(root, true, false, new ChangeSet[] { currentChangeset },
+							null);
 					pm.worked(1);
 				} else {
 					setErrorMessage(Messages.getString("CommitDialog.abortedAmending"));

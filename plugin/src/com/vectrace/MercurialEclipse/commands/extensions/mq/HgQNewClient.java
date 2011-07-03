@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class HgQNewClient extends AbstractClient {
 	public static String createNewPatch(IResource resource,
-			String commitMessage, boolean force, boolean git, String include,
+			String commitMessage, String include,
 			String exclude, String user, String date, String patchName)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qnew", //$NON-NLS-1$
@@ -34,12 +34,9 @@ public class HgQNewClient extends AbstractClient {
 		if (commitMessage != null && commitMessage.length() > 0) {
 			command.addOptions("--message", commitMessage); //$NON-NLS-1$
 		}
-		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
-		}
-		if (git) {
-			command.addOptions("--git"); //$NON-NLS-1$
-		}
+
+		command.addOptions("--git"); //$NON-NLS-1$
+
 		if (include != null && include.length() > 0) {
 			command.addOptions("--include", include); //$NON-NLS-1$
 		}

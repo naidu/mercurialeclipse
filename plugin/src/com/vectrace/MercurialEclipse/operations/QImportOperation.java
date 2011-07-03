@@ -37,21 +37,18 @@ public class QImportOperation extends HgOperation {
 	private final IPath patchFile;
 	private final ChangeSet[] changesets;
 	private final boolean existing;
-	private final boolean git;
 	private final boolean force;
 	private final IResource resource;
 
 	/**
 	 * @param context
 	 */
-	public QImportOperation(IRunnableContext context, IPath patchFile,
-			ChangeSet[] changesets, boolean existing, boolean git,
-			boolean force, IResource resource) {
+	public QImportOperation(IRunnableContext context, IPath patchFile, ChangeSet[] changesets,
+			boolean existing, boolean force, IResource resource) {
 		super(context);
 		this.patchFile = patchFile;
 		this.changesets = changesets;
 		this.existing = existing;
-		this.git = git;
 		this.force = force;
 		this.resource = resource;
 
@@ -71,8 +68,7 @@ public class QImportOperation extends HgOperation {
 				throw new InvocationTargetException(new IllegalStateException(
 						"No hg root found for: " + resource));
 			}
-			HgQImportClient.qimport(hgRoot, force, git, existing, changesets,
-					patchFile);
+			HgQImportClient.qimport(hgRoot, force, existing, changesets, patchFile);
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$
 			new SafeUiJob(Messages.getString("QImportOperation.refreshingView")) { //$NON-NLS-1$

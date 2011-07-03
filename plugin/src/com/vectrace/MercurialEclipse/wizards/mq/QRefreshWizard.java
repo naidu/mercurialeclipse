@@ -62,10 +62,7 @@ public class QRefreshWizard extends HgWizard {
 			try {
 				HgQRefreshClient
 						.refresh(resource, page.getCommitTextDocument().get(),
-								page
-								.getForceCheckBox().getSelection(), page
-								.getGitCheckBox().getSelection(), page
-								.getIncludeTextField().getText(), page
+								page.getIncludeTextField().getText(), page
 								.getExcludeTextField().getText(), page
 								.getUserTextField().getText(), page.getDate()
 								.getText());

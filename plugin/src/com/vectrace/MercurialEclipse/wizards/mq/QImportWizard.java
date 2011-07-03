@@ -69,11 +69,10 @@ public class QImportWizard extends HgWizard {
 		}
 
 		boolean existing = page.isExisting();
-		boolean git = page.getGitCheckBox().getSelection();
 		boolean force = page.getForceCheckBox().getSelection();
 
 		QImportOperation impOperation = new QImportOperation(getContainer(),
-				patchFile, changesets, existing, git, force, resource);
+				patchFile, changesets, existing, force, resource);
 		try {
 			getContainer().run(true, false, impOperation);
 		} catch (Exception e) {

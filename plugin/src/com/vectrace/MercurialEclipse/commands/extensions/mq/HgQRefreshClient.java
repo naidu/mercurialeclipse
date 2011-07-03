@@ -58,8 +58,8 @@ public class HgQRefreshClient extends AbstractClient {
 		}
 	}
 
-	public static String refresh(IResource resource, String commitMessage, boolean force,
-			boolean git, String include, String exclude, String user, String date)
+	public static String refresh(IResource resource, String commitMessage,
+			String include, String exclude, String user, String date)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", resource, true);
@@ -69,12 +69,9 @@ public class HgQRefreshClient extends AbstractClient {
 		if (commitMessage != null && commitMessage.length() > 0) {
 			command.addOptions("--message", commitMessage); //$NON-NLS-1$
 		}
-		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
-		}
-		if (git) {
-			command.addOptions("--git"); //$NON-NLS-1$
-		}
+
+		command.addOptions("--git"); //$NON-NLS-1$
+
 		if (include != null && include.length() > 0) {
 			command.addOptions("--include", include); //$NON-NLS-1$
 		}

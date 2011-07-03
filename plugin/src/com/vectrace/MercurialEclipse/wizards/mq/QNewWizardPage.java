@@ -23,7 +23,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
@@ -47,8 +46,6 @@ public class QNewWizardPage extends HgWizardPage {
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
-	private Button forceCheckBox;
-	private Button gitCheckBox;
 	private Text includeTextField;
 	private Text excludeTextField;
 	private final boolean showPatchName;
@@ -124,10 +121,6 @@ public class QNewWizardPage extends HgWizardPage {
 		});
 
 		g = createGroup(composite, Messages.getString("QNewWizardPage.optionsGroup.title")); //$NON-NLS-1$
-		this.forceCheckBox = createCheckBox(g,
-				Messages.getString("QNewWizardPage.forceCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox = createCheckBox(g, Messages.getString("QNewWizardPage.gitCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox.setSelection(true);
 
 		createLabel(g, Messages.getString("QNewWizardPage.includeLabel.title")); //$NON-NLS-1$
 		this.includeTextField = createTextField(g);
@@ -173,36 +166,6 @@ public class QNewWizardPage extends HgWizardPage {
 	 */
 	public void setDate(Text date) {
 		this.date = date;
-	}
-
-	/**
-	 * @return the forceCheckBox
-	 */
-	public Button getForceCheckBox() {
-		return forceCheckBox;
-	}
-
-	/**
-	 * @param forceCheckBox
-	 *            the forceCheckBox to set
-	 */
-	public void setForceCheckBox(Button forceCheckBox) {
-		this.forceCheckBox = forceCheckBox;
-	}
-
-	/**
-	 * @return the gitCheckBox
-	 */
-	public Button getGitCheckBox() {
-		return gitCheckBox;
-	}
-
-	/**
-	 * @param gitCheckBox
-	 *            the gitCheckBox to set
-	 */
-	public void setGitCheckBox(Button gitCheckBox) {
-		this.gitCheckBox = gitCheckBox;
 	}
 
 	/**

@@ -61,12 +61,10 @@ public class QNewWizard extends HgWizard {
 			try {
 				HgQNewClient.createNewPatch(resource, page
 						.getCommitTextDocument().get(), page
-						.getForceCheckBox().getSelection(), page
-						.getGitCheckBox().getSelection(), page
 						.getIncludeTextField().getText(), page
 						.getExcludeTextField().getText(), page
-						.getUserTextField().getText(),
-						page.getDate().getText(), page.getPatchNameTextField()
+						.getUserTextField().getText(), page.getDate().getText(),
+						page.getPatchNameTextField()
 								.getText());
 				monitor.worked(1);
 				monitor.done();

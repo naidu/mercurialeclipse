@@ -52,7 +52,6 @@ public class QImportWizardPage extends HgWizardPage {
 	private Text patchFile;
 	private Button browseButton;
 	private Button forceCheckBox;
-	private Button gitCheckBox;
 	private Label patchFileLabel;
 	private Group patchNameGroup;
 	private boolean existing;
@@ -77,9 +76,6 @@ public class QImportWizardPage extends HgWizardPage {
 				.getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
 		this.forceCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
 				.getString("QImportWizardPage.forceCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
-				.getString("QImportWizardPage.gitCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox.setSelection(true);
 	}
 
 	private void createPatchNameGroup(Composite composite) {
@@ -233,10 +229,6 @@ public class QImportWizardPage extends HgWizardPage {
 
 	public Button getForceCheckBox() {
 		return forceCheckBox;
-	}
-
-	public Button getGitCheckBox() {
-		return gitCheckBox;
 	}
 
 	public boolean isExisting() {
