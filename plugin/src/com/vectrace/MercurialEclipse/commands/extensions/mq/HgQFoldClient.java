@@ -10,14 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Patch;
 
@@ -30,21 +31,27 @@ public class HgQFoldClient extends AbstractClient {
 			List<Patch> patches) throws HgException {
 		Assert.isNotNull(patches);
 		Assert.isNotNull(resource);
-		AbstractShellCommand command = new HgCommand("qfold", //$NON-NLS-1$
+		HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
 				"Invoking qfold", resource, true);
+		File messageFile = null;
+
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (keep) {
 			command.addOptions("--keep"); //$NON-NLS-1$
 		}
 		if (message != null && message.length() > 0) {
-			command.addOptions("--message", message); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, message);
 		}
 
 		for (Patch patch : patches) {
 			command.addOptions(patch.getName());
 		}
 
-		return command.executeToString();
+		try {
+			return command.executeToString();
+		} finally {
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 }

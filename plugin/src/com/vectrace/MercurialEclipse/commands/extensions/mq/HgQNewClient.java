@@ -10,11 +10,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
@@ -26,13 +28,14 @@ public class HgQNewClient extends AbstractClient {
 			String commitMessage, String include,
 			String exclude, String user, String date, String patchName)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("qnew", //$NON-NLS-1$
+		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
 				"Invoking qnew", resource, true);
+		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			command.addOptions("--message", commitMessage); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, commitMessage);
 		}
 
 		command.addOptions("--git"); //$NON-NLS-1$
@@ -57,6 +60,10 @@ public class HgQNewClient extends AbstractClient {
 
 		command.addOptions(patchName);
 
-		return command.executeToString();
+		try {
+			return command.executeToString();
+		} finally {
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 }
