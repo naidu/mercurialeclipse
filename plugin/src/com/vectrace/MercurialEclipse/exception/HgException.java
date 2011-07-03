@@ -33,6 +33,13 @@ public class HgException extends TeamException {
 	 */
 	private static final Pattern CONCISE_MESSAGE_PATTERN = Pattern.compile("^(?:remote:\\s*)?abort:\\s*(.+)", Pattern.MULTILINE);
 
+	private static final Pattern LINE_PATTERN = Pattern.compile(".+");
+
+	/**
+	 * May be null. Raw hg output.
+	 */
+	private String output;
+
 	public HgException(IStatus status) {
 		super(status);
 	}
@@ -52,8 +59,16 @@ public class HgException extends TeamException {
 	}
 
 	public HgException(int code, String message, Throwable e) {
-		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, code,
-				message, e));
+		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, code, message, e));
+	}
+
+	/**
+	 * Create an exception indicating an error that occurred invoking hg.
+	 */
+	public HgException(int code, String message, String jobName, Throwable e) {
+		this(code, message + ". Command line: " + jobName, e);
+
+		this.output = message;
 	}
 
 	@Override
@@ -83,13 +98,17 @@ public class HgException extends TeamException {
 		return getMessage();
 	}
 
+	private String getOutput() {
+		return this.output != null ? this.output : getStatus().getMessage();
+	}
+
 	/**
 	 * Parses the message looking for "abort:" and if present returns the remainder of the line
 	 *
 	 * @return A more concise error message if possible. Otherwise the entire error message
 	 */
 	public String getConciseMessage() {
-		String message = getStatus().getMessage();
+		String message = getOutput();
 		Matcher matcher = CONCISE_MESSAGE_PATTERN.matcher(message);
 
 		if (matcher.find()) {
@@ -97,5 +116,15 @@ public class HgException extends TeamException {
 		}
 
 		return message;
+	}
+
+	/**
+	 * @return Whether the message is multiple lines
+	 */
+	public boolean isMultiLine() {
+		Matcher m = LINE_PATTERN.matcher(getOutput());
+
+		m.find();
+		return m.find();
 	}
 }

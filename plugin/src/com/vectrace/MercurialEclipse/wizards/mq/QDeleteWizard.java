@@ -67,7 +67,7 @@ public class QDeleteWizard extends HgWizard {
 						.getPatchViewer().getSelection();
 				List<Patch> patches = selection.toList();
 				HgQDeleteClient.delete(resource, page.getKeepCheckBox().getSelection(), page
-						.getChangesetTable().getSelection(), patches);
+						.getSelectedChangeset(), patches);
 				monitor.worked(1);
 				monitor.done();
 			} catch (HgException e) {
@@ -79,15 +79,12 @@ public class QDeleteWizard extends HgWizard {
 
 	private final IResource resource;
 
-	/**
-	 * @param windowTitle
-	 */
-	public QDeleteWizard(IResource resource) {
+	public QDeleteWizard(IResource resource, boolean showRevSelector) {
 		super(Messages.getString("QDeleteWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
 		setNeedsProgressMonitor(true);
 		page = new QDeletePage(Messages.getString("QDeleteWizard.pageName"), Messages.getString("QDeleteWizard.pageTitle"), null, //$NON-NLS-1$ //$NON-NLS-2$
-				Messages.getString("QDeleteWizard.pageDescription"), resource); //$NON-NLS-1$
+				Messages.getString("QDeleteWizard.pageDescription"), resource, showRevSelector); //$NON-NLS-1$
 		initPage(Messages.getString("QDeleteWizard.pageDescription"), //$NON-NLS-1$
 				page);
 		addPage(page);

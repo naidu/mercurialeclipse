@@ -23,13 +23,29 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  *
  */
 public class HgQFinishClient extends AbstractClient {
-	public static String finish(HgRoot root, String rev) throws HgException {
-		Assert.isNotNull(rev);
+	private static AbstractShellCommand makeCommand(HgRoot root) {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qfinish", //$NON-NLS-1$
 				"Invoking qfinish", root, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+
+		return command;
+	}
+
+	public static String finish(HgRoot root, String rev) throws HgException {
+		Assert.isNotNull(rev);
+		AbstractShellCommand command = makeCommand(root);
 		command.addOptions(rev);
+		return command.executeToString();
+	}
+
+	/**
+	 * Calls qfinish -a
+	 */
+	public static String finishAllApplied(HgRoot root) throws HgException {
+		AbstractShellCommand command = makeCommand(root);
+		command.addOptions("--applied");
+
 		return command.executeToString();
 	}
 }

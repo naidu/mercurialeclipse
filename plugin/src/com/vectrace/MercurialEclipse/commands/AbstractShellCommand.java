@@ -446,7 +446,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			if (exitCode != 0 && expectPositiveReturnValue) {
 				Throwable rootCause = result != null ? result.getException() : null;
 				final HgException hgex = new HgException(exitCode,
-						msg + ". Command line: " + jobName, rootCause);
+						msg, jobName, rootCause);
 				logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
 				throw hgex;
 			}

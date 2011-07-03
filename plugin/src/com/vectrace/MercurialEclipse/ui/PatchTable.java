@@ -146,7 +146,7 @@ public class PatchTable extends Composite {
 			Patch patch = (Patch) element;
 			switch (columnIndex) {
 				case 0:
-					return patch.getIndex();
+					return String.valueOf(patch.getIndex());
 				case 1:
 					return patch.isApplied() ? Messages.getString("PatchTable.statusApplied") : Messages.getString("PatchTable.statusUnapplied"); //$NON-NLS-1$ //$NON-NLS-2$
 				case 2:

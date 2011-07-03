@@ -51,7 +51,7 @@ public class HgQSeriesClient extends AbstractClient {
                 String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
 
 				Patch p = new Patch();
-				p.setIndex(patchData[0]);
+				p.setIndex(getInt(patchData[0], -1));
 				p.setApplied("A".equals(patchData[1])); //$NON-NLS-1$
 				p.setName(patchData[2].trim());
 
@@ -64,6 +64,14 @@ public class HgQSeriesClient extends AbstractClient {
 			}
 		}
 		return list;
+	}
+
+	private static int getInt(String s, int def) {
+		try {
+			return Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return def;
+		}
 	}
 
 	public static List<Patch> getPatchesNotInSeries(IResource resource)

@@ -16,7 +16,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -29,6 +28,7 @@ import org.eclipse.jface.action.GroupMarker;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -50,6 +50,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFinishClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
@@ -62,7 +63,8 @@ import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
 
 /**
@@ -81,6 +83,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	private Action qPushAllAction;
 	private Action qPopAllAction;
 	private Action qDeleteAction;
+	private Action qFinishAction;
 	private Action qFoldAction;
 	private Action qImportAction;
 	private Action qGotoAction;
@@ -92,6 +95,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		parent.setLayout(new GridLayout(1, false));
 		statusLabel = new Label(parent, SWT.NONE);
 		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		statusLabel.setText("No project selected");
 		table = new PatchTable(parent);
 		getSite().setSelectionProvider(table.getTableViewer());
 		createActions();
@@ -105,15 +109,17 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		mgr.add(qImportAction);
 		mgr.add(qNewAction);
 		mgr.add(qRefreshAction);
-		mgr.add(qFoldAction);
 		mgr.add(qDeleteAction);
+		mgr.add(qFoldAction);
+		mgr.add(qFinishAction);
 	}
 
 	private void createActions() {
-		qImportAction = new Action("qimport") { //$NON-NLS-1$
+		qImportAction = new Action("qimport...") { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
+					clearStatusLabel();
 					QImportHandler.openWizard(resource, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
@@ -122,10 +128,11 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qImportAction.setEnabled(true);
 
-		qNewAction = new Action("qnew") { //$NON-NLS-1$
+		qNewAction = new Action("qnew...") { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
+					clearStatusLabel();
 					QNewHandler.openWizard(resource, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
@@ -134,98 +141,113 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qNewAction.setEnabled(true);
 
-		qRefreshAction = new Action("qrefresh") { //$NON-NLS-1$
+		qRefreshAction = new Action("qrefresh...") { //$NON-NLS-1$
 			@Override
 			public void run() {
+				clearStatusLabel();
 				QRefreshHandler.openWizard(resource, getSite().getShell());
 			}
 		};
 		qRefreshAction.setEnabled(true);
 
-		qGotoAction = new Action(Messages.getString("PatchQueueView.switchTo")) { //$NON-NLS-1$
+		qGotoAction = new MQAction(Messages.getString("PatchQueueView.switchTo"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
-			public void run() {
-				try {
-					// Switch to the first selected patch. There is only one patch selected because
-					// the action is disabled if zero or more than one patches are selected.
-					Patch patch = table.getSelection();
-					if (patch != null) {
-						if (patch.isApplied()) {
-							HgQPopClient.pop(resource, false, patch.getName());
-						} else {
-							HgQPushClient.push(resource, false, patch.getName());
-						}
-						updateUI();
+			public boolean invoke() throws HgException {
+				// Switch to the first selected patch. There is only one patch selected because
+				// the action is disabled if zero or more than one patches are selected.
+				Patch patch = table.getSelection();
+				if (patch != null) {
+					if (patch.isApplied()) {
+						HgQPopClient.pop(resource, false, patch.getName());
+					} else {
+						HgQPushClient.push(resource, false, patch.getName());
 					}
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
+					return true;
 				}
+				return false;
 			}
 		};
+		qGotoAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/switch.gif"));
 		qGotoAction.setEnabled(false);
 
-		qPushAllAction = new Action(Messages.getString("PatchQueueView.applyAll")) { //$NON-NLS-1$
+		qPushAllAction = new MQAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
-			public void run() {
-				try {
-					HgQPushClient.pushAll(resource, false);
-					updateUI();
-				} catch (Exception e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
-				}
+			public boolean invoke() throws HgException {
+				HgQPushClient.pushAll(resource, false);
+				return true;
 			}
 		};
 		qPushAllAction.setEnabled(true);
 
-		qPopAllAction = new Action(Messages.getString("PatchQueueView.unapplyAll")) { //$NON-NLS-1$
+		qPopAllAction = new MQAction(Messages.getString("PatchQueueView.unapplyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
-			public void run() {
-				try {
-					HgQPopClient.popAll(resource, false);
-					updateUI();
-				} catch (Exception e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
-				}
+			public boolean invoke() throws HgException {
+				HgQPopClient.popAll(resource, false);
+				return true;
 			}
 		};
 		qPopAllAction.setEnabled(false);
 
-		qFoldAction = new Action("qfold") { //$NON-NLS-1$
+		qFoldAction = new MQAction("qfold", RefreshRootJob.WORKSPACE) { //$NON-NLS-1$
 			@Override
-			public void run() {
-				try {
-					List<Patch> patches = table.getSelections();
-					if (patches.size() > 0) {
-						HgQFoldClient.fold(resource, true, null, patches);
-						populateTable();
-					}
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
+			public boolean invoke() throws HgException {
+				List<Patch> patches = table.getSelections();
+				if (patches.size() > 0) {
+					HgQFoldClient.fold(resource, true, null, patches);
+					return true;
 				}
+				return false;
 			}
 		};
-		qFoldAction.setEnabled(true);
+		qFoldAction.setEnabled(false);
 
-		qDeleteAction = new Action("qdel") { //$NON-NLS-1$
+		qDeleteAction = new Action("qdelete...") { //$NON-NLS-1$
 			@Override
 			public void run() {
-				try {
-					QDeleteHandler.openWizard(resource, getSite().getShell());
-					updateUI();
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
-				}
+				clearStatusLabel();
+				QDeleteHandler.openWizard(resource, getSite().getShell(), false);
 			}
 		};
 		qDeleteAction.setEnabled(true);
+
+		qFinishAction = new MQAction("qfinish", RefreshRootJob.OUTGOING) { //$NON-NLS-1$
+			@Override
+			public boolean invoke() throws HgException {
+				List<Patch> patches = table.getSelections();
+				Patch min = null;
+				boolean appliedSelected = false;
+
+				for (Patch p : patches) {
+					if (p.isApplied()) {
+						if (min == null || p.getIndex() < min.getIndex()) {
+							min = p;
+						}
+					} else {
+						appliedSelected = true;
+					}
+				}
+
+				if (min == null) {
+					if (appliedSelected) {
+						MessageDialog
+								.openInformation(getSite().getShell(),
+										"Only applied patches can be promoted",
+										"Only applied patches can be promoted. Select an applied patch to promote.");
+					} else if (MessageDialog.openConfirm(getSite().getShell(),
+							"Promote all applied patches?",
+							"No patches selected, promote all applied patches?")) {
+						HgQFinishClient.finishAllApplied(currentHgRoot);
+						return true;
+					}
+				} else {
+					HgQFinishClient.finish(currentHgRoot, min.getName());
+					return true;
+				}
+
+				return false;
+			}
+		};
+		qFinishAction.setEnabled(true);
 
 		table.getTableViewer().addPostSelectionChangedListener(new ISelectionChangedListener() {
 
@@ -234,11 +256,14 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 
 				boolean isTopSelected = false;
+				boolean selectionHasApplied = false;
 				for (Iterator<Patch> i = selection.iterator(); i.hasNext();) {
-					if (i.next().equals(topmostAppliedPatch)) {
+					Patch p = i.next();
+					if (p.equals(topmostAppliedPatch)) {
 						isTopSelected = true;
-						break;
 					}
+
+					selectionHasApplied |= p.isApplied();
 				}
 
 				boolean isAllApplied = true;
@@ -254,6 +279,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				qGotoAction.setEnabled(selection.size() == 1 && !isTopSelected);
 				qPushAllAction.setEnabled(!isAllApplied);
 				qPopAllAction.setEnabled(!isAllUnapplied);
+				qFoldAction.setEnabled(!selectionHasApplied && !selection.isEmpty());
+				qFinishAction.setEnabled(selectionHasApplied || selection.isEmpty());
 			}
 		});
 	}
@@ -263,8 +290,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		menuMgr.add(qImportAction);
 		menuMgr.add(qNewAction);
 		menuMgr.add(qRefreshAction);
-		menuMgr.add(qFoldAction);
 		menuMgr.add(qDeleteAction);
+		menuMgr.add(qFoldAction);
+		menuMgr.add(qFinishAction);
 
 		MenuManager popupMenuMgr = new MenuManager();
 		popupMenuMgr.add(qGotoAction);
@@ -322,12 +350,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		job.schedule();
 	}
 
-	private void updateUI() throws CoreException {
-		populateTable();
-		for (IProject project : MercurialTeamProvider.getKnownHgProjects(currentHgRoot)) {
-			project.refreshLocal(IResource.DEPTH_INFINITE, null);
-		}
-		MercurialStatusCache.getInstance().refreshStatus(currentHgRoot, null);
+	private void clearStatusLabel() {
+		statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
 	}
 
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
@@ -352,7 +376,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 						currentHgRoot = newRoot;
 						resource = newResource;
 						populateTable();
-						statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
+						clearStatusLabel();
 					}
 				}
 
@@ -392,4 +416,42 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		super.dispose();
 	}
 
+	private abstract class MQAction extends Action {
+		private final int refreshFlag;
+
+		public MQAction(String name, int refreshFlag) {
+			super(name);
+			this.refreshFlag = refreshFlag;
+		}
+
+		/**
+		 * @see org.eclipse.jface.action.Action#run()
+		 */
+		@Override
+		public final void run() {
+			boolean changed = true;
+
+			try {
+				clearStatusLabel();
+				changed = invoke();
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				statusLabel.setText(e.getConciseMessage());
+
+				if (e.isMultiLine()) {
+					MercurialEclipsePlugin.showError(e);
+				}
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+				statusLabel.setText(e.getLocalizedMessage());
+				MercurialEclipsePlugin.showError(e);
+			} finally {
+				if (changed) {
+					populateTable();
+					new RefreshWorkspaceStatusJob(currentHgRoot, refreshFlag).schedule();
+				}
+			}
+		}
+		public abstract boolean invoke() throws HgException, CoreException;
+	}
 }
