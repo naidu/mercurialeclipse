@@ -12,24 +12,23 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.io.File;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
  *
  */
 public class HgQNewClient extends AbstractClient {
-	public static String createNewPatch(IResource resource,
+	public static String createNewPatch(HgRoot root,
 			String commitMessage, String include,
 			String exclude, String user, String date, String patchName)
 			throws HgException {
 		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
-				"Invoking qnew", resource, true);
+				"Invoking qnew", root, true);
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

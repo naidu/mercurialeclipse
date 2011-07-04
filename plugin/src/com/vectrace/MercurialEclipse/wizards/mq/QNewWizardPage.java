@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.*;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -42,7 +41,6 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QNewWizardPage extends HgWizardPage {
 
-	private final IResource resource;
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
@@ -53,24 +51,15 @@ public class QNewWizardPage extends HgWizardPage {
 	private SourceViewerDecorationSupport decorationSupport;
 	private IDocument commitTextDocument;
 
-	/**
-	 * @param pageName
-	 * @param title
-	 * @param titleImage
-	 * @param description
-	 */
 	public QNewWizardPage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IResource resource,
+			ImageDescriptor titleImage, String description,
 			boolean showPatchName) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
 		this.showPatchName = showPatchName;
 		this.commitTextDocument = new Document();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
+	/**
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
@@ -129,13 +118,6 @@ public class QNewWizardPage extends HgWizardPage {
 		this.excludeTextField = createTextField(g);
 
 		setControl(composite);
-	}
-
-	/**
-	 * @return the resource
-	 */
-	public IResource getResource() {
-		return resource;
 	}
 
 	/**

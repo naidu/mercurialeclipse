@@ -11,23 +11,35 @@
 package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard;
 
 public class QNewHandler extends SingleResourceHandler {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
-		openWizard(resource, getShell());
+		if (resource != null) {
+			HgRoot root = MercurialRootCache.getInstance().hasHgRoot(resource, true);
+
+			if (root != null) {
+				openWizard(root, getShell());
+
+				return;
+			}
+		}
+
+		MessageDialog.openInformation(getShell(), "Couldn't find hg root", "Couldn't find hg root");
 	}
 
-	/**
-	 * @param resource
-	 */
-	public static void openWizard(IResource resource, Shell shell) {
-		QNewWizard wizard = new QNewWizard(resource);
+	public static void openWizard(HgRoot root, Shell shell) {
+		Assert.isNotNull(root);
+		QNewWizard wizard = new QNewWizard(root);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.setBlockOnOpen(true);
 		dialog.open();

@@ -12,14 +12,13 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
@@ -33,7 +32,7 @@ public class QNewWizard extends HgOperationWizard {
 
 	private static class NewOperation extends HgOperation {
 
-		private final IResource resource;
+		private final HgRoot root;
 		private final String message;
 		private final String includes;
 		private final String excludes;
@@ -41,10 +40,10 @@ public class QNewWizard extends HgOperationWizard {
 		private final String date;
 		private final String patchName;
 
-		public NewOperation(IRunnableContext context, IResource resource, QNewWizardPage page) {
+		public NewOperation(IRunnableContext context, HgRoot root, QNewWizardPage page) {
 			super(context);
 
-			this.resource = resource;
+			this.root = root;
 			this.message = page.getCommitTextDocument().get();
 			this.includes = page.getIncludeTextField().getText();
 			this.excludes = page.getExcludeTextField().getText();
@@ -71,7 +70,7 @@ public class QNewWizard extends HgOperationWizard {
 			monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQNewClient.createNewPatch(resource, message, includes, excludes, user, date,
+				HgQNewClient.createNewPatch(root, message, includes, excludes, user, date,
 						patchName);
 				monitor.worked(1);
 				monitor.done();
@@ -81,14 +80,14 @@ public class QNewWizard extends HgOperationWizard {
 		}
 	}
 
-	private final IResource resource;
+	private final HgRoot root;
 
-	public QNewWizard(IResource resource) {
+	public QNewWizard(HgRoot root) {
 		super(Messages.getString("QNewWizard.title")); //$NON-NLS-1$
-		this.resource = resource;
+		this.root = root;
 		setNeedsProgressMonitor(true);
 		page = new QNewWizardPage(Messages.getString("QNewWizard.pageName"), Messages.getString("QNewWizard.pageTitle"), null, null, //$NON-NLS-1$ //$NON-NLS-2$
-				resource, true);
+				true);
 		initPage(Messages.getString("QNewWizard.pageDescription"), //$NON-NLS-1$
 				page);
 		addPage(page);
@@ -99,7 +98,7 @@ public class QNewWizard extends HgOperationWizard {
 	 */
 	@Override
 	protected HgOperation initOperation() {
-		return new NewOperation(getContainer(), resource, (QNewWizardPage) page);
+		return new NewOperation(getContainer(), root, (QNewWizardPage) page);
 	}
 
 	/**
@@ -109,7 +108,6 @@ public class QNewWizard extends HgOperationWizard {
 	protected void operationFinished() {
 		super.operationFinished();
 		PatchQueueView.getView().populateTable();
-		new RefreshWorkspaceStatusJob(MercurialRootCache.getInstance().getHgRoot(resource),
-				RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+		new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 	}
 }

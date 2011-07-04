@@ -33,6 +33,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -126,29 +127,29 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				}
 			}
 		};
-		qImportAction.setEnabled(true);
+		qImportAction.setEnabled(false);
 
 		qNewAction = new Action("qnew...") { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
 					clearStatusLabel();
-					QNewHandler.openWizard(resource, getSite().getShell());
+					QNewHandler.openWizard(currentHgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
 				}
 			}
 		};
-		qNewAction.setEnabled(true);
+		qNewAction.setEnabled(false);
 
 		qRefreshAction = new Action("qrefresh...") { //$NON-NLS-1$
 			@Override
 			public void run() {
 				clearStatusLabel();
-				QRefreshHandler.openWizard(resource, getSite().getShell());
+				QRefreshHandler.openWizard(currentHgRoot, getSite().getShell());
 			}
 		};
-		qRefreshAction.setEnabled(true);
+		qRefreshAction.setEnabled(false);
 
 		qGotoAction = new MQAction(Messages.getString("PatchQueueView.switchTo"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
@@ -208,7 +209,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				QDeleteHandler.openWizard(resource, getSite().getShell(), false);
 			}
 		};
-		qDeleteAction.setEnabled(true);
+		qDeleteAction.setEnabled(false);
 
 		qFinishAction = new MQAction("qfinish", RefreshRootJob.OUTGOING) { //$NON-NLS-1$
 			@Override
@@ -247,42 +248,49 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				return false;
 			}
 		};
-		qFinishAction.setEnabled(true);
+		qFinishAction.setEnabled(false);
 
 		table.getTableViewer().addPostSelectionChangedListener(new ISelectionChangedListener() {
-
-			@SuppressWarnings("unchecked")
 			public void selectionChanged(SelectionChangedEvent event) {
-				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
-
-				boolean isTopSelected = false;
-				boolean selectionHasApplied = false;
-				for (Iterator<Patch> i = selection.iterator(); i.hasNext();) {
-					Patch p = i.next();
-					if (p.equals(topmostAppliedPatch)) {
-						isTopSelected = true;
-					}
-
-					selectionHasApplied |= p.isApplied();
-				}
-
-				boolean isAllApplied = true;
-				boolean isAllUnapplied = true;
-				for (Patch patch : (List<Patch>) table.getTableViewer().getInput()) {
-					if (patch.isApplied()) {
-						isAllUnapplied = false;
-					} else {
-						isAllApplied = false;
-					}
-				}
-
-				qGotoAction.setEnabled(selection.size() == 1 && !isTopSelected);
-				qPushAllAction.setEnabled(!isAllApplied);
-				qPopAllAction.setEnabled(!isAllUnapplied);
-				qFoldAction.setEnabled(!selectionHasApplied && !selection.isEmpty());
-				qFinishAction.setEnabled(selectionHasApplied || selection.isEmpty());
+				updateEnablement((IStructuredSelection) event.getSelection());
 			}
 		});
+	}
+
+	@SuppressWarnings("unchecked")
+	protected void updateEnablement(IStructuredSelection selection) {
+		assert currentHgRoot != null;
+
+		boolean isTopSelected = false;
+		boolean selectionHasApplied = false;
+		for (Iterator<Patch> i = selection.iterator(); i.hasNext();) {
+			Patch p = i.next();
+			if (p.equals(topmostAppliedPatch)) {
+				isTopSelected = true;
+			}
+
+			selectionHasApplied |= p.isApplied();
+		}
+
+		boolean isAllApplied = true;
+		boolean isAllUnapplied = true;
+		for (Patch patch : (List<Patch>) table.getTableViewer().getInput()) {
+			if (patch.isApplied()) {
+				isAllUnapplied = false;
+			} else {
+				isAllApplied = false;
+			}
+		}
+
+		qNewAction.setEnabled(true);
+		qRefreshAction.setEnabled(true);
+		qImportAction.setEnabled(true);
+		qDeleteAction.setEnabled(true);
+		qGotoAction.setEnabled(selection.size() == 1 && !isTopSelected);
+		qPushAllAction.setEnabled(!isAllApplied);
+		qPopAllAction.setEnabled(!isAllUnapplied);
+		qFoldAction.setEnabled(!selectionHasApplied && !selection.isEmpty());
+		qFinishAction.setEnabled(selectionHasApplied || selection.isEmpty());
 	}
 
 	private void createMenus() {
@@ -339,6 +347,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 						MercurialEclipsePlugin.logError(e);
 						status = new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
 								Messages.getString("PatchQueueView.cannotPopulatePatchViewTable"), e); //$NON-NLS-1$
+					} finally {
+						updateEnablement(StructuredSelection.EMPTY);
 					}
 				}
 				return status;
@@ -368,18 +378,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 
 				if (newResource != null && newResource.isAccessible()
 						&& MercurialTeamProvider.isHgTeamProviderFor(newResource)) {
-					HgRoot newRoot = MercurialTeamProvider.getHgRoot(newResource);
-					if(newRoot == null) {
-						return;
-					}
-					if (!newRoot.equals(currentHgRoot)) {
-						currentHgRoot = newRoot;
-						resource = newResource;
-						populateTable();
-						clearStatusLabel();
-					}
+					setHgRoot(newResource, MercurialTeamProvider.getHgRoot(newResource));
 				}
-
 			}
 		}
 		if (part instanceof IEditorPart) {
@@ -387,14 +387,19 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			IFile file = (IFile) input.getAdapter(IFile.class);
 			if (file != null && file.isAccessible()
 					&& MercurialTeamProvider.isHgTeamProviderFor(file)) {
-				HgRoot newRoot = MercurialTeamProvider.getHgRoot(file);
-				if (!newRoot.equals(currentHgRoot)) {
-					currentHgRoot = newRoot;
-					resource = file;
-					populateTable();
-					statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
-				}
+
+				setHgRoot(file, MercurialTeamProvider.getHgRoot(file));
 			}
+		}
+	}
+
+	private void setHgRoot(IResource file, HgRoot newRoot)
+	{
+		if (newRoot != null && !newRoot.equals(currentHgRoot)) {
+			currentHgRoot = newRoot;
+			resource = file;
+			clearStatusLabel();
+			populateTable();
 		}
 	}
 

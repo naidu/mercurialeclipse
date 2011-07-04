@@ -10,12 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * Client for {@code qheader}.
@@ -33,8 +32,8 @@ public class HgQHeaderClient extends AbstractClient {
 	 * @throws HgException
 	 *             Thrown when the Hg command cannot be executed.
 	 */
-	public static String getHeader(IResource resource) throws HgException {
-		AbstractShellCommand command = new HgCommand("qheader", "Invoking qheader", resource, false); //$NON-NLS-1$
+	public static String getHeader(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("qheader", "Invoking qheader", root, false); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		return command.executeToString().trim();
 	}

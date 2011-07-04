@@ -57,11 +57,11 @@ public class HgQRefreshClient extends AbstractClient {
 		}
 	}
 
-	public static String refresh(IResource resource, String commitMessage,
+	public static String refresh(HgRoot root, String commitMessage,
 			String include, String exclude, String user, String date)
 			throws HgException {
 		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				"Invoking qrefresh", resource, true);
+				"Invoking qrefresh", root, true);
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
