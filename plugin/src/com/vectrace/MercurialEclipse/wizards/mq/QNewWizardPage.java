@@ -34,7 +34,7 @@ import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
@@ -81,7 +81,7 @@ public class QNewWizardPage extends HgWizardPage {
 
 		createLabel(g, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
 		userTextField = createTextField(g);
-		userTextField.setText(MercurialUtilities.getDefaultUserName());
+		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(root));
 
 		createLabel(g, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
 		date = createTextField(g);
