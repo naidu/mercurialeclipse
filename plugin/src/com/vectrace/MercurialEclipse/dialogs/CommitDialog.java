@@ -511,6 +511,7 @@ public class CommitDialog extends TitleAreaDialog {
 			}
 
 			// add new resources
+			pm.subTask("Adding selected untracked resources to repository.");
 			HgAddClient.addResources(resourcesToAdd, pm);
 			pm.worked(1);
 
@@ -520,6 +521,7 @@ public class CommitDialog extends TitleAreaDialog {
 			pm.worked(1);
 
 			// perform commit
+			pm.subTask("Committing resources to repository.");
 			commitResult = performCommit(commitMessage, closeBranchSelected, currentChangeset);
 			pm.worked(1);
 
