@@ -87,11 +87,7 @@ public class HgQRefreshClient extends AbstractClient {
 		// TODO: this will refresh dirty files in the patch regardless of whether they're selected
 		command.addOptions("-s");
 
-		if (resources.isEmpty()) {
-			command.addOptions("--exclude", "*");
-		} else {
-			command.addFiles(resources);
-		}
+		command.addFiles(resources);
 
 		try
 		{

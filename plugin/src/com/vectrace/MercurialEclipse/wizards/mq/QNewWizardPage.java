@@ -13,6 +13,9 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.*;
 
+import java.util.ArrayList;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
@@ -36,6 +39,8 @@ import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 /**
@@ -44,7 +49,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QNewWizardPage extends HgWizardPage {
 
-	private final HgRoot root;
+	protected final HgRoot root;
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
@@ -70,27 +75,26 @@ public class QNewWizardPage extends HgWizardPage {
 	 */
 	public void createControl(Composite parent) {
 		Composite composite = createComposite(parent, 1);
-		Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
+		//Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
 		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
 		data.minimumHeight = 150;
-		g.setLayoutData(data);
+		composite.setLayoutData(data);
 		if (showPatchName) {
-			createLabel(g, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
-			this.patchNameTextField = createTextField(g);
+			createLabel(composite, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
+			this.patchNameTextField = createTextField(composite);
 		}
 
-		createLabel(g, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
-		userTextField = createTextField(g);
+		createLabel(composite, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
+		userTextField = createTextField(composite);
 		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(root));
 
-		createLabel(g, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
-		date = createTextField(g);
+		createLabel(composite, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
+		date = createTextField(composite);
 
-		createLabel(g, Messages
+		createLabel(composite, Messages
 				.getString("QNewWizardPage.commitMessageLabel.title")); //$NON-NLS-1$
-		commitTextBox = new SourceViewer(g, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
+		commitTextBox = new SourceViewer(composite, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
 		commitTextBox.getTextWidget().setLayoutData(data);
-
 
 		// set up spell-check annotations
 		decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
@@ -112,10 +116,12 @@ public class QNewWizardPage extends HgWizardPage {
 			public void widgetDisposed(DisposeEvent e) {
 				decorationSupport.uninstall();
 			}
-
 		});
 
-		fileChooser = new CommitFilesChooser(root, composite, true, true, true, false);
+		Group g = SWTWidgetHelper.createGroup(composite, "Add changes to patch:", 1, GridData.FILL_BOTH); //$NON-NLS-1$
+		// TODO: Resource calculation wrong for repos below root
+		fileChooser = new CommitFilesChooser(g, true, new ArrayList<IResource>(ResourceUtils
+				.getProjects(root)), true, true, false);
 
 		setControl(composite);
 	}
