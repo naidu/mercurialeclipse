@@ -28,30 +28,17 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
+import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard.FileOperation;
 
 /**
  * @author bastian
  */
 public class QRefreshWizard extends HgOperationWizard {
 
-	private static class RefreshOperation extends HgOperation {
-
-		private final HgRoot root;
-		private final String message;
-		private final String includes;
-		private final String excludes;
-		private final String user;
-		private final String date;
+	private static class RefreshOperation extends FileOperation {
 
 		public RefreshOperation(IRunnableContext context, HgRoot root, QNewWizardPage page) {
-			super(context);
-
-			this.root = root;
-			this.message = page.getCommitTextDocument().get();
-			this.includes = page.getIncludeTextField().getText();
-			this.excludes = page.getExcludeTextField().getText();
-			this.user = page.getUserTextField().getText();
-			this.date = page.getDate().getText();
+			super(context, root, page);
 		}
 
 		@Override
@@ -64,15 +51,14 @@ public class QRefreshWizard extends HgOperationWizard {
 		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
-			monitor.beginTask(Messages.getString("QRefreshWizard.beginTask"), 2); //$NON-NLS-1$
+			monitor.beginTask(Messages.getString("QRefreshWizard.beginTask"), 4); //$NON-NLS-1$
 			monitor.worked(1);
-			monitor.subTask(Messages.getString("QRefreshWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQRefreshClient.refresh(root, message, includes, excludes, user, date);
+				addRemoveFiles(monitor);
+				monitor.subTask(Messages.getString("QRefreshWizard.subTask.callMercurial")); //$NON-NLS-1$
+				HgQRefreshClient.refresh(root, message, allResources, user, date);
 				monitor.worked(1);
-
-				new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
 			} finally {
@@ -89,7 +75,7 @@ public class QRefreshWizard extends HgOperationWizard {
 		setNeedsProgressMonitor(true);
 		page = new QNewWizardPage(
 				Messages.getString("QRefreshWizard.pageName"), Messages.getString("QRefreshWizard.pageTitle"), //$NON-NLS-1$ //$NON-NLS-2$
-				null, null, false);
+				null, null, root, false);
 
 		initPage(Messages.getString("QRefreshWizard.pageDescription"), page); //$NON-NLS-1$
 		try {
@@ -115,6 +101,6 @@ public class QRefreshWizard extends HgOperationWizard {
 	protected void operationFinished() {
 		super.operationFinished();
 		PatchQueueView.getView().populateTable();
-		new RefreshWorkspaceStatusJob(root, RefreshRootJob.WORKSPACE).schedule();
+		new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL).schedule();
 	}
 }

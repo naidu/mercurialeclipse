@@ -58,7 +58,7 @@ public class HgQRefreshClient extends AbstractClient {
 	}
 
 	public static String refresh(HgRoot root, String commitMessage,
-			String include, String exclude, String user, String date)
+			List<IResource> resources, String user, String date)
 			throws HgException {
 		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", root, true);
@@ -72,12 +72,6 @@ public class HgQRefreshClient extends AbstractClient {
 
 		command.addOptions("--git"); //$NON-NLS-1$
 
-		if (include != null && include.length() > 0) {
-			command.addOptions("--include", include); //$NON-NLS-1$
-		}
-		if (exclude != null && exclude.length() > 0) {
-			command.addOptions("--exclude", exclude); //$NON-NLS-1$
-		}
 		if (user != null && user.length() > 0) {
 			command.addOptions("--user", user); //$NON-NLS-1$
 		} else {
@@ -88,6 +82,15 @@ public class HgQRefreshClient extends AbstractClient {
 			command.addOptions("--date", date); //$NON-NLS-1$
 		} else {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
+		}
+
+		// TODO: this will refresh dirty files in the patch regardless of whether they're selected
+		command.addOptions("-s");
+
+		if (resources.isEmpty()) {
+			command.addOptions("--exclude", "*");
+		} else {
+			command.addFiles(resources);
 		}
 
 		try

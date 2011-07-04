@@ -11,6 +11,9 @@
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.io.File;
+import java.util.List;
+
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
@@ -23,9 +26,8 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  *
  */
 public class HgQNewClient extends AbstractClient {
-	public static String createNewPatch(HgRoot root,
-			String commitMessage, String include,
-			String exclude, String user, String date, String patchName)
+	public static String createNewPatch(HgRoot root, String commitMessage,
+			List<IResource> resources, String user, String date, String patchName)
 			throws HgException {
 		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
 				"Invoking qnew", root, true);
@@ -39,12 +41,6 @@ public class HgQNewClient extends AbstractClient {
 
 		command.addOptions("--git"); //$NON-NLS-1$
 
-		if (include != null && include.length() > 0) {
-			command.addOptions("--include", include); //$NON-NLS-1$
-		}
-		if (exclude != null && exclude.length() > 0) {
-			command.addOptions("--exclude", exclude); //$NON-NLS-1$
-		}
 		if (user != null && user.length() > 0) {
 			command.addOptions("--user", user); //$NON-NLS-1$
 		} else {
@@ -55,6 +51,12 @@ public class HgQNewClient extends AbstractClient {
 			command.addOptions("--date", date); //$NON-NLS-1$
 		} else {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
+		}
+
+		if (resources.isEmpty()) {
+			command.addOptions("--exclude", "*");
+		} else {
+			command.addFiles(resources);
 		}
 
 		command.addOptions(patchName);

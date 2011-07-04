@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.*;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -32,7 +33,9 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 /**
@@ -41,20 +44,23 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QNewWizardPage extends HgWizardPage {
 
+	private final HgRoot root;
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
-	private Text includeTextField;
-	private Text excludeTextField;
 	private final boolean showPatchName;
 	private SourceViewer commitTextBox;
 	private SourceViewerDecorationSupport decorationSupport;
 	private IDocument commitTextDocument;
+	private CommitFilesChooser fileChooser;
 
 	public QNewWizardPage(String pageName, String title,
 			ImageDescriptor titleImage, String description,
-			boolean showPatchName) {
+			HgRoot root, boolean showPatchName) {
 		super(pageName, title, titleImage, description);
+
+		Assert.isNotNull(root);
+		this.root = root;
 		this.showPatchName = showPatchName;
 		this.commitTextDocument = new Document();
 	}
@@ -63,7 +69,7 @@ public class QNewWizardPage extends HgWizardPage {
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		Composite composite = createComposite(parent, 2);
+		Composite composite = createComposite(parent, 1);
 		Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
 		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
 		data.minimumHeight = 150;
@@ -109,13 +115,7 @@ public class QNewWizardPage extends HgWizardPage {
 
 		});
 
-		g = createGroup(composite, Messages.getString("QNewWizardPage.optionsGroup.title")); //$NON-NLS-1$
-
-		createLabel(g, Messages.getString("QNewWizardPage.includeLabel.title")); //$NON-NLS-1$
-		this.includeTextField = createTextField(g);
-
-		createLabel(g, Messages.getString("QNewWizardPage.excludeLabel.title")); //$NON-NLS-1$
-		this.excludeTextField = createTextField(g);
+		fileChooser = new CommitFilesChooser(root, composite, true, true, true, false);
 
 		setControl(composite);
 	}
@@ -151,36 +151,6 @@ public class QNewWizardPage extends HgWizardPage {
 	}
 
 	/**
-	 * @return the includeTextField
-	 */
-	public Text getIncludeTextField() {
-		return includeTextField;
-	}
-
-	/**
-	 * @param includeTextField
-	 *            the includeTextField to set
-	 */
-	public void setIncludeTextField(Text includeTextField) {
-		this.includeTextField = includeTextField;
-	}
-
-	/**
-	 * @return the excludeTextField
-	 */
-	public Text getExcludeTextField() {
-		return excludeTextField;
-	}
-
-	/**
-	 * @param excludeTextField
-	 *            the excludeTextField to set
-	 */
-	public void setExcludeTextField(Text excludeTextField) {
-		this.excludeTextField = excludeTextField;
-	}
-
-	/**
 	 * @return the userTextField
 	 */
 	public Text getUserTextField() {
@@ -210,4 +180,8 @@ public class QNewWizardPage extends HgWizardPage {
 		this.commitTextDocument = commitTextDocument;
 	}
 
+	public CommitFilesChooser getFileChooser()
+	{
+		return fileChooser;
+	}
 }

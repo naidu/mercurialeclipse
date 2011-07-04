@@ -341,6 +341,7 @@ public class CommitFilesChooser extends Composite {
 	 */
 	public void setResources(HgRoot hgRoot) {
 		List<IResource> resources = new ArrayList<IResource>();
+		// Future: get this from the status cache
 		// get the dirty files...
 		try {
 			Set<IPath> dirtyFilePaths = HgStatusClient
