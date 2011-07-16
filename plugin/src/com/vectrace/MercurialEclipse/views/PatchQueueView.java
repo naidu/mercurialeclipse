@@ -40,7 +40,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.team.core.Team;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
@@ -324,10 +323,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor)	{
 				IStatus status = Status.OK_STATUS;
-				if (resource != null && resource.isAccessible() && !resource.isDerived()
-						&& !resource.isLinked() && !Team.isIgnoredHint(resource)) {
+				if (currentHgRoot != null) {
 					try {
-						List<Patch> patches = HgQSeriesClient.getPatchesInSeries(resource);
+						List<Patch> patches = HgQSeriesClient.getPatchesInSeries(currentHgRoot);
 
 						// TODO: We have to hide the popup menu if the table is empty or the team
 						// menu will be appended. This is a side effect of the team menu's

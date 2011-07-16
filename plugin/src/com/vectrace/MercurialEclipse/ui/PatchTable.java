@@ -13,6 +13,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jface.layout.TableColumnLayout;
@@ -107,6 +109,8 @@ public class PatchTable extends Composite {
 	}
 
 	public void setPatches(List<Patch> patches) {
+		patches = new ArrayList<Patch>(patches);
+		Collections.reverse(patches);
 		viewer.setInput(patches);
 	}
 

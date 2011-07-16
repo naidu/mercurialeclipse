@@ -19,6 +19,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
@@ -26,10 +27,10 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQSeriesClient extends AbstractClient {
-	public static List<Patch> getPatchesInSeries(IResource resource)
+	public static List<Patch> getPatchesInSeries(HgRoot root)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-				"Invoking qseries", resource, true);
+				"Invoking qseries", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
