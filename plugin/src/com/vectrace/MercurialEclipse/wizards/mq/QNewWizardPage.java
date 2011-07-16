@@ -36,6 +36,7 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -46,6 +47,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 /**
  * @author bastian
  *
+ * TODO: this is a lot like the {@link CommitDialog}, merge more code with it.
  */
 public class QNewWizardPage extends HgWizardPage {
 
@@ -117,6 +119,8 @@ public class QNewWizardPage extends HgWizardPage {
 				decorationSupport.uninstall();
 			}
 		});
+
+		CommitDialog.createOldCommitCombo(composite, commitTextDocument, commitTextBox);
 
 		Group g = SWTWidgetHelper.createGroup(composite, "Add changes to patch:", 1, GridData.FILL_BOTH); //$NON-NLS-1$
 		// TODO: Resource calculation wrong for repos below root

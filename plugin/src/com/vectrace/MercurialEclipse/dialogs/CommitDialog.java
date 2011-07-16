@@ -107,7 +107,6 @@ public class CommitDialog extends TitleAreaDialog {
 	private static final String DEFAULT_COMMIT_MESSAGE = Messages
 			.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
-	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
 	protected CommitFilesChooser commitFilesList;
 	private List<IResource> resourcesToAdd;
@@ -418,17 +417,19 @@ public class CommitDialog extends TitleAreaDialog {
 		if(!options.showCommitMessage){
 			return;
 		}
+		createOldCommitCombo(container, commitTextDocument, commitTextBox);
+	}
 
+	public static void createOldCommitCombo(Composite container, final IDocument commitTextDocument,
+			final ISourceViewer commitTextBox) {
 		final String[] oldCommits = MercurialEclipsePlugin.getCommitMessageManager()
 				.getCommitMessages();
 		if (oldCommits.length > 0) {
-			oldCommitComboBox = SWTWidgetHelper.createCombo(container);
+			final Combo oldCommitComboBox = SWTWidgetHelper.createCombo(container);
 			oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
 			oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages"));
 			for (int i = 0; i < oldCommits.length; i++) {
-				/*
-				 * Add text to the combo but replace \n with <br> to get a one-liner
-				 */
+				 // Add text to the combo but replace \n with <br> to get a one-liner
 				oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>"));
 			}
 			oldCommitComboBox.addSelectionListener(new SelectionAdapter() {
@@ -443,7 +444,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 				}
 			});
-
 		}
 	}
 

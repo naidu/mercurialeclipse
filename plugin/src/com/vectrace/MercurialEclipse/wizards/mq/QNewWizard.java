@@ -17,6 +17,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
@@ -72,6 +73,13 @@ public class QNewWizard extends HgOperationWizard {
 			HgRemoveClient.removeResources(resourcesToRemove);
 			pm.worked(1);
 		}
+
+		protected void saveCommitMessage()
+		{
+			if (message != null && message.length() > 0) {
+				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(message);
+			}
+		}
 	}
 
 	private static class NewOperation extends FileOperation {
@@ -97,13 +105,15 @@ public class QNewWizard extends HgOperationWizard {
 		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
-			monitor.beginTask(Messages.getString("QNewWizard.beginTask"), 4); //$NON-NLS-1$
+			monitor.beginTask(Messages.getString("QNewWizard.beginTask"), 6); //$NON-NLS-1$
 			monitor.worked(1);
 
 			try {
 				addRemoveFiles(monitor);
 				monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
 				HgQNewClient.createNewPatch(root, message, allResources, user, date, patchName);
+				monitor.worked(2);
+				saveCommitMessage();
 				monitor.done();
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());

@@ -60,13 +60,15 @@ public class QRefreshWizard extends HgOperationWizard {
 		 */
 		public void run(IProgressMonitor monitor) throws InvocationTargetException,
 				InterruptedException {
-			monitor.beginTask(Messages.getString("QRefreshWizard.beginTask"), 4); //$NON-NLS-1$
+			monitor.beginTask(Messages.getString("QRefreshWizard.beginTask"), 6); //$NON-NLS-1$
 			monitor.worked(1);
 
 			try {
 				addRemoveFiles(monitor);
 				monitor.subTask(Messages.getString("QRefreshWizard.subTask.callMercurial")); //$NON-NLS-1$
 				HgQRefreshClient.refresh(root, message, allResources, user, date);
+				monitor.worked(2);
+				saveCommitMessage();
 				monitor.worked(1);
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
