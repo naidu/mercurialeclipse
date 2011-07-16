@@ -10,12 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.QImportOperation;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
@@ -26,20 +26,17 @@ import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
  */
 public class QImportWizard extends HgOperationWizard {
 
-	private IResource resource;
+	private final HgRoot root;
 
-	/**
-	 * @param windowTitle
-	 */
-	public QImportWizard(IResource resource) {
+	public QImportWizard(HgRoot root) {
 		super(Messages.getString("QImportWizard.title")); //$NON-NLS-1$
-		this.resource = resource;
+		this.root = root;
 		setNeedsProgressMonitor(true);
 		page = new QImportWizardPage(
 				Messages.getString("QImportWizard.pageName"), //$NON-NLS-1$
 				Messages.getString("QImportWizard.page.title"), //$NON-NLS-1$
 				Messages.getString("QImportWizard.page.description"), //$NON-NLS-1$
-				resource, null);
+				root, null);
 		initPage(page.getDescription(), page);
 		addPage(page);
 	}
@@ -66,8 +63,7 @@ public class QImportWizard extends HgOperationWizard {
 		boolean existing = importPage.isExisting();
 		boolean force = importPage.getForceCheckBox().getSelection();
 
-		return new QImportOperation(getContainer(), patchFile, changesets, existing, force,
-				resource);
+		return new QImportOperation(getContainer(), patchFile, changesets, existing, force, root);
 	}
 
 	/**
@@ -77,20 +73,5 @@ public class QImportWizard extends HgOperationWizard {
 	protected void operationFinished() {
 		super.operationFinished();
 		PatchQueueView.getView().populateTable();
-	}
-
-	/**
-	 * @return the resource
-	 */
-	public IResource getResource() {
-		return resource;
-	}
-
-	/**
-	 * @param resource
-	 *            the resource to set
-	 */
-	public void setResource(IResource resource) {
-		this.resource = resource;
 	}
 }

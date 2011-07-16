@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.operations;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -25,7 +24,6 @@ import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 
 /**
@@ -38,20 +36,16 @@ public class QImportOperation extends HgOperation {
 	private final ChangeSet[] changesets;
 	private final boolean existing;
 	private final boolean force;
-	private final IResource resource;
+	private final HgRoot root;
 
-	/**
-	 * @param context
-	 */
 	public QImportOperation(IRunnableContext context, IPath patchFile, ChangeSet[] changesets,
-			boolean existing, boolean force, IResource resource) {
+			boolean existing, boolean force, HgRoot root) {
 		super(context);
 		this.patchFile = patchFile;
 		this.changesets = changesets;
 		this.existing = existing;
 		this.force = force;
-		this.resource = resource;
-
+		this.root = root;
 	}
 
 	/**
@@ -63,12 +57,8 @@ public class QImportOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.call")); //$NON-NLS-1$
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-			if(hgRoot == null) {
-				throw new InvocationTargetException(new IllegalStateException(
-						"No hg root found for: " + resource));
-			}
-			HgQImportClient.qimport(hgRoot, force, existing, changesets, patchFile);
+
+			HgQImportClient.qimport(root, force, existing, changesets, patchFile);
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$
 			new SafeUiJob(Messages.getString("QImportOperation.refreshingView")) { //$NON-NLS-1$

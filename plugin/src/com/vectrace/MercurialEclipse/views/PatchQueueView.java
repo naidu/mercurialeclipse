@@ -121,7 +121,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			public void run() {
 				try {
 					clearStatusLabel();
-					QImportHandler.openWizard(resource, getSite().getShell());
+					QImportHandler.openWizard(currentHgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
 				}

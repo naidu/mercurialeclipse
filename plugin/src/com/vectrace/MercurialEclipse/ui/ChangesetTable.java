@@ -72,7 +72,7 @@ public class ChangesetTable extends Composite {
 		this(parent, DEFAULT_STYLE, null, hgRoot, true);
 	}
 
-	public ChangesetTable(Composite parent, int tableStyle, IResource resource, boolean autoFetch) {
+	private ChangesetTable(Composite parent, int tableStyle, IResource resource, boolean autoFetch) {
 		this(parent, tableStyle, resource, null, autoFetch);
 	}
 

@@ -15,7 +15,7 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -35,10 +35,8 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
@@ -48,7 +46,7 @@ public class QImportWizardPage extends HgWizardPage {
 	private Button revCheckBox;
 	private ChangesetTable changesetTable;
 	private ChangeSet[] revisions;
-	private IResource resource;
+	private final HgRoot root;
 	private Text patchFile;
 	private Button browseButton;
 	private Button forceCheckBox;
@@ -57,9 +55,11 @@ public class QImportWizardPage extends HgWizardPage {
 	private boolean existing;
 
 	public QImportWizardPage(String pageName, String title, String description,
-			IResource resource, ImageDescriptor titleImage) {
+			HgRoot root, ImageDescriptor titleImage) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
+		this.root = root;
+
+		Assert.isNotNull(root);
 	}
 
 	public void createControl(Composite parent) {
@@ -133,13 +133,10 @@ public class QImportWizardPage extends HgWizardPage {
 		});
 	}
 
-	private void checkExisting(File file) throws IOException, HgException {
+	private void checkExisting(File file) throws IOException {
 		setMessage(null);
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-		if(hgRoot == null) {
-			throw new HgException("No hg root found for: " + resource);
-		}
-		File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
+
+		File patchDir = new File(root, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
 		File[] patches = patchDir.listFiles();
 		if (patches != null) {
 			for (File patch : patches) {
@@ -184,7 +181,7 @@ public class QImportWizardPage extends HgWizardPage {
 		gridData.minimumHeight = 50;
 		this.changesetTable = new ChangesetTable(revGroup,
 				SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-						| SWT.H_SCROLL, resource, true);
+						| SWT.H_SCROLL, root, true);
 		this.changesetTable.setLayoutData(gridData);
 		this.changesetTable.setEnabled(false);
 
@@ -209,14 +206,6 @@ public class QImportWizardPage extends HgWizardPage {
 
 	public ChangeSet[] getRevisions() {
 		return revisions;
-	}
-
-	public IResource getResource() {
-		return resource;
-	}
-
-	public void setResource(IResource resource) {
-		this.resource = resource;
 	}
 
 	public Button getRevCheckBox() {
