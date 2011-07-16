@@ -118,11 +118,8 @@ public class RebaseOperation extends HgOperation {
 	private void showMergeView() {
 		Runnable runnable = new Runnable() {
 			public void run() {
-				MergeView view;
 				try {
-					view = (MergeView) MercurialEclipsePlugin.getActivePage()
-							.showView(MergeView.ID);
-					view.refresh(hgRoot);
+					MergeView.showRebaseConflict(hgRoot, MercurialEclipsePlugin.getActiveShell());
 				} catch (PartInitException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}

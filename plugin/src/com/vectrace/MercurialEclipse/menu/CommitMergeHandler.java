@@ -19,6 +19,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class CommitMergeHandler extends RunnableHandler {
@@ -69,6 +70,7 @@ public class CommitMergeHandler extends RunnableHandler {
 		Assert.isNotNull(message);
 
 		// do hg call
+		MercurialUtilities.setOfferAutoCommitMerge(true);
 		String result = HgCommitClient.commit(hgRoot, commitName, message);
 		return result;
 	}

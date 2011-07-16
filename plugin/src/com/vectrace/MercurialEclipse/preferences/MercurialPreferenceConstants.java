@@ -118,6 +118,8 @@ public final class MercurialPreferenceConstants {
 	public static final String PREF_SHOW_MULTIPLE_PROJECTS_DIALOG = "hg.showMultipleProjectsDialog";
 	public static final String PREF_SHOW_PULL_WARNING_DIALOG = "hg.showPullWarningDialog";
 	public static final String PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG = "hg.dialog.commit.preSelectUntracked";
+	public static final String PREF_SHOW_MERGE_CONFICT_NOTIFICATION_DIALOG = "hg.showMergeConflictNotificationDialog";
+	public static final String PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG = "hg.showRebaseConflictNotificationDialog";
 
 	// security
 	public static final String PREF_VERIFY_SERVER_CERTIFICATE = "hg.verifyServerCertificate"; //$NON-NLS-1$

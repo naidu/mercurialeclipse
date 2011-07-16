@@ -417,22 +417,19 @@ public final class MercurialUtilities {
 		return new MercurialRevisionStorage(file, parents[0]);
 	}
 
-	public static void setMergeViewDialogShown(boolean shown) {
+	public static void setOfferAutoCommitMerge(boolean offer) {
 		try {
-			ResourcesPlugin
-					.getWorkspace()
-					.getRoot()
-					.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED,
-							shown ? "true" : null);
+			ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(
+					ResourceProperties.MERGE_COMMIT_OFFERED, (offer ? null : "true"));
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
-	public static boolean isMergeViewDialogShown() {
+	public static boolean isOfferAutoCommitMerge() {
 		try {
 			return ResourcesPlugin.getWorkspace().getRoot()
-					.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) != null;
+					.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null;
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			return true;

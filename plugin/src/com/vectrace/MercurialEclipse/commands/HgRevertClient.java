@@ -48,8 +48,8 @@ public class HgRevertClient extends AbstractClient {
 		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 		// if there are too many resources, do several calls
 		int size = resources.size();
+		MercurialUtilities.setOfferAutoCommitMerge(true);
 		if(size == 0) {
-			MercurialUtilities.setMergeViewDialogShown(false);
 			return fileSet;
 		}
 		IResource firstFile = resources.get(0);
@@ -95,7 +95,6 @@ public class HgRevertClient extends AbstractClient {
 		}
 		monitor.worked(1);
 
-		MercurialUtilities.setMergeViewDialogShown(false);
 		return fileSet;
 	}
 
@@ -106,7 +105,7 @@ public class HgRevertClient extends AbstractClient {
 		command.addOptions("--all");
 		command.executeToString();
 
-		MercurialUtilities.setMergeViewDialogShown(false);
+		MercurialUtilities.setOfferAutoCommitMerge(true);
 	}
 
 	private static HgCommand createRevertCommand(HgRoot hgRoot, String message) {

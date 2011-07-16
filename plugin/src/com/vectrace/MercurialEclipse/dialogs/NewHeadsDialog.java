@@ -214,9 +214,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 		Runnable runnable = new Runnable() {
 			public void run() {
 				try {
-					MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage()
-							.showView(MergeView.ID);
-					view.refresh(hgRoot);
+					MergeView.showRebaseConflict(hgRoot, getShell());
 				} catch (PartInitException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}

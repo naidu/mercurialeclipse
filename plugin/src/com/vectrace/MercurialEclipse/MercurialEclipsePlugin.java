@@ -39,10 +39,14 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.DecorationOverlayIcon;
 import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
@@ -65,6 +69,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
@@ -521,6 +526,29 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	public IProxyService getProxyService() {
 		return (IProxyService) proxyServiceTracker.getService();
+	}
+
+	/**
+	 * Show a dialog only if the user hasn't selected "don't show again" for it.
+	 *
+	 * @param title The title
+	 * @param message The message
+	 * @param type The type, for example MessageDialog.CONFIRM
+	 * @param key The preference key
+	 * @param shell The shell to use
+	 * @return True of ok was pressed
+	 */
+	public static boolean showDontShowAgainConfirmDialog(final String title,
+			final String message, int type, String key, Shell shell) {
+		IPreferenceStore store = getDefault().getPreferenceStore();
+		String pref = store.getString(key);
+		if (MessageDialogWithToggle.PROMPT.equals(pref)) {
+			String toggleMessage = Messages.getString("Dialogs.DontShowAgain");
+			MessageDialogWithToggle confirmDialog = MessageDialogWithToggle.open(type, shell, title, message, toggleMessage, false, store, key, SWT.NONE);
+			int returnCode = confirmDialog.getReturnCode();
+			return returnCode == Window.OK;
+		}
+		return true;
 	}
 
 	/**

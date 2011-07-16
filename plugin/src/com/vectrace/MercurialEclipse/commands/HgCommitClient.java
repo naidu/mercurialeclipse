@@ -137,7 +137,6 @@ public class HgCommitClient extends AbstractClient {
 		command.addUserName(user);
 		File messageFile = addMessage(command, message);
 		try {
-			MercurialUtilities.setMergeViewDialogShown(false);
 			String result = command.executeToString();
 			command.rememberUserName();
 			new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();

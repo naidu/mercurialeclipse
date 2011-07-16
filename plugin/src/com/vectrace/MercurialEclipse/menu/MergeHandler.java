@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -28,15 +27,14 @@ import org.eclipse.swt.widgets.Shell;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
-import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
@@ -113,52 +111,54 @@ public class MergeHandler extends RootHandler {
 	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
 			CoreException {
-		String result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(), forced);
-		String mergeChangesetId = cs.getChangeset();
-		MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
+		MercurialUtilities.setOfferAutoCommitMerge(true);
+		String result;
+		boolean conflict = false;
 		try {
-			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
+			try {
+				result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(), forced);
+			} catch (HgException e) {
+				if (HgMergeClient.isConflict(e)) {
+					conflict = true;
+					result = e.getMessage();
+				} else {
+					throw e;
+				}
+			}
+
+			String mergeChangesetId = cs.getChangeset();
+			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
+
+			if (conflict) {
+				MergeView.showMergeConflict(hgRoot, shell);
+			} else {
+				try {
+					result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+					MercurialEclipsePlugin.showError(e);
+				}
+			}
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot).schedule();
 		}
-		new RefreshWorkspaceStatusJob(hgRoot).schedule();
 		return result;
 	}
 
 	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
 			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) throws CoreException {
-		boolean commit = true;
-
 		String output = "";
-		// check if auto-commit is possible
-		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(hgRoot);
-		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
-		for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-			if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
-				// unresolved files, no auto-commit
-				commit = false;
-				break;
-			}
+
+		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
+		output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header");
+		if (!showCommitDialog) {
+			output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
+					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
+		} else {
+			output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);
 
-		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
-		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
-		view.refresh(hgRoot);
-
-		// auto-commit if desired
-		if (commit) {
-			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
-			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
-			if (!showCommitDialog) {
-				output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
-						.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
-			} else {
-				output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
-			}
-			monitor.worked(1);
-		}
 		return output;
 	}
 

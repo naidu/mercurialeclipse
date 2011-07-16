@@ -21,10 +21,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.MessageDialogWithToggle;
-import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.window.Window;
-import org.eclipse.swt.SWT;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -144,22 +140,13 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		}
 		getShell().getDisplay().syncExec(new Runnable(){
 			public void run() {
-				showDontShowAgainConfirmDialog(monitor, title, message, MercurialPreferenceConstants.PREF_SHOW_PULL_WARNING_DIALOG);
+				if (!MercurialEclipsePlugin.showDontShowAgainConfirmDialog(title, message,
+						MessageDialog.CONFIRM,
+						MercurialPreferenceConstants.PREF_SHOW_PULL_WARNING_DIALOG, getShell())) {
+					monitor.setCanceled(true);
+				}
 			}
-
 		});
-	}
-
-	private void showDontShowAgainConfirmDialog(final IProgressMonitor monitor, final String title,
-			final String message, String key) {
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		String pref = store.getString(key);
-		if (MessageDialogWithToggle.PROMPT.equals(pref)) {
-			String toggleMessage = Messages.getString("Dialogs.DontShowAgain");
-			MessageDialogWithToggle confirmDialog = MessageDialogWithToggle.open(MessageDialog.CONFIRM, getShell(), title, message, toggleMessage, false, store, key, SWT.NONE);
-			int returnCode = confirmDialog.getReturnCode();
-			monitor.setCanceled(returnCode != Window.OK);
-		}
 	}
 
 	private void checkProjects(final IProgressMonitor monitor, HgRoot hgRoot) {
@@ -175,7 +162,12 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		final String message = "Pull will affect " + projects.size() + " projects in workspace. Continue?";
 		getShell().getDisplay().syncExec(new Runnable(){
 			public void run() {
-				showDontShowAgainConfirmDialog(monitor, title, message, MercurialPreferenceConstants.PREF_SHOW_MULTIPLE_PROJECTS_DIALOG);
+				if (!MercurialEclipsePlugin
+						.showDontShowAgainConfirmDialog(title, message, MessageDialog.CONFIRM,
+								MercurialPreferenceConstants.PREF_SHOW_MULTIPLE_PROJECTS_DIALOG,
+								getShell())) {
+					monitor.setCanceled(true);
+				}
 			}
 		});
 	}

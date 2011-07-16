@@ -95,7 +95,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		parent.setLayout(new GridLayout(1, false));
 		statusLabel = new Label(parent, SWT.NONE);
 		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		statusLabel.setText("No project selected");
+		statusLabel.setText("No repository selected");
 		table = new PatchTable(parent);
 		getSite().setSelectionProvider(table.getTableViewer());
 		createActions();
@@ -341,7 +341,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 							}
 						}
 					} catch (HgException e) {
-						statusLabel.setText(e.getLocalizedMessage());
+						statusLabel.setText(e.getConciseMessage());
 						MercurialEclipsePlugin.logError(e);
 						status = new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
 								Messages.getString("PatchQueueView.cannotPopulatePatchViewTable"), e); //$NON-NLS-1$
