@@ -34,6 +34,10 @@ public abstract class HgOperationWizard extends HgWizard {
 	 */
 	@Override
 	public final boolean performFinish() {
+		if (!super.performFinish()) {
+			return false;
+		}
+
 		setErrorMessage(null);
 
 		try {

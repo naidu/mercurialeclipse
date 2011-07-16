@@ -159,21 +159,11 @@ public class QImportWizardPage extends HgWizardPage {
 
 		Listener revCheckBoxListener = new Listener() {
 			public void handleEvent(Event event) {
-				if (revCheckBox.getSelection()) {
-					if (changesetTable.getChangesets() == null
-							|| changesetTable.getChangesets().length == 0) {
-						setErrorMessage(null);
-					}
-				}
-				// en-/disable patch file text field
-				changesetTable.setEnabled(revCheckBox.getSelection());
-				patchFile.setEnabled(!revCheckBox.getSelection());
-				browseButton.setEnabled(!revCheckBox.getSelection());
-				patchFileLabel.setEnabled(!revCheckBox.getSelection());
-				patchNameGroup.setEnabled(!revCheckBox.getSelection());
+				updateRevSelection();
 			}
 		};
 
+		this.revCheckBox.setSelection(getDialogSettings().getBoolean("importRev"));
 		this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
 		GridData gridData = new GridData(GridData.FILL_BOTH);
@@ -197,11 +187,33 @@ public class QImportWizardPage extends HgWizardPage {
 		};
 
 		this.changesetTable.addSelectionListener(listener);
+		updateRevSelection();
+	}
+
+	protected void updateRevSelection() {
+		if (revCheckBox.getSelection()) {
+			if (changesetTable.getChangesets() == null
+					|| changesetTable.getChangesets().length == 0) {
+				setErrorMessage(null);
+			}
+		}
+		// en-/disable patch file text field
+		changesetTable.setEnabled(revCheckBox.getSelection());
+		patchFile.setEnabled(!revCheckBox.getSelection());
+		browseButton.setEnabled(!revCheckBox.getSelection());
+		patchFileLabel.setEnabled(!revCheckBox.getSelection());
+		patchNameGroup.setEnabled(!revCheckBox.getSelection());
 	}
 
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
-		return super.finish(monitor);
+		boolean bFinish = super.finish(monitor);
+
+		if (bFinish) {
+			getDialogSettings().put("importRev", revCheckBox.getSelection());
+		}
+
+		return bFinish;
 	}
 
 	public ChangeSet[] getRevisions() {
