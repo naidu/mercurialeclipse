@@ -1334,6 +1334,8 @@ public class MercurialHistoryPage extends HistoryPage {
 	public void dispose() {
 		super.dispose();
 
+		mercurialHistory = null;
+
 		if (rulerSelectionListener != null) {
 			rulerSelectionListener.dispose();
 			rulerSelectionListener= null;
