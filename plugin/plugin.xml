@@ -17,6 +17,7 @@
  *     Jerome Negre              - Moving menus around
  *     Sebastian                 - Better naming
  *     Bastian Doetsch           - RepositoryProviderType for ProjectSets
+ *     John Peberdy              - Add more handlers
  *******************************************************************************/
 -->
 
@@ -337,18 +338,26 @@
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%unshelveDescription"
                  name="%unshelveName"/>
-		<command id="com.vectrace.MercurialEclipse.menu.CompareWithParent"
+        <command id="com.vectrace.MercurialEclipse.menu.CompareWithParent"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%compareWithParentDescription"
                  name="%compareWithParentName"/>
-     	<command id="com.vectrace.MercurialEclipse.menu.ShowAnnotations"
+        <command id="com.vectrace.MercurialEclipse.menu.CompareWithRevision"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 description="%actionLabel.compareWithRevision"
+                 name="%compareWithRevisionName"/>
+        <command id="com.vectrace.MercurialEclipse.menu.ShowAnnotations"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%actionLabel.showAnnotation"
                  name="%showAnnotationsName"/>
-       	<command id="com.vectrace.MercurialEclipse.menu.ShowHistory"
+        <command id="com.vectrace.MercurialEclipse.menu.ShowHistory"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%actionLabel.showHistory"
-                 name="%showHistoryName"/>  
+                 name="%showHistoryName"/>
+        <command id="com.vectrace.MercurialEclipse.menu.Revert"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 description="%actionLabel.revert"
+                 name="%revertName"/>
         <category
               description="Mercurial (Hg) related commands"
               id="com.vectrace.MercurialEclipse.commandCategory"
@@ -666,19 +675,20 @@
         <handler commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  class="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler">
         </handler>
-
         <handler commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
                  class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"/>
-
         <handler commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
                  class="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"/>
-                 
-		<handler commandId="com.vectrace.MercurialEclipse.menu.CompareWithParent"
+        <handler commandId="com.vectrace.MercurialEclipse.menu.CompareWithParent"
                  class="com.vectrace.MercurialEclipse.menu.CompareWithParentHandler" />
-		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotations"
+        <handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotations"
                  class="com.vectrace.MercurialEclipse.menu.ShowAnnotationsHandler" />
-		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowHistory"
+        <handler commandId="com.vectrace.MercurialEclipse.menu.ShowHistory"
                  class="com.vectrace.MercurialEclipse.menu.HistoryHandler" />
+        <handler commandId="com.vectrace.MercurialEclipse.menu.CompareWithRevision"
+                 class="com.vectrace.MercurialEclipse.menu.CompareWithRevisionHandler" />
+        <handler commandId="com.vectrace.MercurialEclipse.menu.Revert"
+                 class="com.vectrace.MercurialEclipse.menu.RevertHandler" />
         <handler
                 commandId="com.vectrace.MercurialEclipse.menu.SearchHandler"
                 class="com.vectrace.MercurialEclipse.menu.SearchHandler">
