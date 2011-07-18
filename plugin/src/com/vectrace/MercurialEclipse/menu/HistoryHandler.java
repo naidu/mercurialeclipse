@@ -10,21 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.team.ui.TeamUI;
 
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
-
-public class HistoryHandler extends AbstractHandler {
+public class HistoryHandler extends SingleResourceHandler {
 
 	/**
-	 * @see org.eclipse.core.commands.IHandler#execute(org.eclipse.core.commands.ExecutionEvent)
+	 * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
 	 */
-	public Object execute(ExecutionEvent event) throws ExecutionException {
-		TeamUI.getHistoryView().showHistoryFor(ResourceUtils.getActiveResourceFromEditor());
-
-		return null;
+	@Override
+	protected void run(IResource resource) throws Exception {
+		TeamUI.getHistoryView().showHistoryFor(resource);
 	}
 }
