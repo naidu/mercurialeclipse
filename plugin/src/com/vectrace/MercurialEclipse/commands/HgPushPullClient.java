@@ -116,14 +116,13 @@ public class HgPushPullClient extends AbstractClient {
 			if (update && result != null && !merge && !rebase) {
 				// different messages from hg depending on if branch was set or not
 				// TODO: clean up this detection
-				if(result.contains("not updating, since new heads added") ||
-						result.contains("not updating: crosses branches") ||
-						(branch != null &&
-								HEADS_PATTERN.matcher(result).find())){
+				if (result.contains("not updating, since new heads added")
+						|| result.contains("not updating: crosses branches")
+						|| (branch != null && HEADS_PATTERN.matcher(result).find())) {
 
-				// inform user about new heads and ask if he wants to merge or rebase
-				UpdateJob.handleMultipleHeads(hgRoot, false);
-			}
+					// inform user about new heads and ask if he wants to merge or rebase
+					UpdateJob.handleMultipleHeads(hgRoot, false);
+				}
 			}
 
 			// doesn't matter how far we were: we have to trigger update of caches in case
