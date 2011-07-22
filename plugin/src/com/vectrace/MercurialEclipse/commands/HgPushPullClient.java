@@ -106,7 +106,9 @@ public class HgPushPullClient extends AbstractClient {
 		} finally {
 			if (update && result != null && !merge && !rebase) {
 				// different messages from hg depending on if branch was set or not
+				// TODO: clean up this detection in default
 				if(result.contains("not updating, since new heads added") ||
+						result.contains("not updating: crosses branches") ||
 						(branch != null &&
 								Pattern.compile("\\(\\+\\d+\\sheads\\)").matcher(result).find())){
 
