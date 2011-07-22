@@ -14,6 +14,8 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -56,6 +59,7 @@ public class TagTable extends Composite {
 	private HgRoot hgRoot;
 	private ItemMediator[] data;
 
+	@SuppressWarnings("unchecked")
 	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
 		showTip = true;
@@ -74,10 +78,40 @@ public class TagTable extends Composite {
 		String[] titles = {
 				Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 		int[] widths = { 60, 150, 200, 70, 300 };
+		Comparator[] comparators = { new Comparator<ItemMediator>() {
+			public int compare(ItemMediator a, ItemMediator b) {
+				return SortListener.sort(a.tag.getRevision(), b.tag.getRevision());
+			}
+		}, new Comparator<ItemMediator>() {
+			public int compare(ItemMediator a, ItemMediator b) {
+				return a.tag.getGlobalId().compareTo(b.tag.getGlobalId());
+			}
+		}, new Comparator<ItemMediator>() {
+			public int compare(ItemMediator a, ItemMediator b) {
+				return a.tag.getName().compareTo(b.tag.getName());
+			}
+		}, new Comparator<ItemMediator>() {
+			public int compare(ItemMediator a, ItemMediator b) {
+				return SortListener.sort(a.tag.isLocal() ? 0 : 1, b.tag.isLocal() ? 0 : 1);
+			}
+		}, new Comparator<ItemMediator>() {
+			public int compare(ItemMediator a, ItemMediator b) {
+				return a.summary.compareTo(b.summary);
+			}
+		} };
+
+		Listener sortListener = new SortListener(table, comparators) {
+			@Override
+			protected Object[] getData() {
+				return data;
+			}
+		};
+
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
+			column.addListener(SWT.Selection, sortListener);
 		}
 
 		table.addListener(SWT.SetData, new Listener() {
@@ -220,7 +254,7 @@ public class TagTable extends Composite {
 
 		private TableItem item;
 
-		private String summary;
+		public String summary;
 
 		// constructor
 
@@ -264,6 +298,67 @@ public class TagTable extends Composite {
 			if (summary != null) {
 				item.setText(4, summary);
 			}
+		}
+	}
+
+	/**
+	 * Sorts a table. Should listen to column selection
+	 */
+	@SuppressWarnings("unchecked")
+	public abstract static class SortListener implements Listener {
+
+		private final Comparator[] comparators;
+		private final Table table;
+
+		public SortListener(Table table, Comparator[] comparators) {
+			this.table = table;
+			this.comparators = comparators;
+		}
+
+		public void handleEvent(Event e) {
+			// determine new sort column and direction
+			TableColumn sortColumn = table.getSortColumn();
+			TableColumn currentColumn = (TableColumn) e.widget;
+			int dir = table.getSortDirection();
+			if (sortColumn == currentColumn) {
+				dir = dir == SWT.UP ? SWT.DOWN : SWT.UP;
+			} else {
+				table.setSortColumn(currentColumn);
+				dir = SWT.UP;
+			}
+			// sort the data based on column and direction
+			int nIdx = 0;
+			for (TableColumn c : table.getColumns()) {
+				if (c == currentColumn) {
+					break;
+				}
+				nIdx++;
+			}
+
+			Object[] data = getData();
+
+			Arrays.sort(data, comparators[nIdx]);
+
+			if (dir == SWT.DOWN) {
+				for (int i = 0, n = data.length; i < n / 2; i++) {
+					Object temp = data[i];
+					data[i] = data[n - i - 1];
+					data[n - i - 1] = temp;
+				}
+			}
+
+			// update data displayed in table
+			table.setSortDirection(dir);
+			table.clearAll();
+		}
+
+		protected abstract Object[] getData();
+
+		public static int sort(int a, int b) {
+			if (a == b) {
+				return 0;
+			}
+			return a < b ? -1 : 1;
 		}
 	}
 }
