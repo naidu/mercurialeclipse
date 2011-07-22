@@ -26,6 +26,7 @@ import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -38,6 +39,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -45,6 +47,7 @@ import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
@@ -59,6 +62,7 @@ import com.vectrace.MercurialEclipse.menu.RunnableHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -88,6 +92,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 		statusLabel = new Label(parent, SWT.NONE);
 		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		statusLabel.setText("No repository selected: Select a merging or rebasing repository");
 
 		table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
 				| SWT.V_SCROLL | SWT.H_SCROLL);
@@ -155,6 +160,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());
 				}
+				MercurialUtilities.setOfferAutoCommitMerge(true);
 			}
 		};
 		abortAction.setEnabled(false);
@@ -172,7 +178,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					}
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
+					statusLabel.setText(e.getConciseMessage());
 				}
 			}
 		};
@@ -188,7 +194,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					}
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
+					statusLabel.setText(e.getConciseMessage());
 				}
 			}
 		};
@@ -291,7 +297,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						label = "Merging " + hgRoot.getName();
 					}
 				} else {
-					label = "Rebasing";
+					label = "Rebasing " + hgRoot.getName();
 				}
 			}
 
@@ -299,7 +305,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		}
 
 		// Show commit dialog
-		if (attemptToCommit && !MercurialUtilities.isMergeViewDialogShown()
+		if (attemptToCommit && MercurialUtilities.isOfferAutoCommitMerge()
 				&& areAllResolved()) {
 			/*
 			 * Offer commit of merge or rebase exactly once if no conflicts are found. Uses {@link
@@ -307,7 +313,6 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			 * repeatedly. This flag should be cleared when any of the following operations occur:
 			 * commit, rebase, revert.
 			 */
-			MercurialUtilities.setMergeViewDialogShown(true);
 			attemptToCommit();
 		}
 	}
@@ -316,7 +321,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		try {
 			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
 
-			MercurialUtilities.setMergeViewDialogShown(true);
+			MercurialUtilities.setOfferAutoCommitMerge(false);
 			RunnableHandler handler = merging ? new CommitMergeHandler()
 					: new ContinueRebaseHandler();
 
@@ -328,7 +333,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	}
 
 	protected void clearView() {
-		statusLabel.setText("");
+		statusLabel.setText("No repository selected: Select a merging or rebasing repository");
 		table.removeAll();
 		abortAction.setEnabled(false);
 		completeAction.setEnabled(false);
@@ -339,7 +344,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	public void refresh(HgRoot newRoot) {
 		clearView();
-		setCurrentRoot(newRoot);
+		setCurrentRoot(newRoot, true);
 	}
 
 	/**
@@ -347,9 +352,11 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	 *
 	 * @param newRoot The new selection
 	 */
-	protected void setCurrentRoot(HgRoot newRoot) {
+	protected void setCurrentRoot(HgRoot newRoot, boolean force) {
 		if(newRoot == null) {
-			clearView();
+			if (force) {
+				clearView();
+			}
 			return;
 		}
 		if ((hgRoot == null) || !newRoot.equals(hgRoot)) {
@@ -358,7 +365,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				if (MercurialStatusCache.getInstance().isMergeInProgress(newRoot)) {
 					this.hgRoot = newRoot;
 					populateView(false);
-				} else {
+				} else if (force) {
 					clearView();
 				}
 			} catch (HgException e) {
@@ -385,7 +392,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			IStructuredSelection structured = (IStructuredSelection) selection;
 			IResource resource = MercurialEclipsePlugin.getAdapter(structured.getFirstElement(), IResource.class);
 			if (resource != null) {
-				setCurrentRoot(MercurialTeamProvider.hasHgRoot(resource));
+				setCurrentRoot(MercurialTeamProvider.hasHgRoot(resource), false);
 			}
 		}
 	}
@@ -438,4 +445,31 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		compareAction.run(null);
 	}
 
+	/**
+	 * Must be called from the UI thread
+	 */
+	public static void showMergeConflict(HgRoot hgRoot, Shell shell) throws PartInitException {
+		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
+		view.refresh(hgRoot);
+		MercurialEclipsePlugin.showDontShowAgainConfirmDialog("A merge conflict occurred",
+				"A merge conflict occurred. Use the merge view to resolve and commit the merge",
+				MessageDialog.INFORMATION,
+				MercurialPreferenceConstants.PREF_SHOW_MERGE_CONFICT_NOTIFICATION_DIALOG, shell);
+
+	}
+
+	/**
+	 * Must be called from the UI thread
+	 */
+	public static void showRebaseConflict(HgRoot hgRoot, Shell shell) throws PartInitException {
+		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
+		view.refresh(hgRoot);
+		MercurialEclipsePlugin
+				.showDontShowAgainConfirmDialog(
+						"A rebase conflict occurred",
+						"A rebase conflict occurred. Use the merge view to resolve and complete the rebase",
+						MessageDialog.INFORMATION,
+						MercurialPreferenceConstants.PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG,
+						shell);
+	}
 }

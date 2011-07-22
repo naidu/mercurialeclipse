@@ -104,8 +104,6 @@ public class TransplantOperation extends HgOperation {
 	private boolean handleTransplantException(HgException e) {
 		final String message = e.getMessage();
 		if (!HAS_REJECTS_PATTERN.matcher(message).find()) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
 			return false;
 		}
 
@@ -115,8 +113,6 @@ public class TransplantOperation extends HgOperation {
 			matcher = CHANGESET_PATTERN.matcher(message);
 			boolean found = matcher.find() &&  matcher.groupCount() > 0;
 			if(!found) {
-				MercurialEclipsePlugin.logError(e);
-				MercurialEclipsePlugin.showError(e);
 				return false;
 			}
 			final String changeSetId = matcher.group(1);
@@ -160,4 +156,7 @@ public class TransplantOperation extends HgOperation {
 		return new TransplantOperation(context, hgRoot, options, null);
 	}
 
+	public IHgRepositoryLocation getRepo() {
+		return repo;
+	}
 }

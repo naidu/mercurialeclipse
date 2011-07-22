@@ -233,6 +233,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	public static Map<IPath, Set<ChangeSet>> getPathLog(boolean isFile, File path,
 			HgRoot hgRoot, int limitNumber, int startRev, boolean withFiles)
 			throws HgException {
+		if(hgRoot == null) {
+			return EMPTY_MAP;
+		}
 		try {
 			AbstractShellCommand command = new HgCommand("log", "Retrieving history", hgRoot, false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);

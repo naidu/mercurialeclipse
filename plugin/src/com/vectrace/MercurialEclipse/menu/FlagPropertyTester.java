@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
@@ -34,6 +35,7 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 
 	public static final String PROPERTY_STATUS = "status"; //$NON-NLS-1$
 	public static final String PROPERTY_ROOT = "root"; //$NON-NLS-1$
+	public static final String PROPERTY_DEF_REPO = "hasDefaultRepo"; //$NON-NLS-1$
 
 	@SuppressWarnings({ "serial", "boxing" })
 	private static final Map<Object, Integer> BIT_MAP = Collections.unmodifiableMap(
@@ -95,6 +97,23 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 			}
 			return !hgRoot.equals(file);
 		}
+		else if(PROPERTY_DEF_REPO.equals(property) && args[0] != null) {
+				IResource res = (IResource) receiver;
+				IPath location = ResourceUtils.getPath(res);
+				if(location.isEmpty()) {
+					return false;
+				}
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				if(hgRoot == null){
+					return false;
+				}
+				IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
+				boolean bool = Boolean.valueOf(args[0].toString()).booleanValue();
+				if(bool) {
+					return repoLocation != null;
+				}
+				return repoLocation == null;
+			}
 		return false;
 	}
 

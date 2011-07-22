@@ -10,42 +10,37 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.io.File;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
  *
  */
 public class HgQNewClient extends AbstractClient {
-	public static String createNewPatch(IResource resource,
-			String commitMessage, boolean force, boolean git, String include,
-			String exclude, String user, String date, String patchName)
+	public static String createNewPatch(HgRoot root, String commitMessage,
+			List<IResource> resources, String user, String date, String patchName)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("qnew", //$NON-NLS-1$
-				"Invoking qnew", resource, true);
+		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
+				"Invoking qnew", root, true);
+		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			command.addOptions("--message", commitMessage); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, commitMessage);
 		}
-		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
-		}
-		if (git) {
-			command.addOptions("--git"); //$NON-NLS-1$
-		}
-		if (include != null && include.length() > 0) {
-			command.addOptions("--include", include); //$NON-NLS-1$
-		}
-		if (exclude != null && exclude.length() > 0) {
-			command.addOptions("--exclude", exclude); //$NON-NLS-1$
-		}
+
+		command.addOptions("--git"); //$NON-NLS-1$
+
 		if (user != null && user.length() > 0) {
 			command.addOptions("--user", user); //$NON-NLS-1$
 		} else {
@@ -58,8 +53,18 @@ public class HgQNewClient extends AbstractClient {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
 		}
 
+		if (resources.isEmpty()) {
+			command.addOptions("--exclude", "*");
+		} else {
+			command.addFiles(resources);
+		}
+
 		command.addOptions(patchName);
 
-		return command.executeToString();
+		try {
+			return command.executeToString();
+		} finally {
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 }

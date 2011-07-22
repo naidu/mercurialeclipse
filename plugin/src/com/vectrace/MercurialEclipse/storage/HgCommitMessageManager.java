@@ -8,7 +8,7 @@
  * Contributors:
  *     Zingo Andersen           - Save/Load commit messages using a xml file
  *     Adam Berkes (Intland)    - Fix encoding
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -179,7 +179,7 @@ public class HgCommitMessageManager {
 			TransformerHandler transformerHandler = transformerFactory.newTransformerHandler();
 			Transformer transformer = transformerHandler.getTransformer();
 			transformer.setOutputProperty(OutputKeys.ENCODING, MercurialEclipsePlugin
-					.getDefaultEncoding().name());
+					.getDefaultEncoding());
 			/*
 			 * transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"mercurialeclipse_commitmessage.dtd"
 			 * ); //$NON-NLS-1$

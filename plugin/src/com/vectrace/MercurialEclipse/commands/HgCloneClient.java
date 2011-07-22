@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
@@ -25,6 +25,7 @@ public class HgCloneClient extends AbstractClient {
 			boolean timeout, String rev, String cloneName) throws HgException {
 		AbstractShellCommand command = new RootlessHgCommand("clone", "Cloning", parentDirectory); //$NON-NLS-1$
 
+		addInsecurePreference(command);
 		if (noUpdate) {
 			command.addOptions("--noupdate"); //$NON-NLS-1$
 		}

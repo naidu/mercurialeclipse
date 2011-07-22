@@ -8,7 +8,7 @@
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
  *     Stefan C          - Code cleanup
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 
 

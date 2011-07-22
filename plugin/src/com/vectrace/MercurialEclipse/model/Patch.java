@@ -15,7 +15,7 @@ package com.vectrace.MercurialEclipse.model;
  *
  */
 public class Patch {
-	private String index;
+	private int index;
 	private String name;
 	private String summary;
 
@@ -27,7 +27,7 @@ public class Patch {
 	 * @param author
 	 * @param applied
 	 */
-	public Patch(String name, boolean applied, String summary, String index) {
+	public Patch(String name, boolean applied, String summary, int index) {
 		this.name = name;
 		this.applied = applied;
 		this.summary = summary;
@@ -133,7 +133,7 @@ public class Patch {
 	/**
 	 * @return the index
 	 */
-	public String getIndex() {
+	public int getIndex() {
 		return index;
 	}
 
@@ -141,7 +141,7 @@ public class Patch {
 	 * @param index
 	 *            the index to set
 	 */
-	public void setIndex(String index) {
+	public void setIndex(int index) {
 		this.index = index;
 	}
 

@@ -13,7 +13,10 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.*;
 
+import java.util.ArrayList;
+
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -23,7 +26,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
@@ -34,71 +36,67 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 /**
  * @author bastian
  *
+ * TODO: this is a lot like the {@link CommitDialog}, merge more code with it.
  */
 public class QNewWizardPage extends HgWizardPage {
 
-	private final IResource resource;
+	protected final HgRoot root;
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
-	private Button forceCheckBox;
-	private Button gitCheckBox;
-	private Text includeTextField;
-	private Text excludeTextField;
 	private final boolean showPatchName;
 	private SourceViewer commitTextBox;
 	private SourceViewerDecorationSupport decorationSupport;
 	private IDocument commitTextDocument;
+	private CommitFilesChooser fileChooser;
 
-	/**
-	 * @param pageName
-	 * @param title
-	 * @param titleImage
-	 * @param description
-	 */
 	public QNewWizardPage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IResource resource,
-			boolean showPatchName) {
+			ImageDescriptor titleImage, String description,
+			HgRoot root, boolean showPatchName) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
+
+		Assert.isNotNull(root);
+		this.root = root;
 		this.showPatchName = showPatchName;
 		this.commitTextDocument = new Document();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
+	/**
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
-		Composite composite = createComposite(parent, 2);
-		Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
+		Composite composite = createComposite(parent, 1);
+		//Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
 		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
 		data.minimumHeight = 150;
-		g.setLayoutData(data);
+		composite.setLayoutData(data);
 		if (showPatchName) {
-			createLabel(g, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
-			this.patchNameTextField = createTextField(g);
+			createLabel(composite, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
+			this.patchNameTextField = createTextField(composite);
 		}
 
-		createLabel(g, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
-		userTextField = createTextField(g);
-		userTextField.setText(MercurialUtilities.getDefaultUserName());
+		createLabel(composite, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
+		userTextField = createTextField(composite);
+		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(root));
 
-		createLabel(g, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
-		date = createTextField(g);
+		createLabel(composite, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
+		date = createTextField(composite);
 
-		createLabel(g, Messages
+		createLabel(composite, Messages
 				.getString("QNewWizardPage.commitMessageLabel.title")); //$NON-NLS-1$
-		commitTextBox = new SourceViewer(g, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
+		commitTextBox = new SourceViewer(composite, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
 		commitTextBox.getTextWidget().setLayoutData(data);
-
 
 		// set up spell-check annotations
 		decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
@@ -120,29 +118,16 @@ public class QNewWizardPage extends HgWizardPage {
 			public void widgetDisposed(DisposeEvent e) {
 				decorationSupport.uninstall();
 			}
-
 		});
 
-		g = createGroup(composite, Messages.getString("QNewWizardPage.optionsGroup.title")); //$NON-NLS-1$
-		this.forceCheckBox = createCheckBox(g,
-				Messages.getString("QNewWizardPage.forceCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox = createCheckBox(g, Messages.getString("QNewWizardPage.gitCheckBox.title")); //$NON-NLS-1$
-		this.gitCheckBox.setSelection(true);
+		CommitDialog.createOldCommitCombo(composite, commitTextDocument, commitTextBox);
 
-		createLabel(g, Messages.getString("QNewWizardPage.includeLabel.title")); //$NON-NLS-1$
-		this.includeTextField = createTextField(g);
-
-		createLabel(g, Messages.getString("QNewWizardPage.excludeLabel.title")); //$NON-NLS-1$
-		this.excludeTextField = createTextField(g);
+		Group g = SWTWidgetHelper.createGroup(composite, "Add changes to patch:", 1, GridData.FILL_BOTH); //$NON-NLS-1$
+		// TODO: Resource calculation wrong for repos below root
+		fileChooser = new CommitFilesChooser(g, true, new ArrayList<IResource>(ResourceUtils
+				.getProjects(root)), true, true, false);
 
 		setControl(composite);
-	}
-
-	/**
-	 * @return the resource
-	 */
-	public IResource getResource() {
-		return resource;
 	}
 
 	/**
@@ -176,66 +161,6 @@ public class QNewWizardPage extends HgWizardPage {
 	}
 
 	/**
-	 * @return the forceCheckBox
-	 */
-	public Button getForceCheckBox() {
-		return forceCheckBox;
-	}
-
-	/**
-	 * @param forceCheckBox
-	 *            the forceCheckBox to set
-	 */
-	public void setForceCheckBox(Button forceCheckBox) {
-		this.forceCheckBox = forceCheckBox;
-	}
-
-	/**
-	 * @return the gitCheckBox
-	 */
-	public Button getGitCheckBox() {
-		return gitCheckBox;
-	}
-
-	/**
-	 * @param gitCheckBox
-	 *            the gitCheckBox to set
-	 */
-	public void setGitCheckBox(Button gitCheckBox) {
-		this.gitCheckBox = gitCheckBox;
-	}
-
-	/**
-	 * @return the includeTextField
-	 */
-	public Text getIncludeTextField() {
-		return includeTextField;
-	}
-
-	/**
-	 * @param includeTextField
-	 *            the includeTextField to set
-	 */
-	public void setIncludeTextField(Text includeTextField) {
-		this.includeTextField = includeTextField;
-	}
-
-	/**
-	 * @return the excludeTextField
-	 */
-	public Text getExcludeTextField() {
-		return excludeTextField;
-	}
-
-	/**
-	 * @param excludeTextField
-	 *            the excludeTextField to set
-	 */
-	public void setExcludeTextField(Text excludeTextField) {
-		this.excludeTextField = excludeTextField;
-	}
-
-	/**
 	 * @return the userTextField
 	 */
 	public Text getUserTextField() {
@@ -265,4 +190,8 @@ public class QNewWizardPage extends HgWizardPage {
 		this.commitTextDocument = commitTextDocument;
 	}
 
+	public CommitFilesChooser getFileChooser()
+	{
+		return fileChooser;
+	}
 }

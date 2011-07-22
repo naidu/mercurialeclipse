@@ -56,15 +56,20 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public void run(IAction action) {
-		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
 		if (selection.getFirstElement() instanceof IResource) {
-			IResource firstElement = (IResource) selection.getFirstElement();
-			try {
-				new ShowAnnotationOperation(part, firstElement).run();
-			} catch (Exception e) {
-				MessageDialog.openError(part.getSite().getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
-						+ Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$
-			}
+			run((IResource) selection.getFirstElement());
+		}
+	}
+
+	public void run(IResource res)
+	{
+		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
+
+		try {
+			new ShowAnnotationOperation(part, res).run();
+		} catch (Exception e) {
+			MessageDialog.openError(part.getSite().getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
+					+ Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$
 		}
 	}
 

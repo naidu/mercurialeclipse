@@ -16,7 +16,6 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -58,29 +57,21 @@ public class HgQRefreshClient extends AbstractClient {
 		}
 	}
 
-	public static String refresh(IResource resource, String commitMessage, boolean force,
-			boolean git, String include, String exclude, String user, String date)
+	public static String refresh(HgRoot root, String commitMessage,
+			List<IResource> resources, String user, String date)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				"Invoking qrefresh", resource, true);
+		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
+				"Invoking qrefresh", root, true);
+		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			command.addOptions("--message", commitMessage); //$NON-NLS-1$
+			messageFile = HgCommitClient.addMessage(command, commitMessage);
 		}
-		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
-		}
-		if (git) {
-			command.addOptions("--git"); //$NON-NLS-1$
-		}
-		if (include != null && include.length() > 0) {
-			command.addOptions("--include", include); //$NON-NLS-1$
-		}
-		if (exclude != null && exclude.length() > 0) {
-			command.addOptions("--exclude", exclude); //$NON-NLS-1$
-		}
+
+		command.addOptions("--git"); //$NON-NLS-1$
+
 		if (user != null && user.length() > 0) {
 			command.addOptions("--user", user); //$NON-NLS-1$
 		} else {
@@ -93,6 +84,18 @@ public class HgQRefreshClient extends AbstractClient {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
 		}
 
-		return command.executeToString();
+		// TODO: this will refresh dirty files in the patch regardless of whether they're selected
+		command.addOptions("-s");
+
+		command.addFiles(resources);
+
+		try
+		{
+			return command.executeToString();
+		}
+		finally
+		{
+			HgCommitClient.deleteMessage(messageFile);
+		}
 	}
 }

@@ -6,7 +6,7 @@
  *
  * Contributors: Bastian Doetsch - implementation
  *     Zsolt Koppany (Intland)   - bug fixes
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - proxy support
  ******************************************************************************/
 
@@ -42,6 +42,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		HgCommand command = new HgCommand("incoming", "Calculating incoming changesets", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+
+		addInsecurePreference(command);
 		String branch = key.getBranch();
 		if (!Branch.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
 			// this branch is not known remote, so there can be NO incoming changes
@@ -51,6 +53,10 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		// see issue 10495, 11093: there can be many branch heads: "--rev branch" cannot be used
 		if (branch != null) {
 			command.addOptions("--branch", branch);
+		}
+
+		if (key.isAllowUnrelated()) {
+			command.addOptions("-f");
 		}
 
 		File bundleFile = null;

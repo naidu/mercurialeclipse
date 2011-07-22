@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *     Adam Berkes (Intland) - repository location handling
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -91,6 +91,13 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		if (showForce) {
 			forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					getForceCheckBoxLabel());
+			forceCheckBox.addSelectionListener(new SelectionListener() {
+				public void widgetDefaultSelected(SelectionEvent e) {
+				}
+				public void widgetSelected(SelectionEvent e) {
+					optionChanged();
+				}
+			});
 		}
 		if (showRevisionTable) {
 			createRevisionTable(composite);

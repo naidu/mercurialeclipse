@@ -16,6 +16,7 @@
  *     Philip Graf               - proxy support
  *     Bastian Doetsch           - bug fixes and implementation
  *******************************************************************************/
+
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
@@ -38,8 +39,14 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.DecorationOverlayIcon;
+import org.eclipse.jface.viewers.IDecoration;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
@@ -62,6 +69,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
@@ -80,7 +88,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	// The shared instance.
 	private static MercurialEclipsePlugin plugin;
 
-	private static final Charset HGENCODING;
+	private static final String HGENCODING;
 
 	static {
 		// next in line is HGENCODING in environment
@@ -88,12 +96,12 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 		// next is platform encoding as available in JDK
 		if (!StringUtils.isEmpty(enc) && Charset.isSupported(enc)) {
-			HGENCODING = Charset.forName(enc);
+			HGENCODING = enc;
 		} else {
 			if(Charset.isSupported("UTF-8")){
-				HGENCODING = Charset.forName("UTF-8");
+				HGENCODING = Charset.forName("UTF-8").name();
 			} else {
-				HGENCODING = Charset.defaultCharset();
+				HGENCODING = Charset.defaultCharset().name();
 			}
 		}
 	}
@@ -126,7 +134,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		HgClients.initialize(cfg, cfg, cfg);
 		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
 		proxyServiceTracker.open();
-		Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
+
+		final Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
@@ -177,8 +186,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			});
 		}
 
-		// start plugin
+		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
+		// Why JFaceResources wasn't initialized I don't know.
+		new SafeUiJob(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) {
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				try {
+					getImageRegistry();
+				} finally {
 		job.schedule();
+	}
+				return super.runSafe(monitor);
+			}
+		}.schedule();
 	}
 
 	/**
@@ -204,7 +224,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				System.out.println(HgFeatures.printSummary());
 			}
 		}
-	}
+		}
 
 	/**
 	 * Plugin depends on native mercurial installation, which has to be checked at plugin startup.
@@ -248,15 +268,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") //$NON-NLS-1$
 					+ version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$
 					+ HgFeatures.getLowestWorkingVersion() + "."); //$NON-NLS-1$
-		}
+				}
 		if (!HgFeatures.isHappyWith(detectedVersion)) {
 			logWarning("Can not use some of the new Mercurial features, "
 					+ "hg version greater equals " + preferredVersion + " required, but "
 					+ detectedVersion + " found. Features state:\n" + HgFeatures.printSummary() + ".",
 					null);
-		}
+			}
 		return detectedVersion;
-	}
+		}
 
 	/**
 	 * @return the observer hg version, never null. Returns {@link Version#emptyVersion} in case the
@@ -325,13 +345,54 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * @return the image
 	 */
 	public static Image getImage(String path) {
-		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
-		if (descriptor == null) {
-			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
-			getDefault().getImageRegistry().put(path, descriptor);
-		}
+		// make sure descriptor is created
+		getImageDescriptor(path);
 		return getDefault().getImageRegistry().get(path);
 	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static Image getImage(String basePath, String overlayPath, int quadrant) {
+		getImageDescriptor(basePath, overlayPath, quadrant);
+		return getDefault().getImageRegistry().get(basePath + overlayPath + quadrant);
+	}
+
+	/**
+	 * Returns an image with overlay at given place at the given plug-in relative path.
+	 *
+	 * @param basePath
+	 *            the base image plug-in relative path.
+	 * @param overlayPath
+	 *            the overlay image plug-in relative path.
+	 * @param quadrant
+	 *            the quadrant (one of {@link IDecoration} ({@link IDecoration#TOP_LEFT},
+	 *            {@link IDecoration#TOP_RIGHT}, {@link IDecoration#BOTTOM_LEFT},
+	 *            {@link IDecoration#BOTTOM_RIGHT} or {@link IDecoration#UNDERLAY})
+	 * @return the image
+	 */
+	public static ImageDescriptor getImageDescriptor(String basePath, String overlayPath, int quadrant) {
+		String key = basePath + overlayPath + quadrant;
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(key);
+		if(descriptor == null) {
+			Image base = getImage(basePath);
+			ImageDescriptor overlay = getImageDescriptor(overlayPath);
+			descriptor = new DecorationOverlayIcon(base, overlay, quadrant);
+			getDefault().getImageRegistry().put(key, descriptor);
+		}
+		return descriptor;
+	}
+
 
 	public static final void logError(String message, Throwable error) {
 		getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
@@ -468,13 +529,40 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	/**
+	 * Show a dialog only if the user hasn't selected "don't show again" for it.
+	 *
+	 * @param title The title
+	 * @param message The message
+	 * @param type The type, for example MessageDialog.CONFIRM
+	 * @param key The preference key
+	 * @param shell The shell to use
+	 * @return True of ok was pressed
+	 */
+	public static boolean showDontShowAgainConfirmDialog(final String title,
+			final String message, int type, String key, Shell shell) {
+		IPreferenceStore store = getDefault().getPreferenceStore();
+		String pref = store.getString(key);
+		if (MessageDialogWithToggle.PROMPT.equals(pref)) {
+			String toggleMessage = Messages.getString("Dialogs.DontShowAgain");
+			MessageDialogWithToggle confirmDialog = MessageDialogWithToggle.open(type, shell, title, message, toggleMessage, false, store, key, SWT.NONE);
+			int returnCode = confirmDialog.getReturnCode();
+			return returnCode == Window.OK;
+		}
+		return true;
+	}
+
+	/**
 	 * The default encoding which is used by the current environment.
 	 * <p>
-	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each
-	 * repository may use it's own encoding
-	 * @return a valid {@link Charset} encoding, never null.
+	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each repository
+	 * may use it's own encoding
+	 * <p>
+	 * <b>Note</b>: Python's encoding isn't 1-1 with Charset.name() so do not store
+	 * {@link java.nio.charset.Charset}.
+	 *
+	 * @return a valid encoding name, never null.
 	 */
-	public static Charset getDefaultEncoding() {
+	public static String getDefaultEncoding() {
 		return HGENCODING;
 	}
 

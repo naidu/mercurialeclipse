@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -18,31 +19,81 @@ import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.HgAddClient;
+import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
-import com.vectrace.MercurialEclipse.wizards.HgWizard;
+import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 
 /**
  * @author bastian
  *
  */
-public class QNewWizard extends HgWizard {
-	private final QNewWizardPage page;
+public class QNewWizard extends HgOperationWizard {
 
-	private class NewOperation extends HgOperation {
+	protected static abstract class FileOperation extends HgOperation {
 
-		/**
-		 * @param context
-		 */
-		public NewOperation(IRunnableContext context) {
+		protected final HgRoot root;
+		protected final String message;
+		protected final String user;
+		protected final String date;
+		protected final List<IResource> resourcesToRemove;
+		protected final List<IResource> allResources;
+		protected final List<IResource> resourcesToAdd;
+
+		public FileOperation(IRunnableContext context, HgRoot root, QNewWizardPage page) {
 			super(context);
+
+			this.root = root;
+			this.message = page.getCommitTextDocument().get();
+			this.user = page.getUserTextField().getText();
+			this.date = page.getDate().getText();
+
+			CommitFilesChooser fileChooser = page.getFileChooser();
+
+			this.resourcesToAdd = fileChooser.getCheckedResources(CommitDialog.FILE_UNTRACKED);
+			this.resourcesToRemove = fileChooser.getCheckedResources(CommitDialog.FILE_DELETED);
+			this.allResources = fileChooser.getCheckedResources();
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+		protected void addRemoveFiles(IProgressMonitor pm) throws HgException {
+			// add new resources
+			pm.subTask("Removing selected untracked resources to repository.");
+			HgAddClient.addResources(resourcesToAdd, pm);
+			pm.worked(1);
+
+			// remove deleted resources
+			pm.subTask("Removing selected deleted resources from repository.");
+			HgRemoveClient.removeResources(resourcesToRemove);
+			pm.worked(1);
+		}
+
+		protected void saveCommitMessage()
+		{
+			if (message != null && message.length() > 0) {
+				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(message);
+			}
+		}
+	}
+
+	private static class NewOperation extends FileOperation {
+
+		private final String patchName;
+
+		public NewOperation(IRunnableContext context, HgRoot root, QNewWizardPage page) {
+			super(context, root, page);
+
+			this.patchName = page.getPatchNameTextField().getText();
+		}
+
+		/**
+		 *  @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
 		 */
 		@Override
 		protected String getActionDescription() {
@@ -54,62 +105,51 @@ public class QNewWizard extends HgWizard {
 		 */
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
-			monitor.beginTask(Messages.getString("QNewWizard.beginTask"), 2); //$NON-NLS-1$
+			monitor.beginTask(Messages.getString("QNewWizard.beginTask"), 6); //$NON-NLS-1$
 			monitor.worked(1);
-			monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQNewClient.createNewPatch(resource, page
-						.getCommitTextDocument().get(), page
-						.getForceCheckBox().getSelection(), page
-						.getGitCheckBox().getSelection(), page
-						.getIncludeTextField().getText(), page
-						.getExcludeTextField().getText(), page
-						.getUserTextField().getText(),
-						page.getDate().getText(), page.getPatchNameTextField()
-								.getText());
-				monitor.worked(1);
+				addRemoveFiles(monitor);
+				monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
+				HgQNewClient.createNewPatch(root, message, allResources, user, date, patchName);
+				monitor.worked(2);
+				saveCommitMessage();
 				monitor.done();
 			} catch (HgException e) {
 				throw new InvocationTargetException(e, e.getLocalizedMessage());
 			}
 		}
-
 	}
 
-	private final IResource resource;
+	private final HgRoot root;
 
-	/**
-	 * @param windowTitle
-	 */
-	public QNewWizard(IResource resource) {
+	public QNewWizard(HgRoot root) {
 		super(Messages.getString("QNewWizard.title")); //$NON-NLS-1$
-		this.resource = resource;
+		this.root = root;
 		setNeedsProgressMonitor(true);
-		page = new QNewWizardPage(Messages.getString("QNewWizard.pageName"), Messages.getString("QNewWizard.pageTitle"), null, null, //$NON-NLS-1$ //$NON-NLS-2$
-				resource, true);
+		page = new QNewWizardPage(
+				Messages.getString("QNewWizard.pageName"), Messages.getString("QNewWizard.pageTitle"), //$NON-NLS-1$ //$NON-NLS-2$
+				null, null, root, true);
 		initPage(Messages.getString("QNewWizard.pageDescription"), //$NON-NLS-1$
 				page);
 		addPage(page);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#initOperation()
 	 */
 	@Override
-	public boolean performFinish() {
-		NewOperation initOperation = new NewOperation(getContainer());
-		try {
-			getContainer().run(false, false, initOperation);
-		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return false;
-		}
-		PatchQueueView.getView().populateTable();
-		return true;
+	protected HgOperation initOperation() {
+		return new NewOperation(getContainer(), root, (QNewWizardPage) page);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgOperationWizard#operationFinished()
+	 */
+	@Override
+	protected void operationFinished() {
+		super.operationFinished();
+		PatchQueueView.getView().populateTable();
+		new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+	}
 }

@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Group;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQAppliedClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -38,27 +39,21 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QDeletePage extends HgWizardPage {
 
+	private final boolean showRevSelector;
 	private IResource resource;
 	private ListViewer patchViewer;
 	private ChangesetTable changesetTable;
 	private Button revCheckBox;
 	private Button keepCheckBox;
 
-	/**
-	 * @param pageName
-	 * @param title
-	 * @param titleImage
-	 * @param description
-	 */
 	public QDeletePage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IResource resource) {
+			ImageDescriptor titleImage, String description, IResource resource, boolean showRevSelector) {
 		super(pageName, title, titleImage, description);
 		this.resource = resource;
+		this.showRevSelector = showRevSelector;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
+	/**
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
 	 */
 	public void createControl(Composite parent) {
@@ -67,16 +62,10 @@ public class QDeletePage extends HgWizardPage {
 				Messages.getString("QDeletePage.patchGroup.title")); //$NON-NLS-1$
 
 		IBaseLabelProvider labelProvider = new LabelProvider() {
-			/*
-			 * (non-Javadoc)
-			 *
-			 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-			 */
 			@Override
 			public String getText(Object element) {
 				return element.toString();
 			}
-
 		};
 
 		this.patchViewer = SWTWidgetHelper.createListViewer(g, Messages.getString("QDeletePage.patchViewer.title"), 100, //$NON-NLS-1$
@@ -85,32 +74,35 @@ public class QDeletePage extends HgWizardPage {
 
 		g = SWTWidgetHelper.createGroup(composite, Messages.getString("QDeletePage.optionGroup.title")); //$NON-NLS-1$
 		this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QDeletePage.keepCheckBox.title")); //$NON-NLS-1$
-		this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
-				Messages.getString("QDeletePage.revCheckBox.title")); //$NON-NLS-1$
 
-		SelectionListener revListener = new SelectionListener() {
+		if (showRevSelector) {
+			this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
+					Messages.getString("QDeletePage.revCheckBox.title")); //$NON-NLS-1$
 
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
+			SelectionListener revListener = new SelectionListener() {
 
-			public void widgetSelected(SelectionEvent e) {
-				changesetTable.setEnabled(revCheckBox.getSelection());
-				patchViewer.getControl().setEnabled(!revCheckBox.getSelection());
-			}
+				public void widgetDefaultSelected(SelectionEvent e) {
+					widgetSelected(e);
+				}
 
-		};
+				public void widgetSelected(SelectionEvent e) {
+					changesetTable.setEnabled(revCheckBox.getSelection());
+					patchViewer.getControl().setEnabled(!revCheckBox.getSelection());
+				}
 
-		revCheckBox.addSelectionListener(revListener);
+			};
 
-		GridData gridData = new GridData(GridData.FILL_BOTH);
-		gridData.heightHint = 150;
-		gridData.minimumHeight = 50;
-		this.changesetTable = new ChangesetTable(g, resource.getProject());
-		this.changesetTable.setLayoutData(gridData);
-		this.changesetTable.setEnabled(false);
+			revCheckBox.addSelectionListener(revListener);
+
+			GridData gridData = new GridData(GridData.FILL_BOTH);
+			gridData.heightHint = 150;
+			gridData.minimumHeight = 50;
+			this.changesetTable = new ChangesetTable(g, resource.getProject());
+			this.changesetTable.setLayoutData(gridData);
+			this.changesetTable.setEnabled(false);
+		}
+
 		setControl(composite);
-
 	}
 
 	/**
@@ -163,11 +155,12 @@ public class QDeletePage extends HgWizardPage {
 		return keepCheckBox;
 	}
 
-	/**
-	 * @return the changesetTable
-	 */
-	public ChangesetTable getChangesetTable() {
-		return changesetTable;
+	public ChangeSet getSelectedChangeset() {
+		if (changesetTable == null) {
+			return null;
+		}
+
+		return changesetTable.getSelection();
 	}
 
 }

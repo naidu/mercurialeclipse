@@ -7,7 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -67,7 +67,7 @@ public abstract class BisectAbstractAction extends Action {
 		final HgRoot root;
 		try {
 			root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
-			if(checkDirty(root)){
+			if(root == null || checkDirty(root)){
 				return;
 			}
 		} catch (HgException e) {

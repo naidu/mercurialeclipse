@@ -10,25 +10,24 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.mq.QRefreshWizard;
 
-public class QRefreshHandler extends SingleResourceHandler {
+public class QRefreshHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		openWizard(resource, getShell());
+	protected void run(HgRoot root) {
+		openWizard(root, getShell());
 	}
 
-	/**
-	 * @param resource
-	 * @param shell
-	 */
-	public static void openWizard(IResource resource, Shell shell) {
-		QRefreshWizard wizard = new QRefreshWizard(resource);
+	public static void openWizard(HgRoot root, Shell shell) {
+		Assert.isNotNull(root);
+
+		QRefreshWizard wizard = new QRefreshWizard(root);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.setBlockOnOpen(true);
 		dialog.open();

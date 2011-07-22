@@ -8,11 +8,13 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - adaptation to patches
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *     Philip Graf               - refactoring: replaced Table with TableViewer
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jface.layout.TableColumnLayout;
@@ -107,6 +109,8 @@ public class PatchTable extends Composite {
 	}
 
 	public void setPatches(List<Patch> patches) {
+		patches = new ArrayList<Patch>(patches);
+		Collections.reverse(patches);
 		viewer.setInput(patches);
 	}
 
@@ -146,7 +150,7 @@ public class PatchTable extends Composite {
 			Patch patch = (Patch) element;
 			switch (columnIndex) {
 				case 0:
-					return patch.getIndex();
+					return String.valueOf(patch.getIndex());
 				case 1:
 					return patch.isApplied() ? Messages.getString("PatchTable.statusApplied") : Messages.getString("PatchTable.statusUnapplied"); //$NON-NLS-1$ //$NON-NLS-2$
 				case 2:

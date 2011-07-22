@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -74,6 +75,7 @@ public class PullPage extends PushPullPage {
 								getPasswordText());
 				incomingPage.setLocation(loc);
 				incomingPage.setSvn(isSvnSelected());
+				incomingPage.setForce(isForceSelected());
 
 				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
@@ -105,17 +107,18 @@ public class PullPage extends PushPullPage {
 	public void createControl(Composite parent) {
 		super.createControl(parent);
 		Composite composite = (Composite) getControl();
+		IDialogSettings prefs = getHgRootDialogSetting();
 
 		// now the options
 		Group pullGroup = SWTWidgetHelper
 				.createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
 		updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-		updateCheckBox.setSelection(true);
+		updateCheckBox.setSelection(getSetting(prefs, "update", true));
 
 		cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
-		cleanUpdateCheckBox.setSelection(false);
+		cleanUpdateCheckBox.setSelection(getSetting(prefs, "cleanupdate", false));
 
 		try {
 			if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
@@ -146,18 +149,21 @@ public class PullPage extends PushPullPage {
 				};
 				rebaseCheckBox.addSelectionListener(rebaseCheckBoxListener);
 				updateCheckBox.addSelectionListener(updateCheckBoxListener);
+				rebaseCheckBox.setSelection(getSetting(prefs, "rebase", false));
 			}
 		} catch (HgException e2) {
 			MercurialEclipsePlugin.logError(e2);
 		}
 
 		this.forceCheckBox.setParent(pullGroup);
+		this.forceCheckBox.setSelection(getSetting(prefs, "force", false));
 		pullGroup.moveAbove(optionGroup);
 
 		Group mergeGroup = SWTWidgetHelper.createGroup(composite,
 				Messages.getString("PullPage.option.merge")); //$NON-NLS-1$
 		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
 				Messages.getString("PullPage.option.commitAfterMerge")); //$NON-NLS-1$
+		this.mergeCheckBox.setSelection(getSetting(prefs, "merge", false));
 
 		this.commitDialogCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
 				Messages.getString("PullPage.option.editCommitMessage")); //$NON-NLS-1$
@@ -207,7 +213,19 @@ public class PullPage extends PushPullPage {
 
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
-		return super.finish(monitor);
+		boolean res = super.finish(monitor);
+		IDialogSettings prefs = getHgRootDialogSetting();
+
+		if (prefs != null)
+		{
+			prefs.put("update", isUpdateSelected());
+			prefs.put("cleanupdate", isCleanUpdateSelected());
+			prefs.put("rebase", isRebaseSelected());
+			prefs.put("force", isForce());
+			prefs.put("merge", isMergeSelected());
+		}
+
+		return res;
 	}
 
 	@Override
@@ -242,4 +260,34 @@ public class PullPage extends PushPullPage {
 		return mergeCheckBox.getSelection();
 	}
 
+	private static boolean getSetting(IDialogSettings setting, String sKey, boolean bDefault)
+	{
+		if (setting != null && (sKey = setting.get(sKey)) != null)
+		{
+			return Boolean.valueOf(sKey).booleanValue();
+		}
+
+		return bDefault;
+	}
+
+	/**
+	 * @return Get or add dialog settings for the current hg root.
+	 */
+	protected IDialogSettings getHgRootDialogSetting()
+	{
+		IDialogSettings s = getDialogSettings(), res = null;
+		Object root = getHgRoot();
+
+		if (s != null && root != null && (root = ((HgRoot) root).getAbsolutePath()) != null)
+		{
+			res = s.getSection((String) root);
+
+			if (res == null)
+			{
+				res = s.addNewSection((String) root);
+			}
+		}
+
+		return res;
+	}
 }

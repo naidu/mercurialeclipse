@@ -114,7 +114,7 @@ public class HgRebaseClient extends AbstractClient {
 			c.addOptions("--keep"); //$NON-NLS-1$
 		}
 
-		MercurialUtilities.setMergeViewDialogShown(false);
+		MercurialUtilities.setOfferAutoCommitMerge(true);
 
 		return c.executeToString();
 	}

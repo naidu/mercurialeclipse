@@ -27,8 +27,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  *
  */
 public class HgQImportClient extends AbstractClient {
-	public static String qimport(HgRoot root, boolean force, boolean git, boolean existing,
-			ChangeSet[] changesets, IPath patchFile) throws HgException {
+	public static String qimport(HgRoot root, boolean force, boolean existing, ChangeSet[] changesets,
+			IPath patchFile) throws HgException {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qimport", //$NON-NLS-1$
 				"Invoking qimport", root, true);
@@ -40,9 +40,7 @@ public class HgQImportClient extends AbstractClient {
 			command.addOptions("--force"); //$NON-NLS-1$
 		}
 
-		if (git) {
-			command.addOptions("--git"); //$NON-NLS-1$
-		}
+		command.addOptions("--git"); //$NON-NLS-1$
 
 		if (changesets != null && changesets.length>0) {
 			command.addOptions("--rev", changesets[changesets.length-1].getChangeset()+ ":" +changesets[0].getChangeset()); //$NON-NLS-1$ //$NON-NLS-2$

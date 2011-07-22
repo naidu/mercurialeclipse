@@ -19,11 +19,13 @@ import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
@@ -49,8 +51,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 
 	private Composite comp;
 	private final ChangeSet changeset;
-	private Viewer viewer;
-	private Table table;
+	private ChangedFilesTable changedFileTable;
 
 	private static class ChangesetInfoPathLabelProvider extends DecoratingLabelProvider implements
 			ITableLabelProvider {
@@ -75,16 +76,11 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		}
 	}
 
-	/**
-	 *
-	 */
 	public ChangesetInfoTray(ChangeSet cs) {
 		this.changeset = cs;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
+	/**
 	 * @see org.eclipse.jface.dialogs.DialogTray#createContents(org.eclipse.swt.widgets .Composite)
 	 */
 	@Override
@@ -96,7 +92,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		createChangesetInfoGroup();
 		createChangedFilesTable();
 		// populate viewer
-		viewer.setInput(changeset);
+		changedFileTable.getViewer().setInput(changeset);
 		return comp;
 	}
 
@@ -105,58 +101,8 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 	 */
 	private void createChangedFilesTable() {
 		Group g = SWTWidgetHelper.createGroup(comp, Messages.getString("ChangesetInfoTray.changedFiles"), 1, GridData.FILL_BOTH); //$NON-NLS-1$
-		table = new Table(g, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(false);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		data.heightHint = 150;
-		data.minimumHeight = 50;
-		table.setLayoutData(data);
-		viewer = new TableViewer(table);
-		TableViewer tableViewer = (TableViewer) viewer;
-		tableViewer.setLabelProvider(new ChangesetInfoPathLabelProvider());
-		IStructuredContentProvider contentProvider = new IStructuredContentProvider() {
-			public void inputChanged(Viewer viewer1, Object oldInput, Object newInput) {
-				viewer = viewer1;
-			}
+		changedFileTable = new ChangedFilesTable(g, changeset);
 
-			public void dispose() {
-
-			}
-
-			public Object[] getElements(Object inputElement) {
-				return changeset.getChangedFiles().toArray();
-			}
-		};
-		tableViewer.setContentProvider(contentProvider);
-		IDoubleClickListener listener = new IDoubleClickListener() {
-
-			public void doubleClick(DoubleClickEvent event) {
-				FileStatus clickedFileStatus = (FileStatus) ((IStructuredSelection) event
-						.getSelection()).getFirstElement();
-				ChangeSet cs = changeset;
-				IPath fileAbsPath = cs.getHgRoot().toAbsolute(
-						clickedFileStatus.getRootRelativePath());
-				IFile file = ResourceUtils.getFileHandle(fileAbsPath);
-				if (file != null) {
-					try {
-						String[] parents = HgParentClient.getParentNodeIds(file, cs);
-						// our amend changeset was a merge changeset. diff is difficult...
-						if (parents == null || parents.length == 2) {
-							return;
-						}
-						MercurialRevisionStorage left = new MercurialRevisionStorage(file, cs
-								.getChangesetIndex());
-						MercurialRevisionStorage right = new MercurialRevisionStorage(file,
-								parents[0]);
-						CompareUtils.openEditor(left, right, true);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
-				}
-			}
-		};
-		tableViewer.addDoubleClickListener(listener);
 	}
 
 	private void createChangesetInfoGroup() {
@@ -174,18 +120,83 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		SWTWidgetHelper.createWrappingLabel(g, changeset.getComment(), 0);
 	}
 
-	/**
-	 * @return the viewer
-	 */
-	public Viewer getViewer() {
-		return viewer;
-	}
+	// inner types
 
-	/**
-	 * @param viewer the viewer to set
-	 */
-	public void setViewer(Viewer viewer) {
-		this.viewer = viewer;
-	}
+	public static class ChangedFilesTable extends Composite {
 
+		private TableViewer viewer;
+
+		public ChangedFilesTable(Composite parent, final ChangeSet changeset) {
+			super(parent, SWT.NONE);
+
+			GridLayout layout = new GridLayout();
+			layout.verticalSpacing = 3;
+			layout.horizontalSpacing = 0;
+			layout.marginWidth = 0;
+			layout.marginHeight = 0;
+			setLayout(layout);
+			GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+			data.heightHint = 150;
+			data.minimumHeight = 50;
+			setLayoutData(data);
+
+			Table table = new Table(this, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
+			table.setLinesVisible(true);
+			table.setHeaderVisible(false);
+			data = new GridData(SWT.FILL, SWT.FILL, true, true);
+			data.heightHint = 150;
+			data.minimumHeight = 50;
+			table.setLayoutData(data);
+			viewer = new TableViewer(table);
+
+			viewer.setLabelProvider(new ChangesetInfoPathLabelProvider());
+			IStructuredContentProvider contentProvider = new IStructuredContentProvider() {
+				public void inputChanged(Viewer viewer1, Object oldInput, Object newInput) {
+					viewer = (TableViewer) viewer1;
+				}
+
+				public void dispose() {
+
+				}
+
+				public Object[] getElements(Object inputElement) {
+					return changeset.getChangedFiles().toArray();
+				}
+			};
+			viewer.setContentProvider(contentProvider);
+			IDoubleClickListener listener = new IDoubleClickListener() {
+
+				public void doubleClick(DoubleClickEvent event) {
+					FileStatus clickedFileStatus = (FileStatus) ((IStructuredSelection) event
+							.getSelection()).getFirstElement();
+					ChangeSet cs = changeset;
+					IPath fileAbsPath = cs.getHgRoot().toAbsolute(
+							clickedFileStatus.getRootRelativePath());
+					IFile file = ResourceUtils.getFileHandle(fileAbsPath);
+					if (file != null) {
+						try {
+							String[] parents = HgParentClient.getParentNodeIds(file, cs);
+							// our amend changeset was a merge changeset. diff is difficult...
+							if (parents == null || parents.length == 2) {
+								return;
+							}
+							MercurialRevisionStorage left = new MercurialRevisionStorage(file, cs
+									.getChangesetIndex());
+							MercurialRevisionStorage right = new MercurialRevisionStorage(file,
+									parents[0]);
+							CompareUtils.openEditor(left, right, true);
+						} catch (HgException e) {
+							MercurialEclipsePlugin.logError(e);
+						}
+					}
+				}
+			};
+			viewer.addDoubleClickListener(listener);
+		}
+
+		public StructuredViewer getViewer() {
+			return viewer;
+		}
+
+	}
 }

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Stefan                    - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov           - bug fixes
  *     Philip Graf               - use default timeout from preferences
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;

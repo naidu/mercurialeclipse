@@ -7,7 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch  implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -53,6 +53,9 @@ public final class IncomingChangesetCache extends AbstractRemoteCache {
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if(hgRoot == null) {
+			return null;
+		}
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 		IHgRepositoryLocation defaultRepo = repoManager.getDefaultRepoLocation(hgRoot);
 		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();

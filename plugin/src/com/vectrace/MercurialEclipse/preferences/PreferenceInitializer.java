@@ -132,7 +132,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			};
 			job.setPriority(Job.INTERACTIVE);
 			job.setSystem(true);
-			job.schedule();
+			job.schedule(200);
 		}
 		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
@@ -141,9 +141,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_CLONE_UNCOMPRESSED, false);
 
 		store.setDefault(PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG, false);
+		store.setDefault(PREF_VERIFY_SERVER_CERTIFICATE, true);
 
 		store.setDefault(PREF_SHOW_PULL_WARNING_DIALOG, MessageDialogWithToggle.PROMPT);
 		store.setDefault(PREF_SHOW_MULTIPLE_PROJECTS_DIALOG, MessageDialogWithToggle.PROMPT);
+		store.setDefault(PREF_SHOW_MERGE_CONFICT_NOTIFICATION_DIALOG, MessageDialogWithToggle.PROMPT);
+		store.setDefault(PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG, MessageDialogWithToggle.PROMPT);
 	}
 
 	private static File checkForPossibleHgExecutables() {

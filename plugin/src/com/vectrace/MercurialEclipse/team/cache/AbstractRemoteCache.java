@@ -29,9 +29,9 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -237,7 +237,19 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot,
 			IHgRepositoryLocation repository, String branch) throws HgException {
-		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
+		return getChangeSets(hgRoot, repository, branch, false);
+	}
+
+	/**
+	 * Gets all (in or out) changesets of the given hg root
+	 *
+	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+	 * @param allowUnrelated True if unrelated repositories are acceptable
+	 * @return never null
+	 */
+	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot, IHgRepositoryLocation repository,
+			String branch, boolean allowUnrelated) throws HgException {
+		RemoteKey key = new RemoteKey(hgRoot, repository, branch, allowUnrelated);
 		synchronized (repoDatas){
 			RemoteData data = fastRepoMap.get(key);
 			if(data == null){

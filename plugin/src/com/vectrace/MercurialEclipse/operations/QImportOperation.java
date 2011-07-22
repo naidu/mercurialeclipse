@@ -7,13 +7,12 @@
  *
  * Contributors:
  * bastian	implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.operations;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -24,7 +23,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 
 /**
@@ -36,24 +35,17 @@ public class QImportOperation extends HgOperation {
 	private final IPath patchFile;
 	private final ChangeSet[] changesets;
 	private final boolean existing;
-	private final boolean git;
 	private final boolean force;
-	private final IResource resource;
+	private final HgRoot root;
 
-	/**
-	 * @param context
-	 */
-	public QImportOperation(IRunnableContext context, IPath patchFile,
-			ChangeSet[] changesets, boolean existing, boolean git,
-			boolean force, IResource resource) {
+	public QImportOperation(IRunnableContext context, IPath patchFile, ChangeSet[] changesets,
+			boolean existing, boolean force, HgRoot root) {
 		super(context);
 		this.patchFile = patchFile;
 		this.changesets = changesets;
 		this.existing = existing;
-		this.git = git;
 		this.force = force;
-		this.resource = resource;
-
+		this.root = root;
 	}
 
 	/**
@@ -65,8 +57,8 @@ public class QImportOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.call")); //$NON-NLS-1$
-			HgQImportClient.qimport(MercurialTeamProvider.getHgRoot(resource), force, git, existing, changesets,
-					patchFile);
+
+			HgQImportClient.qimport(root, force, existing, changesets, patchFile);
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$
 			new SafeUiJob(Messages.getString("QImportOperation.refreshingView")) { //$NON-NLS-1$
@@ -80,8 +72,9 @@ public class QImportOperation extends HgOperation {
 			monitor.worked(1);
 		} catch (HgException e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
+		} finally {
+			monitor.done();
 		}
-		monitor.done();
 	}
 
 	@Override

@@ -18,14 +18,13 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 
-import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
-import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.PathFromChangeSet;
+import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 
 /**
  * An action that can operate on folder nodes in "compressed tree" or "tree" mode in the synchronize
  * view.
  *
- * @see HgChangeSetContentProvider.PathFromChangeSet
+ * @see PathFromChangeSet
  */
 public abstract class PathAwareAction extends SynchronizeModelAction {
 

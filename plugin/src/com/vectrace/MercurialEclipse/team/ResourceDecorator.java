@@ -421,9 +421,15 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		HgRoot root;
 		if(container instanceof IProject){
 			root = MercurialTeamProvider.getHgRoot(container);
+			if(root == null) {
+				return "";
+			}
 			changeSet = LOCAL_CACHE.getChangesetByRootId(container);
 		}else{
 			root = AbstractClient.isHgRoot(container);
+			if(root == null) {
+				return "";
+			}
 			changeSet = LOCAL_CACHE.getChangesetForRoot(root);
 		}
 

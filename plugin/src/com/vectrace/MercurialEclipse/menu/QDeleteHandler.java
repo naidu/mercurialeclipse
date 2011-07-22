@@ -22,23 +22,18 @@ import com.vectrace.MercurialEclipse.wizards.mq.QDeleteWizard;
  */
 public class QDeleteHandler extends SingleResourceHandler {
 
-	/* (non-Javadoc)
+	/**
 	 * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
 	 */
 	@Override
 	protected void run(IResource resource) throws Exception {
-		openWizard(resource, getShell());
+		openWizard(resource, getShell(), true);
 	}
 
-	/**
-	 * @param resource
-	 * @param shell
-	 */
-	public static void openWizard(IResource resource, Shell shell) {
-		QDeleteWizard wizard = new QDeleteWizard(resource);
+	public static void openWizard(IResource resource, Shell shell, boolean bShowRevSelector) {
+		QDeleteWizard wizard = new QDeleteWizard(resource, bShowRevSelector);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}
-
 }

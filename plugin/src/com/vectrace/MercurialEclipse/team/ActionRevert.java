@@ -191,6 +191,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 
 	private static void revertToGivenVersion(IResource resource, ChangeSet cs, IProgressMonitor monitor) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if(hgRoot == null) {
+			throw new HgException("Hg root not found for: " + resource);
+		}
 		List<IResource> list = new ArrayList<IResource>();
 		list.add(resource);
 		Set<String> reverted = HgRevertClient.performRevert(monitor, hgRoot, list, cs);

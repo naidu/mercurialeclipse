@@ -19,6 +19,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
@@ -26,10 +27,10 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQSeriesClient extends AbstractClient {
-	public static List<Patch> getPatchesInSeries(IResource resource)
+	public static List<Patch> getPatchesInSeries(HgRoot root)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
-				"Invoking qseries", resource, true);
+				"Invoking qseries", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -51,7 +52,7 @@ public class HgQSeriesClient extends AbstractClient {
                 String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
 
 				Patch p = new Patch();
-				p.setIndex(patchData[0]);
+				p.setIndex(getInt(patchData[0], -1));
 				p.setApplied("A".equals(patchData[1])); //$NON-NLS-1$
 				p.setName(patchData[2].trim());
 
@@ -64,6 +65,14 @@ public class HgQSeriesClient extends AbstractClient {
 			}
 		}
 		return list;
+	}
+
+	private static int getInt(String s, int def) {
+		try {
+			return Integer.parseInt(s);
+		} catch (NumberFormatException e) {
+			return def;
+		}
 	}
 
 	public static List<Patch> getPatchesNotInSeries(IResource resource)

@@ -10,23 +10,20 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.ExecutionEvent;
-import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.team.CompareAction;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class CompareWithParentHandler extends AbstractHandler {
+public class CompareWithParentHandler extends SingleResourceHandler {
 
-	public Object execute(ExecutionEvent event) throws ExecutionException {
-		IFile file = ResourceUtils.getActiveResourceFromEditor();
-
-		if (file != null) {
-			new CompareAction(file).run(null);
+	/**
+	 * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
+	 */
+	@Override
+	protected void run(IResource resource) throws Exception {
+		if (resource instanceof IFile) {
+			new CompareAction((IFile) resource).run(null);
 		}
-
-		return null;
 	}
 }
