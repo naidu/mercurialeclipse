@@ -48,7 +48,6 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable.PrefetchedStrategy;
@@ -65,8 +64,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	private boolean branch;
 	private boolean all;
 	private String branchName;
-	private final SortedSet<ChangeSet> changesets;
-
 	private ChangesetTable changesetTable;
 	private Button branchCheckBox;
 	private Combo branchNameCombo;
@@ -77,7 +74,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		super(pageName, title, titleImage);
 		setHgRoot(hgRoot);
 		selectedChangesets = new TreeSet<ChangeSet>();
-		changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
 	}
 
 	@Override
@@ -313,7 +309,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		};
 
 		changesetTable.addSelectionListener(changeSetTableListener);
-		populateChangesetTable();
 	}
 
 	private void populateBranchNameCombo() {
@@ -326,10 +321,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 			MercurialEclipsePlugin.showError(e);
 			MercurialEclipsePlugin.logError(e);
 		}
-	}
-
-	private void populateChangesetTable() {
-		changesetTable.setStrategy(new PrefetchedStrategy(changesets.toArray(new ChangeSet[changesets.size()])));
 	}
 
 	public boolean isBranch() {
@@ -348,11 +339,19 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		return all;
 	}
 
-	public SortedSet<ChangeSet> getChangesets() {
-		return changesets;
+	public ChangeSet[] getChangesets() {
+		ChangesetTable.Strategy strategy = changesetTable.getStrategy();
+
+		if (strategy == null) {
+			return new ChangeSet[0];
+		}
+
+		return strategy.getFetched();
 	}
 
 	private void getIncoming(final IHgRepositoryLocation repoLocation) {
+		clearChangesets();
+
 		FetchChangesetsOperation op = new FetchChangesetsOperation() {
 			@Override
 			protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
@@ -360,26 +359,12 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 						getHgRoot(), repoLocation, null);
 			}
 		};
-		run(op);
-	}
-
-	private void getLocalFromBranch(final String branchName1) {
-		FetchChangesetsOperation op = new FetchChangesetsOperation() {
-			@Override
-			protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
-				return LocalChangesetCache.getInstance().getOrFetchChangeSetsByBranch(getHgRoot(),
-						branchName1);
-			}
-		};
-		run(op);
-	}
-
-	private void run(FetchChangesetsOperation runnable) {
-		clearChangesets();
 		try {
-			getContainer().run(true, true, runnable);
-			changesets.addAll(runnable.getChanges());
-			populateChangesetTable();
+			getContainer().run(true, true, op);
+
+			SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
+			changesets.addAll(op.getChanges());
+			changesetTable.setStrategy(new PrefetchedStrategy(changesets.toArray(new ChangeSet[changesets.size()])));
 			validatePage();
 		} catch (InvocationTargetException e) {
 			setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets")
@@ -392,13 +377,17 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		}
 	}
 
+	private void getLocalFromBranch(final String branchName1) {
+		clearChangesets();
+		changesetTable.setStrategy(new ChangesetTable.BranchStrategy(getHgRoot(), branchName1));
+	}
+
 	private void clearChangesets() {
-		changesets.clear();
 		changesetTable.setStrategy(null);
 		selectedChangesets.clear();
 	}
 
-	abstract static class FetchChangesetsOperation implements IRunnableWithProgress {
+	private abstract static class FetchChangesetsOperation implements IRunnableWithProgress {
 		Set<ChangeSet> changes = new HashSet<ChangeSet>();
 		Set<ChangeSet> getChanges(){
 			return changes;

@@ -605,11 +605,11 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 	}
 
-	public Set<ChangeSet> getOrFetchChangeSetsByBranch(HgRoot hgRoot, String branchName)
+	public SortedSet<ChangeSet> getOrFetchChangeSetsByBranch(HgRoot hgRoot, String branchName)
 			throws HgException {
 
 		SortedSet<ChangeSet> changes = getOrFetchChangeSets(hgRoot);
-		Set<ChangeSet> branchChangeSets = new HashSet<ChangeSet>();
+		SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
 		for (ChangeSet changeSet : changes) {
 			String changesetBranch = changeSet.getBranch();
 			if (Branch.same(branchName, changesetBranch)) {
@@ -617,6 +617,5 @@ public final class LocalChangesetCache extends AbstractCache {
 			}
 		}
 		return branchChangeSets;
-
 	}
 }

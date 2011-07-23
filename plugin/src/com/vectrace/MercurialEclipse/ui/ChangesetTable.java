@@ -179,6 +179,10 @@ public class ChangesetTable extends Composite {
 		loadMore();
 	}
 
+	public Strategy getStrategy() {
+		return strategy;
+	}
+
 	protected void loadMore() {
 		try {
 			if (ChangesetTable.this.strategy != null) {
@@ -293,6 +297,10 @@ public class ChangesetTable extends Composite {
 
 			return -1;
 		}
+
+		public ChangeSet[] getFetched() {
+			return fetched;
+		}
 	}
 
 	public static class PrefetchedStrategy extends Strategy {
@@ -374,12 +382,12 @@ public class ChangesetTable extends Composite {
 		@Override
 		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
 			cache.fetchRevisions(resource, true, batchSize, startRev, false);
-			return cache.getOrFetchChangeSets(resource);
+			return get(cache);
 		}
 	}
 
 	public static class RootStrategy extends AutofetchStrategy {
-		private final HgRoot root;
+		protected final HgRoot root;
 
 		public RootStrategy(HgRoot root) {
 			this.root = root;
@@ -393,7 +401,24 @@ public class ChangesetTable extends Composite {
 		@Override
 		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
 			cache.fetchRevisions(root, true, batchSize, startRev, false);
-			return cache.getOrFetchChangeSets(root);
+			return get(cache);
+		}
+	}
+
+	public static class BranchStrategy extends RootStrategy {
+		private final String branch;
+
+		public BranchStrategy(HgRoot root, String branch) {
+			super(root);
+
+			this.branch = branch;
+			// TODO: If there are no changesets for a given branch within a batch size then it will
+			// incorrectly detect it as being fully loaded
+		}
+
+		@Override
+		protected SortedSet<ChangeSet> get(LocalChangesetCache cache) throws HgException {
+			return cache.getOrFetchChangeSetsByBranch(root, branch);
 		}
 	}
 }

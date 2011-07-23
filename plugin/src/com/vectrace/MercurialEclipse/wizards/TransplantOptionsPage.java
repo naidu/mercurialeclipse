@@ -11,10 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -53,13 +49,11 @@ public class TransplantOptionsPage extends HgWizardPage {
 	private Button mergeCheckBox;
 	private Button pruneCheckBox;
 	private ChangesetTable pruneNodeIdTable;
-	private final SortedSet<ChangeSet> changesets;
 
 	public TransplantOptionsPage(String pageName, String title, ImageDescriptor titleImage,
 			HgRoot hgRoot) {
 		super(pageName, title, titleImage);
 		this.hgRoot = hgRoot;
-		changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
 	}
 
 	public void createControl(Composite parent) {
@@ -209,13 +203,6 @@ public class TransplantOptionsPage extends HgWizardPage {
 		populateMergeNodeIdTable();
 	}
 
-	private void loadChangesets() {
-		if (changesets.isEmpty()) {
-			TransplantPage page = (TransplantPage) getPreviousPage();
-			changesets.addAll(page.getChangesets());
-		}
-	}
-
 	private void validatePage() {
 		boolean valid = true;
 		try {
@@ -252,15 +239,13 @@ public class TransplantOptionsPage extends HgWizardPage {
 	}
 
 	private void populatePruneNodeIdTable() {
-		loadChangesets();
-		pruneNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(changesets
-				.toArray(new ChangeSet[changesets.size()])));
+		pruneNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(
+				((TransplantPage) getPreviousPage()).getChangesets()));
 	}
 
 	private void populateMergeNodeIdTable() {
-		loadChangesets();
-		mergeNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(changesets
-				.toArray(new ChangeSet[changesets.size()])));
+		mergeNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(
+				((TransplantPage) getPreviousPage()).getChangesets()));
 	}
 
 	public boolean isMerge() {
