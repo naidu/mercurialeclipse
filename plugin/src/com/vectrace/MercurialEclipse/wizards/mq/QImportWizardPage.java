@@ -169,9 +169,7 @@ public class QImportWizardPage extends HgWizardPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
-		this.changesetTable = new ChangesetTable(revGroup,
-				SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-						| SWT.H_SCROLL, root, true);
+		this.changesetTable = new ChangesetTable(revGroup, root, true);
 		this.changesetTable.setLayoutData(gridData);
 		this.changesetTable.setEnabled(false);
 
@@ -191,12 +189,7 @@ public class QImportWizardPage extends HgWizardPage {
 	}
 
 	protected void updateRevSelection() {
-		if (revCheckBox.getSelection()) {
-			if (changesetTable.getChangesets() == null
-					|| changesetTable.getChangesets().length == 0) {
-				setErrorMessage(null);
-			}
-		}
+
 		// en-/disable patch file text field
 		changesetTable.setEnabled(revCheckBox.getSelection());
 		patchFile.setEnabled(!revCheckBox.getSelection());

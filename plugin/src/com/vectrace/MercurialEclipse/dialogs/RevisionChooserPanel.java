@@ -296,14 +296,8 @@ public class RevisionChooserPanel extends Composite {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
 
+		final ChangesetTable table = new ChangesetTable(folder, false);
 
-		final ChangesetTable table;
-		if(dataLoader.getResource() != null) {
-			table = new ChangesetTable(folder, dataLoader.getResource());
-		} else {
-			table = new ChangesetTable(folder, dataLoader.getHgRoot());
-		}
-		table.setAutoFetch(false);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.highlightParents(parents);
 
@@ -329,8 +323,11 @@ public class RevisionChooserPanel extends Composite {
 				new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
-						table.setHgRoot(dataLoader.getHgRoot());
-						table.setAutoFetch(true);
+						if(dataLoader.getResource() != null) {
+							table.setStrategy(new ChangesetTable.ResourceStrategy(dataLoader.getResource()));
+						} else {
+							table.setStrategy(new ChangesetTable.RootStrategy(dataLoader.getHgRoot()));
+						}
 						table.setEnabled(true);
 						return Status.OK_STATUS;
 					}
@@ -494,8 +491,7 @@ public class RevisionChooserPanel extends Composite {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
-		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getHgRoot());
-		table.setAutoFetch(false);
+		final ChangesetTable table = new ChangesetTable(folder, false);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.addListener(SWT.Show, new Listener() {
 			public void handleEvent(Event event) {
@@ -504,10 +500,8 @@ public class RevisionChooserPanel extends Composite {
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						try {
-							table.setHgRoot(dataLoader.getHgRoot());
 							table.highlightParents(parents);
-							ChangeSet[] revisions = dataLoader.getHeads();
-							table.setChangesets(revisions);
+							table.setStrategy(new ChangesetTable.PrefetchedStrategy(dataLoader.getHeads()));
 							table.setEnabled(true);
 							return Status.OK_STATUS;
 						} catch (HgException e) {

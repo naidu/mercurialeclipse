@@ -253,12 +253,14 @@ public class TransplantOptionsPage extends HgWizardPage {
 
 	private void populatePruneNodeIdTable() {
 		loadChangesets();
-		pruneNodeIdTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
+		pruneNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(changesets
+				.toArray(new ChangeSet[changesets.size()])));
 	}
 
 	private void populateMergeNodeIdTable() {
 		loadChangesets();
-		mergeNodeIdTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
+		mergeNodeIdTable.setStrategy(new ChangesetTable.PrefetchedStrategy(changesets
+				.toArray(new ChangeSet[changesets.size()])));
 	}
 
 	public boolean isMerge() {

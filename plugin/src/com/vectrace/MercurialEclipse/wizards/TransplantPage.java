@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
@@ -52,6 +51,7 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable.PrefetchedStrategy;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -291,9 +291,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
-		changesetTable = new ChangesetTable(changeSetGroup, SWT.MULTI
-				| SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-						| SWT.H_SCROLL, getHgRoot(), false);
+		changesetTable = new ChangesetTable(changeSetGroup, true);
 		changesetTable.setLayoutData(gridData);
 		changesetTable.setEnabled(true);
 
@@ -331,8 +329,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	}
 
 	private void populateChangesetTable() {
-		changesetTable.clearTable();
-		changesetTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
+		changesetTable.setStrategy(new PrefetchedStrategy(changesets.toArray(new ChangeSet[changesets.size()])));
 	}
 
 	public boolean isBranch() {
@@ -397,7 +394,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 	private void clearChangesets() {
 		changesets.clear();
-		changesetTable.clearTable();
+		changesetTable.setStrategy(null);
 		selectedChangesets.clear();
 	}
 
