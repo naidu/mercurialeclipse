@@ -38,14 +38,11 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 public class StripWizardPage extends HgWizardPage {
 
 	private ChangesetTable changesetTable;
-	private Button unrelatedCheckBox;
+	private Button keepCheckBox;
 	private ChangeSet stripRevision;
 	private final HgRoot hgRoot;
 	private Button backupCheckBox;
-	private Button stripHeadsCheckBox;
-	private boolean unrelated;
-	private boolean stripHeads;
-	private boolean backup;
+	private Button forceCheckBox;
 	private final ChangeSet changeSet;
 
 	public StripWizardPage(String pageName, String title, ImageDescriptor image,
@@ -89,14 +86,15 @@ public class StripWizardPage extends HgWizardPage {
 		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
 
 		// backup
-		unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
-				optionGroup,
-				Messages.getString("StripWizardPage.unrelatedCheckBox.title")); //$NON-NLS-1$
-		unrelatedCheckBox.setSelection(true);
 		backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
 		backupCheckBox.setSelection(true);
-		stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-				Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
+
+		keepCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
+				.getString("StripWizardPage.keep.title")); //$NON-NLS-1$
+		keepCheckBox.setSelection(false);
+		forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+				Messages.getString("StripWizardPage.force.title")); //$NON-NLS-1$
+		forceCheckBox.addSelectionListener(listener);
 
 		setControl(composite);
 		setPageComplete(true);
@@ -106,7 +104,8 @@ public class StripWizardPage extends HgWizardPage {
 	public void setPageComplete(boolean complete) {
 		if(complete){
 			try {
-				if(HgStatusClient.isDirty(hgRoot)){
+				setErrorMessage(null);
+				if(HgStatusClient.isDirty(hgRoot) && !forceCheckBox.getSelection()){
 					setErrorMessage("Outstanding uncommitted changes! Strip is not possible.");
 					super.setPageComplete(false);
 					return;
@@ -122,11 +121,9 @@ public class StripWizardPage extends HgWizardPage {
 	public boolean finish(IProgressMonitor monitor) {
 		super.finish(monitor);
 		stripRevision = changesetTable.getSelection();
-		unrelated = unrelatedCheckBox.getSelection();
-		stripHeads = stripHeadsCheckBox.getSelection();
-		backup = backupCheckBox.getSelection();
 		try {
-			String result = HgStripClient.strip(hgRoot, unrelated, backup, stripHeads, stripRevision);
+			String result = HgStripClient.strip(hgRoot, keepCheckBox.getSelection(), backupCheckBox
+					.getSelection(), forceCheckBox.getSelection(), stripRevision);
 			HgClients.getConsole().printMessage(result, null);
 		} catch (HgException e) {
 			MessageDialog.openError(getShell(), Messages.getString("StripWizardPage.errorCallingStrip"), e //$NON-NLS-1$
