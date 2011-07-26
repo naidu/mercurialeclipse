@@ -33,8 +33,7 @@ public final class HgStripClient {
 	/**
 	 * strip a revision and all later revs on the same branch
 	 */
-	public static String strip(final HgRoot hgRoot, boolean saveUnrelated,
-			boolean backup, boolean stripHeads, ChangeSet changeset)
+	public static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, ChangeSet changeset)
 			throws HgException {
 		HgCommand command = new HgCommand("strip", "Stripping revision " + changeset.getChangeset(), hgRoot, true); //$NON-NLS-1$
 
@@ -42,13 +41,13 @@ public final class HgStripClient {
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
-		if (saveUnrelated) {
-			command.addOptions("--backup"); //$NON-NLS-1$
+		if (keep) {
+			command.addOptions("--keep"); //$NON-NLS-1$
 		}
 		if (!backup) {
 			command.addOptions("--nobackup"); //$NON-NLS-1$
 		}
-		if (stripHeads) {
+		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
 		}
 		command.addOptions(changeset.getChangeset());
