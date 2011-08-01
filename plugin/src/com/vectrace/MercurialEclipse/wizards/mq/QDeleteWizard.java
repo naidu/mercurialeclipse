@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -22,6 +21,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQDeleteClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
@@ -36,20 +36,20 @@ public class QDeleteWizard extends HgOperationWizard {
 
 		private final boolean isKeep;
 
-		private final IResource resource;
+		private final HgRoot root;
 
 		private final List<Patch> patches;
 
 		private final ChangeSet changeset;
 
 		@SuppressWarnings("unchecked")
-		public DeleteOperation(IRunnableContext context, IResource resource, QDeletePage page) {
+		public DeleteOperation(IRunnableContext context, HgRoot root, QDeletePage page) {
 			super(context);
 
 			IStructuredSelection selection = (IStructuredSelection) page.getPatchViewer().getSelection();
 
 			this.patches = selection.toList();
-			this.resource = resource;
+			this.root = root;
 			this.isKeep = page.getKeepCheckBox().getSelection();
 			this.changeset = page.getSelectedChangeset();
 		}
@@ -72,7 +72,7 @@ public class QDeleteWizard extends HgOperationWizard {
 			monitor.subTask(Messages.getString("QDeleteWizard.subTask.callMercurial")); //$NON-NLS-1$
 
 			try {
-				HgQDeleteClient.delete(resource, isKeep, changeset, patches);
+				HgQDeleteClient.delete(root, isKeep, changeset, patches);
 				monitor.worked(1);
 				monitor.done();
 			} catch (HgException e) {
@@ -81,14 +81,14 @@ public class QDeleteWizard extends HgOperationWizard {
 		}
 	}
 
-	private final IResource resource;
+	private final HgRoot root;
 
-	public QDeleteWizard(IResource resource, boolean showRevSelector) {
+	public QDeleteWizard(HgRoot root, boolean showRevSelector) {
 		super(Messages.getString("QDeleteWizard.title")); //$NON-NLS-1$
-		this.resource = resource;
+		this.root = root;
 		setNeedsProgressMonitor(true);
 		page = new QDeletePage(Messages.getString("QDeleteWizard.pageName"), Messages.getString("QDeleteWizard.pageTitle"), null, //$NON-NLS-1$ //$NON-NLS-2$
-				Messages.getString("QDeleteWizard.pageDescription"), resource, showRevSelector); //$NON-NLS-1$
+				Messages.getString("QDeleteWizard.pageDescription"), root, showRevSelector); //$NON-NLS-1$
 		initPage(Messages.getString("QDeleteWizard.pageDescription"), page); //$NON-NLS-1$
 		addPage(page);
 	}
@@ -98,7 +98,7 @@ public class QDeleteWizard extends HgOperationWizard {
 	 */
 	@Override
 	protected HgOperation initOperation() {
-		return new DeleteOperation(getContainer(), resource, (QDeletePage) page);
+		return new DeleteOperation(getContainer(), root, (QDeletePage) page);
 	}
 
 	/**

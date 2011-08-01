@@ -12,13 +12,13 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
@@ -26,18 +26,18 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQAppliedClient extends AbstractClient {
-	public static List<Patch> getAppliedPatches(IResource resource) throws HgException {
-		Assert.isNotNull(resource);
-		AbstractShellCommand command = new HgCommand("qapplied", "Invoking qapplied", resource, true); //$NON-NLS-1$
+	public static List<Patch> getAppliedPatches(HgRoot root) throws HgException {
+		Assert.isNotNull(root);
+		AbstractShellCommand command = new HgCommand("qapplied", "Invoking qapplied", root, true); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$
 		return HgQSeriesClient.parse(command.executeToString());
 	}
 
-	public static List<Patch> getUnappliedPatches(IResource resource) throws HgException{
-		Assert.isNotNull(resource);
-		AbstractShellCommand command = new HgCommand("qunapplied", "Invoking qunapplied", resource, true); //$NON-NLS-1$
+	public static List<Patch> getUnappliedPatches(HgRoot root) throws HgException{
+		Assert.isNotNull(root);
+		AbstractShellCommand command = new HgCommand("qunapplied", "Invoking qunapplied", root, true); //$NON-NLS-1$
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$

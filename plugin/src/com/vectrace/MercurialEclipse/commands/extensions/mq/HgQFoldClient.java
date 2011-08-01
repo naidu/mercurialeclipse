@@ -13,13 +13,13 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 import java.io.File;
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
@@ -27,12 +27,12 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQFoldClient extends AbstractClient {
-	public static String fold(IResource resource, boolean keep, String message,
+	public static String fold(HgRoot root, boolean keep, String message,
 			List<Patch> patches) throws HgException {
 		Assert.isNotNull(patches);
-		Assert.isNotNull(resource);
+		Assert.isNotNull(root);
 		HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
-				"Invoking qfold", resource, true);
+				"Invoking qfold", root, true);
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

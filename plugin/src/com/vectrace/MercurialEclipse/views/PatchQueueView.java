@@ -158,9 +158,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				Patch patch = table.getSelection();
 				if (patch != null) {
 					if (patch.isApplied()) {
-						HgQPopClient.pop(resource, false, patch.getName());
+						HgQPopClient.pop(currentHgRoot, false, patch.getName());
 					} else {
-						HgQPushClient.push(resource, false, patch.getName());
+						HgQPushClient.push(currentHgRoot, false, patch.getName());
 					}
 					return true;
 				}
@@ -173,7 +173,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qPushAllAction = new MQAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
-				HgQPushClient.pushAll(resource, false);
+				HgQPushClient.pushAll(currentHgRoot, false);
 				return true;
 			}
 		};
@@ -182,7 +182,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qPopAllAction = new MQAction(Messages.getString("PatchQueueView.unapplyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
-				HgQPopClient.popAll(resource, false);
+				HgQPopClient.popAll(currentHgRoot, false);
 				return true;
 			}
 		};
@@ -193,7 +193,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			public boolean invoke() throws HgException {
 				List<Patch> patches = table.getSelections();
 				if (patches.size() > 0) {
-					HgQFoldClient.fold(resource, true, null, patches);
+					HgQFoldClient.fold(currentHgRoot, true, null, patches);
 					return true;
 				}
 				return false;
@@ -205,7 +205,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				clearStatusLabel();
-				QDeleteHandler.openWizard(resource, getSite().getShell(), false);
+				QDeleteHandler.openWizard(currentHgRoot, getSite().getShell(), false);
 			}
 		};
 		qDeleteAction.setEnabled(false);

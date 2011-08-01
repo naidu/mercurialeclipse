@@ -12,7 +12,6 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -28,6 +27,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQAppliedClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -40,16 +40,16 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 public class QDeletePage extends HgWizardPage {
 
 	private final boolean showRevSelector;
-	private IResource resource;
+	private final HgRoot root;
 	private ListViewer patchViewer;
 	private ChangesetTable changesetTable;
 	private Button revCheckBox;
 	private Button keepCheckBox;
 
 	public QDeletePage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IResource resource, boolean showRevSelector) {
+			ImageDescriptor titleImage, String description, HgRoot root, boolean showRevSelector) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
+		this.root = root;
 		this.showRevSelector = showRevSelector;
 	}
 
@@ -97,7 +97,7 @@ public class QDeletePage extends HgWizardPage {
 			GridData gridData = new GridData(GridData.FILL_BOTH);
 			gridData.heightHint = 150;
 			gridData.minimumHeight = 50;
-			this.changesetTable = new ChangesetTable(g, resource.getProject());
+			this.changesetTable = new ChangesetTable(g, root);
 			this.changesetTable.setLayoutData(gridData);
 			this.changesetTable.setEnabled(false);
 		}
@@ -110,7 +110,7 @@ public class QDeletePage extends HgWizardPage {
 	 */
 	private void populatePatchViewer() {
 		try {
-			List<Patch> patches = HgQAppliedClient.getUnappliedPatches(resource);
+			List<Patch> patches = HgQAppliedClient.getUnappliedPatches(root);
 			for (Patch patch : patches) {
 				patchViewer.add(patch);
 			}
@@ -125,20 +125,6 @@ public class QDeletePage extends HgWizardPage {
 	 */
 	public ListViewer getPatchViewer() {
 		return patchViewer;
-	}
-
-	/**
-	 * @return the resource
-	 */
-	public IResource getResource() {
-		return resource;
-	}
-
-	/**
-	 * @param resource the resource to set
-	 */
-	public void setResource(IResource resource) {
-		this.resource = resource;
 	}
 
 	/**
