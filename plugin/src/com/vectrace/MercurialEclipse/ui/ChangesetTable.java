@@ -16,6 +16,7 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -118,20 +119,61 @@ public class ChangesetTable extends Composite {
 				"Tags",
 				Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
 		int[] widths = { 60, 80, 100, 80, 70, 70, 300 };
+		@SuppressWarnings("unchecked") Comparator[] comparators = { new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return TableSortListener.sort(a.getChangesetIndex(), b.getChangesetIndex());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getChangeset().compareTo(b.getChangeset());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getRealDate().compareTo(b.getRealDate());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getUser().compareTo(b.getUser());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getBranch().compareTo(b.getBranch());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getTagsStr().compareTo(b.getTagsStr());
+			}
+		}, new Comparator<ChangeSet>() {
+			public int compare(ChangeSet a, ChangeSet b) {
+				return a.getSummary().compareTo(b.getSummary());
+			}
+		} };
+
+		Listener sortListener = new TableSortListener(table, comparators) {
+			@Override
+			protected Object[] getData() {
+				return ChangesetTable.this.strategy.getFetched();
+			}
+
+			@Override
+			protected boolean canSort() {
+				return ChangesetTable.this.strategy != null && ChangesetTable.this.strategy.isFullyLoaded();
+			}
+		};
+
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
+			column.addListener(SWT.Selection, sortListener);
 		}
 
 		table.addListener(SWT.PaintItem, new Listener() {
 			public void paintControl(Event e) {
 				// When painting the last item, attempt to load more data
 				TableItem tableItem = (TableItem) e.item;
-				ChangeSet cs = (ChangeSet) tableItem.getData();
 				if (table.isEnabled()
-						&& tableItem.equals(table.getItems()[table.getItemCount() - 1])
-						&& cs.getChangesetIndex() > 0) {
+						&& tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
 					loadMore();
 				}
 			}
@@ -301,6 +343,10 @@ public class ChangesetTable extends Composite {
 		public ChangeSet[] getFetched() {
 			return fetched;
 		}
+
+		public boolean isFullyLoaded() {
+			return true;
+		}
 	}
 
 	public static class PrefetchedStrategy extends Strategy {
@@ -317,6 +363,11 @@ public class ChangesetTable extends Composite {
 
 	private abstract static class AutofetchStrategy extends Strategy {
 		private boolean canLoad = true;
+
+		@Override
+		public boolean isFullyLoaded() {
+			return !canLoad;
+		}
 
 		@Override
 		public int load(ChangeSet cs, int batchSize) throws HgException {

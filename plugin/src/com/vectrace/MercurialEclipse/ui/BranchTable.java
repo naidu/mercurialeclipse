@@ -29,7 +29,6 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.ui.TagTable.SortListener;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -65,7 +64,7 @@ public class BranchTable extends Composite {
 				Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 		Comparator[] comparators = { new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
-				return SortListener.sort(o1.getRevision(), o2.getRevision());
+				return TableSortListener.sort(o1.getRevision(), o2.getRevision());
 			}
 		}, new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
@@ -77,12 +76,12 @@ public class BranchTable extends Composite {
 			}
 		}, new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
-				return SortListener.sort(o1.isActive() ? 1 : 0, o2.isActive() ? 1 : 0);
+				return TableSortListener.sort(o1.isActive() ? 1 : 0, o2.isActive() ? 1 : 0);
 			}
 		} };
 		int[] widths = { 60, 150, 300, 70 };
 
-		Listener sortListener = new SortListener(table, comparators) {
+		Listener sortListener = new TableSortListener(table, comparators) {
 			@Override
 			protected Object[] getData() {
 				return branches;
