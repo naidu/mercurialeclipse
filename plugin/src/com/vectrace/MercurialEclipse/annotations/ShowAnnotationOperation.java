@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
@@ -64,7 +65,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		private final ChangeSet entry;
 
-		private final String string;
+		private final String id;
 
 		private final AnnotateBlock block;
 
@@ -72,14 +73,19 @@ public class ShowAnnotationOperation extends TeamOperation {
 				String string, AnnotateBlock block) {
 			this.colors = colors;
 			this.entry = entry;
-			this.string = string;
+			this.id = string;
 			this.block = block;
+
+			Assert.isNotNull(colors);
+			Assert.isNotNull(entry);
+			Assert.isNotNull(string);
+			Assert.isNotNull(block);
 		}
 
 		@Override
 		public Object getHoverInfo() {
 			return entry.getUser()
-					+ " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					+ " " + id + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					(entry.getComment() != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}
 
@@ -97,7 +103,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		@Override
 		public String getId() {
-			return string;
+			return id;
 		}
 
 		@Override
