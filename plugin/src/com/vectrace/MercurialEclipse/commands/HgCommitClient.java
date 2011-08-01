@@ -67,9 +67,11 @@ public class HgCommitClient extends AbstractClient {
 	public static String commitResources(HgRoot root, boolean closeBranch, String user, String message, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
-		String commit = commit(root, emptyList, user, message, closeBranch);
-		new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
-		return commit;
+		try {
+			return commit(root, emptyList, user, message, closeBranch);
+		} finally {
+			new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+		}
 	}
 
 	/**

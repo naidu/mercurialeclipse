@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -27,8 +28,31 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQFoldClient extends AbstractClient {
+
+	public static String fold(HgRoot root, boolean keep, String message,
+			String patchName) throws HgException {
+		List<String> patchNames = new ArrayList<String>(1);
+
+		patchNames.add(patchName);
+
+		return doFold(root, keep, message, patchNames);
+	}
+
 	public static String fold(HgRoot root, boolean keep, String message,
 			List<Patch> patches) throws HgException {
+		Assert.isNotNull(patches);
+
+		List<String> patchNames = new ArrayList<String>(patches.size());
+
+		for (Patch patch : patches) {
+			patchNames.add(patch.getName());
+		}
+
+		return doFold(root, keep, message, patchNames);
+	}
+
+	private static String doFold(HgRoot root, boolean keep, String message,
+			List<String> patches) throws HgException {
 		Assert.isNotNull(patches);
 		Assert.isNotNull(root);
 		HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
@@ -44,8 +68,8 @@ public class HgQFoldClient extends AbstractClient {
 			messageFile = HgCommitClient.addMessage(command, message);
 		}
 
-		for (Patch patch : patches) {
-			command.addOptions(patch.getName());
+		for (String patch : patches) {
+			command.addOptions(patch);
 		}
 
 		try {

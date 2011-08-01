@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -27,8 +28,25 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQDeleteClient extends AbstractClient {
+	public static String delete(HgRoot root, boolean keep, String patch) throws HgException {
+		List<String> patches = new ArrayList<String>(1);
+		patches.add(patch);
+		return doDelete(root, keep, null, patches);
+	}
+
 	public static String delete(HgRoot root, boolean keep,
 			ChangeSet changeset, List<Patch> patches) throws HgException {
+		Assert.isNotNull(patches);
+
+		List<String> patcheNames = new ArrayList<String>(patches.size());
+		for (Patch patch : patches) {
+			patcheNames.add(patch.getName());
+		}
+		return doDelete(root, keep, changeset, patcheNames);
+	}
+
+	private static String doDelete(HgRoot root, boolean keep,
+			ChangeSet changeset, List<String> patches) throws HgException {
 		Assert.isNotNull(patches);
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
@@ -41,8 +59,8 @@ public class HgQDeleteClient extends AbstractClient {
 		if (changeset != null) {
 			command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
 		} else {
-			for (Patch patch : patches) {
-				command.addOptions(patch.getName());
+			for (String patch : patches) {
+				command.addOptions(patch);
 			}
 		}
 		return command.executeToString();

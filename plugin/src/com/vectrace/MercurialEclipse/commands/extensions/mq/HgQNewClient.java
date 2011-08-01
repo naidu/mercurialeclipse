@@ -26,8 +26,18 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  *
  */
 public class HgQNewClient extends AbstractClient {
+	public static String createNewPatch(HgRoot root, String commitMessage, String user, String date, String patchName) throws HgException {
+		return createNewPatch(root, commitMessage, null, user, date, patchName, true);
+	}
+
 	public static String createNewPatch(HgRoot root, String commitMessage,
 			List<IResource> resources, String user, String date, String patchName)
+			throws HgException {
+		return createNewPatch(root, commitMessage, resources, user, date, patchName, false);
+	}
+
+	private static String createNewPatch(HgRoot root, String commitMessage,
+			List<IResource> resources, String user, String date, String patchName, boolean all)
 			throws HgException {
 		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
 				"Invoking qnew", root, true);
@@ -53,10 +63,12 @@ public class HgQNewClient extends AbstractClient {
 			command.addOptions("--currentdate"); //$NON-NLS-1$
 		}
 
-		if (resources.isEmpty()) {
-			command.addOptions("--exclude", "*");
-		} else {
-			command.addFiles(resources);
+		if (!all) {
+			if (resources.isEmpty()) {
+				command.addOptions("--exclude", "*");
+			} else {
+				command.addFiles(resources);
+			}
 		}
 
 		command.addOptions(patchName);

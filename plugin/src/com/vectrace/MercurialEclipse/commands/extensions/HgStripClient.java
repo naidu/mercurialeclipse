@@ -30,12 +30,22 @@ public final class HgStripClient {
 		// hide constructor of utility class.
 	}
 
+	public static String stripCurrent(final HgRoot hgRoot, boolean keep, boolean backup, boolean force)
+		throws HgException {
+		return strip(hgRoot, keep, backup, force, ".");
+	}
+
 	/**
 	 * strip a revision and all later revs on the same branch
 	 */
 	public static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, ChangeSet changeset)
 			throws HgException {
-		HgCommand command = new HgCommand("strip", "Stripping revision " + changeset.getChangeset(), hgRoot, true); //$NON-NLS-1$
+		return strip(hgRoot, keep, backup, force, changeset.getChangeset());
+	}
+
+	private static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, String changeset)
+	throws HgException {
+		HgCommand command = new HgCommand("strip", "Stripping revision " + changeset, hgRoot, true); //$NON-NLS-1$
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 
@@ -50,7 +60,7 @@ public final class HgStripClient {
 		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
 		}
-		command.addOptions(changeset.getChangeset());
+		command.addOptions(changeset);
 		String result = command.executeToString();
 		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		return result;

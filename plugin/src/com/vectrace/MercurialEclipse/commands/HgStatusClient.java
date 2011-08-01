@@ -92,6 +92,12 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString().split("\n"); //$NON-NLS-1$
 	}
 
+	public static void assertClean(HgRoot root) throws HgException {
+		if (isDirty(root)) {
+			throw new HgException("Unexpected condition: " + root.getName() + " is dirty");
+		}
+	}
+
 	public static boolean isDirty(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", "Calculating dirty state", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
