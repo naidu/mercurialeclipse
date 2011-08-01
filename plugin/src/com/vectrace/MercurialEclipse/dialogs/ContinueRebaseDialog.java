@@ -59,12 +59,6 @@ public class ContinueRebaseDialog extends CommitDialog {
 	}
 
 	@Override
-	protected String performCommit(String messageToCommit, boolean closeBranch)
-			throws CoreException {
-		return continueRebase(messageToCommit);
-	}
-
-	@Override
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
 		return continueRebase(messageToCommit);

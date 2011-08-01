@@ -592,11 +592,6 @@ public class CommitDialog extends TitleAreaDialog {
 		return commitResult != null ? commitResult : "";
 	}
 
-	protected String performCommit(String messageToCommit, boolean closeBranch)
-			throws CoreException {
-		return performCommit(messageToCommit, closeBranch, null);
-	}
-
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
 		IProgressMonitor pm = monitor;
