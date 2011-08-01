@@ -55,7 +55,7 @@ public final class HgStripClient {
 			command.addOptions("--keep"); //$NON-NLS-1$
 		}
 		if (!backup) {
-			command.addOptions("--nobackup"); //$NON-NLS-1$
+			command.addOptions("--no-backup"); //$NON-NLS-1$
 		}
 		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
