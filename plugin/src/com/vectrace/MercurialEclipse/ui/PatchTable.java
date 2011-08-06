@@ -114,6 +114,17 @@ public class PatchTable extends Composite {
 		viewer.setInput(patches);
 	}
 
+	@SuppressWarnings("unchecked")
+	public List<Patch> getPatches() {
+		Object inp = viewer.getInput();
+
+		if (inp instanceof List) {
+			return (List<Patch>) inp;
+		}
+
+		return Collections.emptyList();
+	}
+
 	/**
 	 * @return The first selected patch, or {@code null} if the selection is empty.
 	 */

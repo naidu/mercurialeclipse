@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -66,6 +67,7 @@ import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
@@ -225,33 +227,57 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public boolean invoke() throws HgException {
 				List<Patch> patches = table.getSelections();
-				Patch min = null;
-				boolean appliedSelected = false;
+				Patch max = null;
+				boolean unappliedSelected = false;
 
 				for (Patch p : patches) {
 					if (p.isApplied()) {
-						if (min == null || p.getIndex() < min.getIndex()) {
-							min = p;
+						if (max == null || p.getIndex() > max.getIndex()) {
+							max = p;
 						}
 					} else {
-						appliedSelected = true;
+						unappliedSelected = true;
 					}
 				}
 
-				if (min == null) {
-					if (appliedSelected) {
+				List<Patch> toApply = new ArrayList<Patch>(table.getPatches());
+
+				for (Iterator<Patch> it = toApply.iterator(); it.hasNext();) {
+					Patch cur = it.next();
+
+					if (!cur.isApplied()) {
+						it.remove();
+					} else if (max != null && cur.getIndex() > max.getIndex()) {
+						it.remove();
+					}
+				}
+
+				if (toApply.size() == 0) {
+					MessageDialog.openInformation(getSite().getShell(), "No applied patches",
+							"Only applied patches can be promoted.");
+				} else if (max == null) {
+					if (unappliedSelected) {
 						MessageDialog
 								.openInformation(getSite().getShell(),
 										"Only applied patches can be promoted",
 										"Only applied patches can be promoted. Select an applied patch to promote.");
-					} else if (MessageDialog.openConfirm(getSite().getShell(),
-							"Promote all applied patches?",
-							"No patches selected, promote all applied patches?")) {
-						HgQFinishClient.finishAllApplied(currentHgRoot);
+					} else if (MercurialEclipsePlugin.showDontShowAgainConfirmDialog(
+							"Promote all applied patches?", "No patches selected, promote all "
+									+ toApply.size() + " applied patches?",
+							MessageDialog.CONFIRM,
+							MercurialPreferenceConstants.PREF_SHOW_QFINISH_WARNING_DIALOG, getSite()
+									.getShell())) {
+						HgQFinishClient.finish(currentHgRoot, toApply);
 						return true;
 					}
-				} else {
-					HgQFinishClient.finish(currentHgRoot, min.getName());
+				} else if (toApply.size() == 1
+						|| MercurialEclipsePlugin.showDontShowAgainConfirmDialog(
+								"QFinish multiple patches", "Promote " + toApply.size()
+										+ " patches?", MessageDialog.CONFIRM,
+								MercurialPreferenceConstants.PREF_SHOW_QFINISH_WARNING_DIALOG, getSite()
+										.getShell())) {
+
+					HgQFinishClient.finish(currentHgRoot, toApply);
 					return true;
 				}
 

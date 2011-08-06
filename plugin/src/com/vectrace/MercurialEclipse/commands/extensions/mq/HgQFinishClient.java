@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import java.util.List;
+
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
@@ -17,6 +19,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
@@ -32,10 +35,15 @@ public class HgQFinishClient extends AbstractClient {
 		return command;
 	}
 
-	public static String finish(HgRoot root, String rev) throws HgException {
-		Assert.isNotNull(rev);
+	@SuppressWarnings("null")
+	public static String finish(HgRoot root, List<Patch> revs) throws HgException {
+		Assert.isTrue(revs != null && revs.size() > 0);
 		AbstractShellCommand command = makeCommand(root);
-		command.addOptions(rev);
+
+		for (Patch p : revs) {
+			command.addOptions(p.getName());
+		}
+
 		return command.executeToString();
 	}
 
