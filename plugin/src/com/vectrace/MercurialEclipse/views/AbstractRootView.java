@@ -1,0 +1,171 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * John Peberdy	implementation
+ *******************************************************************************/
+package com.vectrace.MercurialEclipse.views;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IContributionItem;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.part.ViewPart;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+
+/**
+ *
+ */
+public abstract class AbstractRootView extends ViewPart implements ISelectionListener {
+
+	private Label statusLabel;
+	private Label statusIcon;
+	private Composite statusComposite;
+
+	protected HgRoot hgRoot;
+
+	@Override
+	public void createPartControl(Composite parent) {
+		setContentDescription(getNoRootSelectedMessage());
+
+		parent.setLayout(new GridLayout(1, false));
+
+		statusComposite = SWTWidgetHelper.createComposite(parent, 2);
+		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
+		gd.exclude = true;
+		statusComposite.setLayoutData(gd);
+		statusComposite.setVisible(false);
+		statusIcon = new Label(statusComposite, SWT.NONE);
+		statusLabel = SWTWidgetHelper.createLabel(statusComposite, "");
+
+		createTable(parent);
+		createActions();
+		createToolBar(getViewSite().getActionBars().getToolBarManager());
+		createMenus(getViewSite().getActionBars().getMenuManager());
+		getSite().getPage().addSelectionListener(this);
+	}
+
+	protected abstract void createTable(Composite parent);
+
+	protected abstract void createActions();
+
+	protected abstract void createMenus(IMenuManager mgr);
+
+	protected abstract void createToolBar(IToolBarManager mgr);
+
+	protected static IContributionItem makeActionContribution(IAction a)
+	{
+		ActionContributionItem c = new ActionContributionItem(a);
+		c.setMode(c.getMode() | ActionContributionItem.MODE_FORCE_TEXT);
+		return c;
+	}
+
+	protected void hideStatus() {
+		showStatus(null, null);
+	}
+
+	protected void handleError(CoreException e) {
+		MercurialEclipsePlugin.logError(e);
+
+		String sMessage;
+
+		if (e instanceof HgException) {
+			sMessage = ((HgException) e).getConciseMessage();
+		} else {
+			sMessage = e.getLocalizedMessage();
+		}
+
+		showWarning(sMessage);
+	}
+
+	protected void showInfo(String sMessage) {
+		showStatus(sMessage, PlatformUI.getWorkbench().getSharedImages().getImage(
+				ISharedImages.IMG_OBJS_INFO_TSK));
+	}
+
+	protected void showWarning(String sMessage) {
+		showStatus(sMessage, PlatformUI.getWorkbench().getSharedImages().getImage(
+				ISharedImages.IMG_OBJS_ERROR_TSK));
+	}
+
+	private void showStatus(String sMessage, Image icon) {
+		boolean show = sMessage != null;
+		GridData gd = (GridData) statusComposite.getLayoutData();
+		gd.exclude = !show;
+
+		if (show) {
+			statusLabel.setText(sMessage);
+			statusIcon.setImage(icon);
+		}
+
+		statusComposite.setVisible(show);
+		statusComposite.getParent().layout(false);
+	}
+
+	@Override
+	public void dispose() {
+		getSite().getPage().removeSelectionListener(this);
+		super.dispose();
+	}
+
+	public final void refresh(HgRoot newRoot) {
+		setHgRoot(null);
+
+		if (newRoot != null && canChangeRoot(newRoot, false)) {
+			setHgRoot(newRoot);
+		}
+
+		onRootChanged();
+	}
+
+	protected final void rootSelected(HgRoot newRoot) {
+		if (newRoot != null && canChangeRoot(newRoot, true)) {
+			setHgRoot(newRoot);
+			onRootChanged();
+		}
+	}
+
+	private void setHgRoot(HgRoot newRoot)
+	{
+		if (newRoot == null) {
+			setContentDescription(getNoRootSelectedMessage());
+		} else {
+			setContentDescription(Messages.getString("AbstractRootView.repository") + newRoot);
+		}
+
+		hgRoot = newRoot;
+		hideStatus();
+	}
+
+	protected abstract String getNoRootSelectedMessage();
+
+	/**
+	 * Template method to customize root changing behavior
+	 *
+	 * @return True if the selection can be changed
+	 */
+	protected boolean canChangeRoot(HgRoot newRoot, boolean fromSelection) {
+		return !newRoot.equals(hgRoot);
+	}
+
+	protected abstract void onRootChanged();
+}

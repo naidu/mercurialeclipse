@@ -25,10 +25,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
-import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.GroupMarker;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
@@ -39,21 +36,13 @@ import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
@@ -67,26 +56,23 @@ import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
 import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
  *
  */
-public class PatchQueueView extends ViewPart implements ISelectionListener {
+public class PatchQueueView extends AbstractRootView {
 
 	public static final String ID = PatchQueueView.class.getName();
 
-	private IResource resource;
 	private PatchTable table;
-	private Label statusLabel;
+
 	private Action qNewAction;
 	private Action qRefreshAction;
 	private Action qPushAllAction;
@@ -96,36 +82,22 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	private Action qFoldAction;
 	private Action qImportAction;
 	private Action qGotoAction;
-	private HgRoot currentHgRoot;
 	private Patch topmostAppliedPatch;
 
-	private Composite statusComposite;
-
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createTable(org.eclipse.swt.widgets.Composite)
+	 */
 	@Override
-	public void createPartControl(Composite parent) {
-		setContentDescription("No repository selected");
-
-		parent.setLayout(new GridLayout(1, false));
-
-		statusComposite = SWTWidgetHelper.createComposite(parent, 2);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-		gd.exclude = true;
-		statusComposite.setLayoutData(gd);
-		statusComposite.setVisible(false);
-		Label warningLabel = new Label(statusComposite, SWT.NONE);
-		warningLabel.setImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_ERROR_TSK));
-		statusLabel = new Label(statusComposite, SWT.NONE);
-
+	protected void createTable(Composite parent) {
 		table = new PatchTable(parent);
 		getSite().setSelectionProvider(table.getTableViewer());
-		createActions();
-		createToolBar();
-		createMenus();
-		getSite().getPage().addSelectionListener(this);
 	}
 
-	private void createToolBar() {
-		final IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createToolBar(org.eclipse.jface.action.IToolBarManager)
+	 */
+	@Override
+	protected void createToolBar(IToolBarManager mgr) {
 		mgr.add(makeActionContribution(qImportAction));
 		mgr.add(makeActionContribution(qNewAction));
 		mgr.add(makeActionContribution(qRefreshAction));
@@ -134,20 +106,17 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		mgr.add(makeActionContribution(qDeleteAction));
 	}
 
-	private static IContributionItem makeActionContribution(IAction a)
-	{
-		ActionContributionItem c = new ActionContributionItem(a);
-		c.setMode(c.getMode() | ActionContributionItem.MODE_FORCE_TEXT);
-		return c;
-	}
-
-	private void createActions() {
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createActions()
+	 */
+	@Override
+	protected void createActions() {
 		qImportAction = new Action("qimport...", MercurialEclipsePlugin.getImageDescriptor("import.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
-					hideWarning();
-					QImportHandler.openWizard(currentHgRoot, getSite().getShell());
+					hideStatus();
+					QImportHandler.openWizard(hgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
 				}
@@ -159,8 +128,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				try {
-					hideWarning();
-					QNewHandler.openWizard(currentHgRoot, getSite().getShell());
+					hideStatus();
+					QNewHandler.openWizard(hgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
 				}
@@ -171,8 +140,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qRefreshAction = new Action("qrefresh...", MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
-				hideWarning();
-				QRefreshHandler.openWizard(currentHgRoot, getSite().getShell());
+				hideStatus();
+				QRefreshHandler.openWizard(hgRoot, getSite().getShell());
 			}
 		};
 		qRefreshAction.setEnabled(false);
@@ -185,9 +154,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 				Patch patch = table.getSelection();
 				if (patch != null) {
 					if (patch.isApplied()) {
-						HgQPopClient.pop(currentHgRoot, false, patch.getName());
+						HgQPopClient.pop(hgRoot, false, patch.getName());
 					} else {
-						HgQPushClient.push(currentHgRoot, false, patch.getName());
+						HgQPushClient.push(hgRoot, false, patch.getName());
 					}
 					return true;
 				}
@@ -200,7 +169,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qPushAllAction = new MQAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
-				HgQPushClient.pushAll(currentHgRoot, false);
+				HgQPushClient.pushAll(hgRoot, false);
 				return true;
 			}
 		};
@@ -209,7 +178,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qPopAllAction = new MQAction(Messages.getString("PatchQueueView.unapplyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
-				HgQPopClient.popAll(currentHgRoot, false);
+				HgQPopClient.popAll(hgRoot, false);
 				return true;
 			}
 		};
@@ -220,7 +189,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			public boolean invoke() throws HgException {
 				List<Patch> patches = table.getSelections();
 				if (patches.size() > 0) {
-					HgQFoldClient.fold(currentHgRoot, true, null, patches);
+					HgQFoldClient.fold(hgRoot, true, null, patches);
 					return true;
 				}
 				return false;
@@ -231,8 +200,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qDeleteAction = new Action("qdelete...", MercurialEclipsePlugin.getImageDescriptor("rem_co.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
-				hideWarning();
-				QDeleteHandler.openWizard(currentHgRoot, getSite().getShell(), false);
+				hideStatus();
+				QDeleteHandler.openWizard(hgRoot, getSite().getShell(), false);
 			}
 		};
 		qDeleteAction.setEnabled(false);
@@ -281,7 +250,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 							MessageDialog.CONFIRM,
 							MercurialPreferenceConstants.PREF_SHOW_QFINISH_WARNING_DIALOG, getSite()
 									.getShell())) {
-						HgQFinishClient.finish(currentHgRoot, toApply);
+						HgQFinishClient.finish(hgRoot, toApply);
 						return true;
 					}
 				} else if (toApply.size() == 1
@@ -291,7 +260,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 								MercurialPreferenceConstants.PREF_SHOW_QFINISH_WARNING_DIALOG, getSite()
 										.getShell())) {
 
-					HgQFinishClient.finish(currentHgRoot, toApply);
+					HgQFinishClient.finish(hgRoot, toApply);
 					return true;
 				}
 
@@ -309,7 +278,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 
 	@SuppressWarnings("unchecked")
 	protected void updateEnablement(IStructuredSelection selection) {
-		assert currentHgRoot != null;
+		assert hgRoot != null;
 
 		boolean isTopSelected = false;
 		boolean selectionHasApplied = false;
@@ -343,8 +312,11 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		qFinishAction.setEnabled(selectionHasApplied || selection.isEmpty());
 	}
 
-	private void createMenus() {
-		final IMenuManager menuMgr = getViewSite().getActionBars().getMenuManager();
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createMenus(org.eclipse.jface.action.IMenuManager)
+	 */
+	@Override
+	protected void createMenus(IMenuManager menuMgr) {
 		menuMgr.add(qImportAction);
 		menuMgr.add(qNewAction);
 		menuMgr.add(qRefreshAction);
@@ -374,9 +346,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor)	{
 				IStatus status = Status.OK_STATUS;
-				if (currentHgRoot != null && !table.isDisposed()) {
+				if (hgRoot != null && !table.isDisposed()) {
 					try {
-						List<Patch> patches = HgQSeriesClient.getPatchesInSeries(currentHgRoot);
+						List<Patch> patches = HgQSeriesClient.getPatchesInSeries(hgRoot);
 
 						// TODO: We have to hide the popup menu if the table is empty or the team
 						// menu will be appended. This is a side effect of the team menu's
@@ -409,61 +381,40 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		job.schedule();
 	}
 
-	protected void hideWarning() {
-		showWarning(null);
-	}
-
-	protected void showWarning(String sMessage) {
-		boolean show = sMessage != null;
-		GridData gd = (GridData) statusComposite.getLayoutData();
-		gd.exclude = !show;
-
-		if (show) {
-			statusLabel.setText(sMessage);
-		}
-
-		statusComposite.setVisible(show);
-		statusComposite.getParent().layout(false);
-	}
-
-	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+	/**
+	 * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
+	 */
+	public final void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
 			IStructuredSelection structured = (IStructuredSelection) selection;
 			if (structured.getFirstElement() instanceof IAdaptable) {
 				IResource newResource = (IResource) ((IAdaptable) structured.getFirstElement())
 						.getAdapter(IResource.class);
-				if (resource != null && resource.isAccessible()
-						&& MercurialTeamProvider.isHgTeamProviderFor(resource)
-						&& newResource != null && newResource.equals(resource)) {
-					return;
-				}
 
 				if (newResource != null && newResource.isAccessible()
 						&& MercurialTeamProvider.isHgTeamProviderFor(newResource)) {
-					setHgRoot(newResource, MercurialTeamProvider.getHgRoot(newResource));
+					rootSelected(MercurialTeamProvider.getHgRoot(newResource));
 				}
 			}
 		}
+
+		// TODO: why?
 		if (part instanceof IEditorPart) {
 			IEditorInput input = ((IEditorPart) part).getEditorInput();
 			IFile file = (IFile) input.getAdapter(IFile.class);
 			if (file != null && file.isAccessible()
 					&& MercurialTeamProvider.isHgTeamProviderFor(file)) {
-
-				setHgRoot(file, MercurialTeamProvider.getHgRoot(file));
+				rootSelected(MercurialTeamProvider.getHgRoot(file));
 			}
 		}
 	}
 
-	private void setHgRoot(IResource file, HgRoot newRoot)
-	{
-		if (newRoot != null && !newRoot.equals(currentHgRoot)) {
-			currentHgRoot = newRoot;
-			resource = file;
-			setContentDescription(Messages.getString("PatchQueueView.repository") + currentHgRoot);
-			hideWarning();
-			populateTable();
-		}
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#onRootChanged()
+	 */
+	@Override
+	protected void onRootChanged() {
+		populateTable();
 	}
 
 	public static PatchQueueView getView() {
@@ -476,12 +427,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			}
 		}
 		return view;
-	}
-
-	@Override
-	public void dispose() {
-		getSite().getPage().removeSelectionListener(this);
-		super.dispose();
 	}
 
 	private abstract class MQAction extends Action {
@@ -505,7 +450,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			boolean changed = true;
 
 			try {
-				hideWarning();
+				hideStatus();
 				changed = invoke();
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
@@ -521,10 +466,18 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			} finally {
 				if (changed) {
 					populateTable();
-					new RefreshWorkspaceStatusJob(currentHgRoot, refreshFlag).schedule();
+					new RefreshWorkspaceStatusJob(hgRoot, refreshFlag).schedule();
 				}
 			}
 		}
 		public abstract boolean invoke() throws HgException, CoreException;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getNoRootSelectedMessage()
+	 */
+	@Override
+	protected String getNoRootSelectedMessage() {
+		return "No repository selected";
 	}
 }
