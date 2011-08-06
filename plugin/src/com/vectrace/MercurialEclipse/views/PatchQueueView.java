@@ -24,11 +24,15 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.GroupMarker;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -105,17 +109,24 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	}
 
 	private void createToolBar() {
-		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
-		mgr.add(qImportAction);
-		mgr.add(qNewAction);
-		mgr.add(qRefreshAction);
-		mgr.add(qDeleteAction);
-		mgr.add(qFoldAction);
-		mgr.add(qFinishAction);
+		final IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+		mgr.add(makeActionContribution(qImportAction));
+		mgr.add(makeActionContribution(qNewAction));
+		mgr.add(makeActionContribution(qRefreshAction));
+		mgr.add(makeActionContribution(qFinishAction));
+		mgr.add(makeActionContribution(qFoldAction));
+		mgr.add(makeActionContribution(qDeleteAction));
+	}
+
+	private static IContributionItem makeActionContribution(IAction a)
+	{
+		ActionContributionItem c = new ActionContributionItem(a);
+		c.setMode(c.getMode() | ActionContributionItem.MODE_FORCE_TEXT);
+		return c;
 	}
 
 	private void createActions() {
-		qImportAction = new Action("qimport...") { //$NON-NLS-1$
+		qImportAction = new Action("qimport...", MercurialEclipsePlugin.getImageDescriptor("import.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
@@ -128,7 +139,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qImportAction.setEnabled(false);
 
-		qNewAction = new Action("qnew...") { //$NON-NLS-1$
+		qNewAction = new Action("qnew...", MercurialEclipsePlugin.getImageDescriptor("import.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
@@ -141,7 +152,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qNewAction.setEnabled(false);
 
-		qRefreshAction = new Action("qrefresh...") { //$NON-NLS-1$
+		qRefreshAction = new Action("qrefresh...", MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				clearStatusLabel();
@@ -201,7 +212,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qFoldAction.setEnabled(false);
 
-		qDeleteAction = new Action("qdelete...") { //$NON-NLS-1$
+		qDeleteAction = new Action("qdelete...", MercurialEclipsePlugin.getImageDescriptor("rem_co.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				clearStatusLabel();
@@ -210,7 +221,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		};
 		qDeleteAction.setEnabled(false);
 
-		qFinishAction = new MQAction("qfinish", RefreshRootJob.OUTGOING) { //$NON-NLS-1$
+		qFinishAction = new MQAction("qfinish", MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif"), RefreshRootJob.OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
 				List<Patch> patches = table.getSelections();
@@ -297,9 +308,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 		menuMgr.add(qImportAction);
 		menuMgr.add(qNewAction);
 		menuMgr.add(qRefreshAction);
-		menuMgr.add(qDeleteAction);
-		menuMgr.add(qFoldAction);
 		menuMgr.add(qFinishAction);
+		menuMgr.add(qFoldAction);
+		menuMgr.add(qDeleteAction);
 
 		MenuManager popupMenuMgr = new MenuManager();
 		popupMenuMgr.add(qGotoAction);
@@ -323,7 +334,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor)	{
 				IStatus status = Status.OK_STATUS;
-				if (currentHgRoot != null) {
+				if (currentHgRoot != null && !table.isDisposed()) {
 					try {
 						List<Patch> patches = HgQSeriesClient.getPatchesInSeries(currentHgRoot);
 
@@ -424,6 +435,11 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 
 		public MQAction(String name, int refreshFlag) {
 			super(name);
+			this.refreshFlag = refreshFlag;
+		}
+
+		public MQAction(String name, ImageDescriptor desc, int refreshFlag) {
+			super(name, desc);
 			this.refreshFlag = refreshFlag;
 		}
 
