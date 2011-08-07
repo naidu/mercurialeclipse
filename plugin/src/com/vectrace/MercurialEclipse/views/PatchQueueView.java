@@ -474,10 +474,14 @@ public class PatchQueueView extends AbstractRootView {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getNoRootSelectedMessage()
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getDescription()
 	 */
 	@Override
-	protected String getNoRootSelectedMessage() {
-		return "No repository selected";
+	protected String getDescription() {
+		if (hgRoot == null) {
+			return "No repository selected";
+		}
+
+		return Messages.getString("PatchQueueView.repository") + hgRoot;
 	}
 }

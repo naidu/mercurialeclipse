@@ -79,6 +79,8 @@ public class MergeView extends AbstractRootView implements Observer {
 
 	private Action markUnresolvedAction;
 
+	protected boolean merging = true;
+
 	@Override
 	public void createPartControl(final Composite parent) {
 		super.createPartControl(parent);
@@ -116,18 +118,11 @@ public class MergeView extends AbstractRootView implements Observer {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createMenus(org.eclipse.jface.action.IMenuManager)
-	 */
-	@Override
-	protected void createMenus(IMenuManager mgr) {
-	}
-
-	/**
 	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createActions()
 	 */
 	@Override
 	protected void createActions() {
-		completeAction = new Action(Messages.getString("MergeView.complete")) { //$NON-NLS-1$
+		completeAction = new Action(Messages.getString("MergeView.merge.complete")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				if (areAllResolved()) {
@@ -139,12 +134,12 @@ public class MergeView extends AbstractRootView implements Observer {
 		completeAction.setEnabled(false);
 		completeAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
 
-		abortAction = new Action(Messages.getString("MergeView.abort")) { //$NON-NLS-1$
+		abortAction = new Action(Messages.getString("MergeView.merge.abort")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
 					RunnableHandler runnable;
-					if (HgRebaseClient.isRebasing(hgRoot)) {
+					if (!merging) {
 						runnable = new AbortRebaseHandler();
 					} else {
 						UpdateHandler update = new UpdateHandler();
@@ -203,9 +198,15 @@ public class MergeView extends AbstractRootView implements Observer {
 	 */
 	@Override
 	protected void createToolBar(IToolBarManager mgr) {
-		mgr.add(completeAction);
-		mgr.add(abortAction);
+		mgr.add(makeActionContribution(completeAction));
+		mgr.add(makeActionContribution(abortAction));
+	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createMenus(org.eclipse.jface.action.IMenuManager)
+	 */
+	@Override
+	protected void createMenus(IMenuManager mgr) {
 		final Action openMergeEditorAction = new Action("Open in Merge Editor") {
 			@Override
 			public void run() {
@@ -276,38 +277,19 @@ public class MergeView extends AbstractRootView implements Observer {
 				bAllResolved = false;
 			}
 		}
-		abortAction.setEnabled(true);
-		completeAction.setEnabled(true);
-		markResolvedAction.setEnabled(true);
-		markUnresolvedAction.setEnabled(true);
 
-		// Update the status label
-		{
-			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
+		completeAction.setEnabled(bAllResolved);
+
+		if (bAllResolved) {
 			String label;
-
-			if (bAllResolved) {
-				if (merging) {
-					label = hgRoot.getName() + Messages.getString("MergeView.PleaseCommitMerge")
-							+ " " + MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-				} else {
-					label = hgRoot.getName() + Messages.getString("MergeView.PleaseCommitRebase");
-				}
+			if (merging) {
+				label = Messages.getString("MergeView.PleaseCommitMerge");
 			} else {
-				if (merging) {
-					String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(
-							hgRoot);
-					if (mergeNodeId != null) {
-						label = "Merging " + hgRoot.getName() + " with " + mergeNodeId;
-					} else {
-						label = "Merging " + hgRoot.getName();
-					}
-				} else {
-					label = "Rebasing " + hgRoot.getName();
-				}
+				label = Messages.getString("MergeView.PleaseCommitRebase");
 			}
-
 			showInfo(label);
+		} else {
+			hideStatus();
 		}
 
 		// Show commit dialog
@@ -334,19 +316,37 @@ public class MergeView extends AbstractRootView implements Observer {
 			completeAction.setEnabled(false);
 			markResolvedAction.setEnabled(false);
 			markUnresolvedAction.setEnabled(false);
-		} else {
-			try {
-				populateView(false);
-			} catch (HgException e) {
-				handleError(e);
+			table.setEnabled(false);
+
+			return;
+		}
+
+		abortAction.setEnabled(true);
+		completeAction.setEnabled(true);
+		markResolvedAction.setEnabled(true);
+		markUnresolvedAction.setEnabled(true);
+		table.setEnabled(true);
+
+		try {
+			merging = !HgRebaseClient.isRebasing(hgRoot);
+
+			if (merging) {
+				abortAction.setText(Messages.getString("MergeView.merge.abort"));
+				completeAction.setText(Messages.getString("MergeView.merge.complete"));
+			} else {
+				abortAction.setText(Messages.getString("MergeView.rebase.abort"));
+				completeAction.setText(Messages.getString("MergeView.rebase.complete"));
 			}
+
+			getViewSite().getActionBars().getToolBarManager().update(true);
+			populateView(false);
+		} catch (HgException e) {
+			handleError(e);
 		}
 	}
 
 	private void attemptToCommit() {
 		try {
-			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
-
 			MercurialUtilities.setOfferAutoCommitMerge(false);
 			RunnableHandler handler = merging ? new CommitMergeHandler()
 					: new ContinueRebaseHandler();
@@ -359,11 +359,22 @@ public class MergeView extends AbstractRootView implements Observer {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getNoRootSelectedMessage()
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getDescription()
 	 */
 	@Override
-	protected String getNoRootSelectedMessage() {
-		return "No repository selected: Select a merging or rebasing repository";
+	protected String getDescription() {
+		if (hgRoot == null || !MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)) {
+			return "No merge in progress. Select a merging or rebasing repository";
+		}
+
+		if (merging) {
+			String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+			if (mergeNodeId != null) {
+				return hgRoot.getName() + ": Merging with " + mergeNodeId;
+			}
+			return hgRoot.getName() + ": Merging";
+		}
+		return hgRoot.getName() + ": Rebasing";
 	}
 
 	/**

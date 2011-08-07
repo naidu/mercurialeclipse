@@ -45,7 +45,7 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 
 	@Override
 	public void createPartControl(Composite parent) {
-		setContentDescription(getNoRootSelectedMessage());
+		setContentDescription(getDescription());
 
 		parent.setLayout(new GridLayout(1, false));
 
@@ -128,35 +128,37 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 	}
 
 	public final void refresh(HgRoot newRoot) {
-		setHgRoot(null);
+		hgRoot = null;
 
 		if (newRoot != null && canChangeRoot(newRoot, false)) {
-			setHgRoot(newRoot);
+			hgRoot = newRoot;
 		}
 
-		onRootChanged();
+		handleRootChanged();
 	}
 
 	protected final void rootSelected(HgRoot newRoot) {
 		if (newRoot != null && canChangeRoot(newRoot, true)) {
-			setHgRoot(newRoot);
+			hgRoot = newRoot;
+			handleRootChanged();
+		}
+	}
+
+	private void handleRootChanged() {
+		Composite composite = statusLabel.getParent();
+
+		try {
+			// Avoid flickering if status is shown again
+			composite.setRedraw(false);
+			hideStatus();
 			onRootChanged();
+			setContentDescription(getDescription());
+		} finally {
+			composite.setRedraw(true);
 		}
 	}
 
-	private void setHgRoot(HgRoot newRoot)
-	{
-		if (newRoot == null) {
-			setContentDescription(getNoRootSelectedMessage());
-		} else {
-			setContentDescription(Messages.getString("AbstractRootView.repository") + newRoot);
-		}
-
-		hgRoot = newRoot;
-		hideStatus();
-	}
-
-	protected abstract String getNoRootSelectedMessage();
+	protected abstract String getDescription();
 
 	/**
 	 * Template method to customize root changing behavior
@@ -167,5 +169,8 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 		return !newRoot.equals(hgRoot);
 	}
 
+	/**
+	 * Called when the selected root changes
+	 */
 	protected abstract void onRootChanged();
 }
