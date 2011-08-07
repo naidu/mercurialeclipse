@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.views;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -223,7 +224,7 @@ public class PatchQueueView extends AbstractRootView {
 					}
 				}
 
-				List<Patch> toApply = new ArrayList<Patch>(table.getPatches());
+				List<Patch> toApply = new ArrayList<Patch>(table.getItems());
 
 				for (Iterator<Patch> it = toApply.iterator(); it.hasNext();) {
 					Patch cur = it.next();
@@ -356,13 +357,17 @@ public class PatchQueueView extends AbstractRootView {
 						// a proper locationURI, the next line can be deleted.
 						table.setEnabled(!patches.isEmpty());
 
-						table.setPatches(patches);
 						topmostAppliedPatch = null;
 						for (Patch patch : patches) {
 							if (patch.isApplied()) {
 								topmostAppliedPatch = patch;
 							}
 						}
+
+						// Reverse so it's in the same order as the sync view
+						patches = new ArrayList<Patch>(patches);
+						Collections.reverse(patches);
+						table.setItems(patches);
 					} catch (HgException e) {
 						showWarning(e.getConciseMessage());
 						MercurialEclipsePlugin.logError(e);

@@ -14,30 +14,17 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.jface.layout.TableColumnLayout;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CellLabelProvider;
 import org.eclipse.jface.viewers.ColumnLayoutData;
 import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.ColumnWeightData;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
-import org.eclipse.jface.viewers.ViewerCell;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Table;
 
 import com.vectrace.MercurialEclipse.model.Patch;
 
@@ -45,31 +32,18 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
-public class PatchTable extends Composite {
-
-	private static final Font APPLIED_FONT = JFaceResources.getFontRegistry().getBold(
-			JFaceResources.DIALOG_FONT);
-
-	private static Color appliedColor;
-	private final TableViewer viewer;
+public class PatchTable extends AbstractHighlightableTable<Patch> {
 
 	public PatchTable(Composite parent) {
-		super(parent, SWT.NONE);
+		super(parent, new PatchTableLabelProvider());
+	}
 
-		if (appliedColor == null) {
-			appliedColor = new Color(getDisplay(), new RGB(225, 255, 172));
-		}
-
-		setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		TableColumnLayout tableColumnLayout = new TableColumnLayout();
-		setLayout(tableColumnLayout);
-
-
-		viewer = new TableViewer(this, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-				| SWT.H_SCROLL);
-
-		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new PatchTableLabelProvider());
+	/**
+	 * @see com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable#createColumns(org.eclipse.jface.viewers.TableViewer, org.eclipse.jface.layout.TableColumnLayout)
+	 */
+	@Override
+	protected List<TableViewerColumn> createColumns(TableViewer viewer, TableColumnLayout tableColumnLayout) {
+		List<TableViewerColumn> l = new ArrayList<TableViewerColumn>(4);
 
 		String[] titles = {
 				Messages.getString("PatchTable.index"), //$NON-NLS-1$
@@ -83,75 +57,15 @@ public class PatchTable extends Composite {
 				new ColumnWeightData(75, 200, true) };
 		for (int i = 0; i < titles.length; i++) {
 			TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
-			column.setLabelProvider(new CellLabelProvider() {
-				@Override
-				public void update(ViewerCell cell) {
-					Patch patch = (Patch) cell.getElement();
-					ITableLabelProvider labelProvider = (ITableLabelProvider) viewer
-							.getLabelProvider();
-					cell.setText(labelProvider.getColumnText(patch, cell.getColumnIndex()));
-					cell.setImage(labelProvider.getColumnImage(patch, cell.getColumnIndex()));
-					if (patch.isApplied()) {
-						cell.setFont(APPLIED_FONT);
-					} else {
-						cell.setFont(null);
-					}
-				}
-			});
 			column.getColumn().setText(titles[i]);
 			tableColumnLayout.setColumnData(column.getColumn(), columnWidths[i]);
-
+			l.add(column);
 		}
 
-		Table table = viewer.getTable();
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
+		return l;
 	}
 
-	public void setPatches(List<Patch> patches) {
-		patches = new ArrayList<Patch>(patches);
-		Collections.reverse(patches);
-		viewer.setInput(patches);
-	}
-
-	@SuppressWarnings("unchecked")
-	public List<Patch> getPatches() {
-		Object inp = viewer.getInput();
-
-		if (inp instanceof List) {
-			return (List<Patch>) inp;
-		}
-
-		return Collections.emptyList();
-	}
-
-	/**
-	 * @return The first selected patch, or {@code null} if the selection is empty.
-	 */
-	public Patch getSelection() {
-		return (Patch) ((IStructuredSelection) viewer.getSelection()).getFirstElement();
-	}
-
-	/**
-	 * @return A list of the selected patches. If the selection is empty an empty list is returned,
-	 *         never {@code null}.
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Patch> getSelections() {
-		return ((IStructuredSelection) viewer.getSelection()).toList();
-	}
-
-	@Override
-	public void dispose() {
-		super.dispose();
-		appliedColor.dispose();
-	}
-
-	public TableViewer getTableViewer() {
-		return viewer;
-	}
-
-	private static class PatchTableLabelProvider extends LabelProvider implements ITableLabelProvider {
+	private static class PatchTableLabelProvider extends HighlightingLabelProvider<Patch> {
 
 		public Image getColumnImage(Object element, int columnIndex) {
 			return null;
@@ -172,6 +86,12 @@ public class PatchTable extends Composite {
 			return null;
 		}
 
+		/**
+		 * @see com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable.HighlightingLabelProvider#isHighlighted(java.lang.Object)
+		 */
+		@Override
+		public boolean isHighlighted(Patch patch) {
+			return patch.isApplied();
+		}
 	}
-
 }
