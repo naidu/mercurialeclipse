@@ -263,6 +263,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		}
 		completeAction.setEnabled(bAllResolved);
 
+		/* TODO: remove this block? Commit button enablement provides sufficient feedback
 		if (bAllResolved) {
 			String label;
 			if (merging) {
@@ -273,7 +274,7 @@ public class MergeView extends AbstractRootView implements Observer {
 			showInfo(label);
 		} else {
 			hideStatus();
-		}
+		}*/
 
 		// Show commit dialog
 		if (attemptToCommit && MercurialUtilities.isOfferAutoCommitMerge()
