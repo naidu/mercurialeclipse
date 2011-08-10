@@ -87,12 +87,19 @@ public class HgGLogClient extends HgCommand {
 		int lengthp1 = length;
 		RowCount rowCount = new RowCount();
 		GChangeSet last = null;
+
+		// Mercurial 1.9 glog issue workaround
+		// TODO: redesign parsing algorithm and revision graph presentation
+		int j=0;
 		for (int i = 0; i < lengthp1; i++) {
 			// adjust index for spacing
 			int changeset = i * 2;
 			String afterS = i != length ? split[changeset + 1] : "";
+			if(split[changeset].indexOf('*') == -1) {
+				continue;
+			}
 			// add current changeset and next line
-			GChangeSet newOne = new GChangeSet(rowCount, i, split[changeset], afterS);
+			GChangeSet newOne = new GChangeSet(rowCount, j++, split[changeset], afterS);
 			newOne.clean(last);
 			last = newOne;
 			sets.add(last);
