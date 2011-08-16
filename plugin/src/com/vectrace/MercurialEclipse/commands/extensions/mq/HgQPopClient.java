@@ -11,23 +11,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
  */
 public class HgQPopClient extends AbstractClient {
-	public static String popAll(IResource resource, boolean force)
+	public static String popAll(HgRoot root, boolean force)
 			throws HgException {
-		Assert.isNotNull(resource);
+		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				"Invoking qpop", resource, true);
+				"Invoking qpop", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -38,10 +38,10 @@ public class HgQPopClient extends AbstractClient {
 		return command.executeToString();
 	}
 
-	public static String pop(IResource resource, boolean force, String patchName)
+	public static String pop(HgRoot root, boolean force, String patchName)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				"Invoking qpop", resource, true);
+				"Invoking qpop", root, true);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

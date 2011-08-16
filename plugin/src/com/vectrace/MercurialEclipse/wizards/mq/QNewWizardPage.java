@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
@@ -51,6 +52,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QNewWizardPage extends HgWizardPage {
 
+	private static final String PROP_COUNTER = "qnewCounter";
 	protected final HgRoot root;
 	private Text patchNameTextField;
 	private Text userTextField;
@@ -84,6 +86,7 @@ public class QNewWizardPage extends HgWizardPage {
 		if (showPatchName) {
 			createLabel(composite, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
 			this.patchNameTextField = createTextField(composite);
+			this.patchNameTextField.setText("new-patch-" + getCount() + ".patch");
 		}
 
 		createLabel(composite, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
@@ -131,18 +134,42 @@ public class QNewWizardPage extends HgWizardPage {
 	}
 
 	/**
+	 * @see org.eclipse.jface.dialogs.DialogPage#setVisible(boolean)
+	 */
+	@Override
+	public void setVisible(boolean visible) {
+		super.setVisible(visible);
+
+		if (visible && commitTextBox != null) {
+			commitTextBox.getTextWidget().setFocus();
+			commitTextBox.getTextWidget().selectAll();
+		}
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		if (showPatchName) {
+			getDialogSettings().put(PROP_COUNTER, getCount() + 1);
+		}
+		return super.finish(monitor);
+	}
+
+	private int getCount() {
+		try {
+			return getDialogSettings().getInt(PROP_COUNTER);
+		} catch(NumberFormatException e) {
+			return 1;
+		}
+	}
+
+	/**
 	 * @return the patchNameTextField
 	 */
 	public Text getPatchNameTextField() {
 		return patchNameTextField;
-	}
-
-	/**
-	 * @param patchNameTextField
-	 *            the patchNameTextField to set
-	 */
-	public void setPatchNameTextField(Text patchNameTextField) {
-		this.patchNameTextField = patchNameTextField;
 	}
 
 	/**
@@ -153,26 +180,10 @@ public class QNewWizardPage extends HgWizardPage {
 	}
 
 	/**
-	 * @param date
-	 *            the date to set
-	 */
-	public void setDate(Text date) {
-		this.date = date;
-	}
-
-	/**
 	 * @return the userTextField
 	 */
 	public Text getUserTextField() {
 		return userTextField;
-	}
-
-	/**
-	 * @param userTextField
-	 *            the userTextField to set
-	 */
-	public void setUserTextField(Text userTextField) {
-		this.userTextField = userTextField;
 	}
 
 	/**

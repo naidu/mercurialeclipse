@@ -74,8 +74,16 @@ import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQAppliedClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQDeleteClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFinishClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQNewClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.SwitchHandler;
@@ -87,6 +95,7 @@ import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -474,9 +483,16 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 
 		boolean closeBranchSelected = isCloseBranchSelected();
+		boolean amend = amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null;
+
 		try {
 			// amend changeset
-			if (amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null) {
+			if (amend) {
+				if (closeBranchSelected) {
+					setErrorMessage(Messages.getString("Cannot close branch while amending"));
+					return;
+				}
+
 				// only one root allowed when amending
 				Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
 				if (map.size() > 1) {
@@ -497,14 +513,14 @@ public class CommitDialog extends TitleAreaDialog {
 					setErrorMessage(Messages.getString("CommitDialog.noAmendForMerge"));
 					return;
 				}
+
+				if (HgQAppliedClient.getAppliedPatches(root).size() > 0) {
+					setErrorMessage("Cannot amend when there are applied MQ patches");
+					return;
+				}
+
 				pm.worked(1);
-				boolean ok = confirmHistoryRewrite();
-				if (ok) {
-					pm.subTask("Importing changeset into MQ.");
-					HgQImportClient.qimport(root, true, false, new ChangeSet[] { currentChangeset },
-							null);
-					pm.worked(1);
-				} else {
+				if (!confirmHistoryRewrite()) {
 					setErrorMessage(Messages.getString("CommitDialog.abortedAmending"));
 					return;
 				}
@@ -522,7 +538,11 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// perform commit
 			pm.subTask("Committing resources to repository.");
-			commitResult = performCommit(commitMessage, closeBranchSelected, currentChangeset);
+			if (amend) {
+				commitResult = performAmend(commitMessage, currentChangeset);
+			} else {
+				commitResult = performCommit(commitMessage, closeBranchSelected, currentChangeset);
+			}
 			pm.worked(1);
 
 			/* Store commit message in the database if not the default message */
@@ -536,6 +556,10 @@ public class CommitDialog extends TitleAreaDialog {
 			if (isRevertSelected()) {
 				revertResources();
 			}
+		} catch (HgException e) {
+			setErrorMessage(e.getConciseMessage());
+			MercurialEclipsePlugin.logError(e);
+			return;
 		} catch (CoreException e) {
 			setErrorMessage(e.getLocalizedMessage());
 			MercurialEclipsePlugin.logError(e);
@@ -592,36 +616,123 @@ public class CommitDialog extends TitleAreaDialog {
 		return commitResult != null ? commitResult : "";
 	}
 
-	protected String performCommit(String messageToCommit, boolean closeBranch)
-			throws CoreException {
-		return performCommit(messageToCommit, closeBranch, null);
+	private static String makePatchName(String id) {
+		return "HGE-" + id + "-" + System.currentTimeMillis() + ".diff";
+	}
+
+	/**
+	 * Amend adds the changes in the selected files to the parent changeset. QRefresh isn't used
+	 * generally because when it fails (eg inconsistent line endings) then programatically restoring
+	 * state is hard. Instead the parent is qimported (a), the selected files are qnew'd (b), if
+	 * still dirty remaining files are added to a 2nd qnew'd patch (c). Then a and b are folded and
+	 * c is applied and then stripped. This also works around the problem of qrefresh unexpectedly
+	 * adding changes to a file if changes in that file are already in the patch.
+	 *
+	 * TODO: allow amending commit user as well.
+	 */
+	protected String performAmend(String message, ChangeSet cs) throws HgException {
+		final IProgressMonitor pm = monitor;
+		final String origPatchName = makePatchName("amend-orig");
+		String result = "";
+		boolean exceptionExpected = true;
+		boolean refreshWorspace = false;
+
+		try {
+			pm.subTask("Importing changeset into MQ.");
+			result += HgQImportClient.qimport(root, true, currentChangeset, origPatchName);
+			pm.worked(1);
+
+			if (!resourcesToCommit.isEmpty() || HgStatusClient.isDirty(root)) {
+				final String amendPatchName = makePatchName("amendment");
+				String notIncludedPatchName = null;
+
+				refreshWorspace = true;
+				pm.subTask("Creating new MQ patch containing changes to amend");
+
+				// May throw exceptions eg: inconsistent newline style or patch file exists
+				result += HgQNewClient.createNewPatch(root, "Changes to amend with previous", resourcesToCommit,
+						user, null, amendPatchName);
+				pm.worked(1);
+
+				if (HgStatusClient.isDirty(root)) {
+					notIncludedPatchName = makePatchName("notSelected");
+
+					// Note: If an exception occurs here 2 patches will be qfinished
+					// This error is semi-expected
+					result += HgQNewClient.createNewPatch(root, "Changes to amend with previous",
+							user, null, notIncludedPatchName);
+
+					exceptionExpected = false;
+					HgStatusClient.assertClean(root);
+				}
+
+				// These should not fail
+				pm.subTask("Folding MQ patches");
+				exceptionExpected = false;
+				HgQPopClient.pop(root, false, origPatchName);
+				pm.worked(1);
+				HgStatusClient.assertClean(root);
+				HgQFoldClient.fold(root, false, message, amendPatchName);
+				pm.worked(1);
+
+				if (notIncludedPatchName != null) {
+					pm.subTask("Restoring uncommitted changes");
+					HgQPushClient.push(root, false, notIncludedPatchName);
+					HgStripClient.stripCurrent(root, true, false, false);
+					HgQDeleteClient.delete(root, false, notIncludedPatchName);
+					pm.worked(1);
+				}
+			} else {
+				// refresh patch to update commit message
+				pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
+				result = HgQRefreshClient.refresh(root, true, resourcesToCommit, message, true);
+				pm.worked(4);
+			}
+		} catch (HgException e) {
+			if (!exceptionExpected) {
+				MessageDialog.openError(getShell(), "Error amending!", "An unexpected error occurred performing amend!\n" +
+						"To recover refer to the Mercurial Patch Queue View.\n" +
+						"Intermediate steps are saved in <repo root>/.hg/patches folder.\n" +
+						"Please file a MercurialEclipse bug and include the Eclipse error log.");
+				MercurialEclipsePlugin.logError("An unexpected error occurred during amend!", e);
+			}
+
+			throw e;
+		} finally {
+			try {
+				pm.subTask("Removing amend patch from MQ and promoting it to repository.");
+				HgQFinishClient.finishAllApplied(root);
+				pm.worked(1);
+			} catch (HgException e) {
+				MessageDialog.openError(getShell(), "Error amending!", "An unexpected error occurred restoring state during amend!\n" +
+						"To recover refer to the Mercurial Patch Queue View.\n" +
+						"Intermediate steps are saved in <repo root>/.hg/patches folder.\n" +
+						"Please file a MercurialEclipse bug and include the Eclipse error log.");
+				MercurialEclipsePlugin.logError("An unexpected error occurred restoring state during amend!", e);
+			}
+
+			RefreshRootJob job;
+			if (refreshWorspace) {
+				// The file contents should be the same but hg may have changed timestamps, etc
+				// which will cause out of sync messages.
+				job = new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL_AND_OUTGOING);
+			} else {
+				job = new RefreshRootJob(
+						Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
+								+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING); //$NON-NLS-1$
+			}
+			job.schedule();
+		}
+		return result;
 	}
 
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
-		IProgressMonitor pm = monitor;
-		if (amendCheckbox != null && amendCheckbox.getSelection() && cs != null) {
-			// refresh patch with added/removed/changed files
-			pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
-			String result = HgQRefreshClient
-					.refresh(root, true, resourcesToCommit, messageToCommit, true);
-			pm.worked(1);
-			// remove patch and promote it to a new changeset
-			pm.subTask("Removing amend patch from MQ and promoting it to repository.");
-			result = HgQFinishClient.finish(root, cs.getChangesetIndex() + ".diff");
-			pm.worked(1);
-			new RefreshRootJob(
-					Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
-					+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
-			.schedule();
-			return result;
-		}
-
 		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch)) {
 			// enforce commit anyway
-			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, pm);
+			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, monitor);
 		}
-		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, pm,
+		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, monitor,
 				closeBranch);
 	}
 

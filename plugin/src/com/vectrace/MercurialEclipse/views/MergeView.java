@@ -11,6 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -27,29 +28,27 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.layout.TableColumnLayout;
+import org.eclipse.jface.viewers.ColumnLayoutData;
+import org.eclipse.jface.viewers.ColumnPixelData;
+import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -67,14 +66,15 @@ import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable;
+import com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable.HighlightingLabelProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class MergeView extends ViewPart implements ISelectionListener, Observer {
+public class MergeView extends AbstractRootView implements Observer {
 
 	public static final String ID = MergeView.class.getName();
 
-	private Label statusLabel;
-	private Table table;
+	private MergeTable table;
 
 	private Action abortAction;
 
@@ -84,49 +84,34 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private Action markUnresolvedAction;
 
-	protected HgRoot hgRoot;
+	protected boolean merging = true;
 
 	@Override
 	public void createPartControl(final Composite parent) {
-		parent.setLayout(new GridLayout(1, false));
-
-		statusLabel = new Label(parent, SWT.NONE);
-		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		statusLabel.setText("No repository selected: Select a merging or rebasing repository");
-
-		table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-				| SWT.V_SCROLL | SWT.H_SCROLL);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		data.heightHint = 200;
-		table.setLayoutData(data);
-
-		table.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetDefaultSelected(SelectionEvent event) {
-				TableItem item = (TableItem) event.item;
-				openMergeEditor(item);
-			}
-		});
-
-		String[] titles = { Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
-		int[] widths = { 100, 400 };
-		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
-		}
-
-		createToolBar();
-		getSite().getPage().addSelectionListener(this);
+		super.createPartControl(parent);
 		MercurialStatusCache.getInstance().addObserver(this);
 	}
 
-	private void createToolBar() {
-		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createTable(org.eclipse.swt.widgets.Composite)
+	 */
+	@Override
+	protected void createTable(Composite parent) {
+		table = new MergeTable(parent);
 
-		completeAction = new Action(Messages.getString("MergeView.complete")) { //$NON-NLS-1$
+		table.getTableViewer().addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				openMergeEditor((FlaggedAdaptable) ((IStructuredSelection) event.getSelection()).getFirstElement());
+			}
+		});
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createActions()
+	 */
+	@Override
+	protected void createActions() {
+		completeAction = new Action(Messages.getString("MergeView.merge.complete")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				if (areAllResolved()) {
@@ -137,14 +122,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		};
 		completeAction.setEnabled(false);
 		completeAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
-		mgr.add(completeAction);
 
-		abortAction = new Action(Messages.getString("MergeView.abort")) { //$NON-NLS-1$
+		abortAction = new Action(Messages.getString("MergeView.merge.abort")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
 					RunnableHandler runnable;
-					if (HgRebaseClient.isRebasing(hgRoot)) {
+					if (!merging) {
 						runnable = new AbortRebaseHandler();
 					} else {
 						UpdateHandler update = new UpdateHandler();
@@ -157,8 +141,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					runnable.run(hgRoot);
 					refresh(hgRoot);
 				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getLocalizedMessage());
+					handleError(e);
 				}
 				MercurialUtilities.setOfferAutoCommitMerge(true);
 			}
@@ -166,7 +149,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		abortAction.setEnabled(false);
 		abortAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(
 				ISharedImages.IMG_ELCL_STOP));
-		mgr.add(abortAction);
+
 		markResolvedAction = new Action(Messages.getString("MergeView.markResolved")) { //$NON-NLS-1$
 			@Override
 			public void run() {
@@ -177,8 +160,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						populateView(true);
 					}
 				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getConciseMessage());
+					handleError(e);
 				}
 			}
 		};
@@ -193,19 +175,33 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						populateView(true);
 					}
 				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-					statusLabel.setText(e.getConciseMessage());
+					handleError(e);
 				}
 			}
 		};
 		markUnresolvedAction.setEnabled(false);
+	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createToolBar(org.eclipse.jface.action.IToolBarManager)
+	 */
+	@Override
+	protected void createToolBar(IToolBarManager mgr) {
+		mgr.add(makeActionContribution(completeAction));
+		mgr.add(makeActionContribution(abortAction));
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#createMenus(org.eclipse.jface.action.IMenuManager)
+	 */
+	@Override
+	protected void createMenus(IMenuManager mgr) {
 		final Action openMergeEditorAction = new Action("Open in Merge Editor") {
 			@Override
 			public void run() {
-				TableItem[] selection = table.getSelection();
-				if (selection != null && selection.length > 0) {
-					openMergeEditor(selection[0]);
+				FlaggedAdaptable selection = table.getSelection();
+				if (selection != null) {
+					openMergeEditor(selection);
 				}
 			}
 		};
@@ -250,58 +246,33 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				menuMgr1.add(abortAction);
 			}
 		});
+
 		menuMgr.setRemoveAllWhenShown(true);
-		table.setMenu(menu);
+		table.getTableViewer().getControl().setMenu(menu);
 	}
 
 	private void populateView(boolean attemptToCommit) throws HgException {
 		boolean bAllResolved = true;
 		List<FlaggedAdaptable> status = null;
 		status = HgResolveClient.list(hgRoot);
-		table.removeAll();
+		table.setItems(status);
 		for (FlaggedAdaptable flagged : status) {
-			TableItem row = new TableItem(table, SWT.NONE);
-			row.setText(0, flagged.getStatus());
-			IFile iFile = (IFile) flagged.getAdapter(IFile.class);
-			row.setText(1, iFile.getProjectRelativePath().toString());
-			row.setData(flagged);
 			if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
-				row.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
 				bAllResolved = false;
 			}
 		}
-		abortAction.setEnabled(true);
-		completeAction.setEnabled(true);
-		markResolvedAction.setEnabled(true);
-		markUnresolvedAction.setEnabled(true);
+		completeAction.setEnabled(bAllResolved);
 
-		// Update the status label
-		{
-			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
+		if (bAllResolved) {
 			String label;
-
-			if (bAllResolved) {
-				if (merging) {
-					label = hgRoot.getName() + Messages.getString("MergeView.PleaseCommitMerge")
-							+ " " + MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-				} else {
-					label = hgRoot.getName() + Messages.getString("MergeView.PleaseCommitRebase");
-				}
+			if (merging) {
+				label = Messages.getString("MergeView.PleaseCommitMerge");
 			} else {
-				if (merging) {
-					String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(
-							hgRoot);
-					if (mergeNodeId != null) {
-						label = "Merging " + hgRoot.getName() + " with " + mergeNodeId;
-					} else {
-						label = "Merging " + hgRoot.getName();
-					}
-				} else {
-					label = "Rebasing " + hgRoot.getName();
-				}
+				label = Messages.getString("MergeView.PleaseCommitRebase");
 			}
-
-			statusLabel.setText(label);
+			showInfo(label);
+		} else {
+			hideStatus();
 		}
 
 		// Show commit dialog
@@ -317,10 +288,48 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		}
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#onRootChanged()
+	 */
+	@Override
+	protected void onRootChanged() {
+		if (hgRoot == null || !MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)) {
+			table.setItems(null);
+			abortAction.setEnabled(false);
+			completeAction.setEnabled(false);
+			markResolvedAction.setEnabled(false);
+			markUnresolvedAction.setEnabled(false);
+			table.setEnabled(false);
+
+			return;
+		}
+
+		abortAction.setEnabled(true);
+		completeAction.setEnabled(true);
+		markResolvedAction.setEnabled(true);
+		markUnresolvedAction.setEnabled(true);
+		table.setEnabled(true);
+
+		try {
+			merging = !HgRebaseClient.isRebasing(hgRoot);
+
+			if (merging) {
+				abortAction.setText(Messages.getString("MergeView.merge.abort"));
+				completeAction.setText(Messages.getString("MergeView.merge.complete"));
+			} else {
+				abortAction.setText(Messages.getString("MergeView.rebase.abort"));
+				completeAction.setText(Messages.getString("MergeView.rebase.complete"));
+			}
+
+			getViewSite().getActionBars().getToolBarManager().update(true);
+			populateView(false);
+		} catch (HgException e) {
+			handleError(e);
+		}
+	}
+
 	private void attemptToCommit() {
 		try {
-			boolean merging = !HgRebaseClient.isRebasing(hgRoot);
-
 			MercurialUtilities.setOfferAutoCommitMerge(false);
 			RunnableHandler handler = merging ? new CommitMergeHandler()
 					: new ContinueRebaseHandler();
@@ -332,67 +341,56 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		}
 	}
 
-	protected void clearView() {
-		statusLabel.setText("No repository selected: Select a merging or rebasing repository");
-		table.removeAll();
-		abortAction.setEnabled(false);
-		completeAction.setEnabled(false);
-		markResolvedAction.setEnabled(false);
-		markUnresolvedAction.setEnabled(false);
-		hgRoot = null;
-	}
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getDescription()
+	 */
+	@Override
+	protected String getDescription() {
+		if (hgRoot == null || !MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)) {
+			return "No merge in progress. Select a merging or rebasing repository";
+		}
 
-	public void refresh(HgRoot newRoot) {
-		clearView();
-		setCurrentRoot(newRoot, true);
+		if (merging) {
+			String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+			if (mergeNodeId != null) {
+				return hgRoot.getName() + ": Merging with " + mergeNodeId;
+			}
+			return hgRoot.getName() + ": Merging";
+		}
+		return hgRoot.getName() + ": Rebasing";
 	}
 
 	/**
-	 * Refresh the view with for the given hg root.
-	 *
-	 * @param newRoot The new selection
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#canChangeRoot(com.vectrace.MercurialEclipse.model.HgRoot, boolean)
 	 */
-	protected void setCurrentRoot(HgRoot newRoot, boolean force) {
-		if(newRoot == null) {
-			if (force) {
-				clearView();
-			}
-			return;
+	@Override
+	protected boolean canChangeRoot(HgRoot newRoot, boolean fromSelection) {
+		boolean ok = super.canChangeRoot(newRoot, fromSelection);
+
+		if (fromSelection) {
+			ok &= MercurialStatusCache.getInstance().isMergeInProgress(newRoot);
 		}
-		if ((hgRoot == null) || !newRoot.equals(hgRoot)) {
-			// TODO should schedule a job here...
-			try {
-				if (MercurialStatusCache.getInstance().isMergeInProgress(newRoot)) {
-					this.hgRoot = newRoot;
-					populateView(false);
-				} else if (force) {
-					clearView();
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
+
+		return ok;
 	}
 
 	private boolean areAllResolved() {
 		boolean allResolved = true;
-		if (table.getItems() != null && table.getItems().length > 0) {
-			for (TableItem item : table.getItems()) {
-				FlaggedAdaptable fa = (FlaggedAdaptable) item.getData();
-				allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
-			}
+		for (FlaggedAdaptable fa : table.getItems()) {
+			allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
 		}
 		return allResolved;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#selectionChanged(org.eclipse.ui.IWorkbenchPart, org.eclipse.jface.viewers.ISelection)
+	 */
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-		// TODO do not react on any changes if the view is hidden...
-
 		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
 			IStructuredSelection structured = (IStructuredSelection) selection;
 			IResource resource = MercurialEclipsePlugin.getAdapter(structured.getFirstElement(), IResource.class);
 			if (resource != null) {
-				setCurrentRoot(MercurialTeamProvider.hasHgRoot(resource), false);
+				rootSelected(MercurialTeamProvider.hasHgRoot(resource));
 			}
 		}
 	}
@@ -404,16 +402,14 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	@Override
 	public void dispose() {
-		getSite().getPage().removeSelectionListener(this);
-		MercurialStatusCache.getInstance().deleteObserver(this);
 		super.dispose();
+		MercurialStatusCache.getInstance().deleteObserver(this);
 	}
 
 	private IFile getSelection() {
-		TableItem[] selection = table.getSelection();
-		if (selection != null && selection.length > 0) {
-			FlaggedAdaptable fa = (FlaggedAdaptable) selection[0].getData();
-			IFile iFile = (IFile) fa.getAdapter(IFile.class);
+		FlaggedAdaptable selection = table.getSelection();
+		if (selection != null) {
+			IFile iFile = (IFile) selection.getAdapter(IFile.class);
 			return iFile;
 		}
 		return null;
@@ -437,8 +433,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		}
 	}
 
-	private void openMergeEditor(TableItem item) {
-		FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
+	private void openMergeEditor(FlaggedAdaptable flagged) {
 		IFile file = (IFile) flagged.getAdapter(IFile.class);
 		CompareAction compareAction = new CompareAction(file);
 		compareAction.setEnableMerge(true);
@@ -471,5 +466,72 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 						MessageDialog.INFORMATION,
 						MercurialPreferenceConstants.PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG,
 						shell);
+	}
+
+	private static class MergeTable extends AbstractHighlightableTable<FlaggedAdaptable> {
+
+		public MergeTable(Composite parent) {
+			super(parent, new MergeTableLabelProvider());
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable#createColumns(org.eclipse.jface.viewers.TableViewer, org.eclipse.jface.layout.TableColumnLayout)
+		 */
+		@Override
+		protected List<TableViewerColumn> createColumns(TableViewer viewer,
+				TableColumnLayout tableColumnLayout) {
+			List<TableViewerColumn> l = new ArrayList<TableViewerColumn>(2);
+			String[] titles = {
+					Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
+			ColumnLayoutData[] widths = { new ColumnPixelData(100, false, true),
+					new ColumnWeightData(100, 200, true) };
+
+			for (int i = 0; i < titles.length; i++) {
+				TableViewerColumn column = new TableViewerColumn(viewer, SWT.NONE);
+				column.getColumn().setText(titles[i]);
+				tableColumnLayout.setColumnData(column.getColumn(), widths[i]);
+				l.add(column);
+			}
+
+			return l;
+		}
+
+	}
+
+	private static class MergeTableLabelProvider extends HighlightingLabelProvider<FlaggedAdaptable> {
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable.HighlightingLabelProvider#isHighlighted(java.lang.Object)
+		 */
+		@Override
+		public boolean isHighlighted(FlaggedAdaptable flagged) {
+			return flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED;
+		}
+
+		/**
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnImage(java.lang.Object, int)
+		 */
+		public Image getColumnImage(Object element, int columnIndex) {
+			return null;
+		}
+
+		/**
+		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
+		 */
+		public String getColumnText(Object element, int columnIndex) {
+			FlaggedAdaptable flagged = (FlaggedAdaptable) element;
+
+			switch (columnIndex) {
+			case 0:
+				return flagged.getStatus();
+			case 1:
+				// TODO: this is wrong when hgroot not at project root
+				return ((IFile) flagged.getAdapter(IFile.class)).getProjectRelativePath()
+						.toString();
+			}
+
+			throw new IllegalStateException();
+		}
+
 	}
 }

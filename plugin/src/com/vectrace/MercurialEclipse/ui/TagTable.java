@@ -14,7 +14,6 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +31,6 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -80,7 +78,7 @@ public class TagTable extends Composite {
 		int[] widths = { 60, 150, 200, 70, 300 };
 		Comparator[] comparators = { new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
-				return SortListener.sort(a.tag.getRevision(), b.tag.getRevision());
+				return TableSortListener.sort(a.tag.getRevision(), b.tag.getRevision());
 			}
 		}, new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
@@ -92,7 +90,7 @@ public class TagTable extends Composite {
 			}
 		}, new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
-				return SortListener.sort(a.tag.isLocal() ? 0 : 1, b.tag.isLocal() ? 0 : 1);
+				return TableSortListener.sort(a.tag.isLocal() ? 0 : 1, b.tag.isLocal() ? 0 : 1);
 			}
 		}, new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
@@ -100,7 +98,7 @@ public class TagTable extends Composite {
 			}
 		} };
 
-		Listener sortListener = new SortListener(table, comparators) {
+		Listener sortListener = new TableSortListener(table, comparators) {
 			@Override
 			protected Object[] getData() {
 				return data;
@@ -298,67 +296,6 @@ public class TagTable extends Composite {
 			if (summary != null) {
 				item.setText(4, summary);
 			}
-		}
-	}
-
-	/**
-	 * Sorts a table. Should listen to column selection
-	 */
-	@SuppressWarnings("unchecked")
-	public abstract static class SortListener implements Listener {
-
-		private final Comparator[] comparators;
-		private final Table table;
-
-		public SortListener(Table table, Comparator[] comparators) {
-			this.table = table;
-			this.comparators = comparators;
-		}
-
-		public void handleEvent(Event e) {
-			// determine new sort column and direction
-			TableColumn sortColumn = table.getSortColumn();
-			TableColumn currentColumn = (TableColumn) e.widget;
-			int dir = table.getSortDirection();
-			if (sortColumn == currentColumn) {
-				dir = dir == SWT.UP ? SWT.DOWN : SWT.UP;
-			} else {
-				table.setSortColumn(currentColumn);
-				dir = SWT.UP;
-			}
-			// sort the data based on column and direction
-			int nIdx = 0;
-			for (TableColumn c : table.getColumns()) {
-				if (c == currentColumn) {
-					break;
-				}
-				nIdx++;
-			}
-
-			Object[] data = getData();
-
-			Arrays.sort(data, comparators[nIdx]);
-
-			if (dir == SWT.DOWN) {
-				for (int i = 0, n = data.length; i < n / 2; i++) {
-					Object temp = data[i];
-					data[i] = data[n - i - 1];
-					data[n - i - 1] = temp;
-				}
-			}
-
-			// update data displayed in table
-			table.setSortDirection(dir);
-			table.clearAll();
-		}
-
-		protected abstract Object[] getData();
-
-		public static int sort(int a, int b) {
-			if (a == b) {
-				return 0;
-			}
-			return a < b ? -1 : 1;
 		}
 	}
 }
