@@ -66,9 +66,9 @@ public class HgQImportClient extends AbstractClient {
 			Assert.isNotNull(patchFile);
 			if (existing) {
 				command.addOptions("--existing"); //$NON-NLS-1$
-			} else {
-				command.addOptions(patchFile.toOSString());
 			}
+
+			command.addOptions(patchFile.toOSString());
 		}
 
 		return command.executeToString();

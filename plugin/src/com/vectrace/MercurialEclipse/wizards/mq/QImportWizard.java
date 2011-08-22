@@ -46,7 +46,9 @@ public class QImportWizard extends HgOperationWizard {
 		final QImportWizardPage importPage = (QImportWizardPage) page;
 
 		ChangeSet[] changesets = importPage.getRevisions();
+		boolean existing = importPage.isExisting();
 		IPath patchFile = null;
+
 		if (changesets == null) {
 			if (importPage.getPatchFile().getText().length()==0) {
 				importPage.setErrorMessage(Messages.getString("QImportWizard.page.error.mustSelectChangesetOrFile")); //$NON-NLS-1$
@@ -54,13 +56,12 @@ public class QImportWizard extends HgOperationWizard {
 			}
 
 			patchFile = new Path(importPage.getPatchFile().getText());
-			if (!patchFile.toFile().exists()) {
+			if (!patchFile.toFile().exists() && !existing) {
 				importPage.setErrorMessage(Messages.getString("QImportWizard.page.error.patchFileNotExists")); //$NON-NLS-1$
 				return null;
 			}
 		}
 
-		boolean existing = importPage.isExisting();
 		boolean force = importPage.getForceCheckBox().getSelection();
 
 		return new QImportOperation(getContainer(), patchFile, changesets, existing, force, root);

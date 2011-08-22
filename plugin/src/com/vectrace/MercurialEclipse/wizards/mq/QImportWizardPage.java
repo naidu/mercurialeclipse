@@ -135,6 +135,7 @@ public class QImportWizardPage extends HgWizardPage {
 
 	private void checkExisting(File file) throws IOException {
 		setMessage(null);
+		setErrorMessage(null);
 
 		File patchDir = new File(root, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
 		File[] patches = patchDir.listFiles();
