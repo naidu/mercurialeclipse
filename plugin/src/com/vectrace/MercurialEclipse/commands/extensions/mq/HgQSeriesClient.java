@@ -39,20 +39,18 @@ public class HgQSeriesClient extends AbstractClient {
 		return parse(command.executeToString());
 	}
 
-	/**
-	 * @param executeToString
-	 * @return
-	 */
-	public static List<Patch> parse(String executeToString) {
+	protected static List<Patch> parse(String executeToString) {
 		List<Patch> list = new ArrayList<Patch>();
 		if (executeToString != null && executeToString.indexOf("\n") >= 0) { //$NON-NLS-1$
 			String[] patches = executeToString.split("\n"); //$NON-NLS-1$
+			int i = 1;
+
 			for (String string : patches) {
                 String[] components = string.split(":", 2); //$NON-NLS-1$
                 String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
 
 				Patch p = new Patch();
-				p.setIndex(getInt(patchData[0], -1));
+				p.setIndex(i++);
 				p.setApplied("A".equals(patchData[1])); //$NON-NLS-1$
 				p.setName(patchData[2].trim());
 
@@ -65,14 +63,6 @@ public class HgQSeriesClient extends AbstractClient {
 			}
 		}
 		return list;
-	}
-
-	private static int getInt(String s, int def) {
-		try {
-			return Integer.parseInt(s);
-		} catch (NumberFormatException e) {
-			return def;
-		}
 	}
 
 	public static List<Patch> getPatchesNotInSeries(IResource resource)
