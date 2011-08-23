@@ -86,12 +86,12 @@ public class QNewWizardPage extends HgWizardPage {
 		if (showPatchName) {
 			createLabel(composite, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
 			this.patchNameTextField = createTextField(composite);
-			this.patchNameTextField.setText("new-patch-" + getCount() + ".patch");
+			this.patchNameTextField.setText("patch-" + getCount() + ".patch");
 		}
 
 		createLabel(composite, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
 		userTextField = createTextField(composite);
-		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(root));
+		userTextField.setText(getUser());
 
 		createLabel(composite, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
 		date = createTextField(composite);
@@ -131,6 +131,13 @@ public class QNewWizardPage extends HgWizardPage {
 				.getProjects(root)), true, true, false);
 
 		setControl(composite);
+	}
+
+	/**
+	 * @return The name for the commit user field
+	 */
+	protected String getUser() {
+		return HgCommitMessageManager.getDefaultCommitName(root);
 	}
 
 	/**

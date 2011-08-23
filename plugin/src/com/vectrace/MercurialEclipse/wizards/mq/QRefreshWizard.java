@@ -116,6 +116,14 @@ public class QRefreshWizard extends HgOperationWizard {
 				new ChangedFilesTable(g, currentChangeset).getViewer().setInput(currentChangeset);
 			}
 		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.wizards.mq.QNewWizardPage#getUser()
+		 */
+		@Override
+		protected String getUser() {
+			return currentChangeset.getAuthor();
+		}
 	}
 
 	private final HgRoot root;
