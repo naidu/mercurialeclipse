@@ -24,6 +24,7 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -76,6 +77,12 @@ public class StripWizardPage extends HgWizardPage {
 			}
 
 		};
+
+		try {
+			changesetTable.highlightParents(HgParentClient.getParents(hgRoot));
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+		}
 
 		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);

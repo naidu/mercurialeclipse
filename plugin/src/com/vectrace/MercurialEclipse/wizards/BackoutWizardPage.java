@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
@@ -69,6 +70,12 @@ public class BackoutWizardPage extends HgWizardPage {
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
 		changesetTable.setLayoutData(gridData);
+
+		try {
+			changesetTable.highlightParents(HgParentClient.getParents(hgRoot));
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+		}
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
