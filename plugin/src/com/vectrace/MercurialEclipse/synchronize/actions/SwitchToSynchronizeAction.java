@@ -49,7 +49,7 @@ public class SwitchToSynchronizeAction extends ExportPatchSynchronizeAction {
 	protected boolean updateSelection(IStructuredSelection selection) {
 		ChangeSet cs = getChangeSet(selection);
 
-		isParent = cs != null && cs.isCurrent();
+		isParent = cs != null && cs.isCurrentOutgoing();
 		setText(isParent ? parentText : normalText);
 
 		return super.updateSelection(selection);

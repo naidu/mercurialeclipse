@@ -45,7 +45,6 @@ public class BackoutWizardPage extends HgWizardPage {
 	private ChangesetTable changesetTable;
 	private Text messageTextField;
 	private Button mergeCheckBox;
-	private ChangeSet backoutRevision;
 	private final HgRoot hgRoot;
 	private Text userTextField;
 	private final ChangeSet selectedChangeSet;
@@ -73,7 +72,7 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				setCommitMessageFromSelectedRevision();
+				onChangesetSelected();
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -84,9 +83,6 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);
-
-		changesetTable.setSelection(selectedChangeSet);
-		setCommitMessageFromSelectedRevision();
 
 		// now the options
 		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
@@ -106,14 +102,16 @@ public class BackoutWizardPage extends HgWizardPage {
 				Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
 		mergeCheckBox.setSelection(true);
 
-
+		changesetTable.setSelection(selectedChangeSet);
 		setControl(composite);
 		setPageComplete(true);
 	}
 
-	protected void setCommitMessageFromSelectedRevision() {
-		backoutRevision = changesetTable.getSelection();
+	protected void onChangesetSelected() {
+		final ChangeSet backoutRevision = changesetTable.getSelection();
+
 		if (backoutRevision != null) {
+			// Update commit message
 			getShell().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					messageTextField.setText(Messages.getString(
@@ -122,30 +120,52 @@ public class BackoutWizardPage extends HgWizardPage {
 					setPageComplete(true);
 				}
 			});
+		} else {
+			setPageComplete(false);
 		}
 	}
 
 	@Override
 	public void setPageComplete(boolean complete) {
 		if(complete){
-			try {
-				if(HgStatusClient.isDirty(hgRoot)){
-					setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
-					super.setPageComplete(false);
-					return;
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			complete = validate();
 		}
 		super.setPageComplete(complete);
 	}
 
+	private boolean validate() {
+		ChangeSet backoutRevision = changesetTable.getSelection();
+
+		mergeCheckBox.setEnabled(backoutRevision != null && !backoutRevision.isCurrent());
+		setErrorMessage(null);
+
+		try {
+			if (backoutRevision == null) {
+				// Do nothing
+			} else if (messageTextField.getText().length() == 0) {
+				setErrorMessage("Please enter a commit message");
+			} else if(HgStatusClient.isDirty(hgRoot)){
+				setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
+			} else {
+				// All ok
+				return true;
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		return false;
+	}
+
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
+		if (!validate()) {
+			return false;
+		}
+
 		String msg = messageTextField.getText();
-		boolean merge = mergeCheckBox.getSelection();
-		backoutRevision = changesetTable.getSelection();
+		ChangeSet backoutRevision = changesetTable.getSelection();
+		boolean merge = mergeCheckBox.getSelection() && !backoutRevision.isCurrent();
 		try {
 			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());

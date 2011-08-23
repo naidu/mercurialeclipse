@@ -764,8 +764,15 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	/**
 	 * @return Whether the repository is currently on this revision
 	 */
+	public boolean isCurrentOutgoing() {
+		return direction == Direction.OUTGOING && isCurrent();
+	}
+
+	/**
+	 * @return Whether the repository is currently on this revision
+	 */
 	public boolean isCurrent() {
-		if (direction == Direction.OUTGOING && hgRoot != null) {
+		if (hgRoot != null) {
 			try {
 				return equals(LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot));
 			} catch (HgException e) {
