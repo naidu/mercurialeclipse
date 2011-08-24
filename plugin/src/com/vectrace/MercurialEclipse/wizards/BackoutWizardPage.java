@@ -48,7 +48,7 @@ public class BackoutWizardPage extends HgWizardPage {
 	private Button mergeCheckBox;
 	private final HgRoot hgRoot;
 	private Text userTextField;
-	private final ChangeSet selectedChangeSet;
+	private ChangeSet selectedChangeSet;
 
 	public BackoutWizardPage(String pageName, String title, ImageDescriptor image,
 			HgRoot hgRoot, ChangeSet selectedChangeSet) {
@@ -79,16 +79,14 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				onChangesetSelected();
+				onChangesetSelected(changesetTable.getSelection());
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
-
 		};
 
-		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);
 
 		// now the options
@@ -109,14 +107,21 @@ public class BackoutWizardPage extends HgWizardPage {
 				Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
 		mergeCheckBox.setSelection(true);
 
-		changesetTable.setSelection(selectedChangeSet);
+		// Hack because initial selection event is not fired
+		{
+			if (selectedChangeSet == null) {
+				selectedChangeSet = changesetTable.getStrategy().getChangeSet(0);
+			}
+			changesetTable.setSelection(selectedChangeSet);
+			onChangesetSelected(selectedChangeSet);
+		}
+		changesetTable.addSelectionListener(listener);
+
 		setControl(composite);
 		setPageComplete(true);
 	}
 
-	protected void onChangesetSelected() {
-		final ChangeSet backoutRevision = changesetTable.getSelection();
-
+	protected void onChangesetSelected(final ChangeSet backoutRevision) {
 		if (backoutRevision != null) {
 			// Update commit message
 			getShell().getDisplay().asyncExec(new Runnable() {
