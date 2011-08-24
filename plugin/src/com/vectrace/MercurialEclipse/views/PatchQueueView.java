@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.views;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -63,6 +64,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
+import com.vectrace.MercurialEclipse.ui.TableSortListener;
 
 /**
  * @author bastian
@@ -185,11 +187,16 @@ public class PatchQueueView extends AbstractRootView {
 		};
 		qPopAllAction.setEnabled(false);
 
-		qFoldAction = new MQAction("qfold", RefreshRootJob.WORKSPACE) { //$NON-NLS-1$
+		qFoldAction = new MQAction("qfold", RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
 			public boolean invoke() throws HgException {
-				List<Patch> patches = table.getSelections();
+				List<Patch> patches = new ArrayList<Patch>(table.getSelections());
 				if (patches.size() > 0) {
+					Collections.sort(patches, new Comparator<Patch>() {
+						public int compare(Patch o1, Patch o2) {
+							return TableSortListener.sort(o1.getIndex(), o2.getIndex());
+						}
+					});
 					HgQFoldClient.fold(hgRoot, true, null, patches);
 					return true;
 				}
