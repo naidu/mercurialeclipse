@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.ColorFieldEditor;
@@ -22,10 +21,8 @@ import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -43,8 +40,6 @@ import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
-
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 /**
  * @author bastian
@@ -298,100 +293,6 @@ public final class SWTWidgetHelper {
 		label = new Label(parent, SWT.SEPARATOR | SWT.HORIZONTAL);
 		data = new GridData(GridData.FILL_HORIZONTAL);
 		label.setLayoutData(data);
-	}
-
-	/**
-	 * Creates a ListViewer whose input is an array of IFiles.
-	 *
-	 * @param parent
-	 *            the parent of the viewer
-	 * @param title
-	 *            the text for the title label
-	 * @param heightHint
-	 *            the nominal height of the list
-	 * @return the created list viewer
-	 */
-	public static ListViewer createFileListViewer(Composite parent, String title, int heightHint) {
-		createLabel(parent, title);
-		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL
-				| SWT.BORDER);
-		listViewer.setContentProvider(new IStructuredContentProvider() {
-			public Object[] getElements(Object inputElement) {
-				return (Object[]) inputElement;
-			}
-
-			public void dispose() {
-			}
-
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			}
-		});
-		listViewer.setLabelProvider(new LabelProvider() {
-			@Override
-			public String getText(Object element) {
-				return ((IFile) element).getFullPath().toString();
-			}
-		});
-		listViewer.setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
-
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.heightHint = heightHint;
-		listViewer.getList().setLayoutData(data);
-		return listViewer;
-	}
-
-	/**
-	 * Creates a ListViewer whose input is an array of ChangeSets.
-	 *
-	 * @param parent
-	 *            the parent of the viewer
-	 * @param title
-	 *            the text for the title label
-	 * @param heightHint
-	 *            the nominal height of the list
-	 * @return the created list viewer
-	 */
-	public static ListViewer createChangeSetListViewer(Composite parent, String title,
-			int heightHint) {
-		if (title != null) {
-			createLabel(parent, title);
-		}
-		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL
-				| SWT.BORDER);
-		listViewer.setContentProvider(new IStructuredContentProvider() {
-			public Object[] getElements(Object inputElement) {
-				return (Object[]) inputElement;
-			}
-
-			public void dispose() {
-			}
-
-			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-			}
-
-		});
-		listViewer.setLabelProvider(new LabelProvider() {
-			@Override
-			public String getText(Object element) {
-				ChangeSet cs = (ChangeSet) element;
-				return cs + "\t" + cs.getDateString() + "\t" + cs.getUser(); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		});
-
-		ViewerComparator comparator = new org.eclipse.ui.model.WorkbenchViewerComparator() {
-			@Override
-			public int compare(Viewer viewer, Object e1, Object e2) {
-				return ((ChangeSet) e2).compareTo((ChangeSet) e1);
-			}
-		};
-
-		listViewer.setComparator(comparator);
-
-		GridData data = new GridData(GridData.FILL_BOTH);
-		data.heightHint = heightHint;
-		listViewer.getList().setLayoutData(data);
-		listViewer.setUseHashlookup(true);
-		return listViewer;
 	}
 
 	/**
