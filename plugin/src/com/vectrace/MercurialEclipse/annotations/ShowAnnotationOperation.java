@@ -84,7 +84,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		@Override
 		public Object getHoverInfo() {
-			return entry.getUser()
+			return entry.getAuthor()
 					+ " " + id + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					(entry.getComment() != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}

@@ -300,10 +300,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return branch;
 	}
 
-	public String getUser() {
-		return user;
-	}
-
 	public String getDateString() {
 		Date d = getRealDate();
 		if (d != null) {
@@ -745,7 +741,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public String getAuthor() {
-		return getUser();
+		return user;
 	}
 
 	/**
@@ -766,7 +762,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 */
 	@DoNotDisplayMe
 	public String getPerson() {
-		String sUser = getUser();
+		String sUser = getAuthor();
 
 		if (sUser != null) {
 			int a = sUser.indexOf('@');

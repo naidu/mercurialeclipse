@@ -60,7 +60,7 @@ public class MergeHandler extends RootHandler {
 			if (!autoPickOtherHead) {
 
 				String csSummary = "    Changeset: " + cs.getRevision().toString().substring(0, 20)
-						+ "\n    User: " + cs.getUser() + "\n    Date: "
+						+ "\n    User: " + cs.getAuthor() + "\n    Date: "
 						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
 				String branch = cs.getBranch();

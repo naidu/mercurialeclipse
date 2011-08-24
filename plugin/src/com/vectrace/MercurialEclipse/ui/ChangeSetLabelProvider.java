@@ -1,10 +1,3 @@
-package com.vectrace.MercurialEclipse.ui;
-
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.swt.graphics.Image;
-
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 /*******************************************************************************
  * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
@@ -16,6 +9,14 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
  * bastian       implementation
  * Philip Graf   bug fix
  *******************************************************************************/
+package com.vectrace.MercurialEclipse.ui;
+
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.Image;
+
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 public class ChangeSetLabelProvider
@@ -36,7 +37,7 @@ public class ChangeSetLabelProvider
 			case 2:
 				return rev.getDateString();
 			case 3:
-				return rev.getUser();
+				return rev.getAuthor();
 			case 4:
 				return rev.getBranch();
 			case 5:

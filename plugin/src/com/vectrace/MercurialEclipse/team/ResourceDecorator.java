@@ -403,12 +403,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
 			if (fileCs != null) {
 				suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
-					+ fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
+					+ fileCs.getAgeDate() + " - " + fileCs.getAuthor() + "]";
 
 				if (cs != null) {
 					suffix += " < [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
 						+ cs.getNodeShort() + " - " + cs.getAgeDate()
-						+ " - " + cs.getUser() + "]";
+						+ " - " + cs.getAuthor() + "]";
 				}
 			}
 		}

@@ -133,7 +133,7 @@ public class ChangesetTable extends Composite {
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getUser().compareTo(b.getUser());
+				return a.getAuthor().compareTo(b.getAuthor());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
@@ -197,7 +197,7 @@ public class ChangesetTable extends Composite {
 					row.setText(0, Integer.toString(rev.getChangesetIndex()));
 					row.setText(1, rev.getChangeset());
 					row.setText(2, rev.getDateString());
-					row.setText(3, rev.getUser());
+					row.setText(3, rev.getAuthor());
 					row.setText(4, rev.getBranch());
 					row.setText(5, ChangeSetUtils.getPrintableTagsString(rev));
 					row.setText(6, rev.getSummary());
