@@ -25,6 +25,8 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class HgPatchClient extends AbstractClient {
 
+	public static final String PATCH_EXTENSION = ".diff";
+
 	/**
 	 * Import a patch. Throws an exception if there is a conflict
 	 *

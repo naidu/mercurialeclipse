@@ -88,7 +88,7 @@ public class ImportPatchOperation extends HgOperation {
 			File file = null;
 			try {
 				file = ClipboardUtils.clipboardToTempFile("mercurial_", //$NON-NLS-1$
-						".patch");
+						HgPatchClient.PATCH_EXTENSION);
 				if (file != null) {
 					return HgPatchClient.importPatch(hgRoot, file, options);
 				}

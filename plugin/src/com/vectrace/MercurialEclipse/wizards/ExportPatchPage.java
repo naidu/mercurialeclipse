@@ -31,6 +31,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -239,7 +240,7 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 		protected String getFileName() {
 			HgRoot root = cs.getHgRoot();
 			List<IProject> projects = (root == null) ? null : MercurialTeamProvider.getKnownHgProjects(root);
-			String sFile = cs.getChangeset().substring(0, 10) + ".patch";
+			String sFile = cs.getChangeset().substring(0, 10) + HgPatchClient.PATCH_EXTENSION;
 
 			if (projects != null)
 			{

@@ -73,6 +73,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
@@ -617,7 +618,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private static String makePatchName(String id) {
-		return "HGE-" + id + "-" + System.currentTimeMillis() + ".diff";
+		return "HGE-" + id + "-" + System.currentTimeMillis() + HgPatchClient.PATCH_EXTENSION;
 	}
 
 	/**

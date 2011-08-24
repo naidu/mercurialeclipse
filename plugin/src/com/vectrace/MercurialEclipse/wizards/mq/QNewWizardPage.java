@@ -37,6 +37,7 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
@@ -86,7 +87,7 @@ public class QNewWizardPage extends HgWizardPage {
 		if (showPatchName) {
 			createLabel(composite, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
 			this.patchNameTextField = createTextField(composite);
-			this.patchNameTextField.setText("patch-" + getCount() + ".patch");
+			this.patchNameTextField.setText("patch-" + getCount() + HgPatchClient.PATCH_EXTENSION);
 		}
 
 		createLabel(composite, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
