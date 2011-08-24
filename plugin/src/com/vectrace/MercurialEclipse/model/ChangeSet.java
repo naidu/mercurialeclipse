@@ -748,6 +748,44 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return getUser();
 	}
 
+	/**
+	 * Roughly corresponds to Mercurial's template filter named "author" except if
+	 * an email is provided includes everything left of the '@'.
+	 *
+	 * See also: http://www.javaforge.com/issue/13809
+	 * <pre>
+	 * def person(author):
+	 * '''get name of author, or else username.'''
+	 * if not '@' in author:
+	 *     return author
+	 * f = author.find('<')
+	 * if f == -1:
+	 *     return util.shortuser(author)
+	 * return author[:f].rstrip()
+	 * </pre>
+	 */
+	@DoNotDisplayMe
+	public String getPerson() {
+		String sUser = getUser();
+
+		if (sUser != null) {
+			int a = sUser.indexOf('@');
+
+			if (a < 0) {
+				return sUser;
+			}
+
+			int b = sUser.indexOf('<');
+
+			if (b >= 0) {
+				return sUser.substring(0, b).trim();
+			}
+			return sUser.substring(0, a).trim();
+		}
+
+		return null;
+	}
+
 	@Override
 	public Date getDate() {
 		return getRealDate();
