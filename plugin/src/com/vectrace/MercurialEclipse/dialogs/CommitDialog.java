@@ -267,10 +267,13 @@ public class CommitDialog extends TitleAreaDialog {
 						inResources == null ? null : inResources.toArray(new IResource[0]));
 	}
 
-	private void validateControls() {
-		final String message = commitTextBox.getDocument().get();
-		if (StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
+	private boolean isDefaultCommitMessage() {
+		String message = commitTextBox.getDocument().get();
+		return StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message);
+	}
 
+	private void validateControls() {
+		if (isDefaultCommitMessage()) {
 			setErrorMessage(Messages.getString("CommitDialog.commitMessageRequired")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else if (commitFilesList.getCheckedResources().size() == 0 && !options.allowEmptyCommit
@@ -304,6 +307,11 @@ public class CommitDialog extends TitleAreaDialog {
 		closeBranchCheckBox.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				validateControls();
+
+				if (closeBranchCheckBox.getSelection() && isDefaultCommitMessage()) {
+						commitTextDocument.set(Messages.getString("CommitDialog.closingBranch",
+								MercurialTeamProvider.getCurrentBranch(root)));
+				}
 			}
 			public void widgetDefaultSelected(SelectionEvent e) {
 			}
