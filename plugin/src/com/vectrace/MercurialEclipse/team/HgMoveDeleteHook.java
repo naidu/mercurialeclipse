@@ -297,10 +297,13 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		}
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.team.IMoveDeleteHook#moveFile(org.eclipse.core.resources.team.IResourceTree, org.eclipse.core.resources.IFile, org.eclipse.core.resources.IFile, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public boolean moveFile(IResourceTree tree, IFile source,
 			IFile destination, int updateFlags, IProgressMonitor monitor) {
 
-		if (!isInMercurialRepo(source, monitor)) {
+		if (!isInMercurialRepo(source, monitor) || !isSameRoot(source, destination)) {
 			return false;
 		}
 		boolean keepHistory = (updateFlags & IResource.KEEP_HISTORY) != 0;
@@ -322,6 +325,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		return true;
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.team.IMoveDeleteHook#moveFolder(org.eclipse.core.resources.team.IResourceTree, org.eclipse.core.resources.IFolder, org.eclipse.core.resources.IFolder, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public boolean moveFolder(IResourceTree tree, IFolder source,
 			IFolder destination, int updateFlags, IProgressMonitor monitor) {
 		/*
@@ -330,7 +336,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		 * Check that there is at least 1 file and if so there is Mercurial work
 		 * to do, otherwise there is no Mercurial work to be done.
 		 */
-		if (!folderHasMercurialFiles(source, monitor) || source.isLinked()) {
+		if (!folderHasMercurialFiles(source, monitor) || source.isLinked() || !isSameRoot(source, destination)) {
 			return false;
 		}
 
@@ -355,6 +361,13 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		// Returning true indicates that this method has moved resource in both
 		// the file system and eclipse.
 		return true;
+	}
+
+	private static boolean isSameRoot(IResource source, IResource dest) {
+		MercurialRootCache cache = MercurialRootCache.getInstance();
+		HgRoot root = cache.getHgRoot(source);
+
+		return root != null && root.equals(cache.hasHgRoot(dest, true));
 	}
 
 	/**
@@ -396,6 +409,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		return true;
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.team.IMoveDeleteHook#moveProject(org.eclipse.core.resources.team.IResourceTree, org.eclipse.core.resources.IProject, org.eclipse.core.resources.IProjectDescription, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public boolean moveProject(IResourceTree tree, final IProject source,
 			IProjectDescription description, int flags,
 			IProgressMonitor monitor) {
