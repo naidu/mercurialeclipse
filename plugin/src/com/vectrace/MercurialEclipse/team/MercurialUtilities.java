@@ -407,10 +407,7 @@ public final class MercurialUtilities {
 
 		FileStatus stat = cs.getStatus(file);
 
-		if (stat == null) {
-			// TODO: throw an exception instead?
-			MercurialEclipsePlugin.logWarning("Cannot correctly calculate parent changeset", new IllegalStateException());
-		} else if (stat.isCopied()) {
+		if (stat != null && stat.isCopied()) {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
