@@ -111,6 +111,15 @@ public class HgCommand extends AbstractShellCommand {
 		}
 	}
 
+	public void addStyleFile(int style) throws HgException {
+		try {
+			addOptions("--style", //$NON-NLS-1$
+					AbstractParseChangesetClient.getStyleFile(style).getCanonicalPath());
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+	}
+
 	/**
 	 * Remembers the user name given as option (see {@link #addUserName(String)}) as the default
 	 * user name for current hg root. Should be called only after the command was successfully

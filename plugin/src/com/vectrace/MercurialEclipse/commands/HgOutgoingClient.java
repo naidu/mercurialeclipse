@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -28,16 +26,11 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	 * @return never return null
 	 */
 	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
-		AbstractShellCommand command = getCommand(key);
+		HgCommand command = getCommand(key);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
-		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		addInsecurePreference(command);
-		try {
-			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
-					.getStyleFile(style).getCanonicalPath());
-		} catch (IOException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
-		}
+		command.addStyleFile(computeFullStatus ? AbstractParseChangesetClient.STYLE_WITH_FILES
+				: AbstractParseChangesetClient.STYLE_WITH_FILES_FAST);
 
 		if (key.isAllowUnrelated()) {
 			command.addOptions("-f");
@@ -69,9 +62,9 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	private static AbstractShellCommand getCommand(RemoteKey key) {
+	private static HgCommand getCommand(RemoteKey key) {
 		HgRoot hgRoot = key.getRoot();
-		AbstractShellCommand command = new HgCommand("outgoing", "Calculating outgoing changesets", hgRoot, false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("outgoing", "Calculating outgoing changesets", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 
