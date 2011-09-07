@@ -17,7 +17,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class SingleResourceAction implements IActionDelegate {
 
-	private IResource selection;
+	protected IResource selection;
 
 	public SingleResourceAction() {
 		super();

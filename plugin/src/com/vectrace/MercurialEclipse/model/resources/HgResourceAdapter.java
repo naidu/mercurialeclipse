@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.MultiRule;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
@@ -242,6 +243,38 @@ public abstract class HgResourceAdapter extends DummyResourceAdapter implements 
 		}
 		HgResourceAdapter other = (HgResourceAdapter) obj;
 		return file.equals(other.file);
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getHgRootRelativePath()
+	 */
+	public String getHgRootRelativePath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getChangeSet()
+	 */
+	public ChangeSet getChangeSet() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getIPath()
+	 */
+	public IPath getIPath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getResource()
+	 */
+	public IResource getResource() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

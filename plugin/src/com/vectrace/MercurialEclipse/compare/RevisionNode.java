@@ -10,82 +10,212 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.compare;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.compare.ResourceNode;
+import org.eclipse.compare.CompareUI;
+import org.eclipse.compare.IEditableContent;
+import org.eclipse.compare.IEditableContentExtension;
+import org.eclipse.compare.IEncodedStreamContentAccessor;
+import org.eclipse.compare.IModificationDate;
+import org.eclipse.compare.ITypedElement;
+import org.eclipse.compare.structuremergeviewer.IStructureComparator;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgResource;
+import com.vectrace.MercurialEclipse.model.IHgFolder;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 
-public class RevisionNode extends ResourceNode {
-	private final MercurialRevisionStorage rev;
+public class RevisionNode implements IEncodedStreamContentAccessor, IStructureComparator, ITypedElement,
+IEditableContent, IModificationDate, IEditableContentExtension {
 
-	public RevisionNode(MercurialRevisionStorage rev) {
-		super(rev.getResource());
-		this.rev = rev;
+	private final IHgResource resource;
+	private List<IStructureComparator> children;
+
+	public RevisionNode(IHgResource resource) {
+		this.resource = resource;
 	}
 
-	@Override
+	public IHgResource getHgResource() {
+		return resource;
+	}
+
+	/**
+	 * @see org.eclipse.compare.ITypedElement#getName()
+	 */
 	public String getName() {
-		return getResource().getName();
+		if (resource != null) {
+			return resource.getName();
+		}
+		return null;
 	}
 
 	public String getLabel()
 	{
-		return rev.getName();
-	}
-
-	@Override
-	public InputStream getContents() throws CoreException {
-		// prefetch byte content
-		getContent();
-		return super.getContents();
-	}
-
-	@Override
-	public long getModificationDate() {
-		if (rev.getChangeSet() != null)
-		{
-			return rev.getChangeSet().getDate().getTime();
+		String name = resource.getName();
+		if (resource.getChangeSet() != null) {
+			name = name + " [" + resource.getChangeSet().toString() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
-
-		return super.getModificationDate();
+		return name;
 	}
 
-	public int getRevision() {
-		return rev.getRevision();
+	public InputStream getContents() throws CoreException {
+		if (resource instanceof IStorage) {
+			return ((IStorage) resource).getContents();
+		}
+		return null;
 	}
 
-	public ChangeSet getChangeSet(){
-		return rev.getChangeSet();
-	}
-
-	@Override
-	protected InputStream createStream() throws CoreException {
-		return rev.getContents();
+	public byte[] getContent() {
+		if (resource instanceof HgResource) {
+			return ((HgResource) resource).getContent();
+		}
+		return null;
 	}
 
 	@Override
 	public boolean equals(Object other) {
-		boolean superResult = super.equals(other);
-		if(!superResult){
-			return false;
+		if (other instanceof RevisionNode) {
+			return this.resource.equals(((RevisionNode) other).getHgResource());
 		}
-		// ResourceNode has a bug/feature, that it only compares names, NOT full resource path
-		// it means, two index.htm files from different folders are considered equal...
-		// See also issue #10757.
-		if(!(other instanceof ResourceNode)){
-			return false;
-		}
-		IResource resource1 = getResource();
-		IResource resource2 = ((ResourceNode) other).getResource();
-		return resource1.equals(resource2);
+		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return super.hashCode();
+		return resource.hashCode();
+	}
+
+	public boolean isWorkingCopy() {
+		return resource.getResource() != null;
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEditableContentExtension#isReadOnly()
+	 */
+	public boolean isReadOnly() {
+		return resource.isReadOnly();
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEditableContentExtension#validateEdit(org.eclipse.swt.widgets.Shell)
+	 */
+	public IStatus validateEdit(Shell shell) {
+		IResource res = resource.getResource();
+
+		if (res instanceof IFile) {
+			// See org.eclipse.compare.ResourceNode.validateEdit(Shell)
+			if (isReadOnly()) {
+				return ResourcesPlugin.getWorkspace().validateEdit(new IFile[] { (IFile)res}, shell);
+			}
+			return Status.OK_STATUS;
+		}
+
+		// Not in workspace
+		return Status.CANCEL_STATUS;
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEditableContent#isEditable()
+	 */
+	public boolean isEditable() {
+		return !isReadOnly();
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEditableContent#replace(org.eclipse.compare.ITypedElement, org.eclipse.compare.ITypedElement)
+	 */
+	public ITypedElement replace(ITypedElement dest, ITypedElement src) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @see org.eclipse.compare.ITypedElement#getImage()
+	 */
+	public Image getImage() {
+		return CompareUI.getImage(getType());
+	}
+
+	/**
+	 * @see org.eclipse.compare.ITypedElement#getType()
+	 */
+	public String getType() {
+		if (resource instanceof IHgFolder) {
+			return ITypedElement.FOLDER_TYPE;
+		}
+		if (resource != null) {
+			String s= resource.getFileExtension();
+			if (s != null) {
+				return s;
+			}
+		}
+		return ITypedElement.UNKNOWN_TYPE;
+	}
+
+	/**
+	 * @see org.eclipse.compare.structuremergeviewer.IStructureComparator#getChildren()
+	 */
+	public Object[] getChildren() {
+		if (children == null) {
+			children = new ArrayList<IStructureComparator>();
+			if (resource instanceof IHgFolder) {
+				IHgResource[] members = ((IHgFolder) resource).members();
+				for (int i = 0; i < members.length; i++) {
+					IStructureComparator child = new RevisionNode(members[i]);
+					children.add(child);
+				}
+			}
+		}
+		return children.toArray();
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEncodedStreamContentAccessor#getCharset()
+	 */
+	public String getCharset() throws CoreException {
+		return resource.getHgRoot().getEncoding();
+	}
+
+	/**
+	 * @see org.eclipse.compare.IModificationDate#getModificationDate()
+	 */
+	public long getModificationDate() {
+		IResource res = resource.getResource();
+
+		if (res != null) {
+			return res.getLocalTimeStamp();
+		}
+
+		// Future: get timestamp from commit time?
+		return 0;
+	}
+
+	/**
+	 * @see org.eclipse.compare.IEditableContent#setContent(byte[])
+	 */
+	public void setContent(byte[] newContent) {
+		if (resource.getResource() instanceof IFile) {
+			InputStream is = new ByteArrayInputStream(newContent);
+			try {
+				// update cache
+				((HgResource) resource).setContent(newContent);
+				// update local file
+				((IFile) resource.getResource()).setContents(is, true, true, null);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 }

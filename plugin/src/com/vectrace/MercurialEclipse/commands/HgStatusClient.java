@@ -21,6 +21,7 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,6 +70,38 @@ public class HgStatusClient extends AbstractClient {
 			command.addFiles(res);
 		}
 		return command.executeToString();
+	}
+
+	public static String[] getStatus(HgRoot root, String revision1, String revision2, String filter, String inPattern, String exPattern) throws HgException {
+		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
+
+		// modified, added, removed, deleted, unknown
+		command.addOptions(filter);
+		if (revision1 != null && revision1 != "") {
+			command.addOptions("--rev", revision1); //$NON-NLS-1$
+		}
+		if (revision2 != null && revision2 != "") {
+			command.addOptions("--rev", revision2); //$NON-NLS-1$
+
+		}
+		if (inPattern != null && inPattern != "") {
+			command.addOptions("--include", inPattern); //$NON-NLS-1$
+		}
+		if (exPattern != null && exPattern != "") {
+			command.addOptions("--exclude", exPattern); //$NON-NLS-1$
+		}
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		return command.executeToString().split("\n"); //$NON-NLS-1$
+	}
+
+	public static TreeSet<String> removeStatusIndicator(String[] status) {
+		TreeSet<String> set = new TreeSet<String>();
+		for (String line : status) {
+			if (line.length() > 2) {
+				set.add(line.substring(2));
+			}
+		}
+		return set;
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {

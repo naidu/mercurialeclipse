@@ -32,8 +32,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -42,8 +43,11 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author zingo
  *
  *         This is a IStorage subclass that can handle file revision
- *
+ * @deprecated due to lacking full support of representing file and folder structure in Hg revision.
+ * Replaced by {@link HgFile}.
+ * To convert to HgFile see ResourceUtils.convertToHgFile(MercurialRevisionStorage rev).
  */
+@Deprecated
 public class MercurialRevisionStorage implements IStorage {
 	private static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 	private int revision;

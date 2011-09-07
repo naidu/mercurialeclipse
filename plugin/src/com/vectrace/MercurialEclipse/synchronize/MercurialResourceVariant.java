@@ -16,12 +16,15 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.IHgFolder;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 
 public class MercurialResourceVariant implements IResourceVariant {
-	private final MercurialRevisionStorage rev;
+	private final RevisionNode rev;
 
-	public MercurialResourceVariant(MercurialRevisionStorage rev) {
+	public MercurialResourceVariant(RevisionNode rev) {
 		this.rev = rev;
 	}
 
@@ -30,25 +33,27 @@ public class MercurialResourceVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		return rev.getRevision() + ":" + rev.getGlobal();
+		ChangeSet cs = rev.getHgResource().getChangeSet();
+		return cs.getChangesetIndex() + ":" + cs.getChangeset();
 	}
 
 	public String getName() {
-		return rev.getResource().getName();
+		return rev.getHgResource().getName();
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		return rev;
+		IHgResource hgResource = rev.getHgResource();
+		if (hgResource instanceof IStorage) {
+			return (IStorage) hgResource;
+		}
+		return null;
 	}
 
 	public boolean isContainer() {
-		return false;
+		return rev.getHgResource() instanceof IHgFolder;
 	}
 
-	/**
-	 * @return the rev
-	 */
-	public MercurialRevisionStorage getRev() {
+	public RevisionNode getRev() {
 		return rev;
 	}
 

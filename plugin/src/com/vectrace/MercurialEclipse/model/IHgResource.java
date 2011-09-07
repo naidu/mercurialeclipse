@@ -10,14 +10,33 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+
+
 /**
  * @author andrei
  */
-public interface IHgResource {
+public interface IHgResource extends IAdaptable {
 
 	/**
 	 * @return the hgRoot, never null
 	 */
-	HgRoot getHgRoot();
+    HgRoot getHgRoot();
+
+    String getHgRootRelativePath();
+
+	String getName();
+
+	String getFileExtension();
+
+	ChangeSet getChangeSet();
+
+	IPath getIPath();
+
+	boolean isReadOnly();
+
+	IResource getResource();
 
 }

@@ -17,10 +17,12 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.IHgFile;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -44,9 +46,9 @@ public class MercurialResourceVariantComparator implements IResourceVariantCompa
 			return true;
 		}
 
-		MercurialRevisionStorage remoteIStorage;
+		IHgFile remoteIStorage;
 		try {
-			remoteIStorage = (MercurialRevisionStorage) repoRevision.getStorage(null);
+			remoteIStorage = (IHgFile) repoRevision.getStorage(null);
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);
 			return false;
@@ -69,13 +71,14 @@ public class MercurialResourceVariantComparator implements IResourceVariantCompa
 	public boolean compare(IResourceVariant base, IResourceVariant remote) {
 		MercurialResourceVariant mbase = (MercurialResourceVariant) base;
 		MercurialResourceVariant mremote = (MercurialResourceVariant) remote;
-		MercurialRevisionStorage remoteRev = mremote.getRev();
-		if(mbase.getRev() == remoteRev){
+		RevisionNode remoteRev = mremote.getRev();
+		if(mbase.getRev().getHgResource() == remoteRev.getHgResource()){
 			return true;
 		}
-		IResource resource = remoteRev.getResource();
-		String remoteBranch = remoteRev.getChangeSet().getBranch();
-		String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+
+		IHgResource resource = remoteRev.getHgResource();
+		String remoteBranch = remoteRev.getHgResource().getChangeSet().getBranch();
+		String currentBranch = MercurialTeamProvider.getCurrentBranch(resource.getHgRoot());
 		if (Branch.same(currentBranch, remoteBranch)) {
 			return base.getContentIdentifier().equals(remote.getContentIdentifier());
 		}

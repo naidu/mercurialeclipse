@@ -11,11 +11,13 @@
 
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -25,12 +27,12 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 public class CompareWithAction extends CompareAction {
 
 	@Override
-	public void run(IFile file) throws TeamException {
-		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-				Messages.getString("CompareWithAction.compareWith"), file); //$NON-NLS-1$
+	public void run(IResource resource) throws TeamException {
+		RevisionChooserDialog dialog = new RevisionChooserDialog(MercurialEclipsePlugin.getActiveShell(),
+				Messages.getString("CompareWithAction.compareWith"), MercurialRootCache.getInstance().getHgRoot(resource)); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			CompareUtils.openEditor(file, dialog.getChangeSet());
+			CompareUtils.openEditor(resource, dialog.getChangeSet());
 		}
 	}
 

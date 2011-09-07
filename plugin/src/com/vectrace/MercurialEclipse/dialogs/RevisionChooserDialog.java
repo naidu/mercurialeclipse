@@ -15,7 +15,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.swt.SWT;
@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
-import com.vectrace.MercurialEclipse.storage.FileDataLoader;
+import com.vectrace.MercurialEclipse.storage.ResourceDataLoader;
 import com.vectrace.MercurialEclipse.storage.RootDataLoader;
 
 /**
@@ -43,8 +43,8 @@ public class RevisionChooserDialog extends Dialog {
 	private String forceButtonText;
 	private RevisionChooserPanel panel;
 
-	public RevisionChooserDialog(Shell parentShell, String title, IFile file) {
-		this(parentShell, title, new FileDataLoader(file));
+	public RevisionChooserDialog(Shell parentShell, String title, IResource resource) {
+		this(parentShell, title, new ResourceDataLoader(resource));
 	}
 
 	public RevisionChooserDialog(Shell parentShell, String title, HgRoot hgRoot) {

@@ -23,6 +23,7 @@ import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -143,6 +144,26 @@ public abstract class AbstractClient {
 			returnValue = false;
 		}
 		return returnValue;
+	}
+
+	public static String getHgResourceSearchPattern(IResource resource) throws HgException {
+
+		HgRoot hgRoot = getHgRoot(resource);
+		String pattern = null;
+
+		IPath relPath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
+		if (resource instanceof IStorage) {
+			pattern = '"' + "glob:" + relPath.toOSString() + '"';
+		} else {
+			String pathString = relPath.toOSString();
+			if (pathString.length() > 0) {
+				pattern = '"' + "glob:" + pathString + System.getProperty("file.separator") + "**" + '"';
+			} else {
+				pattern = '"' + "glob:**" + '"';
+			}
+		}
+
+		return pattern;
 	}
 
 	/**

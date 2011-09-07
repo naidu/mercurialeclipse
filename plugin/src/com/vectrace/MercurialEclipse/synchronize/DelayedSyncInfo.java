@@ -24,9 +24,11 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.internal.core.mapping.ResourceVariantFileRevision;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.NullRevision;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Andrei
@@ -60,8 +62,8 @@ public class DelayedSyncInfo extends MercurialSyncInfo {
 			delayedBase = syncInfo.getBase();
 			delayedRemote = syncInfo.getRemote();
 		} else {
-			delayedBase = new MercurialResourceVariant(new NullRevision(file, null));
-			delayedRemote = new MercurialResourceVariant(new NullRevision(file, null));
+			delayedBase = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(new NullRevision(file, null))));
+			delayedRemote = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(new NullRevision(file, null))));
 		}
 	}
 

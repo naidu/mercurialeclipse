@@ -6,21 +6,15 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * John Peberdy	implementation
+ * ge.zhong	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.menu;
+package com.vectrace.MercurialEclipse.model;
 
-import org.eclipse.core.resources.IResource;
+/**
+ * @author Ge Zhong
+ *
+ */
+public interface IHgFolder extends IHgResource {
 
-import com.vectrace.MercurialEclipse.team.CompareAction;
-
-public class CompareWithParentHandler extends SingleResourceHandler {
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
-	 */
-	@Override
-	protected void run(IResource resource) throws Exception {
-		new CompareAction(resource).run(null);
-	}
+	public IHgResource[] members();
 }

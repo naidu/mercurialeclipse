@@ -16,10 +16,7 @@ import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareNavigator;
 import org.eclipse.compare.ICompareNavigator;
 import org.eclipse.compare.INavigatable;
-import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -33,13 +30,11 @@ import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 public class HgCompareEditorInput extends CompareEditorInput {
 	private static final Differencer DIFFERENCER = new Differencer();
 
-	private final ResourceNode left;
-	private final ResourceNode ancestor;
-	private final ResourceNode right;
+	private final RevisionNode left;
+	private final RevisionNode ancestor;
+	private final RevisionNode right;
 
 	private final ISynchronizePageConfiguration syncConfig;
-
-	private final IFile resource;
 
 	/**
 	 * Does either a 2-way or 3-way compare, depending on if one is an ancestor
@@ -47,52 +42,40 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	 * and does 3-way compare.
 	 * @param syncConfig
 	 */
-	public HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
-			ResourceNode left, ResourceNode right, ResourceNode ancestor, ISynchronizePageConfiguration syncConfig) {
-		this(configuration, resource, left, right, ancestor, !(left instanceof RevisionNode), syncConfig);
+	public HgCompareEditorInput(CompareConfiguration configuration,
+			RevisionNode left, RevisionNode right, RevisionNode ancestor, ISynchronizePageConfiguration syncConfig) {
+		this(configuration, left, right, ancestor, true, syncConfig);
 
-		setTitle(resource.getName());
+		setTitle("Compare " + left.getName());
 	}
 
-	public HgCompareEditorInput(CompareConfiguration configuration, IFile leftResource,
-			ResourceNode right, ResourceNode ancestor) {
-		this(configuration, leftResource, new ResourceNode(leftResource), right, ancestor, true,
-				null);
-
-		setTitle(left.getName());
-
-		if (ancestor != null) {
-			configuration.setAncestorLabel(getLabel(ancestor));
-		}
-	}
-
-	private HgCompareEditorInput(CompareConfiguration configuration, IFile resource,
-			ResourceNode left, ResourceNode right, ResourceNode ancestor, boolean bLeftEditable,
+	private HgCompareEditorInput(CompareConfiguration configuration,
+			RevisionNode left, RevisionNode right, RevisionNode ancestor, boolean bLeftEditable,
 			ISynchronizePageConfiguration syncConfig) {
 		super(configuration);
 		this.syncConfig = syncConfig;
 		this.left = left;
 		this.ancestor = ancestor;
 		this.right = right;
-		this.resource = resource;
 		configuration.setLeftLabel(getLabel(left));
 		configuration.setLeftEditable(bLeftEditable);
 		configuration.setRightLabel(getLabel(right));
 		configuration.setRightEditable(false);
+		configuration.setAncestorLabel(getLabel(ancestor));
 	}
 
-	private static String getLabel(ResourceNode node) {
-		if (node instanceof RevisionNode) {
-			return ((RevisionNode) node).getLabel();
+	private static String getLabel(RevisionNode node) {
+		if (node != null) {
+			return node.getLabel();
 		}
-		return node.getName();
+		return "";
 	}
 
 	@Override
 	protected Object prepareInput(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		byte[] content = null;
-		ResourceNode parent = ancestor;
+		RevisionNode parent = ancestor;
 		if(parent != null){
 			content = parent.getContent();
 		}
@@ -113,15 +96,6 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			return "Save Changes";
 		}
 		return super.getOKButtonLabel();
-	}
-
-	@Override
-	public void saveChanges(IProgressMonitor monitor) throws CoreException {
-		boolean save = isSaveNeeded();
-		super.saveChanges(monitor);
-		if(save) {
-			((IFile) left.getResource()).setContents(left.getContents(), true, true, monitor);
-		}
 	}
 
 	/**
@@ -175,7 +149,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 	}
 
 	private boolean isSelectedInSynchronizeView() {
-		if (syncConfig == null || resource == null) {
+		if (syncConfig == null) {
 			return false;
 		}
 		ISelection s = syncConfig.getSite().getSelectionProvider().getSelection();

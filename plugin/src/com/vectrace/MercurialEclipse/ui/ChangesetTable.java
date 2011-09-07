@@ -79,7 +79,7 @@ public class ChangesetTable extends Composite {
 
 	/**
 	 * @param parent non null swt parent widget
-	 * @param resource a resource to show changesets for, mutually exclusive with the hgRoot argument
+	 * @param workspaceResource a resource to show changesets for, mutually exclusive with the hgRoot argument
 	 * @param hgRoot a hg root to show changesets for, , mutually exclusive with the resource argument
 	 * @param autoFetch true to fetch extra changesets info on scroll as needed
 	 */

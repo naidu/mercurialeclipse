@@ -53,13 +53,19 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.NullRevision;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
@@ -744,5 +750,45 @@ public final class ResourceUtils {
 			MercurialEclipsePlugin.logError(e);
 			return null;
 		}
+	}
+
+	public static IHgResource getParentHgResource(IResource resource) {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		if (hgRoot == null) {
+			return null;
+		}
+		ChangeSet cs = null;
+		try {
+			cs = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		if(cs != null){
+			IPath relPath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
+			if (resource instanceof IFile) {
+				return new HgFile(hgRoot, cs, relPath);
+			}
+			if (resource instanceof IContainer) {
+				try {
+					return HgLocateClient.getHgResources(resource, cs, null);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Convert deprecated MercurialRevisionStorage to HgFile
+	 */
+	public static IHgResource convertToHgFile(MercurialRevisionStorage rev) {
+		IFile file = rev.getResource();
+		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
+		IPath relPath = file.getLocation().makeRelativeTo(hgRoot.getIPath());
+		if (rev instanceof NullRevision) {
+			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
+		}
+		return new HgFile(hgRoot, rev.getChangeSet(), relPath);
 	}
 }

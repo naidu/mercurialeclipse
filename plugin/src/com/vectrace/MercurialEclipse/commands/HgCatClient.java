@@ -17,9 +17,12 @@ import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCatClient extends AbstractClient {
@@ -41,6 +44,26 @@ public class HgCatClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	public static String getContent(IHgFile hgfile) throws HgException {
+		HgRoot hgRoot = hgfile.getHgRoot();
+		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
+
+		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getChangeset();
+		if (revision != null && revision.length() != 0) {
+			command.addOptions("-r", revision); //$NON-NLS-1$
+		}
+
+		command.addOptions("--decode"); //$NON-NLS-1$
+		command.addOptions(hgfile.getHgRootRelativePath());
+		try {
+			command.setEncoding(hgfile.getCharset());
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		return command.executeToString();
+	}
+
 	public static String getContentFromBundle(IFile resource, String revision, File overlayBundle)
 			throws HgException, IOException {
 		Assert.isNotNull(overlayBundle);
@@ -56,6 +79,28 @@ public class HgCatClient extends AbstractClient {
 
 		hgCommand.addOptions("--decode", hgRoot.toRelative(file));
 		hgCommand.setEncoding(ResourceUtils.getFileEncoding(resource));
+
+		return hgCommand.executeToString();
+	}
+
+	public static String getContentFromBundle(IHgFile hgfile, String revision, File overlayBundle)
+			throws HgException, IOException {
+		Assert.isNotNull(overlayBundle);
+		HgRoot hgRoot = hgfile.getHgRoot();
+		HgCommand hgCommand = new HgCommand("cat", "Retrieving file contents from bundle", hgRoot, true);
+
+		hgCommand.setBundleOverlay(overlayBundle);
+
+		if (revision != null && revision.length() != 0) {
+			hgCommand.addOptions("-r", revision);
+		}
+
+		hgCommand.addOptions("--decode", hgfile.getHgRootRelativePath());
+		try {
+			hgCommand.setEncoding(hgfile.getCharset());
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 
 		return hgCommand.executeToString();
 	}

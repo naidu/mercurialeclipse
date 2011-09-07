@@ -1219,6 +1219,15 @@
               menubarPath="team.main/group1"
               label="%actionLabel.commit">
            </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.CompareWithAction"
+                 enablesFor="1"
+                 icon="icons/compare_view.gif"
+                 id="com.vectrace.MercurialEclipse.team.CompareWithAction"
+                 label="%actionLabel.compare.anotherRevision"
+                 menubarPath="compareWithMenu/compareWithGroup"
+                 tooltip="%actionLabel.compare.anotherChangesetTooltip">
+           </action>
       </objectContribution>
 
       <!-- File Team Menu -->
@@ -1232,15 +1241,6 @@
            </filter>
 
            <!-- Compare -->
-           <action
-               label="%actionLabel.compare.anotherChangeset"
-               class="com.vectrace.MercurialEclipse.team.CompareWithAction"
-               icon="icons/compare_view.gif"
-               tooltip="%actionLabel.compare.anotherChangesetTooltip"
-               menubarPath="compareWithMenu/compareWithGroup"
-               id="com.vectrace.MercurialEclipse.team.CompareWithAction"
-               enablesFor="1">
-           </action>
            <action
                label="%actionLabel.compare.parentChangeset"
                class="com.vectrace.MercurialEclipse.team.CompareAction"

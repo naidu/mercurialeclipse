@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.team.CompareWithAction;
@@ -22,8 +21,6 @@ public class CompareWithRevisionHandler extends SingleResourceHandler {
 	 */
 	@Override
 	protected void run(IResource resource) throws Exception {
-		if (resource instanceof IFile) {
-			new CompareWithAction().run((IFile) resource);
-		}
+		new CompareWithAction().run(resource);
 	}
 }

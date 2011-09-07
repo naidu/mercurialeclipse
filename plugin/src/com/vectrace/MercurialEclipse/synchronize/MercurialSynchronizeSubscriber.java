@@ -48,6 +48,7 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -148,7 +149,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					csOutgoing.getRevision().getRevision(),
 					csOutgoing.getChangeset(), csOutgoing);
 
-			outgoing = new MercurialResourceVariant(outgoingIStorage);
+			outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
 			hasOutgoingChanges = true;
 		} else {
 			boolean exists = file.exists();
@@ -176,7 +177,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				outgoingIStorage = new MercurialRevisionStorage(file,
 						csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
 
-				outgoing = new MercurialResourceVariant(outgoingIStorage);
+				outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
 			} else {
 				// new incoming file - no local available
 				outgoingIStorage = null;
@@ -235,7 +236,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 						ChangeSet baseChangeset = getChangeset(file, parentCs, null);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
-						outgoing = new MercurialResourceVariant(incomingIStorage);
+						outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
 						syncMode = SyncInfo.OUTGOING | SyncInfo.CHANGE;
 					}
 				}
@@ -249,7 +250,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		IResourceVariant incoming;
 		if (incomingIStorage != null) {
-			incoming = new MercurialResourceVariant(incomingIStorage);
+			incoming = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
 		} else {
 			// neither base nor outgoing nor incoming revision
 			incoming = null;
