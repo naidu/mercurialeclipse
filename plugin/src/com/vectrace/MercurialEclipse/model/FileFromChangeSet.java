@@ -72,7 +72,7 @@ public class FileFromChangeSet implements IAdaptable{
 	public Object getAdapter(Class adapter) {
 		// Resource adapter is enabled for "working" changeset only to avoid "dirty"
 		// decorations shown in the tree on changeset files from already commited changesets
-		if(changeset instanceof WorkingChangeSet && adapter == IResource.class){
+		if((changeset instanceof WorkingChangeSet) && adapter == IResource.class){
 			return file;
 		}
 		if (adapter == IFile.class /* || adapter == IResource.class*/) {

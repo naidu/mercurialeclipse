@@ -36,6 +36,7 @@ import org.eclipse.ui.navigator.ICommonViewerWorkbenchSite;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.properties.OpenPropertiesAction;
 import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
@@ -121,7 +122,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 			return;
 		}
 		Object selected;
-		if(element instanceof WorkingChangeSet && !((WorkingChangeSet)element).isDefault()) {
+		if(element instanceof GroupedUncommittedChangeSet && !((GroupedUncommittedChangeSet)element).isDefault()) {
 			selected = element;
 		} else {
 			IResource resource = ResourceUtils.getResource(element);

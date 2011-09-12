@@ -28,6 +28,7 @@ import org.eclipse.ui.navigator.CommonViewer;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
 import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted;
 
 /**
  * Creates new empty uncommitted changeset with default name
@@ -62,9 +63,16 @@ public class CreateNewChangesetSynchronizeAction extends SynchronizeModelAction 
 					}
 					CommonViewer commonViewer = (CommonViewer) viewer;
 					final HgChangeSetContentProvider csProvider = OpenAction.getProvider(commonViewer.getNavigatorContentService());
-					csProvider.getUncommittedCsManager().getUncommittedGroup().create(new IFile[0]);
-				}
+					IUncommitted uc = csProvider.getUncommittedEntry();
 
+					if (uc instanceof UncommittedChangesetGroup) {
+						((UncommittedChangesetGroup)uc).create(new IFile[0]);
+					} else {
+						MercurialEclipsePlugin.logError(
+								"Unexped invocation of CreateNewChangesetSynchronizeAction",
+								new IllegalStateException());
+					}
+				}
 			};
 		}
 		return null;

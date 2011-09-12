@@ -40,10 +40,10 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -71,6 +71,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	private final ArrayList<PresentationModeAction> presentationModeActions;
 
 	private OpenAction openAction;
+	private final LocalChangeSetEnableAction localChangeSetEnableAction;
 
 	// constructor
 
@@ -87,15 +88,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			}
 		};
 
+		IPreferenceStore prefStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+
 		presentationModeActions = new ArrayList<PresentationModeAction>();
 
 		for (PresentationMode mode : PresentationMode.values()) {
-			presentationModeActions.add(new PresentationModeAction(mode, MercurialEclipsePlugin
-					.getDefault().getPreferenceStore()));
-	}
+			presentationModeActions.add(new PresentationModeAction(mode, prefStore));
+		}
 
-		allBranchesAction = new PreferenceAction("Synchronize all branches", IAction.AS_CHECK_BOX, MercurialEclipsePlugin
-				.getDefault().getPreferenceStore(), MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH) {
+		localChangeSetEnableAction = new LocalChangeSetEnableAction(prefStore);
+
+		allBranchesAction = new PreferenceAction("Synchronize all branches", IAction.AS_CHECK_BOX,
+				prefStore, MercurialPreferenceConstants.PREF_SYNC_ONLY_CURRENT_BRANCH) {
 			@Override
 			public void run() {
 				prefStore.setValue(prefKey, !isChecked());
@@ -389,6 +393,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			for (PresentationModeAction action : presentationModeActions) {
 				layout.add(action);
 			}
+
+			menu.appendToGroup(group.getId(), localChangeSetEnableAction);
 		}
 	}
 
@@ -401,6 +407,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			action.dispose();
 		}
 		allBranchesAction.dispose();
+		localChangeSetEnableAction.dispose();
 		super.dispose();
 	}
 
@@ -435,6 +442,14 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				update();
 			}
 		}
+
+		protected boolean getBoolean() {
+			return prefStore.getBoolean(prefKey);
+		}
+
+		protected void set(boolean val) {
+			prefStore.setValue(prefKey, val);
+		}
 	}
 
 	private static class PresentationModeAction extends PreferenceAction {
@@ -456,6 +471,27 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		@Override
 		public void update() {
 			setChecked(mode.isSet());
+		}
+	}
+
+	private static class LocalChangeSetEnableAction extends PreferenceAction {
+
+		protected LocalChangeSetEnableAction(IPreferenceStore configuration) {
+			super("Enable local changesets", IAction.AS_CHECK_BOX, configuration,
+					MercurialPreferenceConstants.PREF_SYNC_ENABLE_LOCAL_CHANGESETS);
+
+			setToolTipText("Enable local changesets (Grouping of uncommitted changes)");
+			update();
+		}
+
+		@Override
+		public void run() {
+			set(isChecked());
+		}
+
+		@Override
+		public void update() {
+			setChecked(getBoolean());
 		}
 	}
 }

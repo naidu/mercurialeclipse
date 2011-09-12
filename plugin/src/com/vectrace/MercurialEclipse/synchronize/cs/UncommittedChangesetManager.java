@@ -13,8 +13,8 @@ package com.vectrace.MercurialEclipse.synchronize.cs;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -23,15 +23,15 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.IUncommittedChangesetManager;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
+ * Loads and saves uncommitted changeset state in preferences
+ *
  * @author Andrei
  */
-public class UncommittedChangesetManager implements IUncommittedChangesetManager {
+class UncommittedChangesetManager {
 
 	private static final String PATH_NAME_SEPARATOR = "=";
 
@@ -44,21 +44,17 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 
 	private boolean loadingFromPrefs;
 
-	private WorkingChangeSet defaultChangeset;
+	private GroupedUncommittedChangeSet defaultChangeset;
 	private IProject[] projects;
-
-	private final HgChangeSetContentProvider provider;
 
 	private final UncommittedChangesetGroup group;
 
-	public UncommittedChangesetManager(HgChangeSetContentProvider provider) {
-		this.provider = provider;
-		group = new UncommittedChangesetGroup(this);
-//		defaultChangeset = createDefaultChangeset();
+	public UncommittedChangesetManager(UncommittedChangesetGroup group) {
+		this.group = group;
 	}
 
-	protected WorkingChangeSet createDefaultChangeset() {
-		WorkingChangeSet changeset = new WorkingChangeSet("Default Changeset", group);
+	protected GroupedUncommittedChangeSet createDefaultChangeset() {
+		GroupedUncommittedChangeSet changeset = new GroupedUncommittedChangeSet("Default Changeset", group);
 		changeset.setDefault(true);
 		changeset.setComment("(no commit message)");
 		return changeset;
@@ -69,7 +65,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 	}
 
 	private void loadSavedChangesets(){
-		Set<WorkingChangeSet> sets = new HashSet<WorkingChangeSet>();
+		Set<GroupedUncommittedChangeSet> sets = new HashSet<GroupedUncommittedChangeSet>();
 		loadfromPreferences(sets);
 		assignRemainingFiles();
 	}
@@ -94,7 +90,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 			String comment = changeSet.getComment();
 			changesetNames.append(name).append(MAPPINGS_SEPARATOR);
 			store.putValue(KEY_CS_COMMENT_PREFIX + name, comment);
-			if(((WorkingChangeSet)changeSet).isDefault()) {
+			if(((GroupedUncommittedChangeSet)changeSet).isDefault()) {
 				store.putValue(KEY_CS_DEFAULT, name);
 			}
 			Set<IFile> files = changeSet.getFiles();
@@ -118,14 +114,14 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		}
 	}
 
-	public WorkingChangeSet getDefaultChangeset(){
+	public GroupedUncommittedChangeSet getDefaultChangeset(){
 		if(defaultChangeset == null) {
 			defaultChangeset = createDefaultChangeset();
 		}
 		return defaultChangeset;
 	}
 
-	private void loadfromPreferences(Set<WorkingChangeSet> sets) {
+	private void loadfromPreferences(Set<GroupedUncommittedChangeSet> sets) {
 		loadingFromPrefs = true;
 		try {
 			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
@@ -135,12 +131,12 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 				String[] names = changesets.split(MAPPINGS_SEPARATOR);
 				for (String name : names) {
 					if(!StringUtils.isEmpty(name)) {
-						WorkingChangeSet changeset = new WorkingChangeSet(name, group);
+						GroupedUncommittedChangeSet changeset = new GroupedUncommittedChangeSet(name, group);
 						sets.add(changeset);
 					}
 				}
 			}
-			for (WorkingChangeSet changeSet : sets) {
+			for (GroupedUncommittedChangeSet changeSet : sets) {
 				String comment = store.getString(KEY_CS_COMMENT_PREFIX + changeSet.getName());
 				changeSet.setComment(comment);
 				if(changeSet.getName().equals(defName)) {
@@ -159,7 +155,7 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 				Set<Entry<IFile,String>> entrySet = fileToChangeset.entrySet();
 				for (Entry<IFile, String> entry : entrySet) {
 					String name = entry.getValue();
-					WorkingChangeSet changeset = getChangeset(name, sets);
+					GroupedUncommittedChangeSet changeset = getChangeset(name, sets);
 					if(changeset == null){
 						continue;
 						//					changeset = new WorkingChangeSet(name, group);
@@ -173,8 +169,8 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		}
 	}
 
-	private static WorkingChangeSet getChangeset(String name, Set<WorkingChangeSet> sets){
-		for (WorkingChangeSet set : sets) {
+	private static GroupedUncommittedChangeSet getChangeset(String name, Set<GroupedUncommittedChangeSet> sets){
+		for (GroupedUncommittedChangeSet set : sets) {
 			if(name.equals(set.getName())){
 				return set;
 			}
@@ -224,14 +220,14 @@ public class UncommittedChangesetManager implements IUncommittedChangesetManager
 		if(projects != null){
 			assignRemainingFiles();
 		}
-		MercurialStatusCache.getInstance().addObserver(group);
+
 	}
 
 	public IProject[] getProjects() {
 		return projects;
 	}
 
-	public void makeDefault(WorkingChangeSet set) {
+	public void makeDefault(GroupedUncommittedChangeSet set) {
 		if(set == null || !group.getChangesets().contains(set)){
 			return;
 		}

@@ -23,8 +23,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -34,10 +34,10 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  */
 public class EditChangesetDialog extends CommitDialog {
 
-	private final WorkingChangeSet changeset;
+	private final GroupedUncommittedChangeSet changeset;
 	private Text changesetNameText;
 
-	public EditChangesetDialog(Shell shell, HgRoot hgRoot, WorkingChangeSet changeset,
+	public EditChangesetDialog(Shell shell, HgRoot hgRoot, GroupedUncommittedChangeSet changeset,
 			boolean isDefault) {
 		super(shell, hgRoot, new ArrayList<IResource>(changeset.getFiles()));
 		setBlockOnOpen(true);

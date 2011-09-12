@@ -20,8 +20,9 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
 /**
  * @author Andrei
@@ -67,17 +68,13 @@ public class HgChangeSetSorter extends ViewerSorter {
 		if(e1 instanceof ChangeSet && e2 instanceof ChangeSet){
 			ChangeSet cs1 = (ChangeSet) e1;
 			ChangeSet cs2 = (ChangeSet) e2;
-			if(cs1 instanceof WorkingChangeSet) {
-				WorkingChangeSet wcs1 = (WorkingChangeSet) cs1;
-				if(wcs1.isDefault()) {
-					return -1;
-				}
+			if (cs1 instanceof GroupedUncommittedChangeSet
+					&& ((GroupedUncommittedChangeSet) cs1).isDefault()) {
+				return -1;
 			}
-			if(cs2 instanceof WorkingChangeSet) {
-				WorkingChangeSet wcs2 = (WorkingChangeSet) cs2;
-				if(wcs2.isDefault()) {
-					return 1;
-				}
+			if (cs2 instanceof GroupedUncommittedChangeSet
+					&& ((GroupedUncommittedChangeSet) cs2).isDefault()) {
+				return 1;
 			}
 			return csComparator.compare(cs1, cs2);
 		}

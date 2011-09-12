@@ -41,6 +41,11 @@ public class SynchronizePreferencePage extends FieldEditorPreferencePage impleme
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
+				PREF_SYNC_ENABLE_LOCAL_CHANGESETS,
+				Messages.getString("SynchronizePreferencePage.syncEnableLocalChangeSets"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(
 				PREF_SYNC_ALL_PROJECTS_IN_REPO,
 				Messages.getString("SynchronizePreferencePage.syncAllProjectsInRepo"), //$NON-NLS-1$
 				getFieldEditorParent()));

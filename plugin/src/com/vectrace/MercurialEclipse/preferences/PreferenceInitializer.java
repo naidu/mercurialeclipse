@@ -59,6 +59,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_SYNC_ALL_PROJECTS_IN_REPO, true);
 		store.setDefault(PREF_SYNC_ONLY_CURRENT_BRANCH, true);
 		store.setDefault(PREF_SYNC_PRESENTATION_MODE, PresentationMode.COMPRESSED_TREE.name());
+		store.setDefault(PREF_SYNC_ENABLE_LOCAL_CHANGESETS, false);
 
 		// currently this reduces performance 2x => so disable per default
 		store.setDefault(PREF_ENABLE_SUBREPO_SUPPORT, false);

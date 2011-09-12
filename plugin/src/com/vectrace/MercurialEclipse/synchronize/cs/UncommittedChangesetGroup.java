@@ -35,9 +35,11 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -49,7 +51,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  *
  * @author Andrei
  */
-public class UncommittedChangesetGroup extends ChangesetGroup implements Observer {
+public class UncommittedChangesetGroup extends ChangesetGroup implements Observer, IUncommitted {
 
 
 	private final List<IPropertyChangeListener> listeners;
@@ -64,9 +66,9 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 	private final UncommittedChangesetManager ucsManager;
 	private static final String DEFAULT_NAME = "New changeset";
 
-	public UncommittedChangesetGroup(UncommittedChangesetManager ucsManager) {
+	public UncommittedChangesetGroup() {
 		super("Uncommitted", Direction.LOCAL);
-		this.ucsManager = ucsManager;
+		this.ucsManager = new UncommittedChangesetManager(this);
 		cache = MercurialStatusCache.getInstance();
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		event = new PropertyChangeEvent(this, "", null, "");
@@ -85,6 +87,13 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 
 	public void setContext(HgSubscriberMergeContext context) {
 		this.context = context;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted#getContext()
+	 */
+	public HgSubscriberMergeContext getContext() {
+		return context;
 	}
 
 	public void dispose() {
@@ -117,7 +126,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return files.contains(file);
 	}
 
-	public boolean add(IFile file, WorkingChangeSet set){
+	public boolean add(IFile file, GroupedUncommittedChangeSet set){
 		if(!getChangesets().contains(set)) {
 			return false;
 		}
@@ -161,7 +170,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return true;
 	}
 
-	public void committed(WorkingChangeSet cs) {
+	public void committed(GroupedUncommittedChangeSet cs) {
 		Set<IFile> set = new LinkedHashSet<IFile>(cs.getFiles());
 		for (IFile file : set) {
 			remove(file, cs);
@@ -176,7 +185,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		move(cs.getFiles().toArray(new IFile[0]), ucsManager.getDefaultChangeset());
 	}
 
-	public boolean delete(WorkingChangeSet cs) {
+	public boolean delete(GroupedUncommittedChangeSet cs) {
 		if(cs.isDefault()) {
 			return false;
 		}
@@ -186,7 +195,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 	}
 
 	public WorkingChangeSet create(IFile[] filesToAdd) {
-		WorkingChangeSet cs = new WorkingChangeSet(generateNewChangesetName(), this);
+		GroupedUncommittedChangeSet cs = new GroupedUncommittedChangeSet(generateNewChangesetName(), this);
 		move(filesToAdd, cs);
 		return cs;
 	}
@@ -212,12 +221,12 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		return name;
 	}
 
-	public void move(IFile[] files1, WorkingChangeSet to){
+	public void move(IFile[] files1, GroupedUncommittedChangeSet to){
 		Set<ChangeSet> changesets = getChangesets();
 		for (ChangeSet cs : changesets) {
 			for (IFile file : files1) {
 				if (cs.contains(file)) {
-					((WorkingChangeSet)cs).removeFile(file);
+					((GroupedUncommittedChangeSet)cs).removeFile(file);
 				}
 			}
 		}
@@ -230,7 +239,7 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 		changesetChanged(to);
 	}
 
-	public void remove(IResource file, WorkingChangeSet set){
+	public void remove(IResource file, GroupedUncommittedChangeSet set){
 		if(file instanceof IFile) {
 			set.removeFile((IFile) file);
 		}
@@ -396,5 +405,24 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 
 	public void update(Observable o, Object arg) {
 		update(getProjectSet());
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted#setProjects(org.eclipse.core.resources.IProject[])
+	 */
+	public void setProjects(IProject[] projects) {
+		ucsManager.setProjects(projects);
+		cache.addObserver(this);
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted#getProjects()
+	 */
+	public IProject[] getProjects() {
+		return ucsManager.getProjects();
+	}
+
+	public void makeDefault(GroupedUncommittedChangeSet set) {
+		ucsManager.makeDefault(set);
 	}
 }

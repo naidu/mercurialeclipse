@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -73,8 +74,10 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 						List<IResource> files = new ArrayList<IResource>();
 						files.addAll(cs.getFiles());
 						boolean done = commit(commithandler, files.toArray(new IResource[0]));
-						if(done) {
-							cs.getGroup().committed(cs);
+						if(done && cs instanceof GroupedUncommittedChangeSet) {
+							GroupedUncommittedChangeSet gucs = (GroupedUncommittedChangeSet) cs;
+
+							gucs.getGroup().committed(gucs);
 						}
 					}
 				} else {

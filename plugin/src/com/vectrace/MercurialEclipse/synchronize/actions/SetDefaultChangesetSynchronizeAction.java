@@ -27,8 +27,11 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.navigator.CommonViewer;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
+import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -64,7 +67,15 @@ public class SetDefaultChangesetSynchronizeAction extends SynchronizeModelAction
 					}
 					CommonViewer commonViewer = (CommonViewer) viewer;
 					final HgChangeSetContentProvider csProvider = OpenAction.getProvider(commonViewer.getNavigatorContentService());
-					csProvider.getUncommittedCsManager().makeDefault((WorkingChangeSet) object);
+					IUncommitted uc = csProvider.getUncommittedEntry();
+
+					if (uc instanceof UncommittedChangesetGroup) {
+						((UncommittedChangesetGroup)uc).makeDefault((GroupedUncommittedChangeSet) object);
+					} else {
+						MercurialEclipsePlugin.logError(
+								"Unexped invocation of SetDefaultChangesetSynchronizeAction",
+								new IllegalStateException());
+					}
 				}
 
 			};

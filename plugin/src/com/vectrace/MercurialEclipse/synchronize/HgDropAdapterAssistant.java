@@ -32,6 +32,7 @@ import org.eclipse.ui.navigator.CommonDropAdapterAssistant;
 import org.eclipse.ui.part.ResourceTransfer;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -73,15 +74,15 @@ public class HgDropAdapterAssistant extends CommonDropAdapterAssistant {
 		}
 		if(dropAdapter.getCurrentTarget() instanceof UncommittedChangesetGroup) {
 			createNewChangeset((UncommittedChangesetGroup)dropAdapter.getCurrentTarget(), files);
-		} else if(dropAdapter.getCurrentTarget() instanceof WorkingChangeSet) {
-			moveToAnotherChangeset((WorkingChangeSet)dropAdapter.getCurrentTarget(), files);
+		} else if(dropAdapter.getCurrentTarget() instanceof GroupedUncommittedChangeSet) {
+			moveToAnotherChangeset((GroupedUncommittedChangeSet)dropAdapter.getCurrentTarget(), files);
 		} else {
 			return Status.CANCEL_STATUS;
 		}
 		return Status.OK_STATUS;
 	}
 
-	private static void moveToAnotherChangeset(WorkingChangeSet changeSet, IFile[] files) {
+	private static void moveToAnotherChangeset(GroupedUncommittedChangeSet changeSet, IFile[] files) {
 		changeSet.getGroup().move(files, changeSet);
 	}
 

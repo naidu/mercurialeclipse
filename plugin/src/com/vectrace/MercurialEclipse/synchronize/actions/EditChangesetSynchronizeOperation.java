@@ -23,18 +23,18 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.dialogs.EditChangesetDialog;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class EditChangesetSynchronizeOperation extends SynchronizeModelOperation {
-	private final WorkingChangeSet changeset;
+	private final GroupedUncommittedChangeSet changeset;
 //	private final ISynchronizePageConfiguration configuration;
 //	private MercurialSynchronizeParticipant participant;
 
 	public EditChangesetSynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, WorkingChangeSet input) {
+			IDiffElement[] elements, GroupedUncommittedChangeSet input) {
 		super(configuration, elements);
 //		this.configuration = configuration;
 //		ISynchronizeParticipant participant1 = configuration.getParticipant();

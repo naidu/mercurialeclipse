@@ -25,6 +25,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -94,9 +95,10 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 			}
-		} else if(element instanceof WorkingChangeSet) {
+		} else if (element instanceof WorkingChangeSet) {
 			WorkingChangeSet cs = (WorkingChangeSet) element;
-			if(cs.isDefault()) {
+			if (cs instanceof GroupedUncommittedChangeSet
+					&& ((GroupedUncommittedChangeSet) cs).isDefault()) {
 				decoratedImage = getDefaultChangesetIcon();
 			} else {
 				decoratedImage = getWorkingChangesetIcon();
@@ -209,9 +211,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 	 */
 	@Override
 	public Font getFont(Object element) {
-		if(element instanceof WorkingChangeSet) {
-			WorkingChangeSet cs = (WorkingChangeSet) element;
-			if(cs.isDefault()) {
+		if (element instanceof GroupedUncommittedChangeSet) {
+			if (((GroupedUncommittedChangeSet) element).isDefault()) {
 				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
 			}
 		}

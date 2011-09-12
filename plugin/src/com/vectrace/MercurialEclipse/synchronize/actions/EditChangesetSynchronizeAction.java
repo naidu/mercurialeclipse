@@ -21,6 +21,7 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
@@ -48,7 +49,7 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 		Object object = sel.getFirstElement();
 		if(object instanceof WorkingChangeSet){
 			return new EditChangesetSynchronizeOperation(configuration, elements,
-					(WorkingChangeSet) object);
+					(GroupedUncommittedChangeSet) object);
 		}
 		return null;
 	}
