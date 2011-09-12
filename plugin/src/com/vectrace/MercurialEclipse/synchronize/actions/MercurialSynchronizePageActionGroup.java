@@ -186,8 +186,12 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		if(menu.find(HG_COMMIT_GROUP) == null){
 			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
 		}
-		if(menu.find(HG_CHANGESETS_GROUP) == null){
-			menu.insertAfter(ISynchronizePageConfiguration.EDIT_GROUP, new Separator(HG_CHANGESETS_GROUP));
+		if (localChangeSetEnableAction.getBoolean()) {
+			if(menu.find(HG_CHANGESETS_GROUP) == null) {
+				menu.insertAfter(ISynchronizePageConfiguration.EDIT_GROUP, new Separator(HG_CHANGESETS_GROUP));
+			}
+		} else {
+			menu.remove(HG_CHANGESETS_GROUP);
 		}
 		if (menu.find(HG_PUSH_PULL_GROUP) == null) {
 			menu.insertAfter(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(HG_PUSH_PULL_GROUP));
@@ -385,7 +389,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		IMenuManager menu = actionBars.getMenuManager();
 		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);
+
 		if (menu != null && group != null) {
+			menu.appendToGroup(group.getId(), allBranchesAction);
+
 			MenuManager layout = new MenuManager(Messages
 					.getString("MercurialSynchronizePageActionGroup.PresentationMode"));
 			menu.appendToGroup(group.getId(), layout);
