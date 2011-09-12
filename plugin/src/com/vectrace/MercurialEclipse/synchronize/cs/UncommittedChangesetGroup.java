@@ -110,13 +110,12 @@ public class UncommittedChangesetGroup extends ChangesetGroup implements Observe
 			Iterator<IFile> iterator = cs.getFiles().iterator();
 			while(iterator.hasNext()) {
 				IFile file = iterator.next();
-				if(cache.isClean(file)) {
-					iterator.remove();
+				if (cache.isClean(file)) {
+					((GroupedUncommittedChangeSet) cs).removeFile(file);
 				}
 			}
 		}
 	}
-
 
 	private boolean add(IFile file){
 		return add(file, ucsManager.getDefaultChangeset());
