@@ -20,24 +20,16 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  * @author bastian
  */
 public class StripWizard extends HgWizard {
-	private HgRoot hgRoot;
-	private ChangeSet changeSet;
-
-	private StripWizard() {
-		super(Messages.getString("StripWizard.title"));  //$NON-NLS-1$
-		setNeedsProgressMonitor(true);
-	}
-
-	public StripWizard(HgRoot hgRoot) {
-		this();
-		this.hgRoot = hgRoot;
-	}
+	private final HgRoot hgRoot;
+	private final ChangeSet changeSet;
 
 	/**
 	 * Constructor for wizard with preselected change set
 	 */
 	public StripWizard(HgRoot hgRoot, ChangeSet changeSet) {
-		this(hgRoot);
+		super(Messages.getString("StripWizard.title"));  //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+		this.hgRoot = hgRoot;
 		this.changeSet = changeSet;
 	}
 

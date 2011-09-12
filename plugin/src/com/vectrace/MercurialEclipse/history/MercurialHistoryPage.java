@@ -113,6 +113,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.HistoryContentProposalProvider.RevisionContentProposal;
+import com.vectrace.MercurialEclipse.menu.StripHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -125,7 +126,6 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 import com.vectrace.MercurialEclipse.wizards.Messages;
-import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 public class MercurialHistoryPage extends HistoryPage {
 
@@ -852,10 +852,7 @@ public class MercurialHistoryPage extends HistoryPage {
 						}
 						changeSet = revisions[0].getChangeSet();
 
-						StripWizard stripWizard = new StripWizard(changeSet.getHgRoot(), changeSet);
-						WizardDialog dialog = new WizardDialog(shell, stripWizard);
-						dialog.setBlockOnOpen(true);
-						dialog.open();
+						StripHandler.openWizard(changeSet.getHgRoot(), shell, changeSet);
 					}
 				});
 			}

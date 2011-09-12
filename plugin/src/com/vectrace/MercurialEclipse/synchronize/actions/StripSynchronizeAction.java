@@ -14,15 +14,14 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.menu.StripHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 /**
  * @author Ilya Ivanov (Intland)
@@ -53,14 +52,9 @@ public class StripSynchronizeAction extends SynchronizeModelAction {
 				InterruptedException {
 
 			getShell().getDisplay().asyncExec(new Runnable() {
-
 				public void run() {
-					StripWizard stripWizard = new StripWizard(hgRoot, changeSet);
-					WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
-					dialog.setBlockOnOpen(true);
-					dialog.open();
+					StripHandler.openWizard(hgRoot, getShell(), changeSet);
 				}
-
 			});
 		}
 	}

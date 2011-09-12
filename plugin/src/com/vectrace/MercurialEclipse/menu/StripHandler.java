@@ -12,7 +12,9 @@
 package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
@@ -20,8 +22,12 @@ public class StripHandler extends RootHandler {
 
 	@Override
 	protected void run(HgRoot hgRoot) {
-		StripWizard stripWizard = new StripWizard(hgRoot);
-		WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
+		openWizard(hgRoot, getShell(), null);
+	}
+
+	public static void openWizard(HgRoot hgRoot, Shell shell, ChangeSet changeset) {
+		StripWizard stripWizard = new StripWizard(hgRoot, changeset);
+		WizardDialog dialog = new WizardDialog(shell, stripWizard);
 		dialog.setBlockOnOpen(true);
 		dialog.open();
 	}

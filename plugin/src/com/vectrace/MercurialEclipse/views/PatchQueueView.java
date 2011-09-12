@@ -58,6 +58,7 @@ import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
 import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
+import com.vectrace.MercurialEclipse.menu.StripHandler;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -85,6 +86,7 @@ public class PatchQueueView extends AbstractRootView {
 	private Action qFoldAction;
 	private Action qImportAction;
 	private Action qGotoAction;
+	private Action stripAction;
 	private Patch topmostAppliedPatch;
 
 	/**
@@ -107,6 +109,7 @@ public class PatchQueueView extends AbstractRootView {
 		mgr.add(makeActionContribution(qFinishAction));
 		mgr.add(makeActionContribution(qFoldAction));
 		mgr.add(makeActionContribution(qDeleteAction));
+		mgr.add(makeActionContribution(stripAction));
 	}
 
 	/**
@@ -204,6 +207,20 @@ public class PatchQueueView extends AbstractRootView {
 			}
 		};
 		qFoldAction.setEnabled(false);
+
+		stripAction = new Action("strip...", MercurialEclipsePlugin.getImageDescriptor("actions/revert.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				try {
+					hideStatus();
+					// TODO: set initial selection to selected applied patch
+					StripHandler.openWizard(hgRoot, getSite().getShell(), null);
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		};
+		stripAction.setEnabled(false);
 
 		qDeleteAction = new Action("qdelete...", MercurialEclipsePlugin.getImageDescriptor("rem_co.gif")) { //$NON-NLS-1$
 			@Override
@@ -318,6 +335,7 @@ public class PatchQueueView extends AbstractRootView {
 		qPopAllAction.setEnabled(!isAllUnapplied);
 		qFoldAction.setEnabled(!selectionHasApplied && !selection.isEmpty());
 		qFinishAction.setEnabled(selectionHasApplied || selection.isEmpty());
+		stripAction.setEnabled(true);
 	}
 
 	/**
@@ -331,6 +349,7 @@ public class PatchQueueView extends AbstractRootView {
 		menuMgr.add(qFinishAction);
 		menuMgr.add(qFoldAction);
 		menuMgr.add(qDeleteAction);
+		menuMgr.add(stripAction);
 
 		MenuManager popupMenuMgr = new MenuManager();
 		popupMenuMgr.add(qGotoAction);
