@@ -20,6 +20,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -28,6 +29,7 @@ import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.NullHgFile;
 
 /**
  * @author Ge Zhong
@@ -72,24 +74,23 @@ public class HgLocateClient extends AbstractClient {
 		try {
 			lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		} catch (HgException e) {
-				throw new HgException(e);
+			// it is normal that the resource does not exist.
+			MercurialEclipsePlugin.logError(e);
 		}
-
-        if (lines.length == 0) {
-        	return null;
-        }
 
 		if (resource instanceof IStorage) {
+			if (lines == null || lines.length == 0) {
+	        	return new NullHgFile(hgRoot, cs, relpath);
+	        }
 			for (String line : lines) {
-					return new HgFile(hgRoot, cs, new Path(line));
+				return new HgFile(hgRoot, cs, new Path(line));
 			}
-			return null;
 		}
 
-		return new HgFolder(hgRoot, revision, relpath, lines, filter);
+		return new HgFolder(hgRoot, cs, relpath, lines, filter);
 	}
 
-	public static IHgResource getHgResources(IHgResource hgResource, String revision, SortedSet<String> filter) throws HgException {
+	public static IHgResource getHgResources(IHgResource hgResource, String revision, SortedSet<String> filter) {
 		HgRoot hgRoot = hgResource.getHgRoot();
 		AbstractShellCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
 
@@ -107,20 +108,17 @@ public class HgLocateClient extends AbstractClient {
 		try {
 			lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		} catch (HgException e) {
-				throw new HgException(e);
+			// it is normal that the resource does not exist.
+			MercurialEclipsePlugin.logError(e);
 		}
 
-        if (lines.length == 0) {
-        	return null;
-        }
-
-		if (hgResource instanceof IStorage) {
+        if (hgResource instanceof IStorage) {
+			if (lines == null || lines.length == 0) {
+	        	return new NullHgFile(hgRoot, revision, new Path(hgResource.getHgRootRelativePath()));
+	        }
 			for (String line : lines) {
-				if (line.indexOf(System.getProperty("file.separator")) == -1) {
-					return new HgFile(hgRoot, revision, new Path(line));
-				}
+				return new HgFile(hgRoot, revision, new Path(line));
 			}
-			return null;
 		}
 
 		return new HgFolder(hgRoot, revision, hgResource.getIPath(), lines, filter);

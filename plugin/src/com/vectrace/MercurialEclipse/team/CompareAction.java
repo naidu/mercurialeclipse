@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -31,8 +30,6 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
-import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -106,7 +103,14 @@ public class CompareAction extends SingleResourceAction {
 					return Status.OK_STATUS;
 				}
 				try {
-					ChangeSet cs = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+					String[] parents = HgParentClient.getParentNodeIds(resource);
+					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+					ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(root, parents[0]);
+					if (cs == null) {
+						// refetch cache and try again
+						LocalChangesetCache.getInstance().fetchRevisions(root, false, 0, 0, false);
+						cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(root, parents[0]);
+					}
 
 					if (cs != null) {
 						CompareUtils.openEditor(resource, MercurialUtilities.getParentRevision(cs, (IFile)resource), false, null);
@@ -124,15 +128,12 @@ public class CompareAction extends SingleResourceAction {
 	}
 
 	private void compareToLocal(IResource res) {
-		IHgResource hgr = null;
-		HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
-		if (res instanceof IContainer) {
-			hgr = new HgFolder(root, (IContainer)res);
-		} else if (res instanceof IFile) {
-			hgr = new HgFile(root, (IFile)res);
+		IHgResource right = ResourceUtils.getCleanLocalHgResource(res);
+		try {
+			CompareUtils.openEditor(res, new RevisionNode(right), false, syncConfig);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
-		IHgResource right = ResourceUtils.getParentHgResource(res);
-		CompareUtils.openEditor(new RevisionNode(hgr), new RevisionNode(right), false, syncConfig);
 	}
 
 	/**

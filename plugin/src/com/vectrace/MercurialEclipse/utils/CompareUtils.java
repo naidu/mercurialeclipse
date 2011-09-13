@@ -147,6 +147,12 @@ public final class CompareUtils {
 	public static void openEditor(final IResource left, final MercurialRevisionStorage right,
 			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
+		openEditor(left, getNode(right), dialog, configuration);
+	}
+
+	public static void openEditor(final IResource left, final RevisionNode right,
+			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
+		Assert.isNotNull(right);
 		if(!left.getProject().isOpen()) {
 			final boolean [] open = new boolean[1];
 			Runnable runnable = new Runnable() {
@@ -169,9 +175,9 @@ public final class CompareUtils {
 		}
 		if (dialog) {
 			// TODO: is it intentional the config is ignored?
-			openCompareDialog(getPrecomputedCompareInput(null, left, null, getNode(right)));
+			openCompareDialog(getPrecomputedCompareInput(null, left, null, right));
 		} else {
-			openEditor(getPrecomputedCompareInput(configuration, left, null, getNode(right)));
+			openEditor(getPrecomputedCompareInput(configuration, left, null, right));
 		}
 	}
 
@@ -312,37 +318,32 @@ public final class CompareUtils {
 			return null;
 		}
 
-		try {
-			String commonAncestor = null;
+		String commonAncestor = null;
 
-				try {
-					commonAncestor = HgParentClient.findCommonAncestor(hgRoot,lCS, rCS)[1];
-				} catch (HgException e) {
-					// continue
-				}
-
-			String lId = lCS.getChangeset();
-			String rId = rCS.getChangeset();
-
-			if (commonAncestor == null || commonAncestor.length() == 0){
-				try {
-					commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lId, rId)[1];
-				} catch (HgException e) {
-					// continue: no changeset in the local repo, se issue #10616
-				}
+			try {
+				commonAncestor = HgParentClient.findCommonAncestor(hgRoot,lCS, rCS)[1];
+			} catch (HgException e) {
+				// continue
 			}
 
-			if (commonAncestor == null || commonAncestor.equals(lCS.getChangeset()) ||
-					commonAncestor.equals(rCS.getChangeset())) {
-				return null;
-			}
+		String lId = lCS.getChangeset();
+		String rId = rCS.getChangeset();
 
-			//TODO: should apply filter here and recreate left and right
-			IHgResource hgResource = HgLocateClient.getHgResources(lNode.getHgResource(), commonAncestor, null);
-			return new RevisionNode(hgResource);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+		if (commonAncestor == null || commonAncestor.length() == 0){
+			try {
+				commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lId, rId)[1];
+			} catch (HgException e) {
+				// continue: no changeset in the local repo, se issue #10616
+			}
+		}
+
+		if (commonAncestor == null || commonAncestor.equals(lCS.getChangeset()) ||
+				commonAncestor.equals(rCS.getChangeset())) {
 			return null;
 		}
+
+		//TODO: should apply filter here and recreate left and right
+		IHgResource hgResource = HgLocateClient.getHgResources(lNode.getHgResource(), commonAncestor, null);
+		return new RevisionNode(hgResource);
 	}
 }

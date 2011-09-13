@@ -71,7 +71,11 @@ public class HgFile extends HgResource implements IHgFile {
 	 * @see org.eclipse.core.resources.IStorage#getFullPath()
 	 */
 	public IPath getFullPath() {
-		return this.getHgRoot().getIPath().append(path);
+		IPath p = this.getHgRoot().getIPath().append(path);
+		if (resource == null) {
+			p = p.append(" [" + changeset.getChangesetIndex() + "]");
+		}
+		return p;
 	}
 
 	/**

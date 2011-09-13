@@ -752,7 +752,13 @@ public final class ResourceUtils {
 		}
 	}
 
-	public static IHgResource getParentHgResource(IResource resource) {
+	/**
+	 * Get the IHgResource for the given resource as it is in the current repository revision.
+	 *
+	 * @param resource The resource to use
+	 * @return The resource as it would be if clean
+	 */
+	public static IHgResource getCleanLocalHgResource(IResource resource) {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		if (hgRoot == null) {
 			return null;
@@ -764,16 +770,10 @@ public final class ResourceUtils {
 			MercurialEclipsePlugin.logError(e);
 		}
 		if(cs != null){
-			IPath relPath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
-			if (resource instanceof IFile) {
-				return new HgFile(hgRoot, cs, relPath);
-			}
-			if (resource instanceof IContainer) {
-				try {
-					return HgLocateClient.getHgResources(resource, cs, null);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+			try {
+				return HgLocateClient.getHgResources(resource, cs, null);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		return null;

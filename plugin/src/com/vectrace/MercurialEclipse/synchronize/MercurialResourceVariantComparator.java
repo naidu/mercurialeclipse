@@ -12,16 +12,13 @@
 package com.vectrace.MercurialEclipse.synchronize;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -46,15 +43,7 @@ public class MercurialResourceVariantComparator implements IResourceVariantCompa
 			return true;
 		}
 
-		IHgFile remoteIStorage;
-		try {
-			remoteIStorage = (IHgFile) repoRevision.getStorage(null);
-		} catch (TeamException e) {
-			MercurialEclipsePlugin.logError(e);
-			return false;
-		}
-
-		ChangeSet cs = remoteIStorage.getChangeSet();
+		ChangeSet cs = ((MercurialResourceVariant)repoRevision).getRev().getHgResource().getChangeSet();
 
 		// if this is outgoing or incoming, it can't be equal to any other changeset
 		Direction direction = cs.getDirection();
