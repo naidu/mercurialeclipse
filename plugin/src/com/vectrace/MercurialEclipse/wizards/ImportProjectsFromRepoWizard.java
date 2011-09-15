@@ -53,12 +53,14 @@ public class ImportProjectsFromRepoWizard extends HgWizard implements IImportWiz
 				setInitialData(path);
 			} else {
 				IResource resource = MercurialEclipsePlugin.getAdapter(firstElement, IResource.class);
-				IPath iPath = ResourceUtils.getPath(resource);
-				if(iPath != null && !iPath.isEmpty()) {
-					try {
-						setInitialData(new HgPath(iPath.toOSString()));
-					} catch (IOException e) {
-						MercurialEclipsePlugin.logError(e);
+				if(resource != null) {
+					IPath iPath = ResourceUtils.getPath(resource);
+					if(iPath != null && !iPath.isEmpty()) {
+						try {
+							setInitialData(new HgPath(iPath.toOSString()));
+						} catch (IOException e) {
+							MercurialEclipsePlugin.logError(e);
+						}
 					}
 				}
 			}
