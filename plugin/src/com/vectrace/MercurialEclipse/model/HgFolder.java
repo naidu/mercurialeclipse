@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Ge Zhong
@@ -80,7 +81,7 @@ public class HgFolder extends HgResource implements IHgFolder {
 						members.add(hgFolder);
 					}
 				} else if (res instanceof IFile) {
-					IPath relPath = res.getLocation().makeRelativeTo(root.getIPath());
+					IPath relPath = ResourceUtils.getPath(res).makeRelativeTo(root.getIPath());
 					if (filter == null || filter.contains(relPath.toOSString())) {
 						members.add(new HgFile(root, (IFile)res));
 					}

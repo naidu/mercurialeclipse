@@ -11,6 +11,7 @@ import org.eclipse.core.runtime.IPath;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /*******************************************************************************
  * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
@@ -93,7 +94,7 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 	public HgResource(HgRoot root, IResource resource) {
 		this.root = root;
 		this.resource = resource;
-		path = root.toRelative(resource.getLocation());
+		path = root.toRelative(ResourceUtils.getPath(resource));
 	}
 
 	/**

@@ -151,7 +151,7 @@ public abstract class AbstractClient {
 		HgRoot hgRoot = getHgRoot(resource);
 		String pattern = null;
 
-		IPath relPath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
+		IPath relPath = ResourceUtils.getPath(resource).makeRelativeTo(hgRoot.getIPath());
 		if (resource instanceof IStorage) {
 			pattern = "glob:" + relPath.toOSString();
 		} else {

@@ -785,7 +785,7 @@ public final class ResourceUtils {
 	public static IHgResource convertToHgFile(MercurialRevisionStorage rev) {
 		IFile file = rev.getResource();
 		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
-		IPath relPath = file.getLocation().makeRelativeTo(hgRoot.getIPath());
+		IPath relPath = ResourceUtils.getPath(file).makeRelativeTo(hgRoot.getIPath());
 		if (rev instanceof NullRevision) {
 			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
 		}

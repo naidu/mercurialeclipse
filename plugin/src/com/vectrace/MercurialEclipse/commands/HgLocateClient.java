@@ -23,13 +23,14 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Ge Zhong
@@ -66,7 +67,7 @@ public class HgLocateClient extends AbstractClient {
 			command.addOptions("-r", revision); //$NON-NLS-1$
 		}
 
-		IPath relpath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
+		IPath relpath = ResourceUtils.getPath(resource).makeRelativeTo(hgRoot.getIPath());
 
 		command.addOptions(getHgResourceSearchPattern(resource));
 

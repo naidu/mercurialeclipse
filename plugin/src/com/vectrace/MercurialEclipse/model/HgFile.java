@@ -103,7 +103,9 @@ public class HgFile extends HgResource implements IHgFile {
 						resource.refreshLocal(IResource.DEPTH_INFINITE, null);
 						is= storage.getContents();
 					} else {
-						throw e;
+						// if the file is deleted or inaccessible
+						// log the error and return empty stream
+						MercurialEclipsePlugin.logError(e);
 					}
 				}
 				if (is != null) {
