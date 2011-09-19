@@ -153,13 +153,13 @@ public abstract class AbstractClient {
 
 		IPath relPath = resource.getLocation().makeRelativeTo(hgRoot.getIPath());
 		if (resource instanceof IStorage) {
-			pattern = '"' + "glob:" + relPath.toOSString() + '"';
+			pattern = "glob:" + relPath.toOSString();
 		} else {
 			String pathString = relPath.toOSString();
 			if (pathString.length() > 0) {
-				pattern = '"' + "glob:" + pathString + System.getProperty("file.separator") + "**" + '"';
+				pattern = "glob:" + pathString + System.getProperty("file.separator") + "**";
 			} else {
-				pattern = '"' + "glob:**" + '"';
+				pattern = "glob:**";
 			}
 		}
 

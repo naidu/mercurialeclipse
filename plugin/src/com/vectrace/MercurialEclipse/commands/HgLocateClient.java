@@ -23,13 +23,13 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
 /**
  * @author Ge Zhong
@@ -99,9 +99,9 @@ public class HgLocateClient extends AbstractClient {
 		}
 
 		if (hgResource instanceof IHgFile) {
-			command.addOptions('"' + "glob:" + hgResource.getHgRootRelativePath() + '"');
+			command.addOptions("glob:" + hgResource.getHgRootRelativePath());
 		} else {
-			command.addOptions('"' + "glob:" + hgResource.getHgRootRelativePath() + System.getProperty("file.separator") + "**" + '"');
+			command.addOptions("glob:" + hgResource.getHgRootRelativePath() + System.getProperty("file.separator") + "**");
 		}
 
 		String[] lines = null;
