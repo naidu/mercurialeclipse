@@ -52,10 +52,13 @@ import org.eclipse.ui.texteditor.ITextEditorExtension4;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -315,8 +318,17 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks()) {
 			final String revisionString = block.getRevision().toString();
-			final ChangeSet logEntry = logEntriesByRevision.get(
+		    ChangeSet logEntry = logEntriesByRevision.get(
 					Integer.valueOf(block.getRevision().getRevision()));
+
+		    // logEntriesByRevision may not contain transplanted changesets
+			if (logEntry == null) {
+				HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
+				logEntry = HgLogClient.getChangeset(root, block.getRevision().getChangeset());
+				Assert.isNotNull(logEntry);
+				logEntriesByRevision.put(Integer.valueOf(logEntry.getRevision().getRevision()),
+						logEntry);
+			}
 
 			Revision revision = sets.get(revisionString);
 			if (revision == null) {
