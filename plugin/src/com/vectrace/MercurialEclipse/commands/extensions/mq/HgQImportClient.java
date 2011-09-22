@@ -46,6 +46,7 @@ public class HgQImportClient extends AbstractClient {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qimport", //$NON-NLS-1$
 				"Invoking qimport", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

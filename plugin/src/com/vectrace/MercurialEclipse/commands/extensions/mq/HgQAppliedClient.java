@@ -29,6 +29,7 @@ public class HgQAppliedClient extends AbstractClient {
 	public static List<Patch> getAppliedPatches(HgRoot root) throws HgException {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qapplied", "Invoking qapplied", root, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$
@@ -38,6 +39,7 @@ public class HgQAppliedClient extends AbstractClient {
 	public static List<Patch> getUnappliedPatches(HgRoot root) throws HgException{
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qunapplied", "Invoking qunapplied", root, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-v"); //$NON-NLS-1$
 		command.addOptions("-s"); //$NON-NLS-1$

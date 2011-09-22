@@ -17,6 +17,7 @@ import java.util.List;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -57,6 +58,7 @@ public class HgQFoldClient extends AbstractClient {
 		Assert.isNotNull(root);
 		HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
 				"Invoking qfold", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

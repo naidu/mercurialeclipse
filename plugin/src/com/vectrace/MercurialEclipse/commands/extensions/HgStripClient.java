@@ -11,6 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -46,7 +47,7 @@ public final class HgStripClient {
 	private static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, String changeset)
 	throws HgException {
 		HgCommand command = new HgCommand("strip", "Stripping revision " + changeset, hgRoot, true); //$NON-NLS-1$
-
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

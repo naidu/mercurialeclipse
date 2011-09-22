@@ -28,6 +28,7 @@ public class HgQPopClient extends AbstractClient {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
 				"Invoking qpop", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -42,6 +43,7 @@ public class HgQPopClient extends AbstractClient {
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
 				"Invoking qpop", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

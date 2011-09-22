@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -41,6 +42,7 @@ public class HgQNewClient extends AbstractClient {
 			throws HgException {
 		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
 				"Invoking qnew", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

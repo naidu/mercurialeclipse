@@ -25,6 +25,7 @@ public class HgQPushClient extends AbstractClient {
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
 				"Invoking qpush", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -39,6 +40,7 @@ public class HgQPushClient extends AbstractClient {
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
 				"Invoking qpush", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 

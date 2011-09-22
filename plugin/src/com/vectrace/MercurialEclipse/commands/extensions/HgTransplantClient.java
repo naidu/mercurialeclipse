@@ -67,6 +67,7 @@ public final class HgTransplantClient {
 			IHgRepositoryLocation repo, TransplantOptions options) throws HgException {
 
 		AbstractShellCommand command = new HgCommand("transplant", options.getDescription(), hgRoot, false); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("--log"); //$NON-NLS-1$

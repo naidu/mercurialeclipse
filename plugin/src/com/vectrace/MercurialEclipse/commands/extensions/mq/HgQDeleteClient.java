@@ -51,6 +51,7 @@ public class HgQDeleteClient extends AbstractClient {
 		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
 				"Invoking qdelete", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (keep) {

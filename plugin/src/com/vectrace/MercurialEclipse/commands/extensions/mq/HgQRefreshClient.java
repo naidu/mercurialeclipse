@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -30,7 +31,7 @@ public class HgQRefreshClient extends AbstractClient {
 			String message, boolean currentDate) throws HgException {
 		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", root, true);
-
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		if (shortFlag) {
 			command.addOptions("-s"); //$NON-NLS-1$
@@ -62,6 +63,7 @@ public class HgQRefreshClient extends AbstractClient {
 			throws HgException {
 		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
 				"Invoking qrefresh", root, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		File messageFile = null;
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
