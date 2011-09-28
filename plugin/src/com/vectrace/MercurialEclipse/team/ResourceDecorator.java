@@ -396,7 +396,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		d.setFont(theme.getFontRegistry().get(id));
 	}
 
-	private String getSuffixForFiles(IResource resource, ChangeSet cs) throws HgException {
+	private static String getSuffixForFiles(IResource resource, ChangeSet cs) throws HgException {
 		String suffix = ""; //$NON-NLS-1$
 		// suffix for files
 		if (!STATUS_CACHE.isAdded(ResourceUtils.getPath(resource))) {
@@ -415,7 +415,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		return suffix;
 	}
 
-	private String getSuffixForContainer(IContainer container) throws CoreException {
+	private static String getSuffixForContainer(IContainer container) throws CoreException {
 		ChangeSet changeSet = null;
 
 		HgRoot root;
