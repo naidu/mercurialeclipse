@@ -33,8 +33,8 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray.ChangedFilesTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard.FileOperation;
@@ -161,6 +161,6 @@ public class QRefreshWizard extends HgOperationWizard {
 	protected void operationFinished() {
 		super.operationFinished();
 		PatchQueueView.getView().populateTable();
-		new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL).schedule();
+		new RefreshWorkspaceStatusJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 	}
 }
