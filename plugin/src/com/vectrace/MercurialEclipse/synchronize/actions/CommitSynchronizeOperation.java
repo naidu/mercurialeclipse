@@ -64,13 +64,15 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 							continue;
 						}
 						CommitHandler commithandler = new CommitHandler();
-						Options options = new Options();
-						if(!StringUtils.isEmpty(cs.getComment())) {
-							options.defaultCommitMessage = cs.getComment();
-						} else {
-							options.defaultCommitMessage = cs.getName();
+						if (cs instanceof GroupedUncommittedChangeSet) {
+							Options options = new Options();
+							if (!StringUtils.isEmpty(cs.getComment())) {
+								options.defaultCommitMessage = cs.getComment();
+							} else {
+								options.defaultCommitMessage = cs.getName();
+							}
+							commithandler.setOptions(options);
 						}
-						commithandler.setOptions(options);
 						List<IResource> files = new ArrayList<IResource>();
 						files.addAll(cs.getFiles());
 						boolean done = commit(commithandler, files.toArray(new IResource[0]));
