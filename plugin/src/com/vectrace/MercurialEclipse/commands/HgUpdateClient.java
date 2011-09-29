@@ -21,9 +21,42 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgUpdateClient extends AbstractClient {
 
+	/**
+	 * Perform an update and refresh the workspace. Handles unresolved conflicts and shows the user a message
+	 */
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
+		try {
+			updateWithoutRefresh(hgRoot, revision, clean);
+		} catch (HgException e) {
+			if (isWorkspaceUpdateConflict(e)) {
+				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						MessageDialog
+								.openInformation(null, "Unresolved conflicts",
+										"You have unresolved conflicts after update. Use Synchronize View to edit conflicts");
+					}
+				});
+			} else {
+				throw e;
+			}
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
+		}
+	}
 
+	/**
+	 * Perform an update. Doesn't throw an exception if there are conflicts
+	 *
+	 * @param hgRoot
+	 *            The root to use
+	 * @param revision
+	 *            The revision, may be null
+	 * @param clean
+	 *            Whether a clean update should be done
+	 * @return The result of the invocation
+	 */
+	public static String updateWithoutRefresh(HgRoot hgRoot, String revision, boolean clean) throws HgException {
 		HgCommand command = new HgCommand("update", makeDescription(revision, clean), hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
@@ -35,23 +68,7 @@ public class HgUpdateClient extends AbstractClient {
 		}
 		addMergeToolPreference(command);
 
-		try {
-			command.executeToBytes();
-		} catch (HgException e) {
-			if (e.getMessage().contains("use 'hg resolve' to retry unresolved file merges")) {
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-
-					public void run() {
-						MessageDialog.openInformation(null, "Unresolved conflicts",
-								"You have unresolved conflicts after update. Use Synchronize View to edit conflicts");
-					}
-				});
-			} else {
-				throw e;
-			}
-		} finally {
-			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
-		}
+		return command.executeToString();
 	}
 
 	private static String makeDescription(String revision, boolean clean) {
@@ -62,5 +79,13 @@ public class HgUpdateClient extends AbstractClient {
 		}
 
 		return (clean) ? "Clean update" : "Updating working directory";
+	}
+
+	public static boolean isWorkspaceUpdateConflict(HgException e) {
+		return e.getMessage().contains("use 'hg resolve' to retry unresolved file merges");
+	}
+
+	public static boolean isCrossesBranchError(HgException e) {
+		return e.getMessage().contains("abort: crosses branches") && e.getStatus().getCode() == -1;
 	}
 }

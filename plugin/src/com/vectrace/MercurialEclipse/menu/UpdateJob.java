@@ -75,7 +75,7 @@ public class UpdateJob extends Job {
 				handleMultipleHeads(hgRoot, cleanEnabled);
 			}
 		} catch (HgException e) {
-			if (e.getMessage().contains("abort: crosses branches") && e.getStatus().getCode() == -1 && handleCrossBranches) {
+			if (handleCrossBranches && HgUpdateClient.isCrossesBranchError(e)) {
 				// don't log this error because it's a common situation and can be handled
 				handleMultipleHeads(hgRoot, cleanEnabled);
 				return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "Update canceled - merge needed");

@@ -77,11 +77,20 @@ public class HgPushPullClient extends AbstractClient {
 			IHgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout, boolean merge, String branch) throws HgException {
 
+		boolean separateUpdate = false;
 		HgCommand command = new HgCommand("pull", //$NON-NLS-1$
 				makeDescription("Pulling", changeset, branch), hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
 		addInsecurePreference(command);
+
+		// --update and --branch together will switch to latest of the branch rather than usual
+		// branch crossing logic. See http://www.javaforge.com/issue/19520
+		// TODO: pull from bundle so --branch isn't necessary
+		if (update && branch != null) {
+			update = false;
+			separateUpdate = true;
+		}
 
 		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
@@ -112,8 +121,23 @@ public class HgPushPullClient extends AbstractClient {
 			} else {
 				result = new String(command.executeToBytes(Integer.MAX_VALUE));
 			}
+
+			if (separateUpdate) {
+				try {
+					result += HgUpdateClient.updateWithoutRefresh(hgRoot, null, false);
+				} catch (HgException e) {
+					if (HgUpdateClient.isCrossesBranchError(e) || HgUpdateClient.isWorkspaceUpdateConflict(e)) {
+						result += e.getMessage();
+					} else {
+						// ??
+						throw e;
+					}
+				}
+			}
 		} finally {
-			if (update && result != null && !merge && !rebase) {
+			// TODO: detect workspace conflicts on update and notify user
+
+			if ((update || separateUpdate) && result != null && !merge && !rebase) {
 				// different messages from hg depending on if branch was set or not
 				// TODO: clean up this detection
 				if (result.contains("not updating, since new heads added")
