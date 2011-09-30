@@ -76,7 +76,7 @@ public class HgLocateClient extends AbstractClient {
 			lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		} catch (HgException e) {
 			// it is normal that the resource does not exist.
-			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
 		}
 
 		if (resource instanceof IStorage) {
@@ -110,7 +110,7 @@ public class HgLocateClient extends AbstractClient {
 			lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		} catch (HgException e) {
 			// it is normal that the resource does not exist.
-			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
 		}
 
         if (hgResource instanceof IStorage) {

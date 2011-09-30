@@ -16,7 +16,6 @@ import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareNavigator;
 import org.eclipse.compare.ICompareNavigator;
 import org.eclipse.compare.INavigatable;
-import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -28,7 +27,7 @@ import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 
 public class HgCompareEditorInput extends CompareEditorInput {
-	private static final Differencer DIFFERENCER = new Differencer();
+	private static final HgDifferencer DIFFERENCER = new HgDifferencer();
 
 	private final RevisionNode left;
 	private final RevisionNode ancestor;
