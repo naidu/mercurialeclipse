@@ -46,7 +46,7 @@ public class HgUpdateClient extends AbstractClient {
 	}
 
 	/**
-	 * Perform an update. Doesn't throw an exception if there are conflicts
+	 * Perform an update.
 	 *
 	 * @param hgRoot
 	 *            The root to use

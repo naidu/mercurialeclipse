@@ -87,7 +87,7 @@ public class HgPushPullClient extends AbstractClient {
 		// --update and --branch together will switch to latest of the branch rather than usual
 		// branch crossing logic. See http://www.javaforge.com/issue/19520
 		// TODO: pull from bundle so --branch isn't necessary
-		if (update && branch != null) {
+		if (update && branch != null && changeset == null) {
 			update = false;
 			separateUpdate = true;
 		}
