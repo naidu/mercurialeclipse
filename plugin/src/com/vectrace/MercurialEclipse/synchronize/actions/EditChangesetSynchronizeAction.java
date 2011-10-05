@@ -22,7 +22,6 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -47,7 +46,7 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 		IStructuredSelection sel = getStructuredSelection();
 		// it's guaranteed that we have exact one element
 		Object object = sel.getFirstElement();
-		if(object instanceof WorkingChangeSet){
+		if (isSupported(object)){
 			return new EditChangesetSynchronizeOperation(configuration, elements,
 					(GroupedUncommittedChangeSet) object);
 		}
@@ -67,8 +66,8 @@ public class EditChangesetSynchronizeAction extends SynchronizeModelAction {
 		return updateSelection;
 	}
 
-	private boolean isSupported(Object object) {
-		return object instanceof WorkingChangeSet;
+	private static boolean isSupported(Object object) {
+		return object instanceof GroupedUncommittedChangeSet;
 	}
 
 }
