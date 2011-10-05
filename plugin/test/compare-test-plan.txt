@@ -1,0 +1,99 @@
+Test plan for MercurialEclipse's various comparison functionality
+
+TODO: add variations for these situations: workspace under symbolic link, linked resources.
+
+
+From the context menu
+=====================
+
+1. Compare with parent (without local change)
+   Expected: The local file is compared with the file's previous change. Local resource is editable and savable. 
+   Always in sync. Should work on rename.
+   Current: Works
+ 
+2. Compare with parent (with local saved change)
+   Expected: The local file is compared with its clean copy. Local resource is editable and savable. Always in 
+   sync. Should work on rename.
+   Current: Works
+
+3. Compare with to Another Revision (single file)
+   Expected: Compare Editor shown. Renamed file is treated as different file. Not always in sync. Local resource 
+   is editable and savable.
+   Current: Works
+
+4. Compare with to Another Revision (single folder/project)
+   Expected: Compare Editor shown. Renamed file is treated as different file. Not always in sync. Local resource 
+   is editable and savable.
+   Current: Works
+
+5. Repeat step 1-4 with unsaved local changes
+   Expected: 
+   Current: 
+
+From the History view
+=====================
+
+1. In History view of a file, select two revisions and compare with each other
+   Expected: Compare Editor shown. Three-way comparison is used when the two revision have a common parent.
+   Current: Does not work before rename.
+
+2. In History view select a revision and compare with current
+   Expected: 
+   Current: 
+
+3. In History view of a file with no renames double click on a row in file history
+   Expected: Show uneditable comparison of the two revisions 
+   Current: Works
+
+4. In History view of a file double click on a row in file history on a revision of a rename
+   Expected: Show uneditable comparison of the two revisions
+   Current: 
+
+5. In History view of a file double click on a row in file history on a revision prior to a rename where the 
+   rename source is a path under the project
+   Expected: Show uneditable comparison of the two revisions
+   Current: Does not work
+
+6. In History view of a file double click on a row in file history on a revision prior to a rename where the 
+   rename source is a path not under any project in the workspace (eg where src was renamed to plugin/src and 
+   the project is at plugin)
+   Expected:  Show uneditable comparison of the two revisions
+   Current: Does not work
+
+7. Repeat 2-6 but instead double clicking on the row click on the file in the "affected paths" zone
+   Expected: 
+   Current: 
+
+
+From the Sync view
+==================
+
+1. In Sync view, file in incoming changesets of an added file
+   Expected: File is shown in one pane, other pane is blank, uneditable 
+   Current: Works
+
+2. In Sync view, file in incoming changesets of an changed file
+   Expected: File is compared with the changeset's parent revision, uneditable
+   Current: Works 
+
+3. In Sync view, file in incoming changesets of an renamed file
+   Expected: File is compared with the changeset's parent revision.
+   Current: 
+
+4. In Sync view, file in incoming changesets that is based on an incoming changeset that the file was renamed in 
+   (the file doesn't exist in workspace)
+   Expected: File is compared with the changeset's parent revision.
+   Current: 
+
+5. In Sync view, file in outgoing changesets
+   Expected: File is compared with the changeset's parent revision.
+   Current: Works
+
+6. In Sync view, file in uncommitted changesets
+   Expected: The local file is compared with its clean copy. Local resource is editable and savable. Always in sync. 
+   Should work on rename.
+   Current: Works (except local rename?)
+
+
+
+ 
