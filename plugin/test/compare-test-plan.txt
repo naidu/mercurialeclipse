@@ -1,6 +1,7 @@
 Test plan for MercurialEclipse's various comparison functionality
 
-TODO: add variations for these situations: workspace under symbolic link, linked resources.
+TODO: add variations for these situations: workspace under symbolic link, linked resources, repository root above 
+      workspace root.
 
 
 From the context menu
