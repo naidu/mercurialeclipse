@@ -273,7 +273,9 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 			container.init();
 		} else {
 			try {
-				projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
+				if(!projectAdapter.isOpen()) {
+					projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
+				}
 				if(!MercurialRootCache.isHgTeamProviderFor(projectAdapter)) {
 					try {
 						MercurialRootCache.markAsCached(projectAdapter, this);
