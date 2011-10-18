@@ -126,13 +126,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		if(root == null){
 			return null;
 		}
-		String currentBranch = MercurialTeamProvider.getCurrentBranch(root);
+		String syncBranch = getSyncBranch(root);
 
 		IHgRepositoryLocation repo = getRepo();
 		if(computeFullState) {
-			return getSyncInfo(file, root, currentBranch, repo);
+			return getSyncInfo(file, root, syncBranch, repo);
 		}
-		return getFastSyncInfo(file, root, currentBranch, repo);
+		return getFastSyncInfo(file, root, syncBranch, repo);
 	}
 
 	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
