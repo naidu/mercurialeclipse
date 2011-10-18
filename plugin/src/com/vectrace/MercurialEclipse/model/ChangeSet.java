@@ -745,7 +745,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * Roughly corresponds to Mercurial's template filter named "author" except if
+	 * Roughly corresponds to Mercurial's template filter named "person" except if
 	 * an email is provided includes everything left of the '@'.
 	 *
 	 * See also: http://www.javaforge.com/issue/13809

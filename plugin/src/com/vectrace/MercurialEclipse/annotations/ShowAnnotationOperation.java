@@ -330,6 +330,8 @@ public class ShowAnnotationOperation extends TeamOperation {
 						logEntry);
 			}
 
+			block.setUser(logEntry.getPerson());
+
 			Revision revision = sets.get(revisionString);
 			if (revision == null) {
 				revision = new MercurialRevision(colors, logEntry,
