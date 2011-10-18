@@ -350,7 +350,30 @@ public final class ResourceUtils {
 				}
 			}
 		}
-		return best;
+
+		if(best != null) {
+			return best;
+		}
+		// here we didn't found any existing file matching any hg root
+		// but we can try to return a handle to not existing resource,
+		// according to API contract of IResource.getFile()
+
+		// second try: now we return also handles to currently not existing files
+		// if they *could* be located under the first matching root
+		Collection<HgRoot> roots = MercurialRootCache.getInstance().getKnownHgRoots();
+		for (HgRoot hgRoot : roots) {
+			if(!hgRoot.getIPath().isPrefixOf(origPath)) {
+				continue;
+			}
+			IPath relative = hgRoot.toRelative(origPath);
+			if(!relative.isEmpty()) {
+				if(isFile) {
+					return hgRoot.getResource().getFile(relative);
+				}
+				return hgRoot.getResource().getFolder(relative);
+			}
+		}
+		return null;
 	}
 
 	private static IResource ifNull(IResource a, IResource b) {

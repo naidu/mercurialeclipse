@@ -114,6 +114,9 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 
 		File memberFile = getLocation().append(name).toFile();
 		if (!memberFile.exists()) {
+			if (clazz == IFile.class) {
+				return clazz.cast(getFile(child.toOSString()));
+			}
 			return null;
 		}
 
