@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -49,8 +49,8 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 
 	@Override
 	public void run() {
-		final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
-		final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
+		final IHgResource [] right = new IHgResource [1];
+		final IHgResource [] left = new IHgResource [1];
 		final Job job = new Job(Messages.CompareRevisionAction_retrievingDiffData) {
 
 			@Override
@@ -72,7 +72,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 							}
 						} else if(enableCompareWithPrev){
 							ChangeSet cs = left[0].getChangeSet();
-							IFile file = left[0].getResource();
+							IFile file = (IFile) left[0].getResource();
 							right[0] = MercurialUtilities.getParentRevision(cs, file);
 						}
 					}
@@ -128,12 +128,12 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 	 * the info is fetched...
 	 * @param monitor
 	 */
-	private MercurialRevisionStorage getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
+	private IHgResource getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
 		if(rev.getParent() == null){
 			// see issue #10302: this is a dirty trick to make sure to get content even
 			// if the file was renamed/copied.
 			HgLogClient.getLogWithBranchInfo(rev, page.getMercurialHistory(), monitor);
 		}
-		return (MercurialRevisionStorage) rev.getStorage(monitor);
+		return (IHgResource) rev.getStorage(monitor);
 	}
 }

@@ -21,22 +21,33 @@ import org.eclipse.core.runtime.IPath;
 public interface IHgResource extends IAdaptable {
 
 	/**
-	 * @return the hgRoot, never null
+	 * @return the hg root, never null
 	 */
-    HgRoot getHgRoot();
+	HgRoot getHgRoot();
 
-    String getHgRootRelativePath();
-
+	/**
+	 * @return never null
+	 */
 	String getName();
 
-	String getFileExtension();
-
+	/**
+	 * @return may return null for local resource
+	 */
 	ChangeSet getChangeSet();
 
+	/**
+	 * @return relative path to hg root, never null
+	 */
 	IPath getIPath();
 
+	/**
+	 * @return true if this resource does not exist in the working copy
+	 */
 	boolean isReadOnly();
 
+	/**
+	 * @return may return null
+	 */
 	IResource getResource();
 
 }

@@ -812,6 +812,6 @@ public final class ResourceUtils {
 		if (rev instanceof NullRevision) {
 			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
 		}
-		return new HgFile(hgRoot, rev.getChangeSet(), relPath);
+		return new HgFile(hgRoot, rev.getChangeSet(), file);
 	}
 }

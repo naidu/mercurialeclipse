@@ -34,6 +34,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgResource;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgFolder;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 
@@ -155,8 +156,8 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 		if (resource instanceof IHgFolder) {
 			return ITypedElement.FOLDER_TYPE;
 		}
-		if (resource != null) {
-			String s= resource.getFileExtension();
+		if (resource instanceof IHgFile) {
+			String s = ((IHgFile)resource).getFileExtension();
 			if (s != null) {
 				return s;
 			}
