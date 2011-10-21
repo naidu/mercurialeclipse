@@ -316,8 +316,10 @@ public final class ResourceUtils {
 						.getContainerForLocation(path), best);
 			}
 
+			IProject proj;
+
 			// Is best a definite match?
-			if (best != null && MercurialTeamProvider.isHgTeamProviderFor(best.getProject())) {
+			if (best != null && (proj = best.getProject()) != null && MercurialTeamProvider.isHgTeamProviderFor(proj)) {
 				return best;
 			}
 		}
