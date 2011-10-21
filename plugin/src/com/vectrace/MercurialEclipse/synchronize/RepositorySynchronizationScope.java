@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Andrei Loskutov - implementation
+ *     Martin Olsen (Schantz) 	 - Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -31,29 +32,31 @@ import org.eclipse.team.internal.core.mapping.AbstractResourceMappingScope;
 import org.eclipse.team.internal.ui.Utils;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
  * @author Andrei
  */
+@SuppressWarnings("restriction")
 public class RepositorySynchronizationScope extends AbstractResourceMappingScope {
 
 	private final IProject[] roots;
 	private final ListenerList listeners;
-	private final IHgRepositoryLocation repo;
+	private final Set<? extends IHgRepositoryLocation> repositoryLocationSet;
 	private MercurialSynchronizeSubscriber subscriber;
 	private HgChangeSetModelProvider provider;
 
-	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
+	public RepositorySynchronizationScope(Set<? extends IHgRepositoryLocation> repo, IProject[] roots) {
 		Assert.isNotNull(repo);
-		this.repo = repo;
-		if(roots != null) {
+		this.repositoryLocationSet = repo;
+//		if(roots != null) {
 			this.roots = roots;
-		} else {
-			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-			this.roots = projects.toArray(new IProject[projects.size()]);
-		}
+//		} else {
+//			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+//			this.roots = projects.toArray(new IProject[projects.size()]);
+//		}
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
@@ -99,7 +102,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		}
 		return null;
 	}
-
+// called from refresh
 	public ResourceMapping[] getMappings() {
 		return getInputMappings();
 	}
@@ -200,8 +203,12 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		listeners.remove(listener);
 	}
 
-	public IHgRepositoryLocation getRepositoryLocation() {
-		return repo;
+	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
+		return MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(root);
+	}
+
+	public Set<? extends IHgRepositoryLocation> getRepositoryLocations() {
+		return repositoryLocationSet;
 	}
 
 	public void setSubscriber(MercurialSynchronizeSubscriber mercurialSynchronizeSubscriber) {
@@ -216,9 +223,9 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RepositorySynchronizationScope [");
-		if (repo != null) {
+		if (repositoryLocationSet != null) {
 			builder.append("repo=");
-			builder.append(repo);
+			builder.append(repositoryLocationSet);
 			builder.append(", ");
 		}
 		if (roots != null) {

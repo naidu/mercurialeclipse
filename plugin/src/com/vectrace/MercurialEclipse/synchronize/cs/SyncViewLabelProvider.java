@@ -69,6 +69,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			image = PlatformUI.getWorkbench().getSharedImages().getImage(
 					ISharedImages.IMG_OBJ_FOLDER);
 			}
+		} else if (element instanceof RepositoryChangesetGroup) {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(org.eclipse.ui.ide.IDE.SharedImages.IMG_OBJ_PROJECT);
 		} else {
 			try {
 				image = super.getDelegateImage(element);
@@ -160,6 +162,22 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				return name + " (" + files + ')';
 			}
 			return name + " (" + group.getChangesets().size() + ')';
+		}
+		if(elementOrPath instanceof RepositoryChangesetGroup){
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) elementOrPath;
+			String name = group.getName();
+			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
+				return name + " (empty)";
+			}
+			name += "   [ ";
+			if(!group.getIncoming().getChangesets().isEmpty()) {
+				name += " incoming(" + group.getIncoming().getChangesets().size() + ")";
+			}
+			if(!group.getOutgoing().getChangesets().isEmpty()) {
+				name += " outgoing("+group.getOutgoing().getChangesets().size()+")";
+			}
+			name += " ]";
+			return name;
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;

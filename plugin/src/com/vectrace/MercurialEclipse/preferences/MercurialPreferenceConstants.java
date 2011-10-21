@@ -115,6 +115,9 @@ public final class MercurialPreferenceConstants {
 	// push
 	public static final String PREF_PUSH_NEW_BRANCH = "hg.pushNewBranch"; //$NON-NLS-1$
 
+	// synchronize view
+	public static final String PREF_SYNC_SHOW_EMPTY_GROUPS = "hg.sync.view.showemptygroups"; //$NON-NLS-1$
+
 	// dialogs
 	public static final String PREF_SHOW_MULTIPLE_PROJECTS_DIALOG = "hg.showMultipleProjectsDialog";
 	public static final String PREF_SHOW_PULL_WARNING_DIALOG = "hg.showPullWarningDialog";

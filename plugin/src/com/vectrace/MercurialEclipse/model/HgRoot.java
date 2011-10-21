@@ -8,6 +8,7 @@
  * Contributors:
  *     bastian					- implementation
  *     Andrei Loskutov			- bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -266,7 +267,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	public boolean isLocal() {
 		return true;
 	}
-
+	
 	public IProject getResource() {
 		if(projectAdapter instanceof HgRootContainer) {
 			HgRootContainer container = (HgRootContainer) projectAdapter;
@@ -291,5 +292,4 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	public HgRoot toHgRoot() {
 		return this;
 	}
-
 }

@@ -17,6 +17,7 @@ import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConst
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,7 +129,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		String syncBranch = getSyncBranch(root);
 
-		IHgRepositoryLocation repo = getRepo();
+		IHgRepositoryLocation repo = getRepo(root);
 		if(computeFullState) {
 			return getSyncInfo(file, root, syncBranch, repo);
 		}
@@ -455,9 +456,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			resourcesToRefresh = null;
 		}
 
-		IHgRepositoryLocation repositoryLocation = getRepo();
-		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocationProjects(repositoryLocation);
 
 		Set<HgRoot> roots = byRoot.keySet();
 		try {
@@ -491,7 +489,19 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		for (IProject project : projects) {
-			if (!repoLocationProjects.contains(project)) {
+			IHgRepositoryLocation repositoryLocation = null;
+			Iterator<? extends IHgRepositoryLocation> ite = getRepos().iterator();
+			boolean found = false;
+			while (ite.hasNext()) {
+				IHgRepositoryLocation next = ite.next();
+				Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(next);
+				if (repoLocationProjects.contains(project)) {
+					found = true;
+					repositoryLocation = next;
+					break;
+				}
+			}
+			if (!found) {
 				continue;
 			}
 			// clear caches in any case, but refresh them only if project exists
@@ -532,7 +542,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} finally {
 				CACHE_SEMA.release();
 			}
-		}
+
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
@@ -549,6 +559,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
+		}
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -610,8 +621,16 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope;
 	}
 
-	protected IHgRepositoryLocation getRepo(){
-		return scope.getRepositoryLocation();
+	protected IHgRepositoryLocation getRepo(HgRoot root){
+		IHgRepositoryLocation ret = scope.getRepositoryLocation(root);
+
+		Assert.isNotNull(ret);
+
+		return ret;
+	}
+
+	protected Set<? extends IHgRepositoryLocation> getRepos(){
+		return scope.getRepositoryLocations();
 	}
 
 	public IProject[] getProjects() {
@@ -647,6 +666,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		};
 		job.schedule(100);
 	}
+
 
 	/**
 	 * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}

@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.extensions.lock.LockHelper;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -60,6 +61,7 @@ public class HgStatusClient extends AbstractClient {
 	// (first parent, optional dirty flag)(merge parent, optional dirty flag) space (branch name)
 	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$");
 
+	//called from refresh status in the team menu
 	public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", "Calculating resource status", root, true); //$NON-NLS-1$
 
@@ -69,7 +71,13 @@ public class HgStatusClient extends AbstractClient {
 		if (res.getType() == IResource.FILE) {
 			command.addFiles(res);
 		}
-		return command.executeToString();
+		String statuses = command.executeToString();
+		List<String> lockedFiles = LockHelper.getLockedFiles(root);
+		for (String lockStatus : lockedFiles) {
+			statuses += lockStatus+"\n";
+		}
+
+		return statuses;
 	}
 
 	public static String[] getStatus(HgRoot root, String revision1, String revision2, String filter, String inPattern, String exPattern) throws HgException {
@@ -110,7 +118,13 @@ public class HgStatusClient extends AbstractClient {
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		return command.executeToString();
+		String statuses = command.executeToString();
+		List<String> lockedFiles = LockHelper.getLockedFiles(root);
+		for (String lockStatus : lockedFiles) {
+			statuses += lockStatus+"\n";
+		}
+
+		return statuses;
 	}
 
 	/**
@@ -190,7 +204,8 @@ public class HgStatusClient extends AbstractClient {
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduc"); //$NON-NLS-1$
 		command.addFiles(files);
-		return command.executeToString();
+		String statuses = command.executeToString();
+		return statuses;
 	}
 
 	/**
