@@ -110,14 +110,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 
 			final boolean bLocal = property
 					.equals(MercurialPreferenceConstants.PREF_SYNC_ENABLE_LOCAL_CHANGESETS);
-			
+
 			if ((property.equals(PresentationMode.PREFERENCE_KEY) || bLocal
 					||	property.equals(MercurialPreferenceConstants.PREF_SYNC_SHOW_EMPTY_GROUPS))
 					&& input instanceof HgChangeSetModelProvider) {
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
-						
+
 						if (bLocal) {
 							recreateUncommittedEntry(treeViewer);
 						} else {
@@ -659,8 +659,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		}
 		MercurialEclipsePlugin.getDefault().getPreferenceStore().removePropertyChangeListener(preferenceListener);
 		disposeUncommittedEntry();
-		outgoing.getChangesets().clear();
-		incoming.getChangesets().clear();
 		super.dispose();
 	}
 
