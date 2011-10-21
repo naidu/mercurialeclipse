@@ -395,10 +395,14 @@ public class PatchQueueView extends AbstractRootView {
 						Collections.reverse(patches);
 						table.setItems(patches);
 					} catch (HgException e) {
-						showWarning(e.getConciseMessage());
-						MercurialEclipsePlugin.logError(e);
-						status = new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-								Messages.getString("PatchQueueView.cannotPopulatePatchViewTable"), e); //$NON-NLS-1$
+						if (e.getCause() instanceof InterruptedException) {
+							// ?
+						} else {
+							showWarning(e.getConciseMessage());
+							MercurialEclipsePlugin.logError(e);
+							status = new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+									Messages.getString("PatchQueueView.cannotPopulatePatchViewTable"), e); //$NON-NLS-1$
+						}
 					} finally {
 						updateEnablement(StructuredSelection.EMPTY);
 					}
