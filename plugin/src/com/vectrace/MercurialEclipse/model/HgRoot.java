@@ -272,10 +272,10 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 			HgRootContainer container = (HgRootContainer) projectAdapter;
 			container.init();
 		} else {
-			try {
-				if(!projectAdapter.isOpen()) {
-					projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
-				}
+			// Ideally we'd open the project. See: http://www.javaforge.com/issue/19998
+			// TODO: find a way to do this caching more explicitly. a get method shouldn't have side effects.
+			// projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
+			if(projectAdapter.isOpen()) {
 				if(!MercurialRootCache.isHgTeamProviderFor(projectAdapter)) {
 					try {
 						MercurialRootCache.markAsCached(projectAdapter, this);
@@ -283,8 +283,6 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 						MercurialEclipsePlugin.logError(e);
 					}
 				}
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		return projectAdapter;
