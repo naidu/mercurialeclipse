@@ -102,7 +102,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		}
 		return null;
 	}
-// called from refresh
+
 	public ResourceMapping[] getMappings() {
 		return getInputMappings();
 	}

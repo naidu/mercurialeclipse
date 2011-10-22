@@ -232,15 +232,6 @@
 
     <!-- commands -->
     <extension point="org.eclipse.ui.commands">
-    	<command
-                categoryId="com.vectrace.MercurialEclipse.commandCategory"
-                id="com.vectrace.MercurialEclipse.menu.LockHandler"
-                name="%actionLabel.lock"/>
-        <command
-                categoryId="com.vectrace.MercurialEclipse.commandCategory"
-                id="com.vectrace.MercurialEclipse.menu.UnLockHandler"
-                name="%actionLabel.unlock"/>
-    
         <command
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                 id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
@@ -706,14 +697,6 @@
                     <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>                    
                 </and>
             </enabledWhen>
-        </handler>
-        <handler
-              class="com.vectrace.MercurialEclipse.menu.LockHandler"
-              commandId="com.vectrace.MercurialEclipse.menu.LockHandler">
-        </handler>
-        <handler
-              class="com.vectrace.MercurialEclipse.menu.UnLockHandler"
-              commandId="com.vectrace.MercurialEclipse.menu.UnLockHandler">
         </handler>                 
     </extension>
 
@@ -1040,22 +1023,6 @@
                             <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
                             <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
                             </and>
-                        </visibleWhen>
-                    </command>
-                    
-                    <command
-                      commandId="com.vectrace.MercurialEclipse.menu.LockHandler"
-                      icon="icons/actions/lock.gif">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.file" />
-                        </visibleWhen>
-                    </command>
-                    
-                    <command
-                      commandId="com.vectrace.MercurialEclipse.menu.UnLockHandler"
-                      icon="icons/actions/unlock.gif">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.file" />
                         </visibleWhen>
                     </command>
                 </menu>

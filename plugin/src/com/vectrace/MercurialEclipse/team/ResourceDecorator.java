@@ -338,9 +338,6 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				break;
 			}
 		}
-		if(Bits.contains(statusBits, MercurialStatusCache.BIT_LOCKED)) {
-			overlay = DecoratorImages.LOCKED;
-		}
 		return overlay;
 	}
 

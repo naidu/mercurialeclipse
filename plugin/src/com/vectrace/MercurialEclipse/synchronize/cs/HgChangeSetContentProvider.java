@@ -121,14 +121,14 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						if (bLocal) {
 							recreateUncommittedEntry(treeViewer);
 						} else {
-   						treeViewer.getTree().setRedraw(false);
-   						treeViewer.refresh(uncommitted, true);
-   						for(RepositoryChangesetGroup sg : projectGroup) {
-   							treeViewer.refresh(sg.getOutgoing(), true);
-   							treeViewer.refresh(sg.getIncoming(), true);
-   						}
-   						treeViewer.getTree().setRedraw(true);
-   						treeViewer.refresh();
+							treeViewer.getTree().setRedraw(false);
+							treeViewer.refresh(uncommitted, true);
+							for(RepositoryChangesetGroup sg : projectGroup) {
+								treeViewer.refresh(sg.getOutgoing(), true);
+								treeViewer.refresh(sg.getIncoming(), true);
+							}
+							treeViewer.getTree().setRedraw(true);
+							treeViewer.refresh();
 						}
 					}
 				}, getTreeViewer());
@@ -189,7 +189,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			return null;
 		}
 
-		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault, final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
+		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
+				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
 			// user has requested a manual refresh: simply refresh root elements
 			getRootElements();
 		}

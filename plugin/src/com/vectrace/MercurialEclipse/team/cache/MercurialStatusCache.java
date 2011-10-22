@@ -220,20 +220,18 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	/** directory bit */
 	public static final int BIT_DIR = 1 << 10;
 
-	public static final int BIT_LOCKED = 1 << 11;
-
 	private static final Integer IGNORE = Integer.valueOf(BIT_IGNORE);
 	private static final Integer CLEAN = Integer.valueOf(BIT_CLEAN);
-//    private final static Integer _MISSING = Integer.valueOf(BIT_MISSING);
-//    private final static Integer _REMOVED = Integer.valueOf(BIT_REMOVED);
-//    private final static Integer _UNKNOWN = Integer.valueOf(BIT_UNKNOWN);
-//    private final static Integer _ADDED = Integer.valueOf(BIT_ADDED);
-//    private final static Integer _MODIFIED = Integer.valueOf(BIT_MODIFIED);
-//    private final static Integer _IMPOSSIBLE = Integer.valueOf(BIT_IMPOSSIBLE);
+	//    private final static Integer _MISSING = Integer.valueOf(BIT_MISSING);
+	//    private final static Integer _REMOVED = Integer.valueOf(BIT_REMOVED);
+	//    private final static Integer _UNKNOWN = Integer.valueOf(BIT_UNKNOWN);
+	//    private final static Integer _ADDED = Integer.valueOf(BIT_ADDED);
+	//    private final static Integer _MODIFIED = Integer.valueOf(BIT_MODIFIED);
+	//    private final static Integer _IMPOSSIBLE = Integer.valueOf(BIT_IMPOSSIBLE);
 	private static final Integer CONFLICT = Integer.valueOf(BIT_CONFLICT);
 
 	/** maximum bits count used in the cache */
-//    private final static int MAX_BITS_COUNT = 9;
+	//    private final static int MAX_BITS_COUNT = 9;
 
 	public static final char CHAR_IGNORED = 'I';
 	public static final char CHAR_CLEAN = 'C';
@@ -244,7 +242,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	public static final char CHAR_MODIFIED = 'M';
 	public static final char CHAR_UNRESOLVED = 'U';
 	public static final char CHAR_RESOLVED = 'R';
-	public static final char CHAR_LOCKED = 'L';
 
 	/**
 	 * If the child file has any of the bits set: BIT_IGNORE | BIT_CLEAN |
@@ -264,18 +261,18 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	/** a directory is still supervised if one of the following bits is set */
 	private static final int DIR_SUPERVISED_MASK = BIT_ADDED | BIT_CLEAN | BIT_MISSING
-		| BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT;
+			| BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT;
 
 	/**  an "added" directory is only added if NONE of the following bits is set */
 	private static final int DIR_NOT_ADDED_MASK = BIT_CLEAN | BIT_MISSING
-		| BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT | BIT_IGNORE;
+			| BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT | BIT_IGNORE;
 
 
 	protected static final int MASK_CHANGED = IResourceDelta.OPEN | IResourceDelta.CONTENT
-		| IResourceDelta.MOVED_FROM | IResourceDelta.REPLACED | IResourceDelta.TYPE;
+			| IResourceDelta.MOVED_FROM | IResourceDelta.REPLACED | IResourceDelta.TYPE;
 
 	protected static final int MASK_DELTA = MASK_CHANGED | IResourceDelta.MOVED_TO
-		| IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
+			| IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
 
 	/** Used to store the last known status of a resource */
 	/* private */final ConcurrentHashMap<IPath, Integer> statusMap = new ConcurrentHashMap<IPath, Integer>(
@@ -304,8 +301,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		private final PathsSet conflict = new PathsSet(1000, 0.75f);
 		/** directories */
 		private final PathsSet dir = new PathsSet(1000, 0.75f);
-
-		private final PathsSet lock = new PathsSet(1000, 0.75f);
 		// we do not cache impossible values
 		// private final Set<IPath> impossible = new HashSet<IPath>();
 
@@ -340,9 +335,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if((mask & BIT_DIR) != 0){
 				dir.add(path);
 			}
-			if((mask & BIT_LOCKED) != 0){
-				lock.add(path);
-			}
 		}
 
 		synchronized PathsSet get(int bit){
@@ -363,8 +355,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				return ignore;
 			case BIT_DIR:
 				return dir;
-			case BIT_LOCKED:
-				return lock;
 			default:
 				return null;
 			}
@@ -379,7 +369,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			remove(path, conflict);
 			remove(path, ignore);
 			remove(path, dir);
-			remove(path, lock);
 		}
 
 		static void remove(IPath path, PathsSet set) {
@@ -627,7 +616,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return Collections.emptySet();
 		}
 		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
-			&& Bits.cardinality(statusBits) == 1;
+				&& Bits.cardinality(statusBits) == 1;
 		if(isMappedState){
 			PathsSet set = bitMap.get(statusBits);
 			if(set == null || set.isEmpty()){
@@ -849,7 +838,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			repos = new HashSet<HgRoot>();
 		}
 		if(root != null) {
-		repos.add(root);
+			repos.add(root);
 		}
 
 		Set<IResource> changed = new HashSet<IResource>();
@@ -1047,7 +1036,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// we need the project for performance reasons - gotta hand it to
 		// addToProjectResources
 		Set<IResource> changed = new HashSet<IResource>();
-
 		List<String> strangeStates = new ArrayList<String>();
 
 		// Make values in the path map canonical
@@ -1089,9 +1077,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				changed.add(member);
 			}
 			if(!member.isLinked(IResource.CHECK_ANCESTORS)) {
-			setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
-			changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
-		}
+				setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
+				changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
+			}
 		}
 		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
@@ -1293,8 +1281,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			return BIT_ADDED;
 		case CHAR_MODIFIED:
 			return BIT_MODIFIED;
-		case CHAR_LOCKED:
-			return BIT_LOCKED;
 		default:
 			return BIT_IMPOSSIBLE;
 		}
@@ -1367,7 +1353,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// project status wanted, no batching needed
 		if(resources.remove(project) && resources.isEmpty()){
 			return;
-			}
+		}
 
 		Set<IResource> changed = new HashSet<IResource>();
 		for(Map.Entry<HgRoot, Set<IResource>> entry : resources.entrySet()){
@@ -1396,8 +1382,8 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				currentBatch.add(resource);
 			}
 			if(!listFileEnabled) {
-			if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
-				// call hg with batch
+				if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
+					// call hg with batch
 					updateStatusBatched(project, root, currentBatch, changed);
 					currentBatch.clear();
 				}
@@ -1417,37 +1403,36 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// fix for issue #19998 - call possibly blocking code outside the lock on statusUpdateLock
 		Assert.isNotNull(root.getResource());
 
-				synchronized (statusUpdateLock) {
-					for (IResource curr : currentBatch) {
-						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
-						clearStatusCache(curr);
-						if (unknown && !curr.exists()) {
-							// remember parents of deleted files: we must update their state
-							IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
-							while(directory != null) {
-								changed.add(directory);
-								IPath parentPath = directory.getLocation();
-								if(parentPath != null) {
-									bitMap.remove(parentPath);
-									statusMap.remove(parentPath);
-								}
-								directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
-							}
-							// recursive recalculate parents state
-							// TODO better to combine it with parse status below...
-							setStatusToAncestors(curr, CLEAN, true);
+		synchronized (statusUpdateLock) {
+			for (IResource curr : currentBatch) {
+				boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
+				clearStatusCache(curr);
+				if (unknown && !curr.exists()) {
+					// remember parents of deleted files: we must update their state
+					IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
+					while(directory != null) {
+						changed.add(directory);
+						IPath parentPath = directory.getLocation();
+						if(parentPath != null) {
+							bitMap.remove(parentPath);
+							statusMap.remove(parentPath);
 						}
+						directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
 					}
-					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-					String[] lines = NEWLINE.split(output);
-
-					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
-					IPath projectLocation = project.getLocation();
-					if(projectLocation != null) {
-						pathMap.put(project, projectLocation);
-					}
-					changed.addAll(parseStatus(root, pathMap, lines, true));
+					// recursive recalculate parents state
+					// TODO better to combine it with parse status below...
+					setStatusToAncestors(curr, CLEAN, true);
 				}
+			}
+			String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
+			String[] lines = NEWLINE.split(output);
+			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+			IPath projectLocation = project.getLocation();
+			if(projectLocation != null) {
+				pathMap.put(project, projectLocation);
+			}
+			changed.addAll(parseStatus(root, pathMap, lines, true));
+		}
 	}
 
 	public void clearStatusCache(IResource resource) {

@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch				- implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ *     Andrei Loskutov              - bug fixes
  *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
@@ -100,7 +100,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
 			sb.append("[");
-			for(IHgRepositoryLocation repo : repos) {
+			for (IHgRepositoryLocation repo : repos) {
 				sb.append(" ("+repo.getLocation()+") ").append(',');
 
 			}
@@ -163,9 +163,6 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	private Set<IProject> getRepoProjects() {
 		Set<IProject> repoProjects = new HashSet<IProject>();
 		for(IHgRepositoryLocation repos : repositoryLocationSet) {

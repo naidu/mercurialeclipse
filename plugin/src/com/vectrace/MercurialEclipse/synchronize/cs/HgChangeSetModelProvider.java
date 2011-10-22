@@ -41,13 +41,15 @@ public class HgChangeSetModelProvider extends ModelProvider {
 		return subscriber;
 	}
 
-	public static class HgModelScopeParticipantFactory implements ISynchronizationScopeParticipantFactory, IAdapterFactory {
+	public static class HgModelScopeParticipantFactory implements
+			ISynchronizationScopeParticipantFactory, IAdapterFactory {
 
 		public HgModelScopeParticipantFactory() {
 
 		}
 
-		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1, ISynchronizationScope scope) {
+		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1,
+				ISynchronizationScope scope) {
 			HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider) provider1;
 			RepositorySynchronizationScope rscope = (RepositorySynchronizationScope) scope;
 			MercurialSynchronizeSubscriber subscriber = rscope.getSubscriber();
@@ -56,7 +58,7 @@ public class HgChangeSetModelProvider extends ModelProvider {
 			return subscriber.getParticipant();
 		}
 
-		@SuppressWarnings("rawtypes")
+		@SuppressWarnings("unchecked")
 		public Object getAdapter(Object adaptableObject, Class adapterType) {
 			if (adaptableObject instanceof ModelProvider) {
 				ModelProvider provider1 = (ModelProvider) adaptableObject;
@@ -72,7 +74,7 @@ public class HgChangeSetModelProvider extends ModelProvider {
 			return null;
 		}
 
-		@SuppressWarnings("rawtypes")
+		@SuppressWarnings("unchecked")
 		public Class[] getAdapterList() {
 			return new Class[] {
 //					IResourceMappingMerger.class,

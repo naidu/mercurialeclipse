@@ -204,7 +204,6 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			return EMPTY_SET;
 		}
 
-
 		final Set<ChangeSet> result = new HashSet<ChangeSet>();
 
 		Runnable runnable = new Runnable() {
@@ -303,6 +302,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			}
 		}
 	}
+
 	boolean initializing;
 
 	@Override

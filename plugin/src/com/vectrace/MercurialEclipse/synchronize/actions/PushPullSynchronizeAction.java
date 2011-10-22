@@ -38,20 +38,21 @@ import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
- * Get action that appears in the synchronize view. It's main purpose is to filter the selection and
- * delegate its execution to the get operation.
+ * Get action that appears in the synchronize view. It's main purpose is to
+ * filter the selection and delegate its execution to the get operation.
  */
 public class PushPullSynchronizeAction extends SynchronizeModelAction {
 
 	private final boolean update;
 	private final boolean isPull;
 
-	public PushPullSynchronizeAction(String text, ISynchronizePageConfiguration configuration,
+	public PushPullSynchronizeAction(String text,
+			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider, boolean isPull, boolean update) {
 		super(text, configuration, selectionProvider);
 		this.isPull = isPull;
 		this.update = update;
-		if (isPull) {
+		if(isPull) {
 			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 		} else {
 			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
@@ -95,9 +96,9 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 	@Override
 	protected boolean updateSelection(IStructuredSelection selection) {
 		boolean updateSelection = super.updateSelection(selection);
-		if (!updateSelection) {
+		if(!updateSelection){
 			Object[] array = selection.toArray();
-			if (selection.size() != 1) {
+			if(selection.size() != 1){
 				return false;
 			}
 			return isSupported(array[0]);
@@ -110,10 +111,10 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		if (object instanceof IProject) {
+		if(object instanceof IProject){
 			return true;
 		}
-		if (object instanceof ChangesetGroup) {
+		if(object instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) object;
 			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
 		}

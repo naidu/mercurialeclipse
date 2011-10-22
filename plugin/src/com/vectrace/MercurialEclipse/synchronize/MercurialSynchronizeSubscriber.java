@@ -667,7 +667,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		job.schedule(100);
 	}
 
-
 	/**
 	 * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}
 	 * {@inheritDoc}

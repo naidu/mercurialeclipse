@@ -7,7 +7,7 @@
  *
  * Contributors:
  *      bastian	implementation
- *      Andrei Loskutov       - bug fixes
+ *      Andrei Loskutov - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 

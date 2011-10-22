@@ -267,7 +267,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	public boolean isLocal() {
 		return true;
 	}
-	
+
 	public IProject getResource() {
 		if(projectAdapter instanceof HgRootContainer) {
 			HgRootContainer container = (HgRootContainer) projectAdapter;
@@ -292,4 +292,5 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	public HgRoot toHgRoot() {
 		return this;
 	}
+
 }

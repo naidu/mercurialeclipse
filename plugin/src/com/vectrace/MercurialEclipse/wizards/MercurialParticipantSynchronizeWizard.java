@@ -148,14 +148,13 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	/**
-	 * @return properties object if all information needed to synchronize is available, null if some
-	 *         settings are missing
+	 * @return properties object if all information needed to synchronize is available,
+	 * 	null if some settings are missing
 	 */
 	public List<Map<String, Object>> prepareSettings() {
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
-
 
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (HgRoot hgRoot : roots) {

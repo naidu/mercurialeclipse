@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch				- implementation
- *     Andrei Loskutov       - bug fixes
+ *     Andrei Loskutov              - bug fixes
  *     Zsolt Koppany (Intland)
  *     Adam Berkes (Intland) - modifications
  *     Ilya Ivanov (Intland) - modifications
@@ -119,7 +119,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			public void run() {
 				prefStore.setValue(prefKey, !isChecked());
 				MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant)getConfiguration().getParticipant();
-				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant.getContext().getScope().getMappings());
+
+				participant.refresh(getConfiguration().getSite().getWorkbenchSite(), participant
+						.getContext().getScope().getMappings());
 			}
 
 			@Override

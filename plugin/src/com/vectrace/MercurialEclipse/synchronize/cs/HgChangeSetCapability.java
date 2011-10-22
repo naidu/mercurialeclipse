@@ -29,7 +29,8 @@ public class HgChangeSetCapability extends ChangeSetCapability {
 	}
 
 	@Override
-	public HgChangesetsCollector createSyncInfoSetChangeSetCollector(ISynchronizePageConfiguration configuration) {
+	public HgChangesetsCollector createSyncInfoSetChangeSetCollector(
+			ISynchronizePageConfiguration configuration) {
 		return new HgChangesetsCollector(configuration);
 	}
 
@@ -39,7 +40,8 @@ public class HgChangeSetCapability extends ChangeSetCapability {
 	}
 
 	@Override
-	public ActiveChangeSet createChangeSet(ISynchronizePageConfiguration configuration,	IDiff[] diffs) {
+	public ActiveChangeSet createChangeSet(ISynchronizePageConfiguration configuration,
+			IDiff[] diffs) {
 		return null;
 	}
 
