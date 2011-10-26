@@ -444,12 +444,20 @@ public class CommitDialog extends TitleAreaDialog {
 				.getCommitMessages();
 		if (oldCommits.length > 0) {
 			final Combo oldCommitComboBox = SWTWidgetHelper.createCombo(container);
-			oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
-			oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages"));
+			String[] oddCommitsDisplay = new String[oldCommits.length+1];
+			oddCommitsDisplay[0] = Messages.getString("CommitDialog.oldCommitMessages");
 			for (int i = 0; i < oldCommits.length; i++) {
 				 // Add text to the combo but replace \n with <br> to get a one-liner
-				oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>"));
+				String commitText = oldCommits[i].replaceAll("\\n", "<br>");
+				//XXX This is a workaround of Bug 209157 of SWT Combo
+				if (oddCommitsDisplay.length > 3 || commitText.length() <= 100) {
+					oddCommitsDisplay[i+1] = commitText;
+				} else {
+					oddCommitsDisplay[i+1] = commitText.substring(0, 100) + " ...";
+				}
 			}
+			oldCommitComboBox.setItems(oddCommitsDisplay);
+			oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages"));
 			oldCommitComboBox.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
