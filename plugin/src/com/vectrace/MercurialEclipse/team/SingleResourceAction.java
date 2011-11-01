@@ -30,7 +30,7 @@ public abstract class SingleResourceAction implements IActionDelegate {
 		}
 	}
 
-	protected Shell getShell() {
+	protected static Shell getShell() {
 		return MercurialEclipsePlugin.getActiveShell();
 	}
 

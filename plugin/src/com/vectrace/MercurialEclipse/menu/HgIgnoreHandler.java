@@ -67,7 +67,7 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 		}
 	}
 
-	private void refreshStatus(final IResource resource) {
+	private static void refreshStatus(final IResource resource) {
 		Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {

@@ -139,7 +139,7 @@ public class CompareAction extends SingleResourceAction {
 	/**
 	 * @param file non null
 	 */
-	private void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
+	private static void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
 		try {
 			MercurialRevisionStorage ancestorNode;
 			MercurialRevisionStorage mergeNode;
