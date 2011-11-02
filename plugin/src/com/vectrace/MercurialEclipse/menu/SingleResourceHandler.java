@@ -38,10 +38,6 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 		return shell != null? shell : MercurialEclipsePlugin.getActiveShell();
 	}
 
-	protected IResource getSelectedResource() {
-		return selection;
-	}
-
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		selection = null;
 		ISelection selectionObject = HandlerUtil.getCurrentSelection(event);
@@ -54,7 +50,9 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 				selection = ResourceUtils.getActiveResourceFromEditor();
 			}
 
-			run(getSelectedResource());
+			if (selection != null) {
+				run(selection);
+			}
 		} catch (Exception e) {
 			MessageDialog
 					.openError(

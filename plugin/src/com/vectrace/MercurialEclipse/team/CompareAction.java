@@ -113,7 +113,10 @@ public class CompareAction extends SingleResourceAction {
 					}
 
 					if (cs != null) {
-						CompareUtils.openEditor(resource, MercurialUtilities.getParentRevision(cs, (IFile)resource), false, null);
+						// TODO: compare with parent on a project?
+						if (resource instanceof IFile) {
+							CompareUtils.openEditor(resource, MercurialUtilities.getParentRevision(cs, (IFile)resource), false, null);
+						}
 						return Status.OK_STATUS;
 					}
 				} catch (TeamException e) {
@@ -139,7 +142,7 @@ public class CompareAction extends SingleResourceAction {
 	/**
 	 * @param file non null
 	 */
-	private void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
+	private static void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
 		try {
 			MercurialRevisionStorage ancestorNode;
 			MercurialRevisionStorage mergeNode;

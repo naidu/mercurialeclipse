@@ -73,9 +73,6 @@ public class QInitWizard extends HgOperationWizard {
 
 	private final IResource resource;
 
-	/**
-	 * @param windowTitle
-	 */
 	public QInitWizard(IResource resource) {
 		super(Messages.getString("QInitWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
@@ -84,8 +81,7 @@ public class QInitWizard extends HgOperationWizard {
 				Messages.getString("QInitWizard.pageName"), //$NON-NLS-1$
 				Messages.getString("QInitWizard.pageTitle"), //$NON-NLS-1$
 				null,
-				null,
-				resource);
+				null);
 		initPage(Messages.getString("QInitWizard.pageDescription"), page); //$NON-NLS-1$
 		addPage(page);
 	}

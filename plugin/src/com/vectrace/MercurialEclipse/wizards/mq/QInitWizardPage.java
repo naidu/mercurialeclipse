@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -25,22 +24,12 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QInitWizardPage extends HgWizardPage {
 
-	private IResource resource;
 	private Button checkBox;
 
-	/**
-	 * @param pageName
-	 * @param title
-	 * @param titleImage
-	 * @param description
-	 */
 	public QInitWizardPage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IResource resource) {
+			ImageDescriptor titleImage, String description) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
 	}
-
-
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
@@ -51,17 +40,6 @@ public class QInitWizardPage extends HgWizardPage {
 		this.checkBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QInitWizardPage.checkBox.nestedRepo")); //$NON-NLS-1$
 		setControl(composite);
 	}
-
-
-
-	/**
-	 * @return the resource
-	 */
-	public IResource getResource() {
-		return resource;
-	}
-
-
 
 	/**
 	 * @return the checkBox
