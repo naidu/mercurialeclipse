@@ -475,10 +475,16 @@ public class ClonePage extends PushPullPage {
 	}
 
 	private boolean handle(Exception e) {
-		if (e.getCause() != null) {
-			setErrorMessage(e.getCause().getLocalizedMessage());
+		Throwable t = e.getCause();
+
+		if (t == null) {
+			t = e;
+		}
+
+		if (t instanceof HgException) {
+			setErrorMessage(((HgException) t).getConciseMessage());
 		} else {
-			setErrorMessage(e.getLocalizedMessage());
+			setErrorMessage(t.getLocalizedMessage());
 		}
 		MercurialEclipsePlugin.logError(Messages
 				.getString("CloneRepoWizard.cloneOperationFailed"), e);
