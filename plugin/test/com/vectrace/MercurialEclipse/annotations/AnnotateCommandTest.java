@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.vectrace.MercurialEclipse.commands.HgAnnotateClient;
+
 import junit.framework.TestCase;
 
 public class AnnotateCommandTest extends TestCase {
@@ -25,7 +27,7 @@ public class AnnotateCommandTest extends TestCase {
 	}
 
 	private List<AnnotateBlock> createFromStdOut(String name) {
-		return AnnotateCommand.createFromStdOut(
+		return HgAnnotateClient.createFromStdOut(
 				getClass().getResourceAsStream(name + ".out")).getAnnotateBlocks();
 	}
 

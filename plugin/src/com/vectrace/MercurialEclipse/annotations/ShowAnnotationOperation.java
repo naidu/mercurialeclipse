@@ -52,6 +52,7 @@ import org.eclipse.ui.texteditor.ITextEditorExtension4;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.commands.HgAnnotateClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
@@ -136,7 +137,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 				return;
 			}
 
-			final AnnotateBlocks annotateBlocks = new AnnotateCommand(res).execute();
+			final AnnotateBlocks annotateBlocks = HgAnnotateClient.execute(res);
 
 			// this is not needed if there is no live annotate
 			final RevisionInformation information = createRevisionInformation(

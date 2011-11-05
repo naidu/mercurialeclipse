@@ -13,7 +13,7 @@
  *     Andrei Loskutov   - bug fixes
  *******************************************************************************/
 
-package com.vectrace.MercurialEclipse.annotations;
+package com.vectrace.MercurialEclipse.commands;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -30,24 +30,19 @@ import java.util.regex.Pattern;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.annotations.AnnotateBlock;
+import com.vectrace.MercurialEclipse.annotations.AnnotateBlocks;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
-public class AnnotateCommand {
+public class HgAnnotateClient {
 	private static final Pattern ANNOTATE = Pattern
 			.compile("^\\s*(.+?)\\s+(\\d+)\\s+(\\w+)\\s+(\\w+ \\w+ \\d+ \\d+:\\d+:\\d+ \\d+ [\\+\\-]\\d+)"); //$NON-NLS-1$
 
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
 			"EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
-	private final IResource file;
-
-	public AnnotateCommand(IResource remoteFile) {
-		this.file = remoteFile;
-	}
-
-	public AnnotateBlocks execute() throws HgException {
+	public static AnnotateBlocks execute(IResource file) throws HgException {
 
 		if (!MercurialTeamProvider.isHgTeamProviderFor(file)) {
 			return null;
@@ -61,7 +56,7 @@ public class AnnotateCommand {
 		return createFromStdOut(new StringReader(command.executeToString()));
 	}
 
-	protected static AnnotateBlocks createFromStdOut(InputStream contents) {
+	public static AnnotateBlocks createFromStdOut(InputStream contents) {
 		return createFromStdOut(new InputStreamReader(contents));
 	}
 
