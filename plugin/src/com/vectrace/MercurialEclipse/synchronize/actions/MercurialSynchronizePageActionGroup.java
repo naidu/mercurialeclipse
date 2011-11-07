@@ -66,6 +66,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 	public static final String HG_CHANGESETS_GROUP = "hg.changesets";
 	private final IAction expandAction;
 
+	private IAction pullUpdateAllAction;
+	private IAction pushAllAction;
+
 	private final PreferenceAction allBranchesAction;
 
 	private final ArrayList<PresentationModeAction> presentationModeActions;
@@ -87,6 +90,18 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				}
 			}
 		};
+
+//		pullUpdateAllAction = new Action("Pull/Update all", MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif")) {
+//			@Override
+//			public void run() {
+//				ISynchronizeParticipant part = getConfiguration().getParticipant();
+//				if(part instanceof MercurialSynchronizeParticipant) {
+//					MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
+//					Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
+//					new PushPullSynchronizeOperation(getConfiguration(),null, null, true, true).run();
+//				}
+//			}
+//		};
 
 		IPreferenceStore prefStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 
@@ -157,6 +172,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
 
+		pullUpdateAllAction = new PushPullSynchronizeAction("Pull and Update", configuration, getVisibleRootsSelectionProvider(), true, true);
+		pushAllAction = new PushPullSynchronizeAction("Push all", configuration, getVisibleRootsSelectionProvider(), false, false);
+		
+		
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_CHANGESETS_GROUP,
 				new CreateNewChangesetSynchronizeAction("Create New Change Set",
@@ -386,6 +405,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		IToolBarManager manager = actionBars.getToolBarManager();
 		appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
 		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, allBranchesAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pullUpdateAllAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pushAllAction);
 
 		IMenuManager menu = actionBars.getMenuManager();
 		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);

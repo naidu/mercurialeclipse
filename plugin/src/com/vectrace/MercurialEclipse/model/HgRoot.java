@@ -8,6 +8,7 @@
  * Contributors:
  *     bastian					- implementation
  *     Andrei Loskutov			- bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 

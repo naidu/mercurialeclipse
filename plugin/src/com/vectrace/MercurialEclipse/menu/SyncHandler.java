@@ -68,7 +68,8 @@ public class SyncHandler extends MultipleResourcesHandler {
 			return true;
 		}
 		String id = getId();
-		return !"com.vectrace.MercurialEclipse.menu.SyncHandler".equals(id);
+//???		return !"com.vectrace.MercurialEclipse.menu.SyncHandler".equals(id);		
+		return "com.vectrace.MercurialEclipse.menu.SyncHandler2".equals(id);
 	}
 
 	private String getId() {

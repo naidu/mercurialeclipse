@@ -12,20 +12,29 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -51,12 +60,37 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		IStructuredSelection sel = getStructuredSelection();
+
+		// Object input = configuration.getPage().getViewer().getInput();
+		// if(input instanceof HgChangeSetModelProvider) {
+		// HgChangeSetModelProvider provider = (HgChangeSetModelProvider) input;
+		// provider.getSubscriber().getCollector().get
+		// }
+		if(sel instanceof TreeSelection) {
+			List list = ((TreeSelection)sel).toList();
+			return new PushPullSynchronizeOperation(configuration, elements, new HashSet(list), isPull, update);
+		}
+		ISynchronizeParticipant part = getConfiguration().getParticipant();
+		if (part instanceof MercurialSynchronizeParticipant) {
+			HashSet<IProject> result = new HashSet<IProject>();
+			MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
+			Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
+			for (IHgRepositoryLocation repos : repositoryLocation) {
+				Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repos);
+				for (IProject proj : projects) {
+					result.add(proj);
+				}
+			}
+			PushPullSynchronizeOperation pullupdate = new PushPullSynchronizeOperation(configuration, elements, result, isPull, update);
+			return pullupdate;
+		}
 		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
-		Object object = sel.getFirstElement();
-		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
+		List<Object> object = sel.toList();
+		return new PushPullSynchronizeOperation(configuration, elements, new HashSet(object), isPull, update);
 	}
 
 	@Override
@@ -83,6 +117,15 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		if(object instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) object;
 			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
+		}
+		if (object instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) object;
+			if (isPull && group.getIncoming().getChangesets().size() > 0) {
+				return true;
+			}
+			if (!isPull && group.getOutgoing().getChangesets().size() > 0) {
+				return true;
+			}
 		}
 		if (object instanceof ChangeSet) {
 			ChangeSet changeSet = (ChangeSet) object;
