@@ -23,13 +23,13 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -76,7 +76,6 @@ public class HgLocateClient extends AbstractClient {
 			lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		} catch (HgException e) {
 			// it is normal that the resource does not exist.
-			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
 		}
 
 		if (resource instanceof IStorage) {
