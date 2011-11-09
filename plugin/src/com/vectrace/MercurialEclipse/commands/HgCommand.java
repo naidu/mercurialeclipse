@@ -81,9 +81,9 @@ public class HgCommand extends AbstractShellCommand {
 	/**
 	 * <b>NOTE!</b> this method works only for hg commands which knows "-u" argument
 	 * AND which understood "-u" as user name. There are commands which accept "-u" but
-	 * threat is differently: like "resolve" or "status" (see {@link #isConflictingWithUserArg()}).
+	 * treat is differently: like "resolve" or "status" (see {@link #isConflictingWithUserArg()}).
 	 *
-	 * @param user might be null or empty. In such case, a default user name weill be used.
+	 * @param user might be null or empty. In such case, a default user name will be used.
 	 * @throws IllegalArgumentException if the command uses "-u" NOT as user name parameter
 	 */
 	public void addUserName(String user) throws IllegalArgumentException {
