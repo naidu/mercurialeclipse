@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -259,7 +259,7 @@ public class HgRepositoryLocationManager {
 		return result;
 	}
 
-	private void getProjectRepos() throws HgException {
+	private synchronized void getProjectRepos() throws HgException {
 		if (!initialized) {
 			initialized = true;
 			loadRepos();

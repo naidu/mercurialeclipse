@@ -55,22 +55,25 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
  *
  */
 public class HgCommitMessageManager {
-
-	/**
-	 * commit messages database (keep it simple)
-	 */
-	private static List<String> commitMessages = new ArrayList<String>();
-
 	/**
 	 * Prefix for the pref store for the hg root default commit name
 	 */
 	public static final String KEY_PREFIX_COMMIT_NAME = "commitName_"; //$NON-NLS-1$
 
 	private static final String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
+
 	private static final String XML_TAG_COMMIT_MESSAGE = "commitmessage"; //$NON-NLS-1$
+
 	private static final String XML_TAG_COMMIT_MESSAGES = "commitmessages"; //$NON-NLS-1$
 
 	private final XmlHandler xmlHandler;
+
+	/**
+	 * commit messages database (keep it simple)
+	 */
+	private final List<String> commitMessages = new ArrayList<String>();
+
+	private boolean loaded = false;
 
 	public HgCommitMessageManager() {
 		xmlHandler = new XmlHandler(this);
@@ -123,7 +126,7 @@ public class HgCommitMessageManager {
 	 * Return a <code>File</code> object representing the location file. The file may or may not
 	 * exist and must be checked before use.
 	 */
-	private File getLocationFile() {
+	private static File getLocationFile() {
 		return MercurialEclipsePlugin.getDefault().getStateLocation().append(COMMIT_MESSAGE_FILE)
 				.toFile();
 	}
@@ -133,7 +136,15 @@ public class HgCommitMessageManager {
 	 *
 	 * @throws HgException
 	 */
-	public void start() throws HgException {
+	public synchronized void start() throws HgException {
+		if (!loaded) {
+			loaded = true;
+			load();
+		}
+	}
+
+	private void load() throws HgException
+	{
 		File file = getLocationFile();
 		if (!file.isFile()) {
 			return;
