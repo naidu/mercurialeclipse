@@ -34,11 +34,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -125,6 +123,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		// should NOT do anything until started by OSGI
 	}
 
+	/**
+	 * @see org.eclipse.ui.plugin.AbstractUIPlugin#start(org.osgi.framework.BundleContext)
+	 */
 	@Override
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
@@ -162,28 +163,23 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 					logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
 					return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);
 				}
+				finally {
+					// show console on startup if configured
+					if (getPreferenceStore().getBoolean(
+							MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP)) {
+						// open console in SWT GUI Thread
+						new SafeUiJob(
+								Messages.getString("MercurialEclipsePlugin.openingMercurialConsole")) { //$NON-NLS-1$
+							@Override
+							protected IStatus runSafe(IProgressMonitor monitor2) {
+								HgConsoleHolder.getInstance().showConsole(true);
+								return super.runSafe(monitor2);
+							}
+						}.schedule();
+					}
+				}
 			}
 		};
-
-		// show console on startup if configured
-		if (getPreferenceStore().getBoolean(
-				MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP)) {
-			job.addJobChangeListener(new JobChangeAdapter() {
-				@Override
-				public void done(IJobChangeEvent event) {
-					// open console in SWT GUI Thread
-					new SafeUiJob(Messages
-							.getString("MercurialEclipsePlugin.openingMercurialConsole")) { //$NON-NLS-1$
-						@Override
-						protected IStatus runSafe(IProgressMonitor monitor) {
-							HgConsoleHolder.getInstance().showConsole(true);
-							return super.runSafe(monitor);
-						}
-					}.schedule();
-					super.done(event);
-				}
-			});
-		}
 
 		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
 		// Why JFaceResources wasn't initialized I don't know.
@@ -193,8 +189,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				try {
 					getImageRegistry();
 				} finally {
-		job.schedule();
-	}
+					job.schedule();
+				}
 				return super.runSafe(monitor);
 			}
 		}.schedule();
@@ -223,7 +219,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				System.out.println(HgFeatures.printSummary());
 			}
 		}
-		}
+	}
 
 	/**
 	 * Plugin depends on native mercurial installation, which has to be checked at plugin startup.
