@@ -134,7 +134,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 					return Status.OK_STATUS;
 				}
 			};
-			job.setPriority(Job.LONG);
 			job.setSystem(true);
 			job.schedule(200);
 		}
