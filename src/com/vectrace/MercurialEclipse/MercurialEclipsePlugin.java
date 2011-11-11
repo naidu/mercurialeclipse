@@ -126,8 +126,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		HgClients.initialize(cfg, cfg, cfg);
 		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
 		proxyServiceTracker.open();
-
-		final Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
+		Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
@@ -178,19 +177,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			});
 		}
 
-		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
-		// Why JFaceResources wasn't initialized I don't know.
-		new SafeUiJob(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) {
-			@Override
-			protected IStatus runSafe(IProgressMonitor monitor) {
-				try {
-					getImageRegistry();
-				} finally {
-					job.schedule();
-				}
-				return super.runSafe(monitor);
-			}
-		}.schedule();
+		// start plugin
+		job.schedule();
 	}
 
 	/**
