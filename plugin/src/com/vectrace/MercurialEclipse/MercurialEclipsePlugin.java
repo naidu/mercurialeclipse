@@ -285,23 +285,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * Gets the repository manager
 	 */
 	public static HgRepositoryLocationManager getRepoManager() {
-		try {
-			repoManager.start();
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-
 		return repoManager;
 	}
 
 	public static HgCommitMessageManager getCommitMessageManager() {
-		try {
-			commitMessageManager.start();
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-
 		return commitMessageManager;
+	}
+
+	public static void setCommitMessageManager(HgCommitMessageManager commitMessageManager) {
+		MercurialEclipsePlugin.commitMessageManager = commitMessageManager;
 	}
 
 	@Override
