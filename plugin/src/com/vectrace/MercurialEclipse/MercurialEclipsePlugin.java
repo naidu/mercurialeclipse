@@ -181,6 +181,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			}
 		};
 
+		job.setPriority(Job.SHORT);
 		job.schedule();
 
 		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
@@ -292,10 +293,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	public static HgCommitMessageManager getCommitMessageManager() {
 		return commitMessageManager;
-	}
-
-	public static void setCommitMessageManager(HgCommitMessageManager commitMessageManager) {
-		MercurialEclipsePlugin.commitMessageManager = commitMessageManager;
 	}
 
 	@Override
