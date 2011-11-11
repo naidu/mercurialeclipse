@@ -126,15 +126,14 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			// therefore start job execution.
 			// The preference key is only used as a cache by MercurialUtilities.getDefaultUserName() and
 			// it is useful to show on the preference page.
-			Job job = new Job("Detecting hg user name") {
+			Job job = new Job("Detecting hg user name"){
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					MercurialEclipsePlugin.getDefault().checkHgInstallation();
 					store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getDefaultUserName());
 					return Status.OK_STATUS;
 				}
 			};
-			job.setPriority(Job.LONG);
+			job.setPriority(Job.LONG /* Must be lower than the default priority. See #20425 */);
 			job.setSystem(true);
 			job.schedule(200);
 		}
