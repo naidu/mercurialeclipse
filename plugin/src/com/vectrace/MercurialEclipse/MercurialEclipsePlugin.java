@@ -181,9 +181,11 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			}
 		};
 
+		job.schedule();
+
 		// Image registry must be initialized. See first stack trace in http://www.javaforge.com/issue/14327
 		// Why JFaceResources wasn't initialized I don't know.
-		new SafeUiJob(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) {
+		/*new SafeUiJob(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
@@ -193,7 +195,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				}
 				return super.runSafe(monitor);
 			}
-		}.schedule();
+		}.schedule();*/
 	}
 
 	/**
