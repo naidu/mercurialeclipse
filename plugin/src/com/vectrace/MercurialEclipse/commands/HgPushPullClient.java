@@ -151,7 +151,7 @@ public class HgPushPullClient extends AbstractClient {
 
 			// doesn't matter how far we were: we have to trigger update of caches in case
 			// the pull was *partly* successful (e.g. pull was ok, but update not)
-			refreshProjects(update, hgRoot);
+			refreshProjects((update || separateUpdate), hgRoot);
 		}
 		return result;
 	}
