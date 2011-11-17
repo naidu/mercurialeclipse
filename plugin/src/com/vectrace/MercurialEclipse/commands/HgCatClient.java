@@ -17,9 +17,7 @@ import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.CoreException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
@@ -27,7 +25,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCatClient extends AbstractClient {
 
-	public static String getContent(IFile resource, String revision) throws HgException {
+	public static byte[] getContent(IFile resource, String revision) throws HgException {
 		HgRoot hgRoot = getHgRoot(resource);
 		File file = ResourceUtils.getFileHandle(resource);
 		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
@@ -39,12 +37,11 @@ public class HgCatClient extends AbstractClient {
 
 		command.addOptions("--decode"); //$NON-NLS-1$
 		command.addOptions(hgRoot.toRelative(file));
-		command.setEncoding(ResourceUtils.getFileEncoding(resource));
 
-		return command.executeToString();
+		return command.executeToBytes();
 	}
 
-	public static String getContent(IHgFile hgfile) throws HgException {
+	public static byte[] getContent(IHgFile hgfile) throws HgException {
 		HgRoot hgRoot = hgfile.getHgRoot();
 		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
 
@@ -55,16 +52,11 @@ public class HgCatClient extends AbstractClient {
 
 		command.addOptions("--decode"); //$NON-NLS-1$
 		command.addOptions(hgfile.getHgRootRelativePath());
-		try {
-			command.setEncoding(hgfile.getCharset());
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
 
-		return command.executeToString();
+		return command.executeToBytes();
 	}
 
-	public static String getContentFromBundle(IFile resource, String revision, File overlayBundle)
+	public static byte[] getContentFromBundle(IFile resource, String revision, File overlayBundle)
 			throws HgException, IOException {
 		Assert.isNotNull(overlayBundle);
 		HgRoot hgRoot = getHgRoot(resource);
@@ -78,12 +70,11 @@ public class HgCatClient extends AbstractClient {
 		}
 
 		hgCommand.addOptions("--decode", hgRoot.toRelative(file));
-		hgCommand.setEncoding(ResourceUtils.getFileEncoding(resource));
 
-		return hgCommand.executeToString();
+		return hgCommand.executeToBytes();
 	}
 
-	public static String getContentFromBundle(IHgFile hgfile, String revision, File overlayBundle)
+	public static byte[] getContentFromBundle(IHgFile hgfile, String revision, File overlayBundle)
 			throws HgException, IOException {
 		Assert.isNotNull(overlayBundle);
 		HgRoot hgRoot = hgfile.getHgRoot();
@@ -96,13 +87,8 @@ public class HgCatClient extends AbstractClient {
 		}
 
 		hgCommand.addOptions("--decode", hgfile.getHgRootRelativePath());
-		try {
-			hgCommand.setEncoding(hgfile.getCharset());
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
 
-		return hgCommand.executeToString();
+		return hgCommand.executeToBytes();
 	}
 
 }

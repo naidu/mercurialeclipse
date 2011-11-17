@@ -17,7 +17,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -37,7 +36,6 @@ import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -59,63 +57,24 @@ public class MercurialRevisionStorage implements IStorage {
 
 	protected class ContentHolder {
 		private final byte[] bytes;
-		private final String string;
-		private final String encoding;
-		private Throwable error;
+		private final Throwable error;
 
-		private ContentHolder(byte [] b, String str, Throwable t, String encoding) {
+		private ContentHolder(byte [] b, Throwable t) {
 			bytes = b;
-			string = str;
 			error = t;
-			this.encoding = encoding;
 		}
 
 		public ContentHolder(byte [] bytes) {
-			this(bytes, null, null, null);
-		}
-
-		public ContentHolder(String string) {
-			this(null, string, null, null);
-		}
-
-		public ContentHolder(String string, String encoding) {
-			this(null, string, null, encoding);
+			this(bytes, null);
 		}
 
 		public ContentHolder(Throwable t) {
-			this(null, null, t, null);
-		}
-
-		private InputStream createStreamContent(String result) {
-			try {
-				if(encoding != null) {
-					return new ByteArrayInputStream(result.getBytes(encoding));
-				}
-
-				HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-				if(root == null){
-					// core API ignores exceptions from this method, so we need to log them here
-					error = new UnsupportedOperationException("No hg root found for file: "
-							+ result);
-					MercurialEclipsePlugin.logWarning("Failed to get revision content for "
-							+ MercurialRevisionStorage.this.toString(), error);
-					return EMPTY_STREAM;
-				}
-				return new ByteArrayInputStream(result.getBytes(root.getEncoding()));
-			} catch (UnsupportedEncodingException e) {
-				error = e;
-				// core API ignores exceptions from this method, so we need to log them here
-				MercurialEclipsePlugin.logWarning("Failed to get revision content for "
-						+ MercurialRevisionStorage.this.toString(), e);
-				return EMPTY_STREAM;
-			}
+			this(null, t);
 		}
 
 		public InputStream createStream() {
 			if (bytes != null) {
 				return new ByteArrayInputStream(bytes);
-			} else if(string != null && error == null){
-				return createStreamContent(string);
 			} else {
 				return EMPTY_STREAM;
 			}
@@ -238,9 +197,9 @@ public class MercurialRevisionStorage implements IStorage {
 	private ContentHolder fetchContent(IFile file) throws CoreException {
 		if (changeSet == null) {
 			// no changeset known
-			return new ContentHolder(HgCatClient.getContent(file, null), ResourceUtils.getFileEncoding(file));
+			return new ContentHolder(HgCatClient.getContent(file, null));
 		}
-		String result;
+		byte[] result = null;
 		// Setup and run command
 		if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
 			// incoming: overlay repository with bundle and extract then via cat
@@ -259,7 +218,7 @@ public class MercurialRevisionStorage implements IStorage {
 			}
 			result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
 		}
-		return new ContentHolder(result, ResourceUtils.getFileEncoding(file));
+		return new ContentHolder(result);
 	}
 
 	public IPath getFullPath() {

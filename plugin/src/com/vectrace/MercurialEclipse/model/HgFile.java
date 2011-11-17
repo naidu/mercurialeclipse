@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -115,7 +114,7 @@ public class HgFile extends HgResource implements IHgFile {
 			return EMPTY_STREAM;
 		}
 
-		String result = "";
+		byte[] result = null;
 		// Setup and run command
 		if (changeset.getDirection() == Direction.INCOMING && changeset.getBundleFile() != null) {
 			// incoming: overlay repository with bundle and extract then via cat
@@ -134,10 +133,8 @@ public class HgFile extends HgResource implements IHgFile {
 			}
 		}
 
-		try {
-			return new ByteArrayInputStream(result.getBytes(getCharset()));
-		} catch (UnsupportedEncodingException e) {
-			MercurialEclipsePlugin.logError(e);
+		if(result != null){
+			return new ByteArrayInputStream(result);
 		}
 		return EMPTY_STREAM;
 	}
