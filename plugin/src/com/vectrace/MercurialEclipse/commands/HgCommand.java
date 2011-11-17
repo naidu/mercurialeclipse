@@ -187,4 +187,21 @@ public class HgCommand extends AbstractShellCommand {
 	protected String getExecutable() {
 		return HgClients.getExecutable();
 	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#setupEncoding(java.util.List)
+	 */
+	@Override
+	protected String setupEncoding(List<String> cmd) {
+		String charset = hgRoot.getEncoding();
+		// Enforce strict command line encoding
+		cmd.add(1, charset);
+		cmd.add(1, "--encoding");
+		// Enforce fallback encoding for UI (command output)
+		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
+		// if actual platfrom don't support it.
+		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+		cmd.add(1, "--config"); //$NON-NLS-1$
+		return charset;
+	}
 }

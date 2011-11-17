@@ -510,20 +510,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return builder;
 	}
 
-	private String setupEncoding(List<String> cmd) {
-		if(hgRoot == null){
-			return null;
-		}
-		String charset = hgRoot.getEncoding();
-		// Enforce strict command line encoding
-		cmd.add(1, charset);
-		cmd.add(1, "--encoding");
-		// Enforce fallback encoding for UI (command output)
-		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
-		// if actual platfrom don't support it.
-		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
-		cmd.add(1, "--config"); //$NON-NLS-1$
-		return charset;
+	/**
+	 * Template method to add encoding options
+	 * @param cmd The list of commands to add to
+	 * @return The encoding for HGENCODING env var, or null
+	 */
+	protected String setupEncoding(List<String> cmd) {
+		return null;
 	}
 
 	private void waitForConsumer(int timeout) throws InterruptedException {
