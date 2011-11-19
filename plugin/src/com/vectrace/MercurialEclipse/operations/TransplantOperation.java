@@ -75,7 +75,7 @@ public class TransplantOperation extends HgOperation {
 				result = HgTransplantClient.transplant(hgRoot, repo, options);
 			} finally {
 				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
-						RefreshRootJob.ALL);
+						RefreshRootJob.LOCAL_AND_OUTGOING);
 				job.schedule();
 				job.join();
 				t.cancel();
