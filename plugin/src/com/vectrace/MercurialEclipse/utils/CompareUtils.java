@@ -307,7 +307,7 @@ public final class CompareUtils {
 	}
 
 	private static RevisionNode findCommonAncestorIfExists(RevisionNode lNode, RevisionNode rNode) {
-		if (lNode.isWorkingCopy() || rNode.isWorkingCopy()) {
+		if (lNode == null || lNode.isWorkingCopy() || rNode.isWorkingCopy()) {
 			return null;
 		}
 
