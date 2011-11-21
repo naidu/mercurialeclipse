@@ -16,30 +16,20 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.GridData;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISharedImages;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  *
  */
 public abstract class AbstractRootView extends ViewPart implements ISelectionListener {
-
-	private Label statusLabel;
-	private Label statusIcon;
-	private Composite statusComposite;
 
 	protected HgRoot hgRoot;
 
@@ -48,14 +38,6 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 		setContentDescription(getDescription());
 
 		parent.setLayout(new GridLayout(1, false));
-
-		statusComposite = SWTWidgetHelper.createComposite(parent, 2);
-		GridData gd = new GridData(GridData.FILL_HORIZONTAL);
-		gd.exclude = true;
-		statusComposite.setLayoutData(gd);
-		statusComposite.setVisible(false);
-		statusIcon = new Label(statusComposite, SWT.NONE);
-		statusLabel = SWTWidgetHelper.createLabel(statusComposite, "");
 
 		createTable(parent);
 		createActions();
@@ -79,10 +61,6 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 		return c;
 	}
 
-	protected void hideStatus() {
-		showStatus(null, null);
-	}
-
 	protected void handleError(CoreException e) {
 		MercurialEclipsePlugin.logError(e);
 
@@ -97,28 +75,8 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 		showWarning(sMessage);
 	}
 
-	protected void showInfo(String sMessage) {
-		showStatus(sMessage, PlatformUI.getWorkbench().getSharedImages().getImage(
-				ISharedImages.IMG_OBJS_INFO_TSK));
-	}
-
 	protected void showWarning(String sMessage) {
-		showStatus(sMessage, PlatformUI.getWorkbench().getSharedImages().getImage(
-				ISharedImages.IMG_OBJS_ERROR_TSK));
-	}
-
-	private void showStatus(String sMessage, Image icon) {
-		boolean show = sMessage != null;
-		GridData gd = (GridData) statusComposite.getLayoutData();
-		gd.exclude = !show;
-
-		if (show) {
-			statusLabel.setText(sMessage);
-			statusIcon.setImage(icon);
-		}
-
-		statusComposite.setVisible(show);
-		statusComposite.getParent().layout(false);
+		MessageDialog.openError(getSite().getShell(), "Error", sMessage);
 	}
 
 	@Override
@@ -145,17 +103,8 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 	}
 
 	private void handleRootChanged() {
-		Composite composite = statusLabel.getParent();
-
-		try {
-			// Avoid flickering if status is shown again
-			composite.setRedraw(false);
-			hideStatus();
-			onRootChanged();
-			setContentDescription(getDescription());
-		} finally {
-			composite.setRedraw(true);
-		}
+		onRootChanged();
+		setContentDescription(getDescription());
 	}
 
 	protected abstract String getDescription();

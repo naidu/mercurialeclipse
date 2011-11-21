@@ -122,7 +122,6 @@ public class PatchQueueView extends AbstractRootView {
 			@Override
 			public void run() {
 				try {
-					hideStatus();
 					QImportHandler.openWizard(hgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
@@ -135,7 +134,6 @@ public class PatchQueueView extends AbstractRootView {
 			@Override
 			public void run() {
 				try {
-					hideStatus();
 					QNewHandler.openWizard(hgRoot, getSite().getShell());
 				} catch (Exception e) {
 					MercurialEclipsePlugin.logError(e);
@@ -147,7 +145,6 @@ public class PatchQueueView extends AbstractRootView {
 		qRefreshAction = new Action("qrefresh...", MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
-				hideStatus();
 				QRefreshHandler.openWizard(hgRoot, getSite().getShell());
 			}
 		};
@@ -213,7 +210,6 @@ public class PatchQueueView extends AbstractRootView {
 			@Override
 			public void run() {
 				try {
-					hideStatus();
 					// TODO: set initial selection to selected applied patch
 					StripHandler.openWizard(hgRoot, getSite().getShell(), null);
 				} catch (Exception e) {
@@ -226,7 +222,6 @@ public class PatchQueueView extends AbstractRootView {
 		qDeleteAction = new Action("qdelete...", MercurialEclipsePlugin.getImageDescriptor("rem_co.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
-				hideStatus();
 				QDeleteHandler.openWizard(hgRoot, getSite().getShell(), false);
 			}
 		};
@@ -498,7 +493,6 @@ public class PatchQueueView extends AbstractRootView {
 			boolean changed = true;
 
 			try {
-				hideStatus();
 				changed = invoke();
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
