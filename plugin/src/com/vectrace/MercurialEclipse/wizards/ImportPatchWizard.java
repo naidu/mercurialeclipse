@@ -15,7 +15,9 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.dialogs.RejectsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.ImportPatchOperation;
@@ -57,9 +59,18 @@ public class ImportPatchWizard extends HgOperationWizard {
 	@Override
 	protected boolean operationSucceeded(HgOperation operation) throws HgException {
 		if (((ImportPatchOperation) operation).isConflict()) {
-			MessageDialog.openInformation(getShell(),
-					Messages.getString("ImportPatchWizard.WizardTitle"),
-					Messages.getString("ImportPatchWizard.conflict") + "\n" +  operation.getResult());
+			try {
+				new RejectsDialog(getShell(), hgRoot, operation.getResult(),
+						"ImportPatchRejectsDialog.title", "ImportPatchRejectsDialog.conflict")
+						.open();
+			} catch (HgException e) {
+				// Fallback if couldn't parse rejects
+				MessageDialog.openInformation(getShell(), Messages
+						.getString("ImportPatchWizard.WizardTitle"), Messages
+						.getString("ImportPatchWizard.conflict")
+						+ "\n" + operation.getResult());
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 
 		return super.operationSucceeded(operation);

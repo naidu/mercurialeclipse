@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -51,5 +52,19 @@ public class HgQPushClient extends AbstractClient {
 			command.addOptions(patchName);
 		}
 		return command.executeToString();
+	}
+
+	public static boolean isPatchApplyConflict(HgException e) {
+		// Mercurial 2.0:
+		// applying 3489.diff
+		// patching file src/file1.text
+		// Hunk #1 FAILED at 8
+		// 1 out of 1 hunks FAILED -- saving rejects to file src/file1.text.rej
+		// patch failed, unable to continue (try -v)
+		// patch failed, rejects left in working dir
+		// errors during apply, please fix and refresh 3489.diff.
+
+		return e.getMessage().contains("patch failed, rejects left in working dir")
+				|| HgPatchClient.isPatchImportConflict(e);
 	}
 }

@@ -53,6 +53,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQSeriesClient;
+import com.vectrace.MercurialEclipse.dialogs.RejectsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
 import com.vectrace.MercurialEclipse.menu.QImportHandler;
@@ -152,9 +153,9 @@ public class PatchQueueView extends AbstractRootView {
 		};
 		qRefreshAction.setEnabled(false);
 
-		qGotoAction = new MQAction(Messages.getString("PatchQueueView.switchTo"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qGotoAction = new MQPushAction(Messages.getString("PatchQueueView.switchTo"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
-			public boolean invoke() throws HgException {
+			public boolean invokePush() throws HgException {
 				// Switch to the first selected patch. There is only one patch selected because
 				// the action is disabled if zero or more than one patches are selected.
 				Patch patch = table.getSelection();
@@ -172,9 +173,9 @@ public class PatchQueueView extends AbstractRootView {
 		qGotoAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/switch.gif"));
 		qGotoAction.setEnabled(false);
 
-		qPushAllAction = new MQAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qPushAllAction = new MQPushAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
 			@Override
-			public boolean invoke() throws HgException {
+			public boolean invokePush() throws HgException {
 				HgQPushClient.pushAll(hgRoot, false);
 				return true;
 			}
@@ -464,8 +465,20 @@ public class PatchQueueView extends AbstractRootView {
 		return view;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getDescription()
+	 */
+	@Override
+	protected String getDescription() {
+		if (hgRoot == null) {
+			return "No repository selected";
+		}
+
+		return Messages.getString("PatchQueueView.repository") + hgRoot;
+	}
+
 	private abstract class MQAction extends Action {
-		private final int refreshFlag;
+		protected final int refreshFlag;
 
 		public MQAction(String name, int refreshFlag) {
 			super(name);
@@ -508,15 +521,43 @@ public class PatchQueueView extends AbstractRootView {
 		public abstract boolean invoke() throws HgException, CoreException;
 	}
 
-	/**
-	 * @see com.vectrace.MercurialEclipse.views.AbstractRootView#getDescription()
-	 */
-	@Override
-	protected String getDescription() {
-		if (hgRoot == null) {
-			return "No repository selected";
+	private abstract class MQPushAction extends MQAction {
+
+		public MQPushAction(String name, ImageDescriptor desc, int refreshFlag) {
+			super(name, desc, refreshFlag);
 		}
 
-		return Messages.getString("PatchQueueView.repository") + hgRoot;
+		public MQPushAction(String name, int refreshFlag) {
+			super(name, refreshFlag);
+		}
+
+		@Override
+		public final boolean invoke() throws HgException, CoreException {
+			try {
+				return invokePush();
+			} catch (HgException e) {
+				if (HgQPushClient.isPatchApplyConflict(e)) {
+					try {
+						populateTable();
+						Job job = new RefreshWorkspaceStatusJob(hgRoot, refreshFlag);
+						job.schedule();
+						job.join();
+
+						new RejectsDialog(getSite().getShell(), hgRoot, e.getMessage(),
+								"QPushRejectsDialog.title",
+								"QPushRejectsDialog.conflict").open();
+						return false; // already refreshed and populated the table
+					} catch (HgException e2) {
+						MercurialEclipsePlugin.logError(e2);
+					} catch (InterruptedException e1) {
+						MercurialEclipsePlugin.logError(e1);
+					}
+				}
+
+				throw e;
+			}
+		}
+
+		public abstract boolean invokePush() throws HgException, CoreException;
 	}
 }

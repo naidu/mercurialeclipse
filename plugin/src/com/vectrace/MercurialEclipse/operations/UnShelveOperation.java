@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
@@ -95,7 +96,11 @@ public class UnShelveOperation extends HgOperation {
 								throw e;
 							}
 						} finally {
-							new RefreshWorkspaceStatusJob(hgRoot).schedule();
+							Job job = new RefreshWorkspaceStatusJob(hgRoot);
+							job.schedule();
+							if (conflict) {
+								job.join();
+							}
 						}
 					} else {
 						throw new HgException(Messages

@@ -21,6 +21,8 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.dialogs.RejectsDialog;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.UnShelveOperation;
 
@@ -36,24 +38,33 @@ public class UnShelveHandler extends RootHandler {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					final UnShelveOperation op = new UnShelveOperation((IWorkbenchPart) null, hgRoot);
+					final UnShelveOperation op = new UnShelveOperation((IWorkbenchPart) null,
+							hgRoot);
 					op.run(monitor);
 
 					if (op.isConflict()) {
 						getShell().getDisplay().asyncExec(new Runnable() {
 							public void run() {
-								MessageDialog.openInformation(getShell(), Messages
-										.getString("UnShelveHandler.Unshelving"), Messages
-										.getString("UnShelveHandler.conflict")
-										+ "\n" + op.getResult());
+								try {
+									new RejectsDialog(getShell(), hgRoot, op.getResult(),
+											"UnshelveRejectsDialog.title",
+											"UnshelveRejectsDialog.conflict").open();
+								} catch (HgException e) {
+									// Fallback if couldn't parse rejects
+									MessageDialog.openInformation(getShell(), Messages
+											.getString("UnShelveHandler.Unshelving"), Messages
+											.getString("UnShelveHandler.conflict")
+											+ "\n" + op.getResult());
+									MercurialEclipsePlugin.logError(e);
+								}
 							}
 						});
 					}
 
 					return super.runSafe(monitor);
 				} catch (InvocationTargetException e) {
-					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-							0, e.getLocalizedMessage(), e);
+					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, 0, e
+							.getLocalizedMessage(), e);
 				} catch (InterruptedException e) {
 					return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
 							0, e.getLocalizedMessage(), e);
