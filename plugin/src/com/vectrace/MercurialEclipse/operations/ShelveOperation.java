@@ -42,6 +42,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class ShelveOperation extends HgOperation {
 	private final HgRoot hgRoot;
+	private File shelveFileConflict;
 
 	public ShelveOperation(IWorkbenchPart part, HgRoot hgRoot) {
 		super(part);
@@ -90,6 +91,7 @@ public class ShelveOperation extends HgOperation {
 				}
 				File shelveFile = new File(shelveDir, hgRoot.getName() + "-patchfile.patch"); //$NON-NLS-1$
 				if (shelveFile.exists()) {
+					shelveFileConflict = shelveFile;
 					throw new HgCoreException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
@@ -118,7 +120,9 @@ public class ShelveOperation extends HgOperation {
 		} finally {
 			monitor.done();
 		}
-
 	}
 
+	public File getShelveFileConflict() {
+		return shelveFileConflict;
+	}
 }
