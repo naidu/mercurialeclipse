@@ -76,7 +76,18 @@ public abstract class AbstractRootView extends ViewPart implements ISelectionLis
 	}
 
 	protected void showWarning(String sMessage) {
-		MessageDialog.openError(getSite().getShell(), "Error", sMessage);
+		MessageDialog.openError(getSite().getShell(), "Error", fixCase(sMessage));
+	}
+
+	private static String fixCase(String sMessage) {
+		if (sMessage != null) {
+			sMessage = sMessage.trim();
+
+			if (sMessage.length() > 0) {
+				sMessage = Character.toUpperCase(sMessage.charAt(0)) + sMessage.substring(1);
+			}
+		}
+		return sMessage;
 	}
 
 	@Override

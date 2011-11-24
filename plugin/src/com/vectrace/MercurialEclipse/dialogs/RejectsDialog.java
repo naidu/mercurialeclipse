@@ -74,19 +74,23 @@ public class RejectsDialog extends TrayDialog {
 
 	public RejectsDialog(Shell shell, HgRoot hgRoot, String message, String title, String detail)
 			throws HgException {
+		this(shell, hgRoot, message, title, detail, true);
+	}
+
+	public RejectsDialog(Shell shell, HgRoot hgRoot, String message, String title, String detail, boolean requireSource)
+	throws HgException {
 		super(shell);
 
 		this.title = title;
 		this.detail = detail;
+		this.hgRoot = hgRoot;
 
-		Matcher matcher;
-
-		matcher = CHANGESET_PATTERN.matcher(message);
+		Matcher matcher = CHANGESET_PATTERN.matcher(message);
 		boolean found = matcher.find() && matcher.groupCount() > 0;
-		if (!found) {
+		if (!found && requireSource) {
 			throw new HgException("Couldn't find source");
 		}
-		final String changeSetId = matcher.group(1);
+		this.failedChangeSetId = found ? matcher.group(1) : "";
 
 		rejects = new ArrayList<IFile>();
 
@@ -101,9 +105,6 @@ public class RejectsDialog extends TrayDialog {
 			}
 			lastMatchOffset = matcher.end();
 		}
-
-		this.hgRoot = hgRoot;
-		this.failedChangeSetId = changeSetId;
 
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 	}

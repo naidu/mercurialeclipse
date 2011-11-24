@@ -150,9 +150,10 @@ public class PatchQueueView extends AbstractRootView {
 		};
 		qRefreshAction.setEnabled(false);
 
-		qGotoAction = new MQPushAction(Messages.getString("PatchQueueView.switchTo"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qGotoAction = new MQPatchAction(Messages.getString("PatchQueueView.switchTo"),
+		      RefreshRootJob.LOCAL_AND_OUTGOING, "QPushRejectsDialog.conflict", true) {
 			@Override
-			public boolean invokePush() throws HgException {
+			public boolean doInvoke() throws HgException {
 				// Switch to the first selected patch. There is only one patch selected because
 				// the action is disabled if zero or more than one patches are selected.
 				Patch patch = table.getSelection();
@@ -167,19 +168,22 @@ public class PatchQueueView extends AbstractRootView {
 				return false;
 			}
 		};
-		qGotoAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/switch.gif"));
+		qGotoAction.setImageDescriptor(MercurialEclipsePlugin
+				.getImageDescriptor("actions/switch.gif"));
 		qGotoAction.setEnabled(false);
 
-		qPushAllAction = new MQPushAction(Messages.getString("PatchQueueView.applyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qPushAllAction = new MQPatchAction(Messages.getString("PatchQueueView.applyAll"),
+				RefreshRootJob.LOCAL_AND_OUTGOING, "QPushRejectsDialog.conflict", true) {
 			@Override
-			public boolean invokePush() throws HgException {
+			public boolean doInvoke() throws HgException {
 				HgQPushClient.pushAll(hgRoot, false);
 				return true;
 			}
 		};
 		qPushAllAction.setEnabled(true);
 
-		qPopAllAction = new MQAction(Messages.getString("PatchQueueView.unapplyAll"), RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qPopAllAction = new MQAction(Messages.getString("PatchQueueView.unapplyAll"),
+				RefreshRootJob.LOCAL_AND_OUTGOING) {
 			@Override
 			public boolean invoke() throws HgException {
 				HgQPopClient.popAll(hgRoot, false);
@@ -188,9 +192,10 @@ public class PatchQueueView extends AbstractRootView {
 		};
 		qPopAllAction.setEnabled(false);
 
-		qFoldAction = new MQAction("qfold", RefreshRootJob.LOCAL_AND_OUTGOING) { //$NON-NLS-1$
+		qFoldAction = new MQPatchAction("qfold", RefreshRootJob.LOCAL_AND_OUTGOING,
+				"QFoldRejectsDialog.conflict", false) {
 			@Override
-			public boolean invoke() throws HgException {
+			public boolean doInvoke() throws HgException {
 				List<Patch> patches = new ArrayList<Patch>(table.getSelections());
 				if (patches.size() > 0) {
 					Collections.sort(patches, new Comparator<Patch>() {
@@ -202,6 +207,11 @@ public class PatchQueueView extends AbstractRootView {
 					return true;
 				}
 				return false;
+			}
+
+			@Override
+			protected boolean isPatchConflict(HgException e) {
+				return HgQFoldClient.isPatchConflict(e);
 			}
 		};
 		qFoldAction.setEnabled(false);
@@ -515,22 +525,24 @@ public class PatchQueueView extends AbstractRootView {
 		public abstract boolean invoke() throws HgException, CoreException;
 	}
 
-	private abstract class MQPushAction extends MQAction {
+	private abstract class MQPatchAction extends MQAction {
 
-		public MQPushAction(String name, ImageDescriptor desc, int refreshFlag) {
-			super(name, desc, refreshFlag);
-		}
+		private final String message;
+		private final boolean requireSource;
 
-		public MQPushAction(String name, int refreshFlag) {
+		public MQPatchAction(String name, int refreshFlag, String message, boolean requireSource) {
 			super(name, refreshFlag);
+
+			this.message = message;
+			this.requireSource = requireSource;
 		}
 
 		@Override
 		public final boolean invoke() throws HgException, CoreException {
 			try {
-				return invokePush();
+				return doInvoke();
 			} catch (HgException e) {
-				if (HgQPushClient.isPatchApplyConflict(e)) {
+				if (isPatchConflict(e)) {
 					try {
 						populateTable();
 						Job job = new RefreshWorkspaceStatusJob(hgRoot, refreshFlag);
@@ -538,8 +550,7 @@ public class PatchQueueView extends AbstractRootView {
 						job.join();
 
 						new RejectsDialog(getSite().getShell(), hgRoot, e.getMessage(),
-								"QPushRejectsDialog.title",
-								"QPushRejectsDialog.conflict").open();
+								"QRejectsDialog.title", message, requireSource).open();
 						return false; // already refreshed and populated the table
 					} catch (HgException e2) {
 						MercurialEclipsePlugin.logError(e2);
@@ -552,6 +563,10 @@ public class PatchQueueView extends AbstractRootView {
 			}
 		}
 
-		public abstract boolean invokePush() throws HgException, CoreException;
+		protected boolean isPatchConflict(HgException e) {
+			return HgQPushClient.isPatchApplyConflict(e);
+		}
+
+		public abstract boolean doInvoke() throws HgException, CoreException;
 	}
 }
