@@ -37,10 +37,12 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class UnShelveOperation extends HgOperation {
 	private final HgRoot hgRoot;
 	private boolean conflict;
+	private final boolean force;
 
-	public UnShelveOperation(IWorkbenchPart part, HgRoot hgRoot) {
+	public UnShelveOperation(IWorkbenchPart part, HgRoot hgRoot, boolean force) {
 		super(part);
 		this.hgRoot = hgRoot;
+		this.force = force;
 	}
 
 	@Override
@@ -78,6 +80,10 @@ public class UnShelveOperation extends HgOperation {
 						monitor.subTask(Messages.getString("UnShelveOperation.applyingChanges")); //$NON-NLS-1$
 						ArrayList<String> opts = new ArrayList<String>();
 						opts.add("--no-commit");
+
+						if (force) {
+							opts.add("--force");
+						}
 
 						try {
 							HgPatchClient.importPatch(hgRoot, shelveFile, opts);

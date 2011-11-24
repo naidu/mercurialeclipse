@@ -57,12 +57,13 @@ public class ShelveHandler extends RootHandler {
 
 								if (dialog.open() == 0) {
 									op.getShelveFileConflict().delete();
+									ShelveHandler.this.run(hgRoot);
 								}
 							}
 						});
 						return Status.OK_STATUS;
 					}
-					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, 0, e
+					return new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, 0, e
 							.getLocalizedMessage(), e);
 
 				} catch (InterruptedException e) {
