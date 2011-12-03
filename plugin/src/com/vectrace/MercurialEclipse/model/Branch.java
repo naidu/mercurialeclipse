@@ -10,7 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import java.util.Comparator;
+
 public class Branch {
+
+	public static final Comparator<Branch> COMPARATOR = new BranchComparator();
 
 	public static final String DEFAULT = "default";
 
@@ -92,5 +96,15 @@ public class Branch {
 	 */
 	public static boolean isDefault(String name){
 		return name == null || (name.length() == 0 || name.equals(DEFAULT));
+	}
+
+	private static class BranchComparator implements Comparator<Branch>
+	{
+		/**
+		 * @see java.util.Comparator#compare(java.lang.Object, java.lang.Object)
+		 */
+		public int compare(Branch o1, Branch o2) {
+			return o2.getRevision() - o1.getRevision();
+		}
 	}
 }
