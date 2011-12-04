@@ -80,8 +80,8 @@ public class HgLocateClient extends AbstractClient {
 
 		if (resource instanceof IStorage) {
 			if (lines == null || lines.length == 0) {
-	        	return new NullHgFile(hgRoot, cs, relpath);
-	        }
+				return new NullHgFile(hgRoot, cs, relpath);
+			}
 			for (String line : lines) {
 				return new HgFile(hgRoot, cs, new Path(line));
 			}
@@ -99,9 +99,9 @@ public class HgLocateClient extends AbstractClient {
 		}
 
 		if (hgResource instanceof IHgFile) {
-			command.addOptions("glob:" + hgResource.getHgRootRelativePath());
+			command.addOptions("glob:" + hgResource.getIPath().toOSString());
 		} else {
-			command.addOptions("glob:" + hgResource.getHgRootRelativePath() + System.getProperty("file.separator") + "**");
+			command.addOptions("glob:" + hgResource.getIPath().toOSString() + System.getProperty("file.separator") + "**");
 		}
 
 		String[] lines = null;
@@ -112,10 +112,10 @@ public class HgLocateClient extends AbstractClient {
 			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
 		}
 
-        if (hgResource instanceof IStorage) {
+		if (hgResource instanceof IStorage) {
 			if (lines == null || lines.length == 0) {
-	        	return new NullHgFile(hgRoot, revision, new Path(hgResource.getHgRootRelativePath()));
-	        }
+				return new NullHgFile(hgRoot, revision, hgResource.getIPath());
+			}
 			for (String line : lines) {
 				return new HgFile(hgRoot, revision, new Path(line));
 			}

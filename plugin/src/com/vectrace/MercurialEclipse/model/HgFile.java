@@ -52,6 +52,16 @@ public class HgFile extends HgResource implements IHgFile {
 	}
 
 	/**
+	 * @param hgRoot
+	 * @param changeSet
+	 * @param file
+	 */
+	public HgFile(HgRoot hgRoot, ChangeSet changeSet, IFile file) {
+		super(hgRoot, file);
+		changeset = changeSet;
+	}
+
+	/**
 	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
 	 */
 	public String getCharset() throws CoreException {
@@ -72,17 +82,21 @@ public class HgFile extends HgResource implements IHgFile {
 	public IPath getFullPath() {
 		IPath p = this.getHgRoot().getIPath().append(path);
 		if (resource == null) {
-			p = p.append(" [" + changeset.getChangesetIndex() + "]");
+			String extension = p.getFileExtension();
+			String version = " [" + changeset.getChangesetIndex() + "]";
+			if(extension != null) {
+				version += "." + extension;
+			}
+			p = p.append(version);
 		}
 		return p;
 	}
 
-	/**
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
 	@Override
 	public Object getAdapter(Class adapter) {
-		// TODO Auto-generated method stub
+		if(adapter == IResource.class) {
+			return getResource();
+		}
 		return null;
 	}
 
@@ -91,7 +105,7 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	@Override
 	protected InputStream createStream() throws CoreException {
-		if (resource != null) {
+		if (resource != null && resource.exists()) {
 			if (resource instanceof IStorage) {
 				InputStream is= null;
 				IStorage storage= (IStorage) resource;
