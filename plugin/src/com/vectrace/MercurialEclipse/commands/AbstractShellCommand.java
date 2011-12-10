@@ -754,20 +754,16 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	/**
-	 * Add a file. Need not be canonical, but will try transform to canonical.
+	 * Add a file. Looks like we must keep the file path (do not resolve),
+	 * see issue #20854.
+	 * Mercurial can deal with links by itself, but only if the link target is
+	 * under the hg root. resolving the link can move the path outside the hg root
+	 * and so hg will deny to collaborate :-)
 	 *
 	 * @param file The file to add
 	 */
 	public void addFile(File file) {
-		String sfile;
-		try {
-			sfile = file.getCanonicalPath();
-		} catch (IOException e) {
-			MercurialEclipsePlugin.logError(e);
-			sfile = file.getAbsolutePath();
-		}
-
-		files.add(sfile);
+		files.add(file.getAbsolutePath());
 	}
 
 	public void addFiles(IResource... resources) {
