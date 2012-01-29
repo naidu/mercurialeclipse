@@ -54,7 +54,6 @@ public class BundleRepoPage extends PushPullPage {
 		super(hgRoot, pageName, title, titleImage);
 		setDescription("Generate a compressed changegroup file collecting changesets \n"
 				+ "not known to be in another repository.");
-		setShowRevisionTable(false);
 		setShowCredentials(true);
 	}
 

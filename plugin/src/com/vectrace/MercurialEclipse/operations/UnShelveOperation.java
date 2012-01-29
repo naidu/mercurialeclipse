@@ -16,6 +16,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
@@ -36,10 +37,12 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class UnShelveOperation extends HgOperation {
 	private final HgRoot hgRoot;
 	private boolean conflict;
+	private final boolean force;
 
-	public UnShelveOperation(IWorkbenchPart part, HgRoot hgRoot) {
+	public UnShelveOperation(IWorkbenchPart part, HgRoot hgRoot, boolean force) {
 		super(part);
 		this.hgRoot = hgRoot;
+		this.force = force;
 	}
 
 	@Override
@@ -78,6 +81,10 @@ public class UnShelveOperation extends HgOperation {
 						ArrayList<String> opts = new ArrayList<String>();
 						opts.add("--no-commit");
 
+						if (force) {
+							opts.add("--force");
+						}
+
 						try {
 							HgPatchClient.importPatch(hgRoot, shelveFile, opts);
 							monitor.worked(1);
@@ -95,7 +102,11 @@ public class UnShelveOperation extends HgOperation {
 								throw e;
 							}
 						} finally {
-							new RefreshWorkspaceStatusJob(hgRoot).schedule();
+							Job job = new RefreshWorkspaceStatusJob(hgRoot);
+							job.schedule();
+							if (conflict) {
+								job.join();
+							}
 						}
 					} else {
 						throw new HgException(Messages

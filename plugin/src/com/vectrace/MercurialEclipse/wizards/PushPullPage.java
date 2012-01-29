@@ -14,33 +14,28 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
  *
  */
-public class PushPullPage extends ConfigurationWizardMainPage {
+public abstract class PushPullPage extends ConfigurationWizardMainPage {
 
 	protected Button forceCheckBox;
 	protected Group optionGroup;
@@ -48,14 +43,11 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	private boolean timeout;
 
 	private Button timeoutCheckBox;
-	private ChangesetTable changesetTable;
-	private Button revCheckBox;
 	private Button forestCheckBox;
 	private Combo snapFileCombo;
 	private Button snapFileButton;
 	private Button svnCheckBox;
 
-	private boolean showRevisionTable;
 	private boolean showForce;
 	private boolean showForest;
 	private boolean showSnapFile;
@@ -65,7 +57,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 			ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
 		showSnapFile = true;
-		showRevisionTable = true;
 		showForce = true;
 		setHgRoot(hgRoot);
 		try {
@@ -98,9 +89,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 					optionChanged();
 				}
 			});
-		}
-		if (showRevisionTable) {
-			createRevisionTable(composite);
 		}
 
 		createExtensionControls();
@@ -158,42 +146,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		}
 	}
 
-	private void createRevisionTable(Composite composite) {
-		revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-				getRevCheckBoxLabel());
-
-		Listener revCheckBoxListener = new Listener() {
-			public void handleEvent(Event event) {
-				// en-/disable list view
-				changesetTable.setEnabled(revCheckBox.getSelection());
-			}
-		};
-
-		revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
-
-		Group revGroup = SWTWidgetHelper.createGroup(composite,
-				getRevGroupLabel(), GridData.FILL_BOTH);
-
-		GridData gridData = new GridData(GridData.FILL_BOTH);
-		gridData.heightHint = 150;
-		gridData.minimumHeight = 50;
-		changesetTable = new ChangesetTable(revGroup, getHgRoot());
-		changesetTable.setLayoutData(gridData);
-		changesetTable.setEnabled(false);
-	}
-
-	protected String getRevGroupLabel() {
-		return Messages.getString("PushRepoPage.revGroup.title"); //$NON-NLS-1$
-	}
-
-	protected String getRevCheckBoxLabel() {
-		return Messages.getString("PushRepoPage.revCheckBox.text"); //$NON-NLS-1$
-	}
-
+	@SuppressWarnings("static-method")
 	protected String getForceCheckBoxLabel() {
 		return Messages.getString("PushRepoPage.forceCheckBox.text"); //$NON-NLS-1$
 	}
 
+	@SuppressWarnings("static-method")
 	protected String getTimeoutCheckBoxLabel() {
 		return Messages.getString("PushRepoPage.timeoutCheckBox.text"); //$NON-NLS-1$
 	}
@@ -212,10 +170,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	public boolean isTimeoutSelected() {
 		return timeoutCheckBox != null && timeoutCheckBox.getSelection();
-	}
-
-	public void setShowRevisionTable(boolean showRevisionTable) {
-		this.showRevisionTable = showRevisionTable;
 	}
 
 	public void setShowForce(boolean showForce) {

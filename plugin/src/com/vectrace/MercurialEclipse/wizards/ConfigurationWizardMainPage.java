@@ -114,7 +114,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	 *            number of max entries, -1 if no limit
 	 * @return the history with the new entry appended
 	 */
-	private String[] addToHistory(String[] history, String newEntry, int limitHistory) {
+	private static String[] addToHistory(String[] history, String newEntry, int limitHistory) {
 		ArrayList<String> list = new ArrayList<String>();
 		if (history != null) {
 			list.addAll(Arrays.asList(history));
@@ -294,7 +294,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	 *            the parent of the combo box
 	 * @return the created combo
 	 */
-	protected Combo createEditableCombo(Composite parent) {
+	protected static Combo createEditableCombo(Composite parent) {
 		Combo combo = new Combo(parent, SWT.NULL);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
@@ -454,12 +454,15 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	 * @param urlString non null
 	 * @return true if the given url can be threated as local directory
 	 */
+	@SuppressWarnings("static-method")
 	protected File getLocalDirectory(String urlString) {
 		if (urlString != null) {
 			urlString = urlString.trim();
 		}
 
-		if (urlString == null || urlString.length() == 0 || urlString.contains("http:") || urlString.contains("https:") || urlString.contains("ftp:") || urlString.contains("ssh:")){
+		if (urlString == null || urlString.length() == 0 || urlString.contains("http:")
+				|| urlString.contains("https:") || urlString.contains("ftp:")
+				|| urlString.contains("ssh:")) {
 			return null;
 		}
 

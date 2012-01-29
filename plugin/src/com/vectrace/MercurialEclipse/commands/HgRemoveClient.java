@@ -51,16 +51,18 @@ public class HgRemoveClient extends AbstractClient {
 			HgRoot hgRoot = mapEntry.getKey();
 			// if there are too many resources, do several calls
 			// From 1.8 hg can do it in one call
-			if(!HgFeatures.LISTFILE.isEnabled()) {
-			int size = mapEntry.getValue().size();
-			int delta = AbstractShellCommand.MAX_PARAMS - 1;
-			for (int i = 0; i < size; i += delta) {
-				AbstractShellCommand command = new HgCommand("remove", "Removing resource", hgRoot, true); //$NON-NLS-1$
-				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
-				command.executeToBytes();
-			}
+			if (!HgFeatures.LISTFILE.isEnabled()) {
+				int size = mapEntry.getValue().size();
+				@SuppressWarnings("deprecation")
+				int delta = AbstractShellCommand.MAX_PARAMS - 1;
+				for (int i = 0; i < size; i += delta) {
+					AbstractShellCommand command = new HgCommand(
+							"remove", "Removing resource", hgRoot, true); //$NON-NLS-1$
+					command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+					command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+					command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
+					command.executeToBytes();
+				}
 			} else {
 				AbstractShellCommand command = new HgCommand("remove", "Removing resource", hgRoot, true); //$NON-NLS-1$
 				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
@@ -77,18 +79,19 @@ public class HgRemoveClient extends AbstractClient {
 			// if there are too many resources, do several calls
 			// From 1.8 hg can do it in one call
 			int size = mapEntry.getValue().size();
-			if(!HgFeatures.LISTFILE.isEnabled()) {
-			int delta = AbstractShellCommand.MAX_PARAMS - 1;
-			for (int i = 0; i < size; i += delta) {
-				final int j = Math.min(i + delta, size);
-				AbstractShellCommand command = new HgCommand("remove", //$NON-NLS-1$
-						"Removing " + (j - i) + " resources", hgRoot, true);
-				command.addOptions("-Af");
-				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-				command.addFiles(mapEntry.getValue().subList(i, j));
-				command.executeToBytes();
-			}
+			if (!HgFeatures.LISTFILE.isEnabled()) {
+				@SuppressWarnings("deprecation")
+				int delta = AbstractShellCommand.MAX_PARAMS - 1;
+				for (int i = 0; i < size; i += delta) {
+					final int j = Math.min(i + delta, size);
+					AbstractShellCommand command = new HgCommand("remove", //$NON-NLS-1$
+							"Removing " + (j - i) + " resources", hgRoot, true);
+					command.addOptions("-Af");
+					command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+					command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+					command.addFiles(mapEntry.getValue().subList(i, j));
+					command.executeToBytes();
+				}
 			} else {
 				AbstractShellCommand command = new HgCommand("remove", //$NON-NLS-1$
 						"Removing " + size + " resources", hgRoot, true);

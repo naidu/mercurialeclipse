@@ -12,8 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.runtime.CoreException;
-
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -36,7 +35,7 @@ public class HgBackoutClient extends AbstractClient {
 	 *            commit message
 	 */
 	public static String backout(final HgRoot hgRoot, ChangeSet backoutRevision,
-			boolean merge, String msg, String user) throws CoreException {
+			boolean merge, String msg, String user) throws HgException {
 
 		HgCommand command = new HgCommand("backout", //$NON-NLS-1$
 				"Backing out changeset " + backoutRevision.getChangeset(), hgRoot, true);
@@ -53,6 +52,16 @@ public class HgBackoutClient extends AbstractClient {
 		String result = command.executeToString();
 		command.rememberUserName();
 		return result;
+	}
+
+	public static boolean isMergeError(HgException e) {
+		// eg: (without --merge)
+		// reverting src/file1.text
+		// adding src/file2.txt
+		// removing src/file22.txt
+		// 0 files updated, 0 files merged, 0 files removed, 1 files unresolved
+		// use 'hg resolve' to retry unresolved file merges.
+		return HgUpdateClient.isWorkspaceUpdateConflict(e);
 	}
 
 }

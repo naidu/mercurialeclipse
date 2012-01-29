@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -23,6 +22,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
@@ -35,8 +35,11 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
  * @author bastian
@@ -169,6 +172,9 @@ public class BackoutWizardPage extends HgWizardPage {
 		return false;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
 		if (!validate()) {
@@ -178,6 +184,7 @@ public class BackoutWizardPage extends HgWizardPage {
 		String msg = messageTextField.getText();
 		ChangeSet backoutRevision = changesetTable.getSelection();
 		boolean merge = mergeCheckBox.getSelection() && !backoutRevision.isCurrent();
+
 		try {
 			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
@@ -186,12 +193,31 @@ public class BackoutWizardPage extends HgWizardPage {
 				MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
 				new CommitMergeHandler().run(hgRoot);
 			}
-		} catch (CoreException e) {
+		} catch (HgException e) {
+			if (HgBackoutClient.isMergeError(e)) {
+				if (merge) {
+					try {
+						MergeView.showMergeConflict(hgRoot, getShell());
+					} catch (PartInitException e1) {
+						MercurialEclipsePlugin.logError(e1);
+					}
+				} else {
+					MessageDialog
+							.openInformation(null, "Unresolved conflicts",
+									"You have unresolved conflicts. Use Synchronize View to edit conflicts");
+				}
+
+				return true;
+			}
+
 			MessageDialog.openError(getShell(), Messages
 					.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
 					.getMessage());
 			MercurialEclipsePlugin.logError(e);
+
 			return false;
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		}
 		return true;
 	}

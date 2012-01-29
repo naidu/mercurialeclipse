@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -52,7 +53,7 @@ import org.eclipse.ui.part.Page;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
@@ -61,22 +62,22 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 			IWorkbenchAdapter, IStorageEditorInput {
 
 		private final IFileRevision fileRevision;
-		private final MercurialRevisionStorage storage;
+		private final IHgFile storage;
 		private final IEditorDescriptor descriptor;
 		private final String fileName;
 
 		public MercurialRevisionEditorInput(IFileRevision revision) {
 			this.fileRevision = revision;
-			MercurialRevisionStorage tmpStore = null;
+			IHgFile tmpStore = null;
 			try {
-				tmpStore = (MercurialRevisionStorage) revision.getStorage(new NullProgressMonitor());
+				tmpStore = (IHgFile) revision.getStorage(new NullProgressMonitor());
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 			} finally {
 				storage = tmpStore;
 			}
 			if(storage != null){
-				IFile file = storage.getResource();
+				IResource file = storage.getResource();
 				if(file != null){
 					fileName = file.getName();
 				} else {

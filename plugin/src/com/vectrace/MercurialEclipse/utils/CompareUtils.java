@@ -102,11 +102,11 @@ public final class CompareUtils {
 		openEditor(new RevisionNode(left), new RevisionNode(right), false, null);
 	}
 
-	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right, boolean dialog) {
+	public static void openEditor(IHgResource left, IHgResource right, boolean dialog) {
 		openEditor(left, right, dialog, null);
 	}
 
-	public static void openEditor(MercurialRevisionStorage left, MercurialRevisionStorage right,
+	public static void openEditor(IHgResource left, IHgResource right,
 			boolean dialog, ISynchronizePageConfiguration configuration) {
 		if (right == null && left != null) {
 			// comparing with file-system
@@ -144,7 +144,7 @@ public final class CompareUtils {
 	 * @param configuration might be null
 	 * @throws HgException
 	 */
-	public static void openEditor(final IResource left, final MercurialRevisionStorage right,
+	public static void openEditor(final IResource left, final IHgResource right,
 			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
 		openEditor(left, getNode(right), dialog, configuration);
@@ -285,7 +285,7 @@ public final class CompareUtils {
 		return storage == null ? null : new MercurialResourceVariant(storage);
 	}
 
-	private static RevisionNode getNode(MercurialRevisionStorage rev) {
+	private static RevisionNode getNode(IHgResource rev) {
 		if (rev == null) {
 			return null;
 		}
@@ -300,14 +300,14 @@ public final class CompareUtils {
 			return new RevisionNode(hgresource);
 		}
 		// non-existing file
-		IFile file = rev.getResource();
+		IResource file = rev.getResource();
 		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
 		return new RevisionNode(new NullHgFile(hgRoot, rev.getChangeSet(),
 				file.getFullPath().makeRelativeTo(hgRoot.getIPath())));
 	}
 
 	private static RevisionNode findCommonAncestorIfExists(RevisionNode lNode, RevisionNode rNode) {
-		if (lNode.isWorkingCopy() || rNode.isWorkingCopy()) {
+		if (lNode == null || lNode.isWorkingCopy() || rNode.isWorkingCopy()) {
 			return null;
 		}
 

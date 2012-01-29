@@ -69,10 +69,7 @@ public abstract class HgWizardPage extends WizardPage {
 		setDescription(description);
 	}
 
-	/**
-	 * @param monitor
-	 * @return
-	 */
+	@SuppressWarnings("static-method")
 	public boolean finish(IProgressMonitor monitor) {
 		return true;
 	}

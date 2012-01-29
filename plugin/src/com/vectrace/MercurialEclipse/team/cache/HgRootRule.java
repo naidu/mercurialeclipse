@@ -10,12 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.io.IOException;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -39,8 +43,17 @@ public class HgRootRule implements ISchedulingRule {
 		if (rule instanceof IResource) {
 			IResource resource = (IResource) rule;
 			IPath location = resource.getLocation();
-			if(location != null) {
-				return hgRoot.getIPath().isPrefixOf(location);
+			if (location != null) {
+				boolean isPrefix = hgRoot.getIPath().isPrefixOf(location);
+				if (!isPrefix) {
+					try {
+						IPath canonicalLocation = new Path(location.toFile().getCanonicalPath());
+						isPrefix = hgRoot.getIPath().isPrefixOf(canonicalLocation);
+					} catch (IOException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+				return isPrefix;
 			}
 		}
 		return isConflicting(rule);

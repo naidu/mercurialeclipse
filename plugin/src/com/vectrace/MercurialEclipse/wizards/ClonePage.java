@@ -73,7 +73,6 @@ public class ClonePage extends PushPullPage {
 		super(hgRoot, pageName, title, titleImage);
 		destDirectories = new HashMap<IHgRepositoryLocation, File>();
 		setShowBundleButton(false);
-		setShowRevisionTable(false);
 		setShowCredentials(true);
 		setShowForce(false);
 		setShowSnapFile(false);
@@ -96,7 +95,7 @@ public class ClonePage extends PushPullPage {
 		hookNextButtonListener(composite);
 	}
 
-	private boolean isEmpty(String s){
+	private static boolean isEmpty(String s){
 		return s == null || s.trim().length() == 0;
 	}
 
@@ -386,7 +385,7 @@ public class ClonePage extends PushPullPage {
 		return nextPage;
 	}
 
-	private void rememberLastUsed(File destinationDirectory) {
+	private static void rememberLastUsed(File destinationDirectory) {
 		lastUsedDir = destinationDirectory.getParentFile();
 	}
 

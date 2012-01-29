@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,6 +67,8 @@ public class HgBranchClient extends AbstractClient {
 				MercurialEclipsePlugin.logWarning("Failed to parse branch", ex); //$NON-NLS-1$
 			}
 		}
+		Collections.sort(branches, Branch.COMPARATOR);
+
 		return branches.toArray(new Branch[branches.size()]);
 	}
 

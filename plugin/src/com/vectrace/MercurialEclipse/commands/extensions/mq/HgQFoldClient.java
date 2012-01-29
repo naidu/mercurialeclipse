@@ -80,4 +80,8 @@ public class HgQFoldClient extends AbstractClient {
 			HgCommitClient.deleteMessage(messageFile);
 		}
 	}
+
+	public static boolean isPatchConflict(HgException e) {
+		return e.getMessage().contains("patch failed, unable to continue");
+	}
 }

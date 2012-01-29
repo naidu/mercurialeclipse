@@ -11,17 +11,11 @@
 package com.vectrace.MercurialEclipse.operations;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.filebuffers.FileBuffers;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Display;
 
@@ -39,8 +33,6 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class TransplantOperation extends HgOperation {
 	private static final Pattern HAS_REJECTS_PATTERN = Pattern.compile("abort:.*run hg transplant --continue");
-	private static final Pattern REJECT_PATTERN = Pattern.compile("saving rejects to file (.*)\\s");
-	private static final Pattern CHANGESET_PATTERN = Pattern.compile("applying ([a-z0-9]*)\\s");
 
 	private final TransplantOptions options;
 	private final IHgRepositoryLocation repo;
@@ -83,7 +75,7 @@ public class TransplantOperation extends HgOperation {
 				result = HgTransplantClient.transplant(hgRoot, repo, options);
 			} finally {
 				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
-						RefreshRootJob.ALL);
+						RefreshRootJob.LOCAL_AND_OUTGOING);
 				job.schedule();
 				job.join();
 				t.cancel();
@@ -108,32 +100,11 @@ public class TransplantOperation extends HgOperation {
 		}
 
 		try {
-			Matcher matcher;
-
-			matcher = CHANGESET_PATTERN.matcher(message);
-			boolean found = matcher.find() &&  matcher.groupCount() > 0;
-			if(!found) {
-				return false;
-			}
-			final String changeSetId = matcher.group(1);
-
-			final ArrayList<IFile> rejects = new ArrayList<IFile>();
-
-			matcher = REJECT_PATTERN.matcher(message);
-			int lastMatchOffset = 0;
-			while (matcher.find(lastMatchOffset) && matcher.groupCount() > 0) {
-				String filename = matcher.group(1);
-				IPath path = new Path(hgRoot.getPath()).append(filename);
-				IFile file = FileBuffers.getWorkspaceFileAtLocation(path);
-				if (file != null) {
-					rejects.add(file);
-				}
-				lastMatchOffset = matcher.end();
-			}
+			final TransplantRejectsDialog dialog = new TransplantRejectsDialog(getShell(), hgRoot, message);
 
 			getShell().getDisplay().asyncExec(new Runnable() {
 				public void run() {
-					new TransplantRejectsDialog(getShell(), hgRoot, changeSetId, rejects).open();
+					dialog.open();
 				}
 			});
 

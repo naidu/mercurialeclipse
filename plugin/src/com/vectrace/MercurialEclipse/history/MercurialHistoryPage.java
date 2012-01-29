@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -103,13 +104,13 @@ import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
+import org.osgi.framework.Version;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.HistoryContentProposalProvider.RevisionContentProposal;
@@ -128,6 +129,9 @@ import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
+
+	private static final boolean ECLISPE_BEFORE_38 = Platform.getBundle("org.eclipse.ui.ide")
+			.getVersion().compareTo(new Version(3, 8, 0)) < 0;
 
 	public static final String REMOTE_MODE = null;
 	private GraphLogTableViewer viewer;
@@ -796,15 +800,13 @@ public class MercurialHistoryPage extends HistoryPage {
 				try {
 					HgRoot root = resource != null ? MercurialTeamProvider.getHgRoot(resource) : hgRoot;
 					Assert.isNotNull(root);
-					if (HgStatusClient.isDirty(root)) {
-						if (!MessageDialog
-								.openQuestion(getControl().getShell(),
-										Messages.getString("MercurialHistoryPage.uncommittedChanges1"), //$NON-NLS-1$
-										Messages.getString("MercurialHistoryPage.uncommittedChanges2"))){ //$NON-NLS-1$
-							return;
-						}
-					}
+
 					UpdateJob job = new UpdateJob(rev.getContentIdentifier(), true, root, false);
+
+					if (!job.confirmDataLoss(getControl().getShell())) {
+						return;
+					}
+
 					JobChangeAdapter adap = new JobChangeAdapter() {
 						@Override
 						public void done(IJobChangeEvent event) {
@@ -1186,7 +1188,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		return progressService;
 	}
 
-	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+	/**
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
 		return null;
 	}
 
@@ -1318,10 +1323,15 @@ public class MercurialHistoryPage extends HistoryPage {
 	 * Set the selection provider for current history view
 	 */
 	void setSelectionProvider(ISelectionProvider provider) {
-		getSite().setSelectionProvider(provider);
-		// it looks crazy, but the fact is that the page site doesn't set global
-		// selection provider, so we must have it set properly to support Properties view
-		getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
+		getHistoryPageSite().setSelectionProvider(provider);
+
+		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=366468:
+		// the code below doesn't work with Eclipse 3.8 anymore, but the hack is not needed anymore
+		if(ECLISPE_BEFORE_38) {
+			// it looks crazy, but the fact is that the page site doesn't set global
+			// selection provider, so we must have it set properly to support Properties view
+			getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
+		}
 	}
 
 	/**

@@ -71,6 +71,7 @@ public class HgRevertClient extends AbstractClient {
 			// if there are too many resources, do several calls
 			// From 1.8 hg can do it in one call
 			if(!HgFeatures.LISTFILE.isEnabled()) {
+				@SuppressWarnings("deprecation")
 				int delta = AbstractShellCommand.MAX_PARAMS - 1;
 				for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
 					// the last argument will be replaced with a path

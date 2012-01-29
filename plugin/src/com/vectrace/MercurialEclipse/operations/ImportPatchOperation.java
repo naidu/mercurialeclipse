@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -78,7 +79,12 @@ public class ImportPatchOperation extends HgOperation {
 				refreshFlags = RefreshRootJob.LOCAL;
 			}
 
-			new RefreshWorkspaceStatusJob(hgRoot, refreshFlags).schedule();
+			Job job = new RefreshWorkspaceStatusJob(hgRoot, refreshFlags);
+			job.schedule();
+			if (conflict) {
+				job.join();
+			}
+
 			monitor.done();
 		}
 	}

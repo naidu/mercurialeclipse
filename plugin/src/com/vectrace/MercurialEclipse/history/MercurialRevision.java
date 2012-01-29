@@ -28,6 +28,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.history.IFileRevision;
@@ -36,6 +37,9 @@ import org.eclipse.team.core.history.provider.FileRevision;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
@@ -44,7 +48,7 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 /**
  * @author zingo
  */
-public class MercurialRevision extends FileRevision {
+public class MercurialRevision extends FileRevision implements IHgResource {
 
 	private final IResource resource;
 	private final ChangeSet changeSet;
@@ -250,13 +254,20 @@ public class MercurialRevision extends FileRevision {
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
 		if (mercurialRevisionStorage == null) {
-			if(!resource.exists() && parent != null){
-				IFile parentRes =  ResourcesPlugin.getWorkspace().getRoot()
-					.getFileForLocation(new Path(parent.getAbsolutePath()));
-				mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
-						revision, getContentIdentifier(), changeSet);
+			if(!resource.exists()) {
+				if (parent != null) {
+					IFile parentRes =  ResourcesPlugin.getWorkspace().getRoot()
+						.getFileForLocation(new Path(parent.getAbsolutePath()));
+					mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
+							revision, getContentIdentifier(), changeSet);
+				} else if(resource instanceof IFile ){
+					HgRoot hgRoot = changeSet.getHgRoot();
+					HgFile hgFile = new HgFile(hgRoot, changeSet, (IFile)resource);
+					return hgFile;
+				}
 			} else {
 				if(resource instanceof IFile){
+
 					mercurialRevisionStorage = new MercurialRevisionStorage((IFile) resource,
 							revision, getContentIdentifier(), changeSet);
 					mercurialRevisionStorage.setParent(parent);
@@ -364,6 +375,25 @@ public class MercurialRevision extends FileRevision {
 	 */
 	public void setBisectStatus(Status bisectStatus) {
 		this.bisectStatus = bisectStatus;
+	}
+
+	public Object getAdapter(Class adapter) {
+		if(adapter == IResource.class) {
+			return resource;
+		}
+		return null;
+	}
+
+	public HgRoot getHgRoot() {
+		return changeSet.getHgRoot();
+	}
+
+	public IPath getIPath() {
+		return getHgRoot().toRelative(resource.getLocation());
+	}
+
+	public boolean isReadOnly() {
+		return true;
 	}
 
 }

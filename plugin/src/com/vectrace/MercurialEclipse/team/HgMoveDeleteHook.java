@@ -218,11 +218,16 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			allFiles.remove(project);
 			try {
 				HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
-				MercurialStatusCache.getInstance().refreshStatus(project, monitor);
 			} catch (HgException e1) {
-				MercurialEclipsePlugin.logError(e1);
-				MercurialEclipsePlugin.showError(e1);
-				return true;
+				MercurialEclipsePlugin.logWarning("Warnings encountered removing resources from repository", e1);
+				// Usually deleting untracked resource
+			} finally {
+				try {
+					MercurialStatusCache.getInstance().refreshStatus(project, monitor);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+					MercurialEclipsePlugin.showError(e);
+				}
 			}
 
 			final boolean [] continueDelete = new boolean[]{ false };
@@ -231,7 +236,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 					MessageDialog.openInformation(MercurialEclipsePlugin.getActiveShell(),
 							"Project removed",
 							"All project files are now removed from Mercurial repository.\n"
-							+ "A commit is highly recommended.");
+							+ "A commit is highly recommended if you wish to keep using this repository.");
 					CommitHandler ch = new CommitHandler();
 					Options options = new Options();
 					options.defaultCommitMessage = "Removed project '" + project.getName() + "' from repository.";

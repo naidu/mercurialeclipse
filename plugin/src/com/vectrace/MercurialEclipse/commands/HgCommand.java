@@ -81,9 +81,9 @@ public class HgCommand extends AbstractShellCommand {
 	/**
 	 * <b>NOTE!</b> this method works only for hg commands which knows "-u" argument
 	 * AND which understood "-u" as user name. There are commands which accept "-u" but
-	 * threat is differently: like "resolve" or "status" (see {@link #isConflictingWithUserArg()}).
+	 * treat is differently: like "resolve" or "status" (see {@link #isConflictingWithUserArg()}).
 	 *
-	 * @param user might be null or empty. In such case, a default user name weill be used.
+	 * @param user might be null or empty. In such case, a default user name will be used.
 	 * @throws IllegalArgumentException if the command uses "-u" NOT as user name parameter
 	 */
 	public void addUserName(String user) throws IllegalArgumentException {
@@ -186,5 +186,22 @@ public class HgCommand extends AbstractShellCommand {
 	@Override
 	protected String getExecutable() {
 		return HgClients.getExecutable();
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#setupEncoding(java.util.List)
+	 */
+	@Override
+	protected String setupEncoding(List<String> cmd) {
+		String charset = hgRoot.getEncoding();
+		// Enforce strict command line encoding
+		cmd.add(1, charset);
+		cmd.add(1, "--encoding");
+		// Enforce fallback encoding for UI (command output)
+		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
+		// if actual platfrom don't support it.
+		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+		cmd.add(1, "--config"); //$NON-NLS-1$
+		return charset;
 	}
 }

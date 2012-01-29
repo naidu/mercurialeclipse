@@ -121,18 +121,20 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(REMOVE_TIMEOUT, defaultTimeout);
 
 		String defaultUsername = store.getDefaultString(MERCURIAL_USERNAME);
-		if(defaultUsername == null || defaultUsername.length() == 0){
+		if(defaultUsername == null || defaultUsername.length() == 0) {
 			// the task below may block UI thread and cause entire system to wait forever
-			// therefore start job execution, with the hope, that the user name is not needed
-			// immediately after startup (usualy it is required by commit/tag/merge etc).
-			Job job = new Job("Detecting hg user name"){
+			// therefore start job execution.
+			// The preference key is only used as a cache by MercurialUtilities.getDefaultUserName() and
+			// it is useful to show on the preference page.
+			// Possibly relevant: http://www.javaforge.com/issue/20425
+			Job job = new Job("Detecting hg user name") {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getDefaultUserName());
 					return Status.OK_STATUS;
 				}
 			};
-			job.setPriority(Job.INTERACTIVE);
+			job.setPriority(Job.LONG);
 			job.setSystem(true);
 			job.schedule(200);
 		}

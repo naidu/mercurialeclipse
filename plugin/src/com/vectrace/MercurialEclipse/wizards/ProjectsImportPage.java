@@ -210,7 +210,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		 * 		The path to examine
 		 * @return Whether the given path is the default location for a project
 		 */
-		private boolean isDefaultLocation(IPath path) {
+		private static boolean isDefaultLocation(IPath path) {
 			// The project description file must at least be within the project,
 			// which is within the workspace location
 			if (path.segmentCount() < 2) {
@@ -656,13 +656,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		defaultEnableProjects();
 		projectsList.setExpandedElements(selectedProjects);
 		projectsList.refresh(true);
-	}
-
-	/**
-	 * Get the title for an error dialog. Subclasses should override.
-	 */
-	protected String getErrorDialogTitle() {
-		return "Internal error";
 	}
 
 	/**

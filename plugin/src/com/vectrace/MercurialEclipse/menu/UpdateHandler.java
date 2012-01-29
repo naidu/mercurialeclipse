@@ -11,12 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
-
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -41,26 +36,13 @@ public class UpdateHandler extends RunnableHandler {
 	 */
 	@Override
 	public void run(HgRoot hgRoot) throws HgException {
-		boolean dirty = HgStatusClient.isDirty(hgRoot);
-		if (dirty && cleanEnabled) {
-			final String message = Messages.getString("RevertDialog.uncommitedChanges");
-			final boolean[] result = new boolean[1];
-			if (Display.getCurrent() == null) {
-				Display.getDefault().syncExec(new Runnable() {
-					public void run() {
-						result[0] = MessageDialog.openQuestion(getShell(),
-								"Uncommited Changes", message);
-					}
-				});
-			} else {
-				result[0] = MessageDialog.openQuestion(getShell(),
-						"Uncommited Changes", message);
-			}
-			if (!result[0]) {
-				return;
-			}
+		UpdateJob job = new UpdateJob(revision, cleanEnabled, hgRoot, handleCrossBranches);
+
+		if (!job.confirmDataLoss(getShell())) {
+			return;
 		}
-		new UpdateJob(revision, cleanEnabled, hgRoot, handleCrossBranches).schedule();
+
+		job.schedule();
 	}
 
 	/**

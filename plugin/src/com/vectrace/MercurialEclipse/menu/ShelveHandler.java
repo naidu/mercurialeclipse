@@ -16,6 +16,8 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -34,16 +36,39 @@ public class ShelveHandler extends RootHandler {
 
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
+				final ShelveOperation op = new ShelveOperation((IWorkbenchPart) null, hgRoot);
 				try {
-					ShelveOperation op = new ShelveOperation((IWorkbenchPart) null,	hgRoot);
 					op.run(monitor);
 					return super.runSafe(monitor);
 				} catch (InvocationTargetException e) {
-					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-							0, e.getLocalizedMessage(), e);
+					if (op.getShelveFileConflict() != null) {
+						getShell().getDisplay().asyncExec(new Runnable() {
+							public void run() {
+								MessageDialog dialog = new MessageDialog(getShell(),
+										"Shelve file exists. Delete shelved changes?", null,
+										"Shelve file exists. You must unshelve before shelving anew. "
+												+ "Would you like to delete shelved changes instead?",
+										MessageDialog.QUESTION, new String[] { "Delete shelved changes",
+												"Retain" }, 1) {
+									{
+										setShellStyle(getShellStyle() | SWT.SHEET);
+									}
+								};
+
+								if (dialog.open() == 0) {
+									op.getShelveFileConflict().delete();
+									ShelveHandler.this.run(hgRoot);
+								}
+							}
+						});
+						return Status.OK_STATUS;
+					}
+					return new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, 0, e
+							.getLocalizedMessage(), e);
+
 				} catch (InterruptedException e) {
-					return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
-							0, e.getLocalizedMessage(), e);
+					return new Status(IStatus.INFO, MercurialEclipsePlugin.ID, 0, e
+							.getLocalizedMessage(), e);
 				}
 			}
 		}.schedule();

@@ -303,7 +303,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 									PushHandler handler = new PushHandler();
 
 									handler.setInitialMessage(Messages
-											.getString("PushPullSynchronizeOperation.PushFailed")
+										.getString("PushPullSynchronizeOperation.PushFailed") + " "
 											+ ex.getConciseMessage());
 									handler.run(hgRoot);
 								} catch (Exception e) {

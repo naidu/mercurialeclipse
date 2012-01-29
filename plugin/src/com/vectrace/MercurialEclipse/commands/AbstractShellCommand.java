@@ -510,20 +510,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return builder;
 	}
 
-	private String setupEncoding(List<String> cmd) {
-		if(hgRoot == null){
-			return null;
-		}
-		String charset = hgRoot.getEncoding();
-		// Enforce strict command line encoding
-		cmd.add(1, charset);
-		cmd.add(1, "--encoding");
-		// Enforce fallback encoding for UI (command output)
-		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
-		// if actual platfrom don't support it.
-		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
-		cmd.add(1, "--config"); //$NON-NLS-1$
-		return charset;
+	/**
+	 * Template method to add encoding options
+	 * @param cmd The list of commands to add to
+	 * @return The encoding for HGENCODING env var, or null
+	 */
+	protected String setupEncoding(List<String> cmd) {
+		return null;
 	}
 
 	private void waitForConsumer(int timeout) throws InterruptedException {
@@ -761,20 +754,16 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	/**
-	 * Add a file. Need not be canonical, but will try transform to canonical.
+	 * Add a file. Looks like we must keep the file path (do not resolve),
+	 * see issue #20854.
+	 * Mercurial can deal with links by itself, but only if the link target is
+	 * under the hg root. resolving the link can move the path outside the hg root
+	 * and so hg will deny to collaborate :-)
 	 *
 	 * @param file The file to add
 	 */
 	public void addFile(File file) {
-		String sfile;
-		try {
-			sfile = file.getCanonicalPath();
-		} catch (IOException e) {
-			MercurialEclipsePlugin.logError(e);
-			sfile = file.getAbsolutePath();
-		}
-
-		files.add(sfile);
+		files.add(file.getAbsolutePath());
 	}
 
 	public void addFiles(IResource... resources) {
