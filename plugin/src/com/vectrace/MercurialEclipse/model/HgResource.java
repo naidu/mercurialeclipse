@@ -104,10 +104,6 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 		return root;
 	}
 
-	public String getHgRootRelativePath() {
-		return path.toOSString();
-	}
-
 	public String getName() {
 		String name = path.lastSegment();
 		if(name == null) {

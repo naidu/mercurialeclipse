@@ -51,7 +51,7 @@ public class HgCatClient extends AbstractClient {
 		}
 
 		command.addOptions("--decode"); //$NON-NLS-1$
-		command.addOptions(hgfile.getHgRootRelativePath());
+		command.addOptions(hgfile.getIPath().toOSString());
 
 		return command.executeToBytes();
 	}
@@ -86,7 +86,7 @@ public class HgCatClient extends AbstractClient {
 			hgCommand.addOptions("-r", revision);
 		}
 
-		hgCommand.addOptions("--decode", hgfile.getHgRootRelativePath());
+		hgCommand.addOptions("--decode", hgfile.getIPath().toOSString());
 
 		return hgCommand.executeToBytes();
 	}
