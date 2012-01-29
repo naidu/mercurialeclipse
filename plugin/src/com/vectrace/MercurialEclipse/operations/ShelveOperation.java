@@ -106,7 +106,7 @@ public class ShelveOperation extends HgOperation {
 				String currRev = HgIdentClient.getCurrentChangesetId(hgRoot);
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
-				HgUpdateClient.update(hgRoot, currRev, true);
+				HgUpdateClient.cleanUpdate(hgRoot, currRev);
 			}
 		} catch (HgCoreException e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());

@@ -21,6 +21,11 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgUpdateClient extends AbstractClient {
 
+	public static void cleanUpdate(final HgRoot hgRoot, String revision) throws HgException
+	{
+		update(hgRoot, revision, true);
+	}
+
 	/**
 	 * Perform an update and refresh the workspace. Handles unresolved conflicts and shows the user a message
 	 */

@@ -24,6 +24,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
+/**
+ * Update after cloning a repository. Warning: Always does clean updates.
+ */
 public class UpdateOperation extends HgOperation {
 
 	private final String rev;
@@ -53,7 +56,7 @@ public class UpdateOperation extends HgOperation {
 
 		m.beginTask(Messages.getString("CloneRepoWizard.updateOperation.name"), IProgressMonitor.UNKNOWN); //$NON-NLS-1$
 
-		// Timer which is used to monitor the moniktor cancellation
+		// Timer which is used to monitor the monitor cancellation
 		Timer t = new Timer("Update watcher", false);
 
 		// only start timer if the operation is NOT running in the UI thread
@@ -74,7 +77,7 @@ public class UpdateOperation extends HgOperation {
 			} else if (forest) {
 				throw new IllegalArgumentException("Forest update not supported yet!");
 			} else {
-				HgUpdateClient.update(hgRoot, rev, true);
+				HgUpdateClient.cleanUpdate(hgRoot, rev);
 			}
 			m.worked(1);
 		} catch (HgException e) {

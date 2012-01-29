@@ -17,15 +17,23 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.NewHeadsDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
+ * Update to a revision, optionally with the clean flag.
+ *
+ * Always call {@link #confirmDataLoss(Shell)} or {@link #setDataLossConfirmed(boolean)}.
+ *
  * @author Bastian
  */
 public class UpdateJob extends Job {
@@ -33,6 +41,7 @@ public class UpdateJob extends Job {
 	private final boolean cleanEnabled;
 	private final String revision;
 	private boolean handleCrossBranches = false;
+	private boolean dataLossConfirmed;
 
 	/**
 	 * Job to do a working directory update to the specified version.
@@ -48,10 +57,6 @@ public class UpdateJob extends Job {
 		this.handleCrossBranches = handleCrossBranches;
 	}
 
-	public UpdateJob(String revision, boolean cleanEnabled, HgRoot hgRoot) {
-		this(revision, cleanEnabled, hgRoot, false);
-	}
-
 	@Override
 	public IStatus run(IProgressMonitor monitor) {
 		String jobName = "Updating " + hgRoot.getName();
@@ -61,10 +66,20 @@ public class UpdateJob extends Job {
 		if (cleanEnabled) {
 			jobName += " discarding all local changes (-C option).";
 		}
-		monitor.beginTask(jobName, 2);
+		monitor.beginTask(jobName, 3);
+
 		monitor.subTask("Calling Mercurial...");
 		monitor.worked(1);
 		try {
+			if (cleanEnabled && !dataLossConfirmed) {
+				// The root could have become dirty since confirmDataLoss() was called
+				if (HgStatusClient.isDirty(hgRoot)) {
+					return new HgException("The root has become dirty. Update cancelled").getStatus();
+				}
+				// TODO: in some cases it is possible to turn off cleanEnabled.
+			}
+			monitor.worked(1);
+
 			HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 			monitor.worked(1);
 
@@ -104,4 +119,54 @@ public class UpdateJob extends Job {
 		});
 	}
 
+	/**
+	 * Call from the UI thread.
+	 * @return True if loss was confirmed.
+	 */
+	private static boolean showConfirmDataLoss(Shell shell)
+	{
+		MessageDialog dialog = new MessageDialog(
+				shell,
+				Messages.getString("UpdateJob.uncommittedChanges1"),
+				null,
+				Messages.getString("UpdateJob.uncommittedChanges2"),
+				MessageDialog.CONFIRM,
+				new String[]{
+					Messages.getString("UpdateJob.continueAndDiscard"),
+					IDialogConstants.CANCEL_LABEL},
+					1 // default index - cancel
+				);
+		dialog.setBlockOnOpen(true);
+		return  dialog.open() == 0;
+	}
+
+	public boolean confirmDataLoss(final Shell shell) throws HgException
+	{
+		if (HgStatusClient.isDirty(hgRoot)) {
+
+			final boolean[] result = new boolean[1];
+			if (Display.getCurrent() == null) {
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						result[0] = showConfirmDataLoss(shell);
+					}
+				});
+			} else {
+				result[0] = showConfirmDataLoss(shell);
+			}
+			if (!result[0]) {
+				return false;
+			}
+
+			dataLossConfirmed = true;
+
+			return true;
+		}
+
+		return true;
+	}
+
+	public void setDataLossConfirmed(boolean lossOk) {
+		dataLossConfirmed = lossOk;
+	}
 }

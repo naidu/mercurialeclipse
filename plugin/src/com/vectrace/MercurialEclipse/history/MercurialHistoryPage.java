@@ -109,7 +109,6 @@ import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.HistoryContentProposalProvider.RevisionContentProposal;
@@ -796,15 +795,13 @@ public class MercurialHistoryPage extends HistoryPage {
 				try {
 					HgRoot root = resource != null ? MercurialTeamProvider.getHgRoot(resource) : hgRoot;
 					Assert.isNotNull(root);
-					if (HgStatusClient.isDirty(root)) {
-						if (!MessageDialog
-								.openQuestion(getControl().getShell(),
-										Messages.getString("MercurialHistoryPage.uncommittedChanges1"), //$NON-NLS-1$
-										Messages.getString("MercurialHistoryPage.uncommittedChanges2"))){ //$NON-NLS-1$
-							return;
-						}
-					}
+
 					UpdateJob job = new UpdateJob(rev.getContentIdentifier(), true, root, false);
+
+					if (!job.confirmDataLoss(getControl().getShell())) {
+						return;
+					}
+
 					JobChangeAdapter adap = new JobChangeAdapter() {
 						@Override
 						public void done(IJobChangeEvent event) {
@@ -1186,7 +1183,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		return progressService;
 	}
 
-	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+	/**
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
+	public Object getAdapter(Class adapter) {
 		return null;
 	}
 

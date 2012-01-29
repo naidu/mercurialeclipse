@@ -23,6 +23,8 @@ public class SwitchHandler extends RootHandler {
 
 	@Override
 	public void run(HgRoot hgRoot) throws CoreException {
+		boolean lossConfirmed = false;
+
 		if (HgStatusClient.isDirty(hgRoot)) {
 			if (!MessageDialog
 					.openQuestion(getShell(),
@@ -30,13 +32,16 @@ public class SwitchHandler extends RootHandler {
 							Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
 				return;
 			}
+			lossConfirmed = true;
 		}
 		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
 				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			new UpdateJob(dialog.getRevision(), true, hgRoot, false).schedule();
+			UpdateJob job = new UpdateJob(dialog.getRevision(), true, hgRoot, false);
+
+			job.setDataLossConfirmed(lossConfirmed);
+			job.schedule();
 		}
 	}
-
 }
