@@ -49,7 +49,6 @@ public class PullPage extends PushPullPage {
 		setDescription(description);
 		setShowCredentials(true);
 		setShowBundleButton(true);
-		setShowRevisionTable(false);
 	}
 
 	public boolean isRebaseSelected() {
@@ -89,18 +88,6 @@ public class PullPage extends PushPullPage {
 	public boolean isPageComplete() {
 		return super.isPageComplete()
 				&& HgRepositoryLocation.validateLocation(getUrlText());
-	}
-
-	protected boolean isPageComplete(String url) {
-		return HgRepositoryLocation.validateLocation(url);
-	}
-
-	protected boolean validateAndSetComplete(String url) {
-		boolean validLocation = isPageComplete(url);
-
-		setPageComplete(validLocation);
-
-		return validLocation;
 	}
 
 	@Override
@@ -231,16 +218,6 @@ public class PullPage extends PushPullPage {
 	@Override
 	protected String getForceCheckBoxLabel() {
 		return Messages.getString("PullPage.forceCheckBox.title"); //$NON-NLS-1$
-	}
-
-	@Override
-	protected String getRevGroupLabel() {
-		return Messages.getString("PullPage.revGroup.title"); //$NON-NLS-1$
-	}
-
-	@Override
-	protected String getRevCheckBoxLabel() {
-		return Messages.getString("PullPage.revCheckBox.title"); //$NON-NLS-1$
 	}
 
 	@Override

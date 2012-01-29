@@ -115,7 +115,7 @@ public class CreateRepoPage extends ConfigurationWizardMainPage {
 
 	/**
 	 * @param urlString non null
-	 * @return non null file object if the given url can be threated as local directory
+	 * @return non null file object if the given url can be treated as local directory
 	 */
 	@Override
 	protected File getLocalDirectory(String urlString) {

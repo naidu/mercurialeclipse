@@ -32,7 +32,6 @@ public class PushRepoPage extends PushPullPage {
 	public PushRepoPage(String pageName, String title,
 			ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(hgRoot, pageName, title, titleImage);
-		setShowRevisionTable(false);
 	}
 
 	@Override
