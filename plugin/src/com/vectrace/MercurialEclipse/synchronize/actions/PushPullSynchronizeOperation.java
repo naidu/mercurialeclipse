@@ -24,7 +24,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -63,70 +62,90 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		this.update = update;
 	}
 
+	/**
+	 * Collect roots for the given object
+	 * @param monitor The progress monitor
+	 * @param hgRoots (Output) Collected roots are added to this
+	 * @param changeSet Current changeset.
+	 * @param target The object to get roots from
+	 * @return The new value for the selected changeset
+	 */
+	private ChangeSet getRoots(final IProgressMonitor monitor, final Set<HgRoot> hgRoots,
+			ChangeSet changeSet, final Object target) {
+		HgRoot hgRoot = null;
+		if (target instanceof IProject) {
+			hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
+		} else if (target instanceof ChangeSet) {
+			changeSet = (ChangeSet) target;
+			hgRoot = changeSet.getHgRoot();
+		}
+		if (target instanceof ChangesetGroup) {
+			ChangesetGroup group = (ChangesetGroup) target;
+			checkChangesets(monitor, group);
+			if(monitor.isCanceled()){
+				return null;
+			}
+
+			// Alternative: Find all the heads and push/pull them individually (without doing
+			// workspace refreshes in between)
+			changeSet = null;
+			hgRoot = group.getChangesets().iterator().next().getHgRoot();
+		}
+		if (target instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) target;
+			checkChangesets(monitor, group);
+			if (monitor.isCanceled()) {
+				return null;
+			}
+			if (isPull) {
+				changeSet = null;
+				hgRoot = group.getIncoming().getChangesets().iterator().next().getHgRoot();
+			} else {
+				changeSet = Collections.min(group.getOutgoing().getChangesets(),new ChangeSetComparator());
+				hgRoot = changeSet.getHgRoot();
+			}
+		}
+		if(hgRoot == null){
+			String message = "No hg root found for: " + target + ". Operation cancelled.";
+			Status status = new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, message);
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			monitor.setCanceled(true);
+			return null;
+		}
+		hgRoots.add(hgRoot);
+		return changeSet;
+	}
+
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
 		Set<HgRoot> hgRoots = new TreeSet<HgRoot>();
 		ChangeSet changeSet = null; // ok to have changeset outside loop, if it's not null in the end we have only selected one thing, and the loop below runs only once.
+		// TODO: logic wrt 'changeset' is not correct
 		// TODO Make a changeRequest class of a pair with hgroot and changeset(s)
 		for (Object target : targets) {
-			HgRoot hgRoot = null;
-
-			if (target instanceof IProject) {
-				hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
-			} else if (target instanceof ChangeSet) {
-				changeSet = (ChangeSet) target;
-				hgRoot = changeSet.getHgRoot();
-			}
-			if (target instanceof ChangesetGroup) {
-				ChangesetGroup group = (ChangesetGroup) target;
-				checkChangesets(monitor, group);
-				if (monitor.isCanceled()) {
-					return;
-				}
-
-				// Alternative: Find all the heads and push/pull them individually (without doing
-				// workspace refreshes in between)
-				changeSet = null;
-				hgRoot = group.getChangesets().iterator().next().getHgRoot();
-			}
-			if (target instanceof RepositoryChangesetGroup) {
-				RepositoryChangesetGroup group = (RepositoryChangesetGroup) target;
-				checkChangesets(monitor, group);
-				if (monitor.isCanceled()) {
-					return;
-				}
-				if (isPull) {
-					changeSet = null;
-					hgRoot = group.getIncoming().getChangesets().iterator().next().getHgRoot();
-				} else {
-					changeSet = Collections.min(group.getOutgoing().getChangesets(),new ChangeSetComparator());
-					hgRoot = changeSet.getHgRoot();
-				}
-			}
-			if (hgRoot == null) {
-				String message = "No hg root found for: " + target + ". Operation cancelled.";
-				Status status = new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, message);
-				StatusManager.getManager().handle(status, StatusManager.SHOW);
-				monitor.setCanceled(true);
+			changeSet = getRoots(monitor, hgRoots, changeSet, target);
+			if(monitor.isCanceled()){
 				return;
 			}
-			hgRoots.add(hgRoot);
 		}
 		//Inform the user on how many projects is about to update
 		for(HgRoot root: hgRoots) {
 			checkProjects(monitor, root);
-			if (monitor.isCanceled()) {
+			if(monitor.isCanceled()){
 				return;
 			}
 		}
 		monitor.beginTask(getTaskName(hgRoots), 1);
-		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob") : Messages.getString("PushPullSynchronizeOperation.PushJob");
+		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
+				: Messages.getString("PushPullSynchronizeOperation.PushJob");
 		PushPullJob job = new PushPullJob(jobName, hgRoots, changeSet, monitor);
 
-		if (changeSet == null) {
+		if (changeSet == null)
+		{
 			for(HgRoot hgRoot : hgRoots) {
-				job.addBranch(hgRoot, MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
+				job.setBranch(hgRoot, MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
 			}
 		}
+
 		job.schedule();
 	}
 
@@ -145,7 +164,21 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	}
 
 	private void checkChangesets(final IProgressMonitor monitor, ChangesetGroup group) {
-		int csCount = group.getChangesets().size();
+		checkChangesets(monitor, group.getChangesets().size());
+	}
+
+	private void checkChangesets(final IProgressMonitor monitor, RepositoryChangesetGroup group) {
+		int csCount;
+		if (isPull) {
+			csCount = group.getIncoming().getChangesets().size();
+		} else {
+			csCount = group.getOutgoing().getChangesets().size();
+		}
+		checkChangesets(monitor, csCount);
+	}
+
+	private void checkChangesets(final IProgressMonitor monitor, int csCount)
+	{
 		if(csCount < 1){
 			// paranoia...
 			monitor.setCanceled(true);
@@ -171,42 +204,6 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 						MercurialPreferenceConstants.PREF_SHOW_PULL_WARNING_DIALOG, getShell())) {
 					monitor.setCanceled(true);
 				}
-			}
-		});
-	}
-
-	@SuppressWarnings("boxing")
-	private void checkChangesets(final IProgressMonitor monitor, RepositoryChangesetGroup group) {
-		Integer csCount = null;
-		if(isPull) {
-			csCount = group.getIncoming().getChangesets().size();
-		} else {
-			csCount = group.getOutgoing().getChangesets().size();
-		}
-
-		if(csCount == null || csCount < 1){
-			// paranoia...
-			monitor.setCanceled(true);
-			return;
-		}
-		final String title;
-		final String message;
-		if(isPull){
-			title = "Hg Pull";
-			message = "Pulling " + csCount + " changesets (or more) from the remote repository.\n"
-					+ "The pull will fetch the *latest* version available remote.\n" + "Continue?";
-		} else {
-			if(csCount == 1){
-				return;
-			}
-			title = "Hg Push";
-			message = "Pushing " + csCount + " changesets to the remote repository. Continue?";
-		}
-		getShell().getDisplay().syncExec(new Runnable(){
-			public void run() {
-			
-				MercurialEclipsePlugin.showDontShowAgainConfirmDialog(title, message, MessageDialog.CONFIRM, 
-						MercurialPreferenceConstants.PREF_SHOW_PULL_WARNING_DIALOG, getShell());
 			}
 		});
 	}
@@ -257,68 +254,78 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		/**
 		 * @param branch The branch name, or null for all/any
 		 */
-		public void addBranch(HgRoot root, String branch) {
+		public void setBranch(HgRoot root, String branch) {
 			this.branches.put(root, branch);
 		}
 
 		@Override
 		protected IStatus run(IProgressMonitor moni) {
-			for (final HgRoot hgRoot : hgRoots) {
+			try {
+				for (HgRoot hgRoot : hgRoots) {
+					IStatus stat = run(moni, hgRoot);
 
-				IHgRepositoryLocation location = participant.getRepositoryLocation(hgRoot); // TODO
-																							// schantz
-				if (location == null) {
-					return Status.OK_STATUS;
-				}
-				// re-validate the location as it might have changed credentials...
-				try {
-					location = MercurialEclipsePlugin.getRepoManager().getRepoLocation(location.getLocation());
-				} catch (HgException e1) {
-					MercurialEclipsePlugin.logError(e1);
-					return Status.OK_STATUS;
-				}
-				if (opMonitor.isCanceled() || moni.isCanceled()) {
-					return Status.CANCEL_STATUS;
-				}
-				try {
-					if (isPull) {
-						boolean rebase = false;
-						boolean force = false;
-						boolean timeout = true;
-						HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false, branches.get(hgRoot));
-						// pull client does the refresh automatically, no extra job required here
-					} else {
-						HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branches.get(hgRoot));
-						//TODO Why does OUTGOING alone not work !!
-						new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+					if (stat != null) {
+						return stat;
 					}
-				} catch (final HgException ex) {
-					MercurialEclipsePlugin.logError(ex);
-					if (!isPull) {
-						// try to recover: open the default dialog, where user can change some
-						// settings like password/force flag etc (issue #10720)
-						MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-							public void run() {
-								try {
-									PushHandler handler = new PushHandler();
-
-									handler.setInitialMessage(Messages
-										.getString("PushPullSynchronizeOperation.PushFailed") + " "
-											+ ex.getConciseMessage());
-									handler.run(hgRoot);
-								} catch (Exception e) {
-									MercurialEclipsePlugin.logError(e);
-								}
-							}
-						});
-					}
-					return Status.CANCEL_STATUS;
-				} finally {
-					opMonitor.done();
 				}
+			} finally {
+				opMonitor.done();
 			}
 			return Status.OK_STATUS;
 		}
+
+		protected IStatus run(IProgressMonitor moni, final HgRoot hgRoot) {
+			String branch = branches.get(hgRoot);
+			IHgRepositoryLocation location = participant.getRepositoryLocation(hgRoot);
+			if(location == null){
+				return Status.OK_STATUS;
+			}
+			// re-validate the location as it might have changed credentials...
+			try {
+				location = MercurialEclipsePlugin.getRepoManager().getRepoLocation(location.getLocation());
+			} catch (HgException e1) {
+				MercurialEclipsePlugin.logError(e1);
+				return Status.OK_STATUS;
+			}
+			if(opMonitor.isCanceled() || moni.isCanceled()){
+				return Status.CANCEL_STATUS;
+			}
+			try {
+				if (isPull) {
+					boolean rebase = false;
+					boolean force = false;
+					boolean timeout = true;
+					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false, branch);
+					// pull client does the refresh automatically, no extra job required here
+				} else {
+					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch);
+					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
+				}
+				return null;
+			} catch (final HgException ex) {
+				MercurialEclipsePlugin.logError(ex);
+				if(!isPull){
+					// try to recover: open the default dialog, where user can change some
+					// settings like password/force flag etc (issue #10720)
+					MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+						public void run() {
+							try {
+								PushHandler handler = new PushHandler();
+
+								handler.setInitialMessage(Messages
+										.getString("PushPullSynchronizeOperation.PushFailed") + " "
+										+ ex.getConciseMessage());
+								handler.run(hgRoot);
+							} catch (Exception e) {
+								MercurialEclipsePlugin.logError(e);
+							}
+						}
+					});
+				}
+				return Status.CANCEL_STATUS;
+			}
+		}
 	}
+
 
 }
