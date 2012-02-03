@@ -159,7 +159,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (HgRoot hgRoot : roots) {
 			Map<String, Object> pageProperties = initPropertiesInternal(hgRoot);
-			if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
+			if(isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
 						result.add(pageProperties);
@@ -167,10 +167,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 				} else {
 					result.add(pageProperties);
 				}
-			} else {
-				MessageDialog.openError(MercurialEclipsePlugin.getActiveShell(), "No default url", hgRoot.getName()+" has no default url");
-				result.clear();
-				return result;
 			}
 		}
 		return result;
