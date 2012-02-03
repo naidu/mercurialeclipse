@@ -24,11 +24,11 @@ import org.eclipse.ui.ide.IDE;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.FilteredPlaceholder;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -164,20 +164,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			return name + " (" + group.getChangesets().size() + ')';
 		}
 		if(elementOrPath instanceof RepositoryChangesetGroup){
-			RepositoryChangesetGroup group = (RepositoryChangesetGroup) elementOrPath;
-			String name = group.getName();
-			if(group.getIncoming().getChangesets().isEmpty() && group.getOutgoing().getChangesets().isEmpty()){
-				return name + " (empty)";
-			}
-			name += "   [ ";
-			if(!group.getIncoming().getChangesets().isEmpty()) {
-				name += " incoming(" + group.getIncoming().getChangesets().size() + ")";
-			}
-			if(!group.getOutgoing().getChangesets().isEmpty()) {
-				name += " outgoing("+group.getOutgoing().getChangesets().size()+")";
-			}
-			name += " ]";
-			return name;
+			return ((RepositoryChangesetGroup) elementOrPath).getName();
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;
