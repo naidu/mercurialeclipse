@@ -101,14 +101,10 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		if(projects.length > 0){
 			sb.append("[");
 			for (IHgRepositoryLocation repo : repos) {
-				sb.append(" ("+repo.getLocation()+") ").append(',');
-
+				sb.append(repo.getLocation()).append(',');
 			}
 			sb.deleteCharAt(sb.length() - 1);
-			sb.append("] ");
-		}
-		if(sb.charAt(sb.length() - 1) == '/'){
-			sb.deleteCharAt(sb.length() - 1);
+			sb.append("]");
 		}
 		return sb.toString();
 	}
