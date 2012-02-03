@@ -13,10 +13,13 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -28,7 +31,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -155,10 +157,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
-
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (HgRoot hgRoot : roots) {
-			Map<String, Object> pageProperties = initPropertiesInternal(hgRoot);
+			Map<String, Object> pageProperties = propertiesToMap(initProperties(hgRoot));
 			if(isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
@@ -179,27 +180,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	/**
 	 * @param hgRoot non null
-	 * @return non null properties with possible repository data initialized from given
+	 * @return non null properties with possible repository data initialised from given
 	 * root (may be empty)
 	 */
-	private static Map<String, Object> initPropertiesInternal(HgRoot hgRoot) {
-		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
-		Map<String, Object> properties = new Hashtable<String, Object>();
-		if(repoLocation != null){
-			if(repoLocation.getLocation() != null) {
-				properties.put(ConfigurationWizardMainPage.PROP_URL, repoLocation.getLocation());
-				if(repoLocation.getUser() != null) {
-					properties.put(ConfigurationWizardMainPage.PROP_USER, repoLocation.getUser());
-					if(repoLocation.getPassword() != null) {
-						properties.put(ConfigurationWizardMainPage.PROP_PASSWORD, repoLocation.getPassword());
-					}
-				}
-			}
-			properties.put(PROP_HGROOT, hgRoot);
-		}
-		return properties;
-	}
-
 	static Properties initProperties(HgRoot hgRoot) {
 		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
 				.getDefaultRepoLocation(hgRoot);
@@ -288,7 +271,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo,
 			IProject[] selectedProjects) {
-		Set<IHgRepositoryLocation> s = new HashSet(1);
+		Set<IHgRepositoryLocation> s = new HashSet<IHgRepositoryLocation>(1);
 		s.add(repo);
 
 		return createParticipant(s, selectedProjects);
@@ -363,7 +346,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	protected void createParticipant() {
-		createdParticipant = createParticipant(prepareSettings(), selectionPage.getSelectedProjects());
+		Map<String, Object> map = propertiesToMap(repoPage.getProperties());
+
+		map.put(PROP_HGROOT, repoPage.getHgRoot());
+
+		createdParticipant = createParticipant(Collections.singletonList(map),
+				selectionPage.getSelectedProjects());
+	}
+
+	private static Map<String, Object> propertiesToMap(Properties properties) {
+		Map<String, Object> properties2 = new Hashtable<String, Object>();
+
+		for (Iterator<Entry<Object, Object>> it = properties.entrySet().iterator(); it.hasNext();) {
+			Entry<Object, Object> entry = it.next();
+			properties2.put((String) entry.getKey(), entry.getValue());
+		}
+		return properties2;
 	}
 
 	@Override
