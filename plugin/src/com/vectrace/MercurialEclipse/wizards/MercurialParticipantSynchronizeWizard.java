@@ -291,9 +291,12 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			if (participant != null) {
 				try {
 					ISynchronizeParticipant participant2 = participant.getParticipant();
-					TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
-					while (Display.getCurrent().readAndDispatch()) {
-						// give Team UI a chance to dispose the sync page, if any
+
+					if (participant2 instanceof MercurialSynchronizeParticipant) {
+						TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[] { participant2 });
+						while (Display.getCurrent().readAndDispatch()) {
+							// give Team UI a chance to dispose the sync page, if any
+						}
 					}
 				} catch (TeamException e) {
 					MercurialEclipsePlugin.logError(e);
@@ -306,8 +309,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		IProject[] selectedProjects = scope.getProjects();
 		ResourceMapping[] selectedMappings = new ResourceMapping[selectedProjects.length];
 		for (int i = 0; i < selectedProjects.length; i++) {
-			selectedMappings[i] = (ResourceMapping) selectedProjects[i]
-					.getAdapter(ResourceMapping.class);
+			selectedMappings[i] = (ResourceMapping) selectedProjects[i].getAdapter(ResourceMapping.class);
 		}
 		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
 		HgSubscriberMergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);

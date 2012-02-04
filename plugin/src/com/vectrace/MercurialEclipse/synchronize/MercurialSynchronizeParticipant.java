@@ -20,20 +20,13 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
-import org.eclipse.team.internal.ui.IPreferenceIds;
-import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
-import org.eclipse.team.internal.ui.synchronize.IRefreshSubscriberListener;
-import org.eclipse.team.internal.ui.synchronize.RefreshModelParticipantJob;
-import org.eclipse.team.internal.ui.synchronize.RefreshParticipantJob;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
@@ -232,10 +225,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	@Override
 	public void run(IWorkbenchPart part) {
-		//TODO: reevaluate!!!!
-
-//		super.run(part);
-		IRefreshSubscriberListener listener = new MercurialRefreshUserNotificationPolicy(this);
+		super.run(part);
+		/*IRefreshSubscriberListener listener = new MercurialRefreshUserNotificationPolicy(this);
 
 		ResourceMapping[] mappings = getContext().getScope().getMappings();
 		String jobName = null;
@@ -251,6 +242,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		// Remember the last participant synchronized
 		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT, getId());
 		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT_SEC_ID, getSecondaryId());
+		*/
 	}
 
 	public ChangeSetCapability getChangeSetCapability() {

@@ -28,30 +28,29 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 @SuppressWarnings("restriction")
 public class RepositoryChangesetGroup implements IAdaptable {
 
-	private final String name;
+	private final HgRoot root;
 	private ChangesetGroup incoming;
 	private ChangesetGroup outgoing;
 	private final IHgRepositoryLocation location;
 	private List<IProject> projects;
 
-	public RepositoryChangesetGroup(String name, IHgRepositoryLocation location) {
-		this.name = name;
+	public RepositoryChangesetGroup(HgRoot root, IHgRepositoryLocation location) {
+		this.root = root;
 		this.location = location;
 	}
 
 	public String getName() {
-		return name;
+		return root.getName();
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RepositoryChangesetGroup [");
-		if (name != null) {
-			builder.append("name=");
-			builder.append(name);
-			builder.append(", ");
-		}
+
+		builder.append("name=");
+		builder.append(getName());
+		builder.append(", ");
 		if (incoming != null && incoming.getChangesets().size() > 0) {
 			for (ChangeSet set : incoming.getChangesets()) {
 				builder.append(set.toString() + " ,");
@@ -116,6 +115,10 @@ public class RepositoryChangesetGroup implements IAdaptable {
 
 	public List<IProject> getProjects() {
 		return projects;
+	}
+
+	public HgRoot getRoot() {
+		return root;
 	}
 
 	public Object getAdapter(Class adapter) {

@@ -54,6 +54,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	private final MercurialSynchronizeParticipant participant;
 	private final IPropertyListener branchListener;
 	private static final Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
+	boolean initializing;
 
 	private final class ChangesetsCollectorJob extends Job {
 
@@ -290,8 +291,6 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			}
 		}
 	}
-
-	boolean initializing;
 
 	@Override
 	public String toString() {

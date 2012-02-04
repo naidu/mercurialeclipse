@@ -62,13 +62,6 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		Assert.isNotNull(repos);
 		this.repositoryLocations = repos;
 
-		// TODO: reevaluate !!!
-//		if(roots != null) {
-// this.roots = roots;
-//		} else {
-//			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-//			this.roots = projects.toArray(new IProject[projects.size()]);
-//		}
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
@@ -347,6 +340,10 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 
 		public Set<IHgRepositoryLocation> getLocations() {
 			return map.keySet();
+		}
+
+		public HgRoot getRoot(IHgRepositoryLocation repoLocation) {
+			return map.get(repoLocation).a;
 		}
 	}
 }

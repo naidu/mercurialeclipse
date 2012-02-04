@@ -31,7 +31,6 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.menu.PushHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -51,7 +50,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	private final MercurialSynchronizeParticipant participant;
 	private final boolean update;
 	private final boolean isPull;
-	private final Set<? extends Object> targets;
+	private Set<? extends Object> targets;
 
 	public PushPullSynchronizeOperation(ISynchronizePageConfiguration configuration,
 			IDiffElement[] elements, Set<? extends Object> target, boolean isPull, boolean update) {
@@ -70,59 +69,56 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	 * @param target The object to get roots from
 	 * @return The new value for the selected changeset
 	 */
-	private ChangeSet getRoots(final IProgressMonitor monitor, final Set<HgRoot> hgRoots,
-			ChangeSet changeSet, final Object target) {
+	private void getRoots(final IProgressMonitor monitor, final Set<HgRoot> hgRoots,
+			final Object target) {
 		HgRoot hgRoot = null;
 		if (target instanceof IProject) {
 			hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
 		} else if (target instanceof ChangeSet) {
-			changeSet = (ChangeSet) target;
-			hgRoot = changeSet.getHgRoot();
+			hgRoot = ((ChangeSet) target).getHgRoot();
 		}
 		if (target instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) target;
 			checkChangesets(monitor, group);
 			if(monitor.isCanceled()){
-				return null;
+				return;
 			}
 
 			// Alternative: Find all the heads and push/pull them individually (without doing
 			// workspace refreshes in between)
-			changeSet = null;
 			hgRoot = group.getChangesets().iterator().next().getHgRoot();
 		}
 		if (target instanceof RepositoryChangesetGroup) {
 			RepositoryChangesetGroup group = (RepositoryChangesetGroup) target;
 			checkChangesets(monitor, group);
 			if (monitor.isCanceled()) {
-				return null;
+				return;
 			}
-			if (isPull) {
-				changeSet = null;
-				hgRoot = group.getIncoming().getChangesets().iterator().next().getHgRoot();
-			} else {
-				changeSet = Collections.min(group.getOutgoing().getChangesets(),new ChangeSetComparator());
-				hgRoot = changeSet.getHgRoot();
-			}
+			hgRoot = group.getRoot();
 		}
 		if(hgRoot == null){
 			String message = "No hg root found for: " + target + ". Operation cancelled.";
 			Status status = new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, message);
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			monitor.setCanceled(true);
-			return null;
+			return;
 		}
 		hgRoots.add(hgRoot);
-		return changeSet;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
 		Set<HgRoot> hgRoots = new TreeSet<HgRoot>();
-		ChangeSet changeSet = null; // ok to have changeset outside loop, if it's not null in the end we have only selected one thing, and the loop below runs only once.
-		// TODO: logic wrt 'changeset' is not correct
+		ChangeSet changeSet = null;
 		// TODO Make a changeRequest class of a pair with hgroot and changeset(s)
 		for (Object target : targets) {
-			changeSet = getRoots(monitor, hgRoots, changeSet, target);
+			if (target instanceof ChangeSet) {
+				targets = Collections.singleton(target);
+				changeSet = (ChangeSet) target;
+			}
+		}
+
+		for (Object target : targets) {
+			getRoots(monitor, hgRoots, target);
 			if(monitor.isCanceled()){
 				return;
 			}

@@ -59,7 +59,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.UncommittedChangeSet;
@@ -128,7 +127,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 								treeViewer.refresh(sg.getIncoming(), true);
 							}
 							treeViewer.getTree().setRedraw(true);
-							treeViewer.refresh();
+							treeViewer.refresh(); // TODO: this is unnecessary?
 						}
 					}
 				}, getTreeViewer());
@@ -149,7 +148,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						Utils.asyncExec(new Runnable() {
 							public void run() {
 								getTreeViewer().refresh(toRefresh, true);
-								getTreeViewer().refresh();
+								getTreeViewer().refresh();  // TODO: this is unnecessary?
 							}
 						}, getTreeViewer());
 					}
@@ -215,7 +214,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 	private final IPropertyChangeListener preferenceListener;
 	private final List<RepositoryChangesetGroup> projectGroup;
 	private WorkbenchContentProvider provider;
-	boolean initialized;
 
 	private IUncommitted uncommitted;
 
@@ -343,12 +341,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		RepositoryLocationMap locations = subscriber.getParticipant().getRepositoryLocations();
 
 		for (IHgRepositoryLocation repoLocation : locations.getLocations()) {
-			Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
-			String projectName = repoLocation.getLocation();
-			if(hgRoots.size() == 1) {
-				projectName = hgRoots.iterator().next().getName();
-			}
-			RepositoryChangesetGroup scg = new RepositoryChangesetGroup(projectName, repoLocation);
+			RepositoryChangesetGroup scg = new RepositoryChangesetGroup(
+					locations.getRoot(repoLocation), repoLocation);
 			scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 			scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
 
@@ -469,6 +463,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			}
 		}
 
+		uncommitted.update(STATUS_CACHE, null);
+
 		List<Object> itemsToShow = new ArrayList<Object>();
 		itemsToShow.add(uncommitted);
 
@@ -546,13 +542,13 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			}
 		} else if (element instanceof RepositoryChangesetGroup) {
 			boolean showEmptyGroups =  MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_SHOW_EMPTY_GROUPS);
-				RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) element;
-				if (isOutgoingVisible() && (showEmptyGroups || supergroup.getOutgoing().getChangesets().size() > 0)) {
-					return true;
-				}
-				if (isIncomingVisible() && (showEmptyGroups || supergroup.getIncoming().getChangesets().size() > 0)) {
-					return true;
-				}
+			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) element;
+			if (isOutgoingVisible() && (showEmptyGroups || supergroup.getOutgoing().getChangesets().size() > 0)) {
+				return true;
+			}
+			if (isIncomingVisible() && (showEmptyGroups || supergroup.getIncoming().getChangesets().size() > 0)) {
+				return true;
+			}
 		} else if (element instanceof PathFromChangeSet) {
 			return true;
 		}
@@ -626,7 +622,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		INavigatorSorterService sortingService = contentService.getSorterService();
 		INavigatorContentExtension extension = getExtensionSite().getExtension();
 		if (extension != null) {
-			ViewerSorter sorter = sortingService.findSorter(extension.getDescriptor(), getModelProvider(), null, null); // incoming, incoming
+			ViewerSorter sorter = sortingService.findSorter(extension.getDescriptor(),
+					getModelProvider(), null, null); // incoming, incoming
+					// TODO: sorting
 			if (sorter instanceof HgChangeSetSorter) {
 				return (HgChangeSetSorter) sorter;
 			}
@@ -657,6 +655,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		}
 		MercurialEclipsePlugin.getDefault().getPreferenceStore().removePropertyChangeListener(preferenceListener);
 		disposeUncommittedEntry();
+		for(RepositoryChangesetGroup sg : projectGroup) {
+			sg.getOutgoing().getChangesets().clear();
+			sg.getIncoming().getChangesets().clear();
+		}
+		projectGroup.clear();
 		super.dispose();
 	}
 
@@ -664,14 +667,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		uncommitted.removeListener(uncommittedSetListener);
 		STATUS_CACHE.deleteObserver(uncommitted);
 		uncommitted.dispose();
-
-		for(RepositoryChangesetGroup sg : projectGroup) {
-			sg.getOutgoing().getChangesets().clear();
-			sg.getIncoming().getChangesets().clear();
-		}
-		projectGroup.clear();
-//		initialized=false;
-		super.dispose();
+		uncommitted = null;
 	}
 
 	protected void recreateUncommittedEntry(TreeViewer tree) {
@@ -763,12 +759,17 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		if(changeset == null || changeset instanceof WorkingChangeSet){
 			return null;
 		}
-		assert false; // TODO: implement for mult-repo sync
+		boolean incoming = changeset.getDirection() == Direction.INCOMING;
+
+		for (RepositoryChangesetGroup group : projectGroup) {
+			ChangesetGroup g = incoming ? group.getIncoming() : group.getOutgoing();
+
+			if (g.getChangesets().contains(changeset)) {
+				return g;
+			}
+		}
+
 		return null;
-//		if(changeset.getDirection() == Direction.INCOMING){
-//			return incoming;
-//		}
-//		return outgoing;
 	}
 
 	@Override

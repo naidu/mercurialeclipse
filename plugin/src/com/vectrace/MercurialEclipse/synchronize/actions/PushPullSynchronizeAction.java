@@ -44,6 +44,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 
 	private final boolean update;
 	private final boolean isPull;
+	private boolean allowAll;
 
 	public PushPullSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
@@ -51,11 +52,16 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		super(text, configuration, selectionProvider);
 		this.isPull = isPull;
 		this.update = update;
+		this.allowAll = false;
 		if(isPull) {
 			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 		} else {
 			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif"));
 		}
+	}
+
+	public void setAllowAll(boolean b) {
+		this.allowAll = b;
 	}
 
 	@Override
@@ -65,14 +71,9 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		Set<Object> target = new HashSet<Object>();
 		ISynchronizeParticipant part = getConfiguration().getParticipant();
 
-		// Object input = configuration.getPage().getViewer().getInput();
-		// if(input instanceof HgChangeSetModelProvider) {
-		// HgChangeSetModelProvider provider = (HgChangeSetModelProvider) input;
-		// provider.getSubscriber().getCollector().get
-		// }
 		if (sel instanceof TreeSelection) {
 			target.addAll(((TreeSelection) sel).toList());
-		} else if (part instanceof MercurialSynchronizeParticipant) {
+		} else if (allowAll && part instanceof MercurialSynchronizeParticipant) {
 			target.addAll(Arrays.asList(((MercurialSynchronizeParticipant) part)
 					.getRepositoryLocations().getProjects()));
 		} else {
@@ -128,7 +129,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		return (d == Direction.INCOMING && isPull) || (d == Direction.OUTGOING && !isPull);
 	}
 
-	private boolean isMatchingBranch(ChangeSet cs) {
+	private static boolean isMatchingBranch(ChangeSet cs) {
 		return Branch.same(MercurialTeamProvider.getCurrentBranch(cs.getHgRoot()), cs.getBranch());
 	}
 }
