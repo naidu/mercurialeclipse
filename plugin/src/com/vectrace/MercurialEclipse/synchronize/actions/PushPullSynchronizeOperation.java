@@ -12,7 +12,10 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
@@ -37,6 +40,7 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -46,26 +50,32 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	private final MercurialSynchronizeParticipant participant;
 	private final boolean update;
 	private final boolean isPull;
-	private final Object target;
+	private Set<? extends Object> targets;
 
 	public PushPullSynchronizeOperation(ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, Object target, boolean isPull, boolean update) {
+			IDiffElement[] elements, Set<? extends Object> target, boolean isPull, boolean update) {
 		super(configuration, elements);
-		this.target = target;
+		this.targets = target;
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
 		this.isPull = isPull;
 		this.update = update;
 	}
 
-	public void run(IProgressMonitor monitor) throws InvocationTargetException,
-			InterruptedException {
+	/**
+	 * Collect roots for the given object
+	 * @param monitor The progress monitor
+	 * @param hgRoots (Output) Collected roots are added to this
+	 * @param changeSet Current changeset.
+	 * @param target The object to get roots from
+	 * @return The new value for the selected changeset
+	 */
+	private void getRoots(final IProgressMonitor monitor, final Set<HgRoot> hgRoots,
+			final Object target) {
 		HgRoot hgRoot = null;
-		ChangeSet changeSet = null;
 		if (target instanceof IProject) {
 			hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
 		} else if (target instanceof ChangeSet) {
-			changeSet = (ChangeSet) target;
-			hgRoot = changeSet.getHgRoot();
+			hgRoot = ((ChangeSet) target).getHgRoot();
 		}
 		if (target instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) target;
@@ -76,10 +86,16 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 
 			// Alternative: Find all the heads and push/pull them individually (without doing
 			// workspace refreshes in between)
-			changeSet = null;
 			hgRoot = group.getChangesets().iterator().next().getHgRoot();
 		}
-
+		if (target instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) target;
+			checkChangesets(monitor, group);
+			if (monitor.isCanceled()) {
+				return;
+			}
+			hgRoot = group.getRoot();
+		}
 		if(hgRoot == null){
 			String message = "No hg root found for: " + target + ". Operation cancelled.";
 			Status status = new Status(IStatus.WARNING, MercurialEclipsePlugin.ID, message);
@@ -87,39 +103,82 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 			monitor.setCanceled(true);
 			return;
 		}
+		hgRoots.add(hgRoot);
+	}
 
-
-		checkProjects(monitor, hgRoot);
-		if(monitor.isCanceled()){
-			return;
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
+		Set<HgRoot> hgRoots = new TreeSet<HgRoot>();
+		ChangeSet changeSet = null;
+		// TODO Make a changeRequest class of a pair with hgroot and changeset(s)
+		for (Object target : targets) {
+			if (target instanceof ChangeSet) {
+				targets = Collections.singleton(target);
+				changeSet = (ChangeSet) target;
+			}
 		}
-		monitor.beginTask(getTaskName(hgRoot), 1);
+
+		for (Object target : targets) {
+			getRoots(monitor, hgRoots, target);
+			if(monitor.isCanceled()){
+				return;
+			}
+		}
+		//Inform the user on how many projects is about to update
+		for(HgRoot root: hgRoots) {
+			checkProjects(monitor, root);
+			if(monitor.isCanceled()){
+				return;
+			}
+		}
+		monitor.beginTask(getTaskName(hgRoots), 1);
 		String jobName = isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
 				: Messages.getString("PushPullSynchronizeOperation.PushJob");
-		PushPullJob job = new PushPullJob(jobName, hgRoot, changeSet, monitor);
+		PushPullJob job = new PushPullJob(jobName, hgRoots, changeSet, monitor);
 
 		if (changeSet == null)
 		{
-			job.setBranch(MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
+			for(HgRoot hgRoot : hgRoots) {
+				job.setBranch(hgRoot, MercurialSynchronizeSubscriber.getSyncBranch(hgRoot));
+			}
 		}
 
 		job.schedule();
 	}
 
-	private String getTaskName(HgRoot hgRoot) {
+	private String getTaskName(Set<HgRoot> hgRoot) {
 		String taskName;
+
+		// TODO: use repo location map information better
 		if (isPull) {
-			taskName = Messages.getString("PushPullSynchronizeOperation.PullTask")
-			+ " " + participant.getRepositoryLocation();
+			taskName = Messages.getString("PushPullSynchronizeOperation.PullTask") + " ";
+			for(IHgRepositoryLocation loc : participant.getRepositoryLocations().getLocations()) {
+				taskName += loc.getLocation() + " ";
+			}
 		} else {
-			taskName = Messages.getString("PushPullSynchronizeOperation.PushTask")
-			+ " " + hgRoot.getName();
+			taskName = Messages.getString("PushPullSynchronizeOperation.PushTask")+ " ";
+			for(HgRoot root : hgRoot) {
+				taskName += root.getName()+ " ";
+			}
 		}
 		return taskName;
 	}
 
 	private void checkChangesets(final IProgressMonitor monitor, ChangesetGroup group) {
-		int csCount = group.getChangesets().size();
+		checkChangesets(monitor, group.getChangesets().size());
+	}
+
+	private void checkChangesets(final IProgressMonitor monitor, RepositoryChangesetGroup group) {
+		int csCount;
+		if (isPull) {
+			csCount = group.getIncoming().getChangesets().size();
+		} else {
+			csCount = group.getOutgoing().getChangesets().size();
+		}
+		checkChangesets(monitor, csCount);
+	}
+
+	private void checkChangesets(final IProgressMonitor monitor, int csCount)
+	{
 		if(csCount < 1){
 			// paranoia...
 			monitor.setCanceled(true);
@@ -175,9 +234,9 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 	private final class PushPullJob extends /*NON UI!*/Job {
 
 		private final IProgressMonitor opMonitor;
-		private final HgRoot hgRoot;
+		private final Set<HgRoot> hgRoots;
 		private final ChangeSet changeSet;
-		private String branch;
+		private final HashMap<HgRoot,String> branches = new HashMap<HgRoot, String>();
 
 		/**
 		 * @param name Human readable name
@@ -185,9 +244,9 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		 * @param changeSet The changeset, may be null to push/pull everything
 		 * @param opMonitor The progress monitor
 		 */
-		private PushPullJob(String name, HgRoot hgRoot, ChangeSet changeSet, IProgressMonitor opMonitor) {
+		private PushPullJob(String name, Set<HgRoot> hgRoot, ChangeSet changeSet, IProgressMonitor opMonitor) {
 			super(name);
-			this.hgRoot = hgRoot;
+			this.hgRoots = hgRoot;
 			this.changeSet = changeSet;
 			this.opMonitor = opMonitor;
 		}
@@ -195,13 +254,29 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		/**
 		 * @param branch The branch name, or null for all/any
 		 */
-		public void setBranch(String branch) {
-			this.branch = branch;
+		public void setBranch(HgRoot root, String branch) {
+			this.branches.put(root, branch);
 		}
 
 		@Override
 		protected IStatus run(IProgressMonitor moni) {
-			IHgRepositoryLocation location = participant.getRepositoryLocation();
+			try {
+				for (HgRoot hgRoot : hgRoots) {
+					IStatus stat = run(moni, hgRoot);
+
+					if (stat != null) {
+						return stat;
+					}
+				}
+			} finally {
+				opMonitor.done();
+			}
+			return Status.OK_STATUS;
+		}
+
+		protected IStatus run(IProgressMonitor moni, final HgRoot hgRoot) {
+			String branch = branches.get(hgRoot);
+			IHgRepositoryLocation location = participant.getRepositoryLocation(hgRoot);
 			if(location == null){
 				return Status.OK_STATUS;
 			}
@@ -226,6 +301,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch);
 					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
 				}
+				return null;
 			} catch (final HgException ex) {
 				MercurialEclipsePlugin.logError(ex);
 				if(!isPull){
@@ -247,10 +323,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					});
 				}
 				return Status.CANCEL_STATUS;
-			} finally {
-				opMonitor.done();
 			}
-			return Status.OK_STATUS;
 		}
 	}
 

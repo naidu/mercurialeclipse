@@ -38,17 +38,20 @@ public class HgChangeSetSorter extends ViewerSorter {
 
 	@Override
 	public int category(Object element) {
-		if(element instanceof WorkingChangeSet){
+		if(element instanceof RepositoryChangesetGroup){
 			return 0;
 		}
-		if(element instanceof ChangesetGroup){
+		if(element instanceof WorkingChangeSet){
 			return 1;
 		}
-		if(element instanceof ChangeSet){
+		if(element instanceof ChangesetGroup){
 			return 2;
 		}
-		if(element instanceof IResource){
+		if(element instanceof ChangeSet){
 			return 3;
+		}
+		if(element instanceof IResource){
+			return 4;
 		}
 		return super.category(element);
 	}

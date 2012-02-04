@@ -40,10 +40,10 @@ import org.eclipse.ui.IActionBars;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
@@ -65,6 +65,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 	public static final String HG_CHANGESETS_GROUP = "hg.changesets";
 	private final IAction expandAction;
+
+	private PushPullSynchronizeAction pullUpdateAllAction;
+	private PushPullSynchronizeAction pushAllAction;
 
 	private final PreferenceAction allBranchesAction;
 
@@ -156,6 +159,13 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				HG_PUSH_PULL_GROUP,
 				new PushPullSynchronizeAction("Pull",
 						configuration, getVisibleRootsSelectionProvider(), true, false));
+
+		pullUpdateAllAction = new PushPullSynchronizeAction("Pull and Update", configuration,
+				getVisibleRootsSelectionProvider(), true, true);
+		pullUpdateAllAction.setAllowAll(true);
+		pushAllAction = new PushPullSynchronizeAction("Push all", configuration,
+				getVisibleRootsSelectionProvider(), false, false);
+		pushAllAction.setAllowAll(true);
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_CHANGESETS_GROUP,
@@ -386,6 +396,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		IToolBarManager manager = actionBars.getToolBarManager();
 		appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
 		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, allBranchesAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pullUpdateAllAction);
+		appendToGroup(manager, ISynchronizePageConfiguration.MODE_GROUP, pushAllAction);
 
 		IMenuManager menu = actionBars.getMenuManager();
 		IContributionItem group = findGroup(menu, ISynchronizePageConfiguration.LAYOUT_GROUP);

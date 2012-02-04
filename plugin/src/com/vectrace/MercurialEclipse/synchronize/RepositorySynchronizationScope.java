@@ -7,16 +7,26 @@
  *
  * Contributors:
  *     Andrei Loskutov - implementation
+ *     Martin Olsen (Schantz) 	 - Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
@@ -29,31 +39,29 @@ import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeChangeListener;
 import org.eclipse.team.internal.core.mapping.AbstractResourceMappingScope;
 import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.ui.IMemento;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
  * @author Andrei
  */
+@SuppressWarnings("restriction")
 public class RepositorySynchronizationScope extends AbstractResourceMappingScope {
 
-	private final IProject[] roots;
 	private final ListenerList listeners;
-	private final IHgRepositoryLocation repo;
+	private final RepositoryLocationMap repositoryLocations;
 	private MercurialSynchronizeSubscriber subscriber;
 	private HgChangeSetModelProvider provider;
 
-	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
-		Assert.isNotNull(repo);
-		this.repo = repo;
-		if(roots != null) {
-			this.roots = roots;
-		} else {
-			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-			this.roots = projects.toArray(new IProject[projects.size()]);
-		}
+	public RepositorySynchronizationScope(RepositoryLocationMap repos) {
+		Assert.isNotNull(repos);
+		this.repositoryLocations = repos;
+
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
@@ -119,7 +127,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		return result.toArray(new ResourceMapping[result.size()]);
 	}
 
-	private boolean isSupportedModelProvider(String modelProviderId) {
+	private static boolean isSupportedModelProvider(String modelProviderId) {
 		return ModelProvider.RESOURCE_MODEL_PROVIDER_ID.equals(modelProviderId)
 			|| HgChangeSetModelProvider.ID.equals(modelProviderId);
 	}
@@ -151,17 +159,19 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		return provider;
 	}
 
+	/**
+	 * @see org.eclipse.team.core.mapping.ISynchronizationScope#getProjects()
+	 */
 	public IProject[] getProjects() {
-		Set<IProject> projects = new HashSet<IProject>();
-		for (IProject res : roots) {
-			projects.add(res);
-		}
-		return projects.toArray(new IProject[projects.size()]);
+		return repositoryLocations.getProjects();
 	}
 
+	/**
+	 * @see org.eclipse.team.internal.core.subscribers.AbstractSynchronizationScope#getRoots()
+	 */
 	@Override
 	public IProject[] getRoots() {
-		return roots;
+		return getProjects();
 	}
 
 	public ResourceTraversal[] getTraversals() {
@@ -200,8 +210,8 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		listeners.remove(listener);
 	}
 
-	public IHgRepositoryLocation getRepositoryLocation() {
-		return repo;
+	public IHgRepositoryLocation getRepositoryLocation(IResource res) {
+		return repositoryLocations.getRepositoryLocation(res.getProject());
 	}
 
 	public void setSubscriber(MercurialSynchronizeSubscriber mercurialSynchronizeSubscriber) {
@@ -216,18 +226,124 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RepositorySynchronizationScope [");
-		if (repo != null) {
+		if (repositoryLocations != null) {
 			builder.append("repo=");
-			builder.append(repo);
+			builder.append(repositoryLocations);
 			builder.append(", ");
 		}
-		if (roots != null) {
-			builder.append("roots=");
-			builder.append(Arrays.toString(roots));
+		if (repositoryLocations != null) {
+			builder.append("locations=");
+			builder.append(repositoryLocations.toString());
 		}
 		builder.append("]");
 		return builder.toString();
 	}
 
+	private static class Pair<A, B> {
+		public final A a;
+		public final B b;
 
+		public Pair(A a, B b)
+		{
+			this.a = a;
+			this.b = b;
+		}
+	}
+
+	public static class RepositoryLocationMap  {
+
+		private final Map<IHgRepositoryLocation, Pair<HgRoot, IProject[]>> map;
+
+		public RepositoryLocationMap(int size) {
+			map =  new HashMap<IHgRepositoryLocation, Pair<HgRoot, IProject[]>>(size);
+		}
+
+		public RepositoryLocationMap(IMemento m) throws HgException, IOException {
+			this(4);
+
+			IWorkspaceRoot workspace = ResourcesPlugin.getWorkspace().getRoot();
+
+			for (IMemento l : m.getChildren("location")) {
+				IHgRepositoryLocation location = MercurialEclipsePlugin.getRepoManager().getRepoLocation(l.getString("uri"));
+				List<IProject> list = new ArrayList<IProject>();
+				Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(location);
+				HgRoot root = HgRoot.get(new File(l.getString("root")));
+
+				for (IMemento p : l.getChildren("project")) {
+					String sName = p.getTextData();
+
+					if(sName.length() == 0){
+						continue;
+					}
+					IProject project = workspace.getProject(sName);
+
+					if(project != null && (repoProjects.contains(project) || (!project.isOpen() && project.exists()))){
+						list.add(project);
+					}
+				}
+
+				add(location, root, list.toArray(new IProject[list.size()]));
+			}
+		}
+
+		public void serialize(IMemento m) {
+			for (IHgRepositoryLocation loc : map.keySet()) {
+				IMemento l = m.createChild("location");
+				Pair<HgRoot, IProject[]> p = map.get(loc);
+
+				l.putString("uri", loc.getLocation());
+				l.putString("root", p.a.getLocation());
+
+				for (IProject proj : p.b) {
+					(l.createChild("project")).putTextData(proj.getName());
+				}
+			}
+		}
+
+		public IHgRepositoryLocation getRepositoryLocation(IProject proj) {
+			for (IHgRepositoryLocation loc : map.keySet()) {
+				for (IProject curProj : map.get(loc).b) {
+					if (proj.equals(curProj)) {
+						return loc;
+					}
+				}
+			}
+			return null;
+		}
+
+		public IHgRepositoryLocation getLocation(HgRoot root) {
+			for (Entry<IHgRepositoryLocation, Pair<HgRoot, IProject[]>> loc : map.entrySet()) {
+				if (loc.getValue().a.equals(root)) {
+					return loc.getKey();
+				}
+			}
+			return null;
+		}
+
+		public IProject[] getProjects() {
+			Set<IProject> projects = new HashSet<IProject>();
+
+			for (Pair<HgRoot, IProject[]> projs : map.values()) {
+				projects.addAll(Arrays.asList(projs.b));
+			}
+
+			return projects.toArray(new IProject[projects.size()]);
+		}
+
+		public IProject[] getProjects(IHgRepositoryLocation repoLocation) {
+			return map.get(repoLocation).b;
+		}
+
+		public void add(IHgRepositoryLocation repo, HgRoot hgRoot, IProject[] array) {
+			map.put(repo, new Pair<HgRoot, IProject[]>(hgRoot, array));
+		}
+
+		public Set<IHgRepositoryLocation> getLocations() {
+			return map.keySet();
+		}
+
+		public HgRoot getRoot(IHgRepositoryLocation repoLocation) {
+			return map.get(repoLocation).a;
+		}
+	}
 }

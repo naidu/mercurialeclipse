@@ -12,20 +12,28 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.TreeSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -36,6 +44,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 
 	private final boolean update;
 	private final boolean isPull;
+	private boolean allowAll;
 
 	public PushPullSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
@@ -43,6 +52,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		super(text, configuration, selectionProvider);
 		this.isPull = isPull;
 		this.update = update;
+		this.allowAll = false;
 		if(isPull) {
 			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 		} else {
@@ -50,13 +60,27 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		}
 	}
 
+	public void setAllowAll(boolean b) {
+		this.allowAll = b;
+	}
+
 	@Override
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
 		IStructuredSelection sel = getStructuredSelection();
-		// it's guaranteed that we have exact one, allowed element (project, changeset or csGroup)
-		Object object = sel.getFirstElement();
-		return new PushPullSynchronizeOperation(configuration, elements, object, isPull, update);
+		Set<Object> target = new HashSet<Object>();
+		ISynchronizeParticipant part = getConfiguration().getParticipant();
+
+		if (sel instanceof TreeSelection) {
+			target.addAll(((TreeSelection) sel).toList());
+		} else if (allowAll && part instanceof MercurialSynchronizeParticipant) {
+			target.addAll(Arrays.asList(((MercurialSynchronizeParticipant) part)
+					.getRepositoryLocations().getProjects()));
+		} else {
+			target.addAll(sel.toList());
+		}
+
+		return new PushPullSynchronizeOperation(configuration, elements, target, isPull, update);
 	}
 
 	@Override
@@ -84,6 +108,15 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 			ChangesetGroup group = (ChangesetGroup) object;
 			return isMatching(group.getDirection()) && !group.getChangesets().isEmpty();
 		}
+		if (object instanceof RepositoryChangesetGroup) {
+			RepositoryChangesetGroup group = (RepositoryChangesetGroup) object;
+			if (isPull && group.getIncoming().getChangesets().size() > 0) {
+				return true;
+			}
+			if (!isPull && group.getOutgoing().getChangesets().size() > 0) {
+				return true;
+			}
+		}
 		if (object instanceof ChangeSet) {
 			ChangeSet changeSet = (ChangeSet) object;
 			return !(changeSet instanceof WorkingChangeSet) && isMatching(changeSet.getDirection())
@@ -96,7 +129,7 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		return (d == Direction.INCOMING && isPull) || (d == Direction.OUTGOING && !isPull);
 	}
 
-	private boolean isMatchingBranch(ChangeSet cs) {
+	private static boolean isMatchingBranch(ChangeSet cs) {
 		return Branch.same(MercurialTeamProvider.getCurrentBranch(cs.getHgRoot()), cs.getBranch());
 	}
 }

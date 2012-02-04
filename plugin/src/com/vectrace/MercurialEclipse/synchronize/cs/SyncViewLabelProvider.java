@@ -24,11 +24,11 @@ import org.eclipse.ui.ide.IDE;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.FilteredPlaceholder;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -69,6 +69,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			image = PlatformUI.getWorkbench().getSharedImages().getImage(
 					ISharedImages.IMG_OBJ_FOLDER);
 			}
+		} else if (element instanceof RepositoryChangesetGroup) {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(org.eclipse.ui.ide.IDE.SharedImages.IMG_OBJ_PROJECT);
 		} else {
 			try {
 				image = super.getDelegateImage(element);
@@ -160,6 +162,9 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				return name + " (" + files + ')';
 			}
 			return name + " (" + group.getChangesets().size() + ')';
+		}
+		if(elementOrPath instanceof RepositoryChangesetGroup){
+			return ((RepositoryChangesetGroup) elementOrPath).getName();
 		}
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;

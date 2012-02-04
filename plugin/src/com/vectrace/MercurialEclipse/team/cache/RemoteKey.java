@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -47,6 +48,10 @@ public class RemoteKey {
 	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch, boolean force) {
 		this.root = root;
 		this.repo = repo;
+
+		Assert.isNotNull(repo);
+		Assert.isNotNull(root);
+
 		this.branch = branch != null && Branch.isDefault(branch)? Branch.DEFAULT : branch;
 		this.allowUnrelated = force;
 	}

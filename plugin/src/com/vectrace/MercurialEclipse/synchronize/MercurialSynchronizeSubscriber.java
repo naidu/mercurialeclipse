@@ -128,7 +128,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		String syncBranch = getSyncBranch(root);
 
-		IHgRepositoryLocation repo = getRepo();
+		IHgRepositoryLocation repo = getRepo(resource);
 		if(computeFullState) {
 			return getSyncInfo(file, root, syncBranch, repo);
 		}
@@ -455,9 +455,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			resourcesToRefresh = null;
 		}
 
-		IHgRepositoryLocation repositoryLocation = getRepo();
-		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocationProjects(repositoryLocation);
 
 		Set<HgRoot> roots = byRoot.keySet();
 		try {
@@ -491,7 +488,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		for (IProject project : projects) {
-			if (!repoLocationProjects.contains(project)) {
+			IHgRepositoryLocation repositoryLocation = getScope().getRepositoryLocation(project);
+
+			if (repositoryLocation == null) {
 				continue;
 			}
 			// clear caches in any case, but refresh them only if project exists
@@ -532,7 +531,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} finally {
 				CACHE_SEMA.release();
 			}
-		}
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
@@ -549,6 +547,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
+		}
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -610,8 +609,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope;
 	}
 
-	protected IHgRepositoryLocation getRepo(){
-		return scope.getRepositoryLocation();
+	protected IHgRepositoryLocation getRepo(IResource root){
+		IHgRepositoryLocation ret = scope.getRepositoryLocation(root);
+
+		Assert.isNotNull(ret);
+
+		return ret;
 	}
 
 	public IProject[] getProjects() {
