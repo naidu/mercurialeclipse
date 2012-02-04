@@ -181,15 +181,9 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	@Override
 	protected void initializeSets() {
-		ChangesetsCollectorJob job = new ChangesetsCollectorJob("Initializing changesets");
+		Job job = new ChangesetsCollectorJob("Initializing changesets");
 		job.setRule(new ExclusiveRule());
 		job.schedule(100);
-//		try {
-//			job.join(); // needed otherwise the update seems lazy, and elements are "randomly" poping in the sync list...
-//			//TODO Gotta be a better ways than this, anyone ?
-//		} catch (InterruptedException e) {
-//			MercurialEclipsePlugin.logError(e);
-//		}
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
@@ -214,11 +208,8 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 						continue;
 					}
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
+					IHgRepositoryLocation repo = participant.getRepositoryLocation(project);
 					try {
-						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
-						if(repo == null) {
-							throw new RuntimeException("Unable to find default repository");
-						}
 						result.addAll(cache.getChangeSets(project, repo, syncBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -229,9 +220,6 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 					String syncBranch = MercurialSynchronizeSubscriber.getSyncBranch(hgRoot);
 					try {
 						final IHgRepositoryLocation repo = participant.getRepositoryLocation(hgRoot);
-						if(repo == null) {
-							throw new RuntimeException("Unable to find default repository");
-						}
 						result.addAll(cache.getUnmappedChangeSets(hgRoot, repo, syncBranch, result));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);

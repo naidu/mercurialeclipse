@@ -22,12 +22,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -53,6 +51,7 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberScopeManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope.RepositoryLocationMap;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -232,10 +231,10 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	protected MercurialSynchronizeParticipant createParticipant(List<Map<String, Object>> properties, IProject[] selectedProjects) {
-
+		RepositoryLocationMap byLocation = new RepositoryLocationMap(1);
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
 
-		Set<IHgRepositoryLocation> repos = new TreeSet<IHgRepositoryLocation>();
 		for (Map<String, Object> prop : properties) {
 			String url = (String) prop.get(ConfigurationWizardMainPage.PROP_URL);
 			String user = (String) prop.get(ConfigurationWizardMainPage.PROP_USER);
@@ -244,16 +243,17 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			IHgRepositoryLocation repo;
 			try {
 				HgRoot hgRoot = (HgRoot) prop.get(PROP_HGROOT);
-				Assert.isNotNull(hgRoot);
+				List<IResource> curProjects = byRoot.get(hgRoot);
 
 				repo = repoManager.getRepoLocation(url, user, pass);
-				if (pass != null && user != null) {
+				if (pass != null && user != null && curProjects.size() > 0) {
 					if (!pass.equals(repo.getPassword())) {
 						// At least 1 project exists, update location for that project
 						repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
 					}
 				}
-				repos.add(repo);
+
+				byLocation.add(repo, hgRoot, curProjects.toArray(new IProject[curProjects.size()]));
 				try {
 					repoManager.addRepoLocation(hgRoot, repo);
 				} catch (CoreException e) {
@@ -266,29 +266,24 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			}
 		}
 
-		return createParticipant(repos, selectedProjects);
+		return createParticipant(byLocation);
 	}
 
-	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo,
+	public static MercurialSynchronizeParticipant createParticipant(IHgRepositoryLocation repo, HgRoot root,
 			IProject[] selectedProjects) {
-		Set<IHgRepositoryLocation> s = new HashSet<IHgRepositoryLocation>(1);
-		s.add(repo);
-
-		return createParticipant(s, selectedProjects);
+		RepositoryLocationMap map = new RepositoryLocationMap(1);
+		map.add(repo, root, selectedProjects);
+		return createParticipant(map);
 	}
 
-	public static MercurialSynchronizeParticipant createParticipant(Set<IHgRepositoryLocation> repos,
-			IProject[] selectedProjects) {
-
-		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
-		Set<HgRoot> roots = byRoot.keySet();
+	public static MercurialSynchronizeParticipant createParticipant(RepositoryLocationMap repos) {
 
 		/*ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
 				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());*/
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(roots, selectedProjects);
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repos);
 
 		// do not reuse participants which may already existing, not doing this would lead to the state where many sync. participants would listen
-		// to resource changes and update/request same data/cashes many times
+		// to resource changes and update/request same data/caches many times
 		// we can not reuse participants because their scope can be different (if there are
 		// more then one project under same repository)
 		ISynchronizeParticipantReference[] synchronizeParticipants = TeamUI.getSynchronizeManager().getSynchronizeParticipants();
@@ -308,6 +303,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 		// Create a new participant for given repo/project pair
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
+		IProject[] selectedProjects = scope.getProjects();
 		ResourceMapping[] selectedMappings = new ResourceMapping[selectedProjects.length];
 		for (int i = 0; i < selectedProjects.length; i++) {
 			selectedMappings[i] = (ResourceMapping) selectedProjects[i]

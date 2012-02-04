@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Observer;
 import java.util.Set;
 
@@ -71,6 +70,7 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.PresentationMode;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope.RepositoryLocationMap;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -230,7 +230,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		uncommitted = makeUncommittedEntry();
 	}
 
-	private IUncommitted makeUncommittedEntry() {
+	private static IUncommitted makeUncommittedEntry() {
 		if (MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(
 				MercurialPreferenceConstants.PREF_SYNC_ENABLE_LOCAL_CHANGESETS)) {
 			return new UncommittedChangesetGroup();
@@ -340,8 +340,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 	}
 
 	private synchronized void initProjects(MercurialSynchronizeSubscriber subscriber) {
-		Set<IHgRepositoryLocation> repositoryLocations = subscriber.getParticipant().getRepositoryLocation();
-		for (IHgRepositoryLocation repoLocation : repositoryLocations) {
+		RepositoryLocationMap locations = subscriber.getParticipant().getRepositoryLocations();
+
+		for (IHgRepositoryLocation repoLocation : locations.getLocations()) {
 			Set<HgRoot> hgRoots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repoLocation);
 			String projectName = repoLocation.getLocation();
 			if(hgRoots.size() == 1) {
@@ -351,12 +352,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			scg.setIncoming(new ChangesetGroup("Incoming", Direction.INCOMING));
 			scg.setOutgoing(new ChangesetGroup("Outgoing", Direction.OUTGOING));
 
-			ArrayList<IProject> projects = new ArrayList<IProject>();
-			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(subscriber.getProjects()));
-			for(HgRoot root : hgRoots) {
-				projects.addAll((Collection<? extends IProject>) byRoot.get(root));
-			}
-			scg.setProjects(projects);
+			scg.setProjects(Arrays.asList(locations.getProjects(repoLocation)));
 			projectGroup.add(scg);
 		}
 	}

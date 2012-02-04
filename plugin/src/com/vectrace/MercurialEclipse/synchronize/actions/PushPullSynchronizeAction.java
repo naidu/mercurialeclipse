@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +30,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
@@ -73,15 +73,8 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 		if (sel instanceof TreeSelection) {
 			target.addAll(((TreeSelection) sel).toList());
 		} else if (part instanceof MercurialSynchronizeParticipant) {
-			MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) part;
-			Set<IHgRepositoryLocation> repositoryLocation = participant.getRepositoryLocation();
-			for (IHgRepositoryLocation repos : repositoryLocation) {
-				Set<IProject> projects = MercurialEclipsePlugin.getRepoManager()
-						.getAllRepoLocationProjects(repos);
-				for (IProject proj : projects) {
-					target.add(proj);
-				}
-			}
+			target.addAll(Arrays.asList(((MercurialSynchronizeParticipant) part)
+					.getRepositoryLocations().getProjects()));
 		} else {
 			target.addAll(sel.toList());
 		}

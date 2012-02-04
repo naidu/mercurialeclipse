@@ -151,9 +151,13 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 
 	private String getTaskName(Set<HgRoot> hgRoot) {
 		String taskName;
+
+		// TODO: use repo location map information better
 		if (isPull) {
-			taskName = Messages.getString("PushPullSynchronizeOperation.PullTask")
-			+ " " + participant.getRepositoryLocation();
+			taskName = Messages.getString("PushPullSynchronizeOperation.PullTask") + " ";
+			for(IHgRepositoryLocation loc : participant.getRepositoryLocations().getLocations()) {
+				taskName += loc.getLocation() + " ";
+			}
 		} else {
 			taskName = Messages.getString("PushPullSynchronizeOperation.PushTask")+ " ";
 			for(HgRoot root : hgRoot) {

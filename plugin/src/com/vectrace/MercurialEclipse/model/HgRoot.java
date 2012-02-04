@@ -97,6 +97,10 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		}
 	}
 
+	public static HgRoot get(File file) throws IOException {
+		return MercurialRootCache.getInstance().getCached(new HgRoot(file));
+	}
+
 	public void setEncoding(String charset) {
 		this.encoding = charset;
 	}

@@ -52,7 +52,7 @@ public class SyncHandler extends MultipleResourcesHandler {
 				} else {
 					projects = MercurialTeamProvider.getKnownHgProjects(root).toArray(new IProject[0]);
 				}
-				MercurialSynchronizeParticipant participant = MercurialParticipantSynchronizeWizard.createParticipant(root, projects);
+				MercurialSynchronizeParticipant participant = MercurialParticipantSynchronizeWizard.createParticipant(root, root, projects);
 				MercurialParticipantSynchronizeWizard.openSyncView(participant);
 			} else {
 				wizard.performFinish();
