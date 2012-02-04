@@ -62,6 +62,13 @@ public class HgFile extends HgResource implements IHgFile {
 	}
 
 	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgFile#getFileExtension()
+	 */
+	public String getFileExtension() {
+		return path.getFileExtension();
+	}
+
+	/**
 	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
 	 */
 	public String getCharset() throws CoreException {

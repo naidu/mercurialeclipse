@@ -112,10 +112,6 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 		return name;
 	}
 
-	public String getFileExtension() {
-		return path.getFileExtension();
-	}
-
 	public ChangeSet getChangeSet() {
 		return changeset;
 	}

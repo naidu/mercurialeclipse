@@ -20,7 +20,6 @@ import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -34,7 +33,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -47,7 +46,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * To convert to HgFile see ResourceUtils.convertToHgFile(MercurialRevisionStorage rev).
  */
 @Deprecated
-public class MercurialRevisionStorage implements IStorage, IHgResource {
+public class MercurialRevisionStorage implements IHgFile {
 	private static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 	private int revision;
 	private String global;
@@ -415,5 +414,20 @@ public class MercurialRevisionStorage implements IStorage, IHgResource {
 
 	public IPath getIPath() {
 		return getHgRoot().toRelative(resource);
+	}
+
+	/**
+	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
+	 */
+	public String getCharset() throws CoreException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgFile#getFileExtension()
+	 */
+	public String getFileExtension() {
+		return resource.getFileExtension();
 	}
 }
