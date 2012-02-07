@@ -325,8 +325,8 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			List<IProject> managed = MercurialTeamProvider.getKnownHgProjects();
 			for (Object object : array) {
 				IResource iResource = ResourceUtils.getResource(object);
-				if(iResource instanceof IProject){
-					IProject another = (IProject) iResource;
+				if (iResource != null) {
+					IProject another = iResource.getProject();
 					for (IProject project : managed) {
 						if(project.equals(another)) {
 							// add project as a root of resource
