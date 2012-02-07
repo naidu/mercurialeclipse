@@ -148,7 +148,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 						Utils.asyncExec(new Runnable() {
 							public void run() {
 								getTreeViewer().refresh(toRefresh, true);
-								getTreeViewer().refresh();  // TODO: this is unnecessary?
 							}
 						}, getTreeViewer());
 					}
