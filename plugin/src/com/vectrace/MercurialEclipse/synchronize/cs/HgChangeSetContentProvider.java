@@ -286,9 +286,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			Direction direction = group.getDirection();
 			if (isOutgoing(direction)) {
 				if (isOutgoingVisible()) {
-				return group.getChangesets().toArray();
-			}
-				return new Object[] {new FilteredPlaceholder()};
+					return group.getChangesets().toArray();
+				}
+				return new Object[] { new FilteredPlaceholder() };
 			}
 			if(direction == Direction.INCOMING){
 				if (isIncomingVisible()) {
@@ -301,8 +301,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 			}
 		} else if (parent instanceof RepositoryChangesetGroup) {
 			// added groups to view
-			boolean showEmpty = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.PREF_SYNC_SHOW_EMPTY_GROUPS);
-//			showEmpty = true;
+			boolean showEmpty = MercurialEclipsePlugin.getDefault().getPreferenceStore()
+					.getBoolean(MercurialPreferenceConstants.PREF_SYNC_SHOW_EMPTY_GROUPS);
+
 			RepositoryChangesetGroup supergroup = (RepositoryChangesetGroup) parent;
 			ArrayList<Object> groups =new ArrayList<Object>();
 			if(supergroup.getIncoming().getChangesets().size() > 0) {
@@ -401,12 +402,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider {
 		List<Object> out = new ArrayList<Object>();
 
 		for (FileFromChangeSet file : files) {
-			IPath path;
-			if(file.getPath() == null) {
-				path = Path.EMPTY;
-			} else {
-				path = file.getPath().removeLastSegments(1);
-			}
+			IPath path = file.getPath();
+
+			path = (path == null) ? Path.EMPTY : path.removeLastSegments(1);
+
 			List<FileFromChangeSet> l = map.get(path);
 
 			if (l == null) {
