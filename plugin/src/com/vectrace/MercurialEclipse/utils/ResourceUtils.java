@@ -188,11 +188,11 @@ public final class ResourceUtils {
 		// first try with the unresolved path. In most cases it's enough
 		String fullPath = child.getAbsolutePath();
 		String parentpath = parent.getPath();
-		if (!fullPath.startsWith(parentpath)) {
+		if (!pathStartsWith(parentpath, fullPath)) {
 			try {
 				// ok, now try to resolve all the links etc. this takes A LOT of time...
 				fullPath = child.getCanonicalPath();
-				if (!fullPath.startsWith(parentpath)) {
+				if (!pathStartsWith(parentpath, fullPath)) {
 					return child.getPath();
 				}
 			} catch (IOException e) {
@@ -200,11 +200,21 @@ public final class ResourceUtils {
 				return child.getPath();
 			}
 		}
-		if(fullPath.equals(parentpath)){
+		if (fullPath.equals(parentpath)) {
 			return Path.EMPTY.toOSString();
 		}
+
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(parentpath.length() + 1);
+	}
+
+	private static boolean pathStartsWith(String parentpath, String childPath) {
+		final int nParentLen = parentpath.length();
+		return childPath.startsWith(parentpath) && (childPath.length() == nParentLen || isDirSep(childPath.charAt(nParentLen)));
+	}
+
+	private static boolean isDirSep(char ch) {
+		return ch == '/' || ch == '\\';
 	}
 
 	/**
@@ -234,6 +244,7 @@ public final class ResourceUtils {
 	 * Tries to determine the encoding for a file resource. Returns null, if the encoding cannot be
 	 * determined.
 	 */
+	@SuppressWarnings("unused")
 	public static String getFileEncoding(IFile resource){
 		try{
 			String charset = resource.getCharset(true);
