@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: %Bundle-Name.0
-Bundle-SymbolicName: com.vectrace.MercurialEclipse; singleton:=true
+Bundle-Name: MercurialEclipse
+Bundle-SymbolicName: com.vectrace.MercurialEclipse;singleton:=true
 Bundle-Version: 2.0.0.qualifier
 Bundle-Activator: com.vectrace.MercurialEclipse.MercurialEclipsePlugin
 Bundle-Vendor: %Bundle-Vendor.0
@@ -66,3 +66,7 @@ Export-Package: com.vectrace.MercurialEclipse,
  com.vectrace.MercurialEclipse.wizards,
  com.vectrace.MercurialEclipse.wizards.mq
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-ClassPath: .,
+ javahg-0.3-SNAPSHOT.jar,
+ jsr305-1.3.9.jar,
+ guava-11.0.1.jar

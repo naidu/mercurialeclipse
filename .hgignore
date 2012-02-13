@@ -18,3 +18,6 @@ syntax: regexp
 ^com.vectrace.MercurialEclipse_[0-9.]*.zip$
 ^com.vectrace.MercurialEclipse_[0-9.]*.jar$
 ^src.zip$
+
+syntax: regexp
+^plugin/[\w0-9\.\-]*\.jar$
