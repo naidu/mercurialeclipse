@@ -13,14 +13,11 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -28,92 +25,42 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 
-import com.vectrace.MercurialEclipse.HgRevision;
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.flags.HeadsCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
-import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class HgLogClient extends AbstractParseChangesetClient {
 
 	private static final Map<IPath, Set<ChangeSet>> EMPTY_MAP =
 		Collections.unmodifiableMap(new HashMap<IPath, Set<ChangeSet>>());
 
-	// "{rev}:{node} {date|isodate} {author|person}#{tags}**#{branches}**#{desc|firstline}\n"
-	private static final Pattern GET_REVISIONS_PATTERN = Pattern
-			.compile("^([-0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]*)#(.*)\\*\\*#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
-
 	public static final String NOLIMIT = "999999999999";
 
-	public static ChangeSet[] getHeads(HgRoot hgRoot) throws HgException {
-		HgCommand command = new HgCommand("heads", "Listing heads", hgRoot, true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		return getRevisions(command);
+	public static ChangeSet[] getHeads(HgRoot hgRoot) {
+		return getRevisions(hgRoot, HeadsCommandFlags.on(hgRoot.getRepository()).execute());
 	}
 
-	public static ChangeSet getTip(HgRoot hgRoot) throws HgException {
-		HgCommand command = new HgCommand("log", "Finding tip revision", hgRoot, true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		command.addOptions("-r", HgRevision.TIP.getChangeset());
-		ChangeSet[] sets = getRevisions(command);
-		if(sets.length != 1){
-			throw new HgException("Unable to get changeset for 'tip' version");
-		}
-		return sets[0];
-	}
+	private static ChangeSet[] getRevisions(HgRoot root, List<Changeset> list) {
+		ChangeSet[] ar = new ChangeSet[list.size()];
 
-	/**
-	 * @param command
-	 *            a command with optionally its Files set
-	 */
-	private static ChangeSet[] getRevisions(HgCommand command)
-			throws HgException {
-		command.addOptions("--template", //$NON-NLS-1$
-				"{rev}:{node} {date|isodate} {author|person}#{tags}**#{branches}**#{desc|firstline}\n"); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		String[] lines = null;
-		try {
-			lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		} catch (HgException e) {
-			if (!e.getMessage()
-					.contains(
-							"abort: can only follow copies/renames for explicit file names")) { //$NON-NLS-1$
-				throw new HgException(e);
-			}
-			return null;
+		for (int i = 0, n = list.size(); i < n; i++) {
+			Changeset cs = list.get(i);
+
+			ar[i] = new ChangeSet.Builder(cs.getRevision(), cs.getNode(), cs.getBranch(), cs
+					.getTimestamp().getHgString() /*TODO*/, cs.getUser(), root).description(cs.getMessage()).build();
 		}
-		List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
-		HgRoot hgRoot = command.getHgRoot();
-		for (String line : lines) {
-			if(StringUtils.isEmpty(line)){
-				continue;
-			}
-			Matcher m = GET_REVISIONS_PATTERN.matcher(line);
-			if (m.matches()) {
-				Builder builder = new ChangeSet.Builder(
-						Integer.parseInt(m.group(1)), // revisions
-						m.group(2), // changeset
-						m.group(6), // branch
-						m.group(3), // date
-						m.group(4), // user
-						hgRoot).description(m.group(7));
-				builder.tags(m.group(5));
-				ChangeSet changeSet = builder.build();
-				changeSets.add(changeSet);
-			} else {
-				throw new HgException(Messages.getString("HgLogClient.parseException") + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		}
-		return changeSets.toArray(new ChangeSet[changeSets.size()]);
+
+		return ar;
 	}
 
 	/**
