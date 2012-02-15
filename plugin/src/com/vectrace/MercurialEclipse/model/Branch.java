@@ -12,47 +12,47 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.util.Comparator;
 
+/**
+ * @deprecated
+ */
+@Deprecated
 public class Branch {
 
 	public static final Comparator<Branch> COMPARATOR = new BranchComparator();
 
 	public static final String DEFAULT = "default";
 
-	/** name of the branch, unique in the repository */
-	private final String name;
-	private final int revision;
-	private final String globalId;
-	private final boolean active;
+	private final com.aragost.javahg.commands.Branch branch;
 
-	public Branch(String name, int revision, String globalId, boolean active) {
-		super();
-		this.name = name;
-		this.revision = revision;
-		this.globalId = globalId;
-		this.active = active;
+	public Branch(com.aragost.javahg.commands.Branch branch) {
+		this.branch = branch;
 	}
 
 	public String getName() {
-		return name;
+		return branch.getName();
 	}
 
 	public int getRevision() {
-		return revision;
+		return branch.getBranchTip().getRevision();
 	}
 
 	public String getGlobalId() {
-		return globalId;
+		return branch.getBranchTip().getNode();
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	public boolean isActive() {
-		return active;
+		return !branch.isClosed();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((getName() == null) ? 0 : getName().hashCode());
 		return result;
 	}
 
@@ -68,7 +68,7 @@ public class Branch {
 			return false;
 		}
 		final Branch other = (Branch) obj;
-		return same(name, other.name);
+		return same(getName(), other.getName());
 	}
 
 	/**
