@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +35,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
+import com.aragost.javahg.commands.StatusResult;
+import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
@@ -48,8 +51,8 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
 @SuppressWarnings("restriction")
 public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSet> {
 
-	private static final List<FileStatus> EMPTY_STATUS =
-		Collections.unmodifiableList(new ArrayList<FileStatus>());
+	private static final List<FileStatus> EMPTY_STATUS = Collections
+			.unmodifiableList(new ArrayList<FileStatus>());
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat(
@@ -268,7 +271,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 					tags = tagList.toArray(new Tag[tagList.size()]);
 				}
 			}
-			if(tags == null) {
+			if (tags == null) {
 				tags = EMPTY_TAGS;
 			}
 		}
@@ -334,23 +337,45 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return the changedFiles, never null. The returned list is non modifiable so any
-	 * attempt to modify it will lead to an exception.
+	 * @return the changedFiles, never null. The returned list is non modifiable so any attempt to
+	 *         modify it will lead to an exception.
 	 */
 	public List<FileStatus> getChangedFiles() {
-		return changedFiles == null? EMPTY_STATUS : changedFiles;
-	}
+		if (changedFiles == null) {
+			List<FileStatus> l = new ArrayList<FileStatus>();
 
-	/**
-	 * @param changedFiles the changedFiles to set
-	 */
-	public void setChangedFiles(List<FileStatus> changedFiles) {
-		this.changedFiles = (changedFiles == null ? EMPTY_STATUS : Collections
-				.unmodifiableList(changedFiles));
-	}
+			StatusResult res = StatusCommandFlags.on(hgRoot.getRepository()).added().modified()
+					.deleted().removed().copies().execute();
 
-	public boolean hasFileStatus() {
-		return changedFiles != null;
+			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
+				l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
+			}
+
+			for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
+				l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
+			}
+
+			for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
+				l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
+			}
+
+			// TODO moves
+			for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
+				String s = it.next();
+				String source = res.getCopied().get(s);
+				l.add(new FileStatus(
+						res.getRemoved().contains(source) ? FileStatus.Action.MOVED
+								: FileStatus.Action.COPIED, s, source, hgRoot));
+			}
+
+			if (l.isEmpty()) {
+				changedFiles = EMPTY_STATUS;
+			} else {
+				changedFiles = Collections.unmodifiableList(l);
+			}
+		}
+
+		return changedFiles;
 	}
 
 	/**
@@ -399,7 +424,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return null;
 		}
 		IPath path = ResourceUtils.getPath(resource);
-		if(path.isEmpty()) {
+		if (path.isEmpty()) {
 			return null;
 		}
 		for (FileStatus fileStatus : getChangedFiles()) {
@@ -696,9 +721,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			}
 			fcs.add(new FileFromChangeSet(this, fileStatus, action | dir));
 
-			if(fileStatus.getAction() == FileStatus.Action.MOVED){
+			if (fileStatus.getAction() == FileStatus.Action.MOVED) {
 				// for moved files, include an extra FileFromChangeset for the deleted file
-				FileStatus fs = new FileStatus(Action.REMOVED, fileStatus.getRootRelativeCopySourcePath().toString(), this.hgRoot);
+				FileStatus fs = new FileStatus(Action.REMOVED, fileStatus
+						.getRootRelativeCopySourcePath().toString(), this.hgRoot);
 				fcs.add(new FileFromChangeSet(this, fs, dir | Differencer.DELETION));
 			}
 		}

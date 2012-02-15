@@ -24,7 +24,6 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQHeaderClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -33,8 +32,8 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
-import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray.ChangedFilesTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray.ChangedFilesTable;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard.FileOperation;
@@ -101,16 +100,7 @@ public class QRefreshWizard extends HgOperationWizard {
 		public void createControl(Composite parent) {
 			super.createControl(parent);
 
-			// TODO: should get this from the cache
-			if (currentChangeset != null && !currentChangeset.hasFileStatus()) {
-				try {
-					currentChangeset = HgLogClient.getChangeset(root, currentChangeset
-							.getChangeset(), true);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-			}
-			if (currentChangeset != null && currentChangeset.hasFileStatus()) {
+			if (currentChangeset != null) {
 				Group g = SWTWidgetHelper.createGroup((Composite) getControl(),
 						"Already in patch:", 1, GridData.FILL_BOTH); //$NON-NLS-1$
 				new ChangedFilesTable(g, currentChangeset).getViewer().setInput(currentChangeset);

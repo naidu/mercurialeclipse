@@ -45,7 +45,6 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -392,16 +391,6 @@ public final class MercurialUtilities {
 			}
 			if (parents.length == 0) {
 				return new NullRevision(file, cs);
-			}
-		}
-
-		if (!cs.hasFileStatus()) {
-			ChangeSet newCs = HgLogClient.getChangeset(cs.getHgRoot(), cs.getChangeset(), true);
-
-			if (newCs != null) {
-				assert newCs.hasFileStatus();
-				cs.setChangedFiles(newCs.getChangedFiles());
-				assert cs.hasFileStatus();
 			}
 		}
 
