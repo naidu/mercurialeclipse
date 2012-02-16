@@ -97,4 +97,18 @@
 			<version>0.3-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
+	<repositories>
+		<repository>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<id>sonatype-ossrh</id>
+			<name>Sonatype Open Source Software Repository Hosting</name>
+			<layout>default</layout>
+			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+		</repository>
+	</repositories>
 </project>
