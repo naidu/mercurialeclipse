@@ -12,14 +12,12 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.aragost.javahg.commands.flags.BranchesCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -27,7 +25,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
-import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class HgBranchClient extends AbstractClient {
 	/**
@@ -50,36 +47,14 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("branches", "Listing branches", hgRoot, false); //$NON-NLS-1$
-		command.addOptions("-v"); //$NON-NLS-1$
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		List<Branch> branches = new ArrayList<Branch>();
-		for (String line : lines) {
-			if(StringUtils.isEmpty(line)){
-				continue;
-			}
+		List<com.aragost.javahg.commands.Branch> branches = BranchesCommandFlags.on(
+				hgRoot.getRepository()).execute();
+		Branch[] r = new Branch[branches.size()];
 
-			Branch branch = parseBranch(line);
-			if (branch != null) {
-				branches.add(branch);
-			} else {
-				HgException ex = new HgException("Failed to parse branch from '" + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-				MercurialEclipsePlugin.logWarning("Failed to parse branch", ex); //$NON-NLS-1$
-			}
+		for(int i = 0; i<branches.size(); i++) {
+			r[i] = new Branch(branches.get(i));
 		}
-		Collections.sort(branches, Branch.COMPARATOR);
-
-		return branches.toArray(new Branch[branches.size()]);
-	}
-
-	protected static Branch parseBranch(String line) {
-		Matcher m = GET_BRANCHES_PATTERN.matcher(line.trim());
-		if (m.matches()) {
-			Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
-			return branch;
-		}
-
-		return null;
+		return r;
 	}
 
 	/**

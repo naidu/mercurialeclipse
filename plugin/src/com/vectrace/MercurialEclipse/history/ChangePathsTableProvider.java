@@ -195,7 +195,6 @@ public class ChangePathsTableProvider extends TableViewer {
 						revCs.setTags(fullCs.getTags());
 						revCs.setTagsStr(fullCs.getTagsStr());
 						List<FileStatus> list = fullCs.getChangedFiles();
-						revCs.setChangedFiles(list);
 						changedFiles = list.toArray(new FileStatus[list.size()]);
 						if(changedFiles.length == 0){
 							changedFiles = EMPTY_CHANGE_PATHS;

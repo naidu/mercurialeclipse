@@ -26,7 +26,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.resource.ImageDescriptor;
 
+import com.aragost.javahg.Repository;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -83,6 +85,8 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	private final IProject projectAdapter;
 
+	private Repository repository;
+
 	public HgRoot(String pathname) throws IOException {
 		this(new File(pathname));
 	}
@@ -99,6 +103,14 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	public static HgRoot get(File file) throws IOException {
 		return MercurialRootCache.getInstance().getCached(new HgRoot(file));
+	}
+
+	public Repository getRepository() {
+		if (repository == null) {
+			repository = Repository.open(HgClients.getRepoConfig(), this);
+		}
+
+		return repository;
 	}
 
 	public void setEncoding(String charset) {
