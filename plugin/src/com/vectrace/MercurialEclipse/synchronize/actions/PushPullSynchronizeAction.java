@@ -27,7 +27,6 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
@@ -35,6 +34,7 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -130,6 +130,6 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private static boolean isMatchingBranch(ChangeSet cs) {
-		return Branch.same(MercurialTeamProvider.getCurrentBranch(cs.getHgRoot()), cs.getBranch());
+		return BranchUtils.same(MercurialTeamProvider.getCurrentBranch(cs.getHgRoot()), cs.getBranch());
 	}
 }

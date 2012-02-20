@@ -60,6 +60,7 @@ import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -105,7 +106,7 @@ public class RevisionChooserPanel extends Composite {
 		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		if(data.highlightDefaultBranch){
-			text.setText(com.vectrace.MercurialEclipse.model.Branch.DEFAULT);
+			text.setText(BranchUtils.DEFAULT);
 		}
 		text.addFocusListener(new FocusListener() {
 			String textStr;
@@ -394,7 +395,7 @@ public class RevisionChooserPanel extends Composite {
 		final BranchTable table = new BranchTable(folder);
 		table.highlightParents(parents);
 		if(data.highlightDefaultBranch) {
-			table.highlightBranch(com.vectrace.MercurialEclipse.model.Branch.DEFAULT);
+			table.highlightBranch(BranchUtils.DEFAULT);
 		}
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -420,7 +421,7 @@ public class RevisionChooserPanel extends Composite {
 				try {
 					Branch[] branches = dataLoader.getBranches();
 					if (data.highlightDefaultBranch && branches.length == 0
-							&& com.vectrace.MercurialEclipse.model.Branch.DEFAULT.equals(text.getText())) {
+							&& BranchUtils.DEFAULT.equals(text.getText())) {
 						text.setText("");
 					}
 					table.setBranches(branches);

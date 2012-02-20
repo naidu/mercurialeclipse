@@ -44,7 +44,6 @@ import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -52,6 +51,7 @@ import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -407,7 +407,7 @@ public class MercurialHistory extends FileHistory {
 	private int getLastRevision(String branch) {
 		for (int i = revisions.size() - 1; i >= 0; i--) {
 			MercurialRevision rev = revisions.get(i);
-			if(Branch.same(rev.getChangeSet().getBranch(), branch)){
+			if(BranchUtils.same(rev.getChangeSet().getBranch(), branch)){
 				return i;
 			}
 		}
@@ -425,7 +425,7 @@ public class MercurialHistory extends FileHistory {
 	private int getNextRevision(int from, String branch) {
 		for (int i = from; i < revisions.size(); i++) {
 			MercurialRevision rev = revisions.get(i);
-			if(Branch.same(rev.getChangeSet().getBranch(), branch)){
+			if(BranchUtils.same(rev.getChangeSet().getBranch(), branch)){
 				return i;
 			}
 		}

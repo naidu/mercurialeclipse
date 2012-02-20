@@ -18,11 +18,11 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient.TransplantOptions;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.operations.TransplantOperation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * @author bastian
@@ -96,9 +96,9 @@ public class TransplantWizard extends HgOperationWizard {
 
 		options.all = transplantPage.isAll();
 		options.branch = transplantPage.isBranch();
-		if (options.branch && Branch.isDefault(transplantPage.getBranchName())) {
+		if (options.branch && BranchUtils.isDefault(transplantPage.getBranchName())) {
 			// branch name, as command parameter is default if empty
-			options.branchName = Branch.DEFAULT;
+			options.branchName = BranchUtils.DEFAULT;
 		} else {
 			options.branchName = transplantPage.getBranchName();
 		}

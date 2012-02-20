@@ -50,7 +50,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -63,6 +62,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MercurialSynchronizeSubscriber extends Subscriber /*implements Observer*/ {
@@ -170,7 +170,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return null;
 				}
 
-				if(csOutgoing == null || !Branch.same(csOutgoing.getBranch(), currentBranch)){
+				if(csOutgoing == null || !BranchUtils.same(csOutgoing.getBranch(), currentBranch)){
 					return null;
 				}
 				// construct base revision

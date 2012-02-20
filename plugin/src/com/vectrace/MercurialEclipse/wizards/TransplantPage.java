@@ -51,6 +51,7 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable.PrefetchedStrategy;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -203,8 +204,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		SelectionListener branchNameComboListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				branchName = branchNameCombo.getText();
-				if (com.vectrace.MercurialEclipse.model.Branch.isDefault(branchName)) {
-					branchName = com.vectrace.MercurialEclipse.model.Branch.DEFAULT;
+				if (BranchUtils.isDefault(branchName)) {
+					branchName = BranchUtils.DEFAULT;
 				}
 				getLocalFromBranch(branchName);
 			}

@@ -31,11 +31,11 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -612,7 +612,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
 		for (ChangeSet changeSet : changes) {
 			String changesetBranch = changeSet.getBranch();
-			if (Branch.same(branchName, changesetBranch)) {
+			if (BranchUtils.same(branchName, changesetBranch)) {
 				branchChangeSets.add(changeSet);
 			}
 		}

@@ -32,11 +32,11 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 public class HgStatusClient extends AbstractClient {
 
@@ -168,7 +168,7 @@ public class HgStatusClient extends AbstractClient {
 
 		Matcher m = ID_MERGE_AND_BRANCH_PATTERN.matcher((versionIds == null) ? "" : versionIds);
 		String mergeId = null;
-		String branch = Branch.DEFAULT;
+		String branch = BranchUtils.DEFAULT;
 		// current working directory id
 		String id = "";
 		if (m.matches() && m.groupCount() > 2) {

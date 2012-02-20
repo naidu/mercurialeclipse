@@ -22,7 +22,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.IDE;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -30,6 +29,7 @@ import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.FilteredPlaceholder;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
@@ -139,7 +139,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 				sb.append(cset.getName());
 				sb.append(" (").append(cset.getChangesetFiles().length).append(')');
 			}
-			if (!Branch.isDefault(cset.getBranch())) {
+			if (!BranchUtils.isDefault(cset.getBranch())) {
 				sb.append(' ').append(cset.getBranch());
 			}
 			sb.append(':').append(' ').append(getShortComment(cset));

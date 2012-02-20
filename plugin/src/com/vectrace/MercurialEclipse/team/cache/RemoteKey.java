@@ -13,10 +13,10 @@ package com.vectrace.MercurialEclipse.team.cache;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * A key to identify remote cache. The key is direction-insensitive, e.g. it can be
@@ -52,7 +52,7 @@ public class RemoteKey {
 		Assert.isNotNull(repo);
 		Assert.isNotNull(root);
 
-		this.branch = branch != null && Branch.isDefault(branch)? Branch.DEFAULT : branch;
+		this.branch = branch != null && BranchUtils.isDefault(branch)? BranchUtils.DEFAULT : branch;
 		this.allowUnrelated = force;
 	}
 
@@ -61,7 +61,7 @@ public class RemoteKey {
 		if(hgRoot != null) {
 			return new RemoteKey(hgRoot, repo, branch);
 		}
-		return new RemoteKey(null, repo, Branch.DEFAULT);
+		return new RemoteKey(null, repo, BranchUtils.DEFAULT);
 	}
 
 	public IHgRepositoryLocation getRepo() {
@@ -117,7 +117,7 @@ public class RemoteKey {
 		} else if (!root.equals(other.root)) {
 			return false;
 		}
-		return Branch.same(branch, other.branch);
+		return BranchUtils.same(branch, other.branch);
 	}
 
 	@Override

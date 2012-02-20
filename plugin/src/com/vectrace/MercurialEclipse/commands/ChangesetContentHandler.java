@@ -29,7 +29,6 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -37,6 +36,7 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
@@ -161,7 +161,7 @@ final class ChangesetContentHandler implements ContentHandler {
 			tags = cDataChars.toString();
 		} else if ("cs".equals(name)) {
 			// only collect changesets from requested branch. Null is: collect everything.
-			if(expectedBranch == null || Branch.same(branchStr, expectedBranch)){
+			if(expectedBranch == null || BranchUtils.same(branchStr, expectedBranch)){
 				ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
 				csb.tags(tags);
 				csb.nodeShort(nodeShort);

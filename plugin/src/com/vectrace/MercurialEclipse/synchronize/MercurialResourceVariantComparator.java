@@ -16,12 +16,12 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * Comparator for the identity with remote content
@@ -49,7 +49,7 @@ public class MercurialResourceVariantComparator implements IResourceVariantCompa
 		Direction direction = cs.getDirection();
 		if (direction == Direction.INCOMING || direction == Direction.OUTGOING) {
 			String branch = MercurialTeamProvider.getCurrentBranch(local);
-			if (Branch.same(cs.getBranch(), branch)) {
+			if (BranchUtils.same(cs.getBranch(), branch)) {
 				return false;
 			}
 		}
@@ -68,7 +68,7 @@ public class MercurialResourceVariantComparator implements IResourceVariantCompa
 		IHgResource resource = remoteRev.getHgResource();
 		String remoteBranch = remoteRev.getHgResource().getChangeSet().getBranch();
 		String currentBranch = MercurialTeamProvider.getCurrentBranch(resource.getHgRoot());
-		if (Branch.same(currentBranch, remoteBranch)) {
+		if (BranchUtils.same(currentBranch, remoteBranch)) {
 			return base.getContentIdentifier().equals(remote.getContentIdentifier());
 		}
 		return true;

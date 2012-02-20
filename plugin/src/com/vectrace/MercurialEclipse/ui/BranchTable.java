@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -46,7 +47,6 @@ public class BranchTable extends Composite {
 
 	private Branch[] branches;
 
-	@SuppressWarnings("unchecked")
 	public BranchTable(Composite parent) {
 		super(parent, SWT.NONE);
 
@@ -63,6 +63,7 @@ public class BranchTable extends Composite {
 		String[] titles = { Messages.getString("BranchTable.column.rev"),
 				Messages.getString("BranchTable.column.global"),
 				Messages.getString("BranchTable.column.branch")  };
+		@SuppressWarnings("rawtypes")
 		Comparator[] comparators = { new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
 				return TableSortListener.sort(o1.getBranchTip().getRevision(), o2.getBranchTip().getRevision());
@@ -101,7 +102,7 @@ public class BranchTable extends Composite {
 					Branch branch = branches[index];
 					if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
 						if ((parents != null && isParent(branch.getBranchTip().getRevision()))
-								|| com.vectrace.MercurialEclipse.model.Branch.same(highlightBranch,
+								|| BranchUtils.same(highlightBranch,
 										branch.getName())) {
 							row.setFont(PARENT_FONT);
 						}

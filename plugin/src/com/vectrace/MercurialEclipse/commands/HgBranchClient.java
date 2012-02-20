@@ -15,28 +15,18 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
+import com.aragost.javahg.commands.Branch;
 import com.aragost.javahg.commands.flags.BranchesCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 public class HgBranchClient extends AbstractClient {
-	/**
-	 * matches branch names which may also contain spaces or consist of only one letter.
-	 * Valid examples:
-	 * "a test                         3:066ee3f79d2a"
-	 * "*                              2:5a953790aa12 (inactive)"
-	 * "default                        0:fd83cc49d230 (inactive)"
-	 */
-	private static final Pattern GET_BRANCHES_PATTERN = Pattern.compile(
-		// (branch name) (version):(hash) (optional "inactive" flag)
-		"^(.*[^ ]+) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
 	private static final Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
 
@@ -46,11 +36,11 @@ public class HgBranchClient extends AbstractClient {
 	 * @return never null, but possibly empty array
 	 * @throws HgException
 	 */
-	public static com.aragost.javahg.commands.Branch[] getBranches(HgRoot hgRoot) throws HgException {
-		List<com.aragost.javahg.commands.Branch> branches = BranchesCommandFlags.on(
+	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
+		List<Branch> branches = BranchesCommandFlags.on(
 				hgRoot.getRepository()).execute();
 
-		return branches.toArray(new com.aragost.javahg.commands.Branch[branches.size()]);
+		return branches.toArray(new Branch[branches.size()]);
 	}
 
 	/**
@@ -88,7 +78,7 @@ public class HgBranchClient extends AbstractClient {
 	 */
 	public static boolean isKnownRemote(RemoteKey key) {
 		String branch = key.getBranch();
-		if(Branch.isDefault(branch)){
+		if(BranchUtils.isDefault(branch)){
 			// default is always there
 			return true;
 		}

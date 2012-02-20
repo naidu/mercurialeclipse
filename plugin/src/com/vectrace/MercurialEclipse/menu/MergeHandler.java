@@ -31,7 +31,6 @@ import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
@@ -39,6 +38,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends RootHandler {
@@ -65,8 +65,8 @@ public class MergeHandler extends RootHandler {
 						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
 				String branch = cs.getBranch();
-				if (Branch.isDefault(branch)) {
-					branch = Branch.DEFAULT;
+				if (BranchUtils.isDefault(branch)) {
+					branch = BranchUtils.DEFAULT;
 				}
 				String message = MessageFormat.format(Messages
 						.getString("MergeHandler.mergeWithOtherHead"), branch, csSummary);
@@ -218,7 +218,7 @@ public class MergeHandler extends RootHandler {
 
 		for (Changeset cs : heads) {
 			// must match branch
-			if (!Branch.same(branch, cs.getBranch())) {
+			if (!BranchUtils.same(branch, cs.getBranch())) {
 				continue;
 			}
 
