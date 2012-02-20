@@ -27,8 +27,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.model.Branch;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -60,26 +60,23 @@ public class BranchTable extends Composite {
 		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
 		table.setLayoutData(data);
 
-		String[] titles = {
-				Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		String[] titles = { Messages.getString("BranchTable.column.rev"),
+				Messages.getString("BranchTable.column.global"),
+				Messages.getString("BranchTable.column.branch")  };
 		Comparator[] comparators = { new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
-				return TableSortListener.sort(o1.getRevision(), o2.getRevision());
+				return TableSortListener.sort(o1.getBranchTip().getRevision(), o2.getBranchTip().getRevision());
 			}
 		}, new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
-				return o1.getGlobalId().compareTo(o2.getGlobalId());
+				return o1.getBranchTip().getNode().compareTo(o2.getBranchTip().getNode());
 			}
 		}, new Comparator<Branch>() {
 			public int compare(Branch o1, Branch o2) {
 				return o1.getName().compareTo(o2.getName());
 			}
-		}, new Comparator<Branch>() {
-			public int compare(Branch o1, Branch o2) {
-				return TableSortListener.sort(o1.isActive() ? 1 : 0, o2.isActive() ? 1 : 0);
-			}
 		} };
-		int[] widths = { 60, 150, 300, 70 };
+		int[] widths = { 70, 200, 300};
 
 		Listener sortListener = new TableSortListener(table, comparators) {
 			@Override
@@ -103,16 +100,14 @@ public class BranchTable extends Composite {
 				if (branches != null && 0 <= index && index < branches.length) {
 					Branch branch = branches[index];
 					if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
-						if ((parents != null && isParent(branch.getRevision()))
-								|| Branch.same(highlightBranch, branch.getName())) {
+						if ((parents != null && isParent(branch.getBranchTip().getRevision()))
+								|| com.vectrace.MercurialEclipse.model.Branch.same(highlightBranch,
+										branch.getName())) {
 							row.setFont(PARENT_FONT);
 						}
-						row.setText(0, Integer.toString(branch.getRevision()));
-						row.setText(1, branch.getGlobalId());
+						row.setText(0, Integer.toString(branch.getBranchTip().getRevision()));
+						row.setText(1, branch.getBranchTip().getNode());
 						row.setText(2, branch.getName());
-						row.setText(3, branch.isActive() ? Messages
-								.getString("BranchTable.stateActive") //$NON-NLS-1$
-								: Messages.getString("BranchTable.stateInactive")); //$NON-NLS-1$
 						row.setData(branch);
 					}
 				}

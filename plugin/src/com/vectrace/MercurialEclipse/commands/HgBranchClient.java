@@ -46,15 +46,11 @@ public class HgBranchClient extends AbstractClient {
 	 * @return never null, but possibly empty array
 	 * @throws HgException
 	 */
-	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
+	public static com.aragost.javahg.commands.Branch[] getBranches(HgRoot hgRoot) throws HgException {
 		List<com.aragost.javahg.commands.Branch> branches = BranchesCommandFlags.on(
 				hgRoot.getRepository()).execute();
-		Branch[] r = new Branch[branches.size()];
 
-		for(int i = 0; i<branches.size(); i++) {
-			r[i] = new Branch(branches.get(i));
-		}
-		return r;
+		return branches.toArray(new com.aragost.javahg.commands.Branch[branches.size()]);
 	}
 
 	/**

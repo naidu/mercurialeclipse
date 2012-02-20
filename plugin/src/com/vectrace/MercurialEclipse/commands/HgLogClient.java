@@ -367,7 +367,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		return getChangeset(hgRoot, nodeId, false);
 	}
 
-	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId, boolean withFiles) throws HgException {
+	private static ChangeSet getChangeset(HgRoot hgRoot, String nodeId, boolean withFiles) throws HgException {
 		Assert.isNotNull(nodeId);
 		HgCommand command = new HgCommand("log", "Retrieving history", hgRoot, false);
 

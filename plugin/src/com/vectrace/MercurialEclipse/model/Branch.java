@@ -24,7 +24,7 @@ public class Branch {
 
 	private final com.aragost.javahg.commands.Branch branch;
 
-	public Branch(com.aragost.javahg.commands.Branch branch) {
+	private Branch(com.aragost.javahg.commands.Branch branch) {
 		this.branch = branch;
 	}
 

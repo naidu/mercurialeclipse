@@ -43,11 +43,11 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
+import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
@@ -105,7 +105,7 @@ public class RevisionChooserPanel extends Composite {
 		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		if(data.highlightDefaultBranch){
-			text.setText(Branch.DEFAULT);
+			text.setText(com.vectrace.MercurialEclipse.model.Branch.DEFAULT);
 		}
 		text.addFocusListener(new FocusListener() {
 			String textStr;
@@ -238,11 +238,11 @@ public class RevisionChooserPanel extends Composite {
 				}
 			} else if(branch != null) {
 				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getRevision()
-							+ ":" + branch.getGlobalId()); //$NON-NLS-1$
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getBranchTip().getRevision()
+							+ ":" + branch.getBranchTip().getNode()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-							branch.getRevision(), branch.getGlobalId()), ex);
+							branch.getBranchTip().getRevision(), branch.getBranchTip().getNode()), ex);
 				}
 			} else if (bookmark != null) {
 				try {
@@ -394,7 +394,7 @@ public class RevisionChooserPanel extends Composite {
 		final BranchTable table = new BranchTable(folder);
 		table.highlightParents(parents);
 		if(data.highlightDefaultBranch) {
-			table.highlightBranch(Branch.DEFAULT);
+			table.highlightBranch(com.vectrace.MercurialEclipse.model.Branch.DEFAULT);
 		}
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -420,7 +420,7 @@ public class RevisionChooserPanel extends Composite {
 				try {
 					Branch[] branches = dataLoader.getBranches();
 					if (data.highlightDefaultBranch && branches.length == 0
-							&& Branch.DEFAULT.equals(text.getText())) {
+							&& com.vectrace.MercurialEclipse.model.Branch.DEFAULT.equals(text.getText())) {
 						text.setText("");
 					}
 					table.setBranches(branches);

@@ -13,8 +13,8 @@ package com.vectrace.MercurialEclipse.storage;
 import org.eclipse.core.resources.IResource;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 

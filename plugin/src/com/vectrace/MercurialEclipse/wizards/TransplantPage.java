@@ -37,11 +37,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 
+import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -49,8 +49,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable.PrefetchedStrategy;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -203,8 +203,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		SelectionListener branchNameComboListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				branchName = branchNameCombo.getText();
-				if (Branch.isDefault(branchName)) {
-					branchName = Branch.DEFAULT;
+				if (com.vectrace.MercurialEclipse.model.Branch.isDefault(branchName)) {
+					branchName = com.vectrace.MercurialEclipse.model.Branch.DEFAULT;
 				}
 				getLocalFromBranch(branchName);
 			}
