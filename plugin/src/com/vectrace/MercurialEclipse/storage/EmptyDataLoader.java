@@ -12,9 +12,9 @@ package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
@@ -40,8 +40,8 @@ public final class EmptyDataLoader extends DataLoader {
 	}
 
 	@Override
-	public ChangeSet[] getHeads() throws HgException {
-		return new ChangeSet[0];
+	public Changeset[] getHeads() {
+		return new Changeset[0];
 	}
 
 	@Override

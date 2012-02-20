@@ -46,21 +46,33 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 	public static final String NOLIMIT = "999999999999";
 
-	public static ChangeSet[] getHeads(HgRoot hgRoot) {
-		return getRevisions(hgRoot, HeadsCommandFlags.on(hgRoot.getRepository()).execute());
+	public static Changeset[] getHeads(HgRoot hgRoot) {
+		return getRevisions(HeadsCommandFlags.on(hgRoot.getRepository()).execute());
 	}
 
-	private static ChangeSet[] getRevisions(HgRoot root, List<Changeset> list) {
-		ChangeSet[] ar = new ChangeSet[list.size()];
+	private static Changeset[] getRevisions(List<Changeset> list) {
+		return list.toArray(new Changeset[list.size()]);
+	}
 
-		for (int i = 0, n = list.size(); i < n; i++) {
-			Changeset cs = list.get(i);
+	public static ChangeSet[] getChangeSets(HgRoot root, List<Changeset> list) {
+		return getChangeSets(root, list.toArray(new Changeset[list.size()]));
+	}
 
-			ar[i] = new ChangeSet.Builder(cs.getRevision(), cs.getNode(), cs.getBranch(), cs
-					.getTimestamp().getHgString() /*TODO*/, cs.getUser(), root).description(cs.getMessage()).build();
+	public static ChangeSet[] getChangeSets(HgRoot root, Changeset[] list) {
+		ChangeSet[] ar = new ChangeSet[list.length];
+
+		for (int i = 0, n = list.length; i < n; i++) {
+			Changeset cs = list[i];
+
+			ar[i] = getChangeSet(root, cs);
 		}
 
 		return ar;
+	}
+
+	public static ChangeSet getChangeSet(HgRoot root, Changeset cs) {
+		return new ChangeSet.Builder(cs.getRevision(), cs.getNode(), cs.getBranch(), cs
+				.getTimestamp().getHgString() /*TODO*/, cs.getUser(), root).description(cs.getMessage()).build();
 	}
 
 	/**
@@ -211,7 +223,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		setLimit(command, limitNumber);
 	}
 
-	public static void setLimit(AbstractShellCommand command, int limitNumber) {
+	private static void setLimit(AbstractShellCommand command, int limitNumber) {
 		command.addOptions("--limit", (limitNumber > 0) ? limitNumber + "" : NOLIMIT); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 

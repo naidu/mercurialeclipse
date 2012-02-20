@@ -44,6 +44,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -499,15 +500,11 @@ public class RevisionChooserPanel extends Composite {
 				new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
-						try {
-							table.highlightParents(parents);
-							table.setStrategy(new ChangesetTable.PrefetchedStrategy(dataLoader.getHeads()));
-							table.setEnabled(true);
-							return Status.OK_STATUS;
-						} catch (HgException e) {
-							logError(e);
-							return Status.CANCEL_STATUS;
-						}
+						table.highlightParents(parents);
+						table.setStrategy(new ChangesetTable.PrefetchedStrategy(HgLogClient
+								.getChangeSets(dataLoader.getHgRoot(), dataLoader.getHeads())));
+						table.setEnabled(true);
+						return Status.OK_STATUS;
 					}
 				}.schedule();
 			}

@@ -15,13 +15,13 @@ package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
@@ -38,7 +38,7 @@ public abstract class DataLoader {
 		return HgBranchClient.getBranches(getHgRoot());
 	}
 
-	public ChangeSet[] getHeads() throws HgException {
+	public Changeset[] getHeads() {
 		return HgLogClient.getHeads(getHgRoot());
 	}
 

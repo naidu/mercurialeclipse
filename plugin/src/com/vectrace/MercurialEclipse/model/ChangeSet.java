@@ -306,12 +306,16 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public String getDateString() {
 		Date d = getRealDate();
 		if (d != null) {
-			// needed because static date format instances are not thread safe
-			synchronized (DISPLAY_DATE_FORMAT) {
-				return DISPLAY_DATE_FORMAT.format(d);
-			}
+			return formatDate(getRealDate());
 		}
 		return date;
+	}
+
+	public static String formatDate(Date d) {
+		// needed because static date format instances are not thread safe
+		synchronized (DISPLAY_DATE_FORMAT) {
+			return DISPLAY_DATE_FORMAT.format(d);
+		}
 	}
 
 	@Override
