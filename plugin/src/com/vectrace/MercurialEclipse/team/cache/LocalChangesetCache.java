@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -331,6 +332,11 @@ public final class LocalChangesetCache extends AbstractCache {
 			return map.get(changesetId);
 		}
 		return null;
+	}
+
+	public ChangeSet getOrFetchChangeSetById(HgRoot hgRoot, Changeset cs) throws HgException {
+		// TODO: why not just the node?
+		return getOrFetchChangeSetById(hgRoot, cs.getRevision() + ":" + cs.getNode());
 	}
 
 	public ChangeSet getOrFetchChangeSetById(HgRoot hgRoot, String nodeId) throws HgException {

@@ -54,10 +54,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		return list.toArray(new Changeset[list.size()]);
 	}
 
-	public static ChangeSet[] getChangeSets(HgRoot root, List<Changeset> list) {
-		return getChangeSets(root, list.toArray(new Changeset[list.size()]));
-	}
-
+	/**
+	 * Helper method to transform JavaHg changesets into normal changesets.
+	 */
 	public static ChangeSet[] getChangeSets(HgRoot root, Changeset[] list) {
 		ChangeSet[] ar = new ChangeSet[list.length];
 
@@ -70,6 +69,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		return ar;
 	}
 
+	/**
+	 * /**
+	 * Helper method to transform JavaHg changesets into normal changesets
+	 */
 	public static ChangeSet getChangeSet(HgRoot root, Changeset cs) {
 		return new ChangeSet.Builder(cs.getRevision(), cs.getNode(), cs.getBranch(), cs
 				.getTimestamp().getHgString() /*TODO*/, cs.getUser(), root).description(cs.getMessage()).build();

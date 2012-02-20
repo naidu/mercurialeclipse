@@ -230,17 +230,15 @@ public class RevisionChooserPanel extends Composite {
 			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
 				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getRevision()
-							+ ":" + tag.getGlobalId()); //$NON-NLS-1$
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getChangeset());
 				} catch (HgException ex) {
 					logError(
 							Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-									tag.getRevision(), tag.getGlobalId()), ex);
+									tag.getChangeset().getRevision(), tag.getChangeset().getNode()), ex);
 				}
 			} else if(branch != null) {
 				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getBranchTip().getRevision()
-							+ ":" + branch.getBranchTip().getNode()); //$NON-NLS-1$
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getBranchTip());
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
 							branch.getBranchTip().getRevision(), branch.getBranchTip().getNode()), ex);

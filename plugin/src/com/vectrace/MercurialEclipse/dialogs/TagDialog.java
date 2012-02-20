@@ -104,14 +104,14 @@ public class TagDialog extends Dialog {
 		return composite;
 	}
 
-	private GridData createGridData(int colspan) {
+	private static GridData createGridData(int colspan) {
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalSpan = colspan;
 		data.minimumWidth = SWT.DEFAULT;
 		return data;
 	}
 
-	private GridData createGridData(int colspan, int width) {
+	private static GridData createGridData(int colspan, int width) {
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalSpan = colspan;
 		data.minimumWidth = width;
@@ -172,17 +172,13 @@ public class TagDialog extends Dialog {
 			}
 		});
 
-		try {
-			table.setTags(HgTagClient.getTags(hgRoot));
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		table.setTags(HgTagClient.getTags(hgRoot));
 
 		item.setControl(composite);
 		return item;
 	}
 
-	protected TabItem createOptionsTabItem(TabFolder folder) {
+	protected final TabItem createOptionsTabItem(TabFolder folder) {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.options")); //$NON-NLS-1$
 
@@ -224,12 +220,8 @@ public class TagDialog extends Dialog {
 		data.heightHint = 150;
 		tt.setLayoutData(data);
 
-		try {
-			tt.setTags(HgTagClient.getTags(hgRoot));
-		} catch (HgException e2) {
-			MercurialEclipsePlugin.showError(e2);
-			MercurialEclipsePlugin.logError(e2);
-		}
+		tt.setTags(HgTagClient.getTags(hgRoot));
+
 		Button removeButton = SWTWidgetHelper.createPushButton(composite,
 				Messages.getString("TagDialog.removeSelectedTag"), 1); //$NON-NLS-1$
 		MouseListener listener = new MouseListener() {

@@ -11,11 +11,11 @@ import java.util.Comparator;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.Tag;
 
+
 /**
- * Thsi class can be used to compare Tags by names.
+ * This class can be used to compare Tags by names.
  *
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
  */
 public class TagComparator implements Comparator<Tag> {
 	private static final String TIP = HgRevision.TIP.getChangeset();

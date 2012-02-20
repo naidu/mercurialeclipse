@@ -40,6 +40,7 @@ import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
@@ -258,18 +259,9 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public Tag[] getTags() {
 		if (tags == null) {
 			if (!StringUtils.isEmpty(tagsStr)) {
-				String[] tagsStrArr = tagsStr.split("_,_");
-				List<Tag> tagList = new ArrayList<Tag>();
-				for (String ctag : tagsStrArr) {
-					if (StringUtils.isEmpty(ctag)) {
-						continue;
-					}
-					Tag tag = new Tag(hgRoot, ctag, this, false);
-					tagList.add(tag);
-				}
-				if (!tagList.isEmpty()) {
-					tags = tagList.toArray(new Tag[tagList.size()]);
-				}
+				List<Tag> tagList = HgTagClient.getTags(hgRoot, tagsStr.split("_,_"));
+
+				tags = tagList.toArray(new Tag[tagList.size()]);
 			}
 			if (tags == null) {
 				tags = EMPTY_TAGS;

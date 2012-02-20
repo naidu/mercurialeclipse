@@ -330,10 +330,9 @@ public class MercurialHistory extends FileHistory {
 		return sigMap;
 	}
 
-	private void fetchTags() throws HgException {
+	private void fetchTags() {
 		// we need extra tag changesets for files/folders only.
-		boolean withChangesets = !isRootHistory();
-		Tag[] tags2 = HgTagClient.getTags(hgRoot, withChangesets);
+		Tag[] tags2 = HgTagClient.getTags(hgRoot);
 		SortedSet<Tag> sorted = new TreeSet<Tag>();
 		for (Tag tag : tags2) {
 			if(!tag.isTip()){
@@ -368,8 +367,8 @@ public class MercurialHistory extends FileHistory {
 	 *         revision matches given tag
 	 */
 	private int getFirstMatchingRevision(Tag tag, int start) {
-		String tagBranch = tag.getChangeSet().getBranch();
-		int tagRev = tag.getRevision();
+		String tagBranch = tag.getChangeset().getBranch();
+		int tagRev = tag.getChangeset().getRevision();
 		// revisions are sorted descending by cs revision
 		int lastRev = getLastRevision(tagBranch);
 		for (int i = start; i <= lastRev; i++) {

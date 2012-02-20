@@ -12,102 +12,46 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
-import java.util.Set;
-
 import org.eclipse.team.core.history.ITag;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet.ShallowChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author Bastian
  */
 public class Tag implements ITag, Comparable<Tag> {
+
 	private static final String TIP = HgRevision.TIP.getChangeset();
 
+	private final com.aragost.javahg.commands.Tag tag;
 
-	/** name of the tag, unique in the repository */
-	private final String name;
-	private final int revision;
-	private final String globalId;
-	private final boolean local;
-
-	private ChangeSet changeSet;
-
-
-	private final HgRoot hgRoot;
-
-	public Tag(HgRoot hgRoot, String name, int revision, String globalId, boolean local) {
+	public Tag(com.aragost.javahg.commands.Tag tag) {
 		super();
-		this.hgRoot = hgRoot;
-		this.name = name;
-		this.revision = revision;
-		this.globalId = globalId;
-		this.local = local;
-	}
-
-	public Tag(HgRoot hgRoot, String name, ChangeSet changeSet, boolean local) {
-		this(hgRoot, name, changeSet.getChangesetIndex(), changeSet.getChangeset(), local);
-		this.changeSet = changeSet;
-	}
-
-	/**
-	 * <b>Note: this method may trigger Mercurial call</b> to retrieve the changeset info, if
-	 * the tag was created with {@link #Tag(HgRoot, String, int, String, boolean)} constructor
-	 * and the local changeset cache doesn't contain the tag version!
-	 * @return never null
-	 */
-	public ChangeSet getChangeSet() {
-		if(changeSet != null) {
-			return changeSet;
-		}
-		LocalChangesetCache cache = LocalChangesetCache.getInstance();
-		try {
-			changeSet = cache.getOrFetchChangeSetById(hgRoot,
-					revision + ":" + globalId);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		if(changeSet == null) {
-			try {
-				Set<ChangeSet> revisions = cache.fetchRevisions(hgRoot, true, 1, revision, false);
-				if(revisions.size() == 1) {
-					changeSet = revisions.iterator().next();
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-			if(changeSet == null) {
-				changeSet = new ShallowChangeSet(revision, globalId, hgRoot);
-			}
-		}
-		return changeSet;
+		this.tag = tag;
 	}
 
 	public String getName() {
-		return name;
+		return tag.getName();
 	}
 
-	public int getRevision() {
-		return revision;
-	}
-
-	public String getGlobalId() {
-		return globalId;
+	private int getRevision() {
+		return tag.getChangeset().getRevision();
 	}
 
 	public boolean isLocal() {
-		return local;
+		return tag.isLocal();
+	}
+
+	public Changeset getChangeset() {
+		return tag.getChangeset();
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((tag == null) ? 0 : tag.hashCode());
 		return result;
 	}
 
@@ -122,12 +66,12 @@ public class Tag implements ITag, Comparable<Tag> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final Tag other = (Tag) obj;
-		if (name == null) {
-			if (other.name != null) {
+		Tag other = (Tag) obj;
+		if (tag == null) {
+			if (other.tag != null) {
 				return false;
 			}
-		} else if (!name.equals(other.name)) {
+		} else if (!tag.equals(other.tag)) {
 			return false;
 		}
 		return true;
@@ -135,12 +79,12 @@ public class Tag implements ITag, Comparable<Tag> {
 
 	@Override
 	public String toString() {
-		return name + " [" + revision +  ':' + globalId + ']';
+		return tag.toString();
 	}
 
 	public int compareTo(Tag tag) {
 		/* "tip" must be always the first in the collection */
-		if (tag == null || name == null || isTip()) {
+		if (tag == null || getName() == null || isTip()) {
 			return -1;
 		}
 
@@ -148,22 +92,22 @@ public class Tag implements ITag, Comparable<Tag> {
 			return 1;
 		}
 
-		int cmp = tag.getRevision() - revision;
+		int cmp = tag.getRevision() - getRevision();
 		if(cmp != 0){
 			// sort by revision first
 			return cmp;
 		}
 
 		// sort by name
-		cmp = name.compareToIgnoreCase(tag.getName());
+		cmp = getName().compareToIgnoreCase(tag.getName());
 		if (cmp == 0) {
 			// Check it case sensitive
-			cmp = name.compareTo(tag.getName());
+			cmp = getName().compareTo(tag.getName());
 		}
 		return cmp;
 	}
 
 	public boolean isTip(){
-		return TIP.equals(name);
+		return TIP.equals(getName());
 	}
 }
