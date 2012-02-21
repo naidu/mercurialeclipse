@@ -235,6 +235,23 @@ public final class MercurialUtilities {
 	}
 
 	/**
+	 * Get the user name trimmed to null. If user is not provided uses the default username
+	 * @see #getDefaultUserName()
+	 * @param user The user to prefer
+	 * @return The user name, may be null.
+	 */
+	public static String getDefaultUserName(String user) {
+		user = user != null ? user : getDefaultUserName();
+		if (user != null) {
+			user = user.trim();
+			if (user.length() == 0) {
+				user = null;
+			}
+		}
+		return user;
+	}
+
+	/**
 	 * Returns the username for hg as configured in preferences. If it's not defined in the
 	 * preference store, null is returned.
 	 * <p>

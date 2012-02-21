@@ -89,22 +89,15 @@ public class HgCommand extends AbstractShellCommand {
 	public void addUserName(String user) throws IllegalArgumentException {
 
 		// avoid empty user
-		user = user != null ? user : MercurialUtilities.getDefaultUserName();
-		if(user != null) {
-			user = user.trim();
-			if (user.length() == 0) {
-				user = null;
-			} else {
-				user = quote(user);
-			}
-		}
+		user = MercurialUtilities.getDefaultUserName(user);
+
 		if(user != null) {
 			if (isConflictingWithUserArg()) {
 				throw new IllegalArgumentException("Command '" + command
 						+ "' uses '-u' argument NOT as user name!");
 			}
 			options.add("-u"); //$NON-NLS-1$
-			options.add(user);
+			options.add(quote(user));
 			this.lastUserName = user;
 		} else {
 			this.lastUserName = null;
@@ -126,15 +119,7 @@ public class HgCommand extends AbstractShellCommand {
 	 * executed. If no hg root or no user name option was given, does nothing.
 	 */
 	public void rememberUserName(){
-		if (lastUserName == null){
-			return;
-		}
-
-		String commitName = HgCommitMessageManager.getDefaultCommitName(hgRoot);
-
-		if(!commitName.equals(lastUserName)) {
-			HgCommitMessageManager.setDefaultCommitName(hgRoot, lastUserName);
-		}
+		HgCommitMessageManager.updateDefaultCommitName(hgRoot, lastUserName);
 	}
 
 	private boolean isConflictingWithUserArg() {

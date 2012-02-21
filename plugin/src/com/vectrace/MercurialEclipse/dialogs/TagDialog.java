@@ -30,7 +30,6 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -227,8 +226,7 @@ public class TagDialog extends Dialog {
 		MouseListener listener = new MouseListener() {
 			public void mouseUp(MouseEvent e) {
 				try {
-					String result = HgTagClient.removeTag(hgRoot, tt.getSelection(), userTextField.getText());
-					HgClients.getConsole().printMessage(result, null);
+					HgTagClient.removeTag(hgRoot, tt.getSelection(), userTextField.getText());
 					tt.setTags(HgTagClient.getTags(hgRoot));
 					new RefreshRootJob(com.vectrace.MercurialEclipse.menu.Messages.getString(
 							"TagHandler.refreshing"), hgRoot, RefreshRootJob.ALL).schedule(); //$NON-NLS-1$
