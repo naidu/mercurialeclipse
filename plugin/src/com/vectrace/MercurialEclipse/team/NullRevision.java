@@ -17,12 +17,11 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 /**
  * An empty (null) revision to be used for 0 (first/non existent) revisions in compare editor
  * @author Andrei
+ * @deprecated
  */
+@Deprecated
 public class NullRevision extends MercurialRevisionStorage {
 
-	/**
-	 * @param res
-	 */
 	public NullRevision(IFile res, ChangeSet cs) {
 		super(res, 0, null, null);
 		content = new ContentHolder((byte[]) null);

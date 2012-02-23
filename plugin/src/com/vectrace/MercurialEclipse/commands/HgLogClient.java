@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +26,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.flags.HeadsCommandFlags;
+import com.aragost.javahg.commands.flags.LogCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -44,10 +47,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	public static final String NOLIMIT = "999999999999";
 
 	public static Changeset[] getHeads(HgRoot hgRoot) {
-		return getRevisions(HeadsCommandFlags.on(hgRoot.getRepository()).execute());
+		return toArray(HeadsCommandFlags.on(hgRoot.getRepository()).execute());
 	}
 
-	private static Changeset[] getRevisions(List<Changeset> list) {
+	private static Changeset[] toArray(List<Changeset> list) {
 		return list.toArray(new Changeset[list.size()]);
 	}
 
@@ -58,9 +61,17 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		ChangeSet[] ar = new ChangeSet[list.length];
 
 		for (int i = 0, n = list.length; i < n; i++) {
-			Changeset cs = list[i];
+			ar[i] = getChangeSet(root, list[i]);
+		}
 
-			ar[i] = getChangeSet(root, cs);
+		return ar;
+	}
+
+	private static List<ChangeSet> getChangeSets(HgRoot root, List<Changeset> list) {
+		List<ChangeSet> ar = new ArrayList<ChangeSet>(list.size());
+
+		for (int i = 0, n = list.size(); i < n; i++) {
+			ar.add(getChangeSet(root, list.get(i)));
 		}
 
 		return ar;
@@ -78,7 +89,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 * Helper method to transform JavaHg changesets into normal changesets
 	 */
 	public static ChangeSet getChangeSet(HgRoot root, Changeset cs) {
-		return new JHgChangeSet(root, cs, null, null, null);
+		return new JHgChangeSet(root, cs);
 	}
 
 	/**
@@ -112,6 +123,19 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	public static Map<IPath, Set<ChangeSet>> getRecentProjectLog(
 			IResource res, int limitNumber, boolean withFiles) throws HgException {
 		return getProjectLogBatch(res, limitNumber, -1, withFiles);
+	}
+
+	public static List<ChangeSet> getResourceLog(HgRoot root, IResource res, int limitNumber,
+			int startRev) {
+		boolean isFile = res.getType() == IResource.FILE;
+
+		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+
+		if (isFile) {
+			command.follow();
+		}
+
+		return getChangeSets(root, command.execute(ResourceUtils.getPath(res).toOSString()));
 	}
 
 	/**
@@ -158,9 +182,17 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		return revisions;
 	}
 
+	public static List<ChangeSet> getRootLog(HgRoot root, int limitNumber, int startRev) {
+		return getChangeSets(root,
+				addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, false)
+						.execute());
+	}
+
 	/**
 	 * @return map where the key is an absolute file path, never null
+	 * @deprecated
 	 */
+	@Deprecated
 	public static Map<IPath, Set<ChangeSet>> getRootLog(HgRoot hgRoot,
 			int limitNumber, int startRev, boolean withFiles)
 			throws HgException {
@@ -226,38 +258,33 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			command.addOptions("-r"); //$NON-NLS-1$
 			command.addOptions("tip:0"); //$NON-NLS-1$
 		}
-		setLimit(command, limitNumber);
-	}
-
-	private static void setLimit(AbstractShellCommand command, int limitNumber) {
 		command.addOptions("--limit", (limitNumber > 0) ? limitNumber + "" : NOLIMIT); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	public static ChangeSet getChangeset(IResource res, String nodeId,
-			boolean withFiles) throws HgException {
+	/**
+	 * TODO: reevaluate
+	 */
+	private static LogCommand addRange(LogCommand command, int startRev, int limitNumber, boolean isFile) {
+		if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
+			// always advise to follow until 0 revision: the reason is that log limit
+			// might be bigger then the difference of two consequent revisions on a specific resource
+			command.rev(startRev + ":" + 0); //$NON-NLS-1$
+		}
+		if(isFile && startRev == Integer.MAX_VALUE) {
+			// always start with the tip to get the latest version of a file too
+			// seems that hg log misses some versions if the file working copy is not at the tip
+			command.rev("tip:0"); //$NON-NLS-1$
+		}
+		command.limit((limitNumber > 0) ? limitNumber : Integer.MAX_VALUE);
 
+		return command;
+	}
+
+	public static ChangeSet getChangeset(IResource res, String nodeId) {
 		Assert.isNotNull(nodeId);
-
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
-		HgCommand command = new HgCommand("log", "Retrieving history", //$NON-NLS-1$
-				root, false);
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		command.addStyleFile(withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES
-				: AbstractParseChangesetClient.STYLE_DEFAULT);
-		command.addOptions("--rev", nodeId); //$NON-NLS-1$
-		String result = command.executeToString();
 
-		Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
-				res, result, Direction.LOCAL, null, null, null);
-		IPath location = ResourceUtils.getPath(res);
-		if(location.isEmpty()) {
-			return null;
-		}
-		Set<ChangeSet> set = revisions.get(location);
-		if (set != null) {
-			return Collections.min(set);
-		}
-		return null;
+		return getChangeset(root, nodeId);
 	}
 
 	/**
@@ -266,26 +293,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 * @param nodeId non null
 	 * @return might return null if the changeset is not known/existing in the repo
 	 */
-	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId) throws HgException {
-		return getChangeset(hgRoot, nodeId, false);
-	}
-
-	private static ChangeSet getChangeset(HgRoot hgRoot, String nodeId, boolean withFiles) throws HgException {
-		Assert.isNotNull(nodeId);
-		HgCommand command = new HgCommand("log", "Retrieving history", hgRoot, false);
-
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-		command.addStyleFile(withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES
-				: AbstractParseChangesetClient.STYLE_DEFAULT);
-		command.addOptions("--rev", nodeId); //$NON-NLS-1$
-		String result = command.executeToString();
-
-		Path path = new Path(hgRoot.getAbsolutePath());
-		Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, hgRoot);
-		Set<ChangeSet> set = revisions.get(path);
-		if (set != null && !set.isEmpty()) {
-			return Collections.min(set);
-		}
-		return null;
+	public static ChangeSet getChangeset(HgRoot root, String nodeId) {
+		return new JHgChangeSet(root, LogCommandFlags.on(root.getRepository()).rev(nodeId)
+				.execute().get(0));
 	}
 }

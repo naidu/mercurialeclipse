@@ -49,7 +49,9 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.utils.IniFile;
@@ -390,10 +392,10 @@ public final class MercurialUtilities {
 	 * @return Storage for the parent revision
 	 * @throws HgException
 	 */
-	public static MercurialRevisionStorage getParentRevision(ChangeSet cs, IFile file) throws HgException {
+	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
 		String[] parents = cs.getParents();
 		if(cs.getRevision().getRevision() == 0){
-			return new NullRevision(file, cs);
+			return new NullHgFile(cs.getHgRoot(), file);
 		} else if (parents.length == 0) {
 			// TODO for some reason, we do not always have right parent info in the changesets
 			// If we are on the different branch then the changeset? or if the changeset
@@ -407,7 +409,7 @@ public final class MercurialUtilities {
 				MercurialEclipsePlugin.logError(e);
 			}
 			if (parents.length == 0) {
-				return new NullRevision(file, cs);
+				return new NullHgFile(cs.getHgRoot(), file);
 			}
 		}
 
@@ -417,7 +419,7 @@ public final class MercurialUtilities {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
-		return new MercurialRevisionStorage(file, parents[0]);
+		return new HgFile(cs.getHgRoot(), parents[0], file);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {

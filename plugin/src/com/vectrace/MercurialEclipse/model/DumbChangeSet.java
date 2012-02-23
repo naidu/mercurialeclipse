@@ -261,7 +261,6 @@ public class DumbChangeSet extends ChangeSet {
 	@Override
 	public String toString() {
 		return getIndexAndName();
-
 	}
 
 	protected String getIndexAndName() {

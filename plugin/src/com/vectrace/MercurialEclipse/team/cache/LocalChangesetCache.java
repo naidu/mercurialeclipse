@@ -361,7 +361,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			return changeSet;
 		}
 		synchronized (localChangeSets){
-			changeSet = HgLogClient.getChangeset(res, nodeId, isGetFileInformationForChangesets());
+			changeSet = HgLogClient.getChangeset(res, nodeId);
 			if (changeSet == null) {
 				return changeSet;
 			}

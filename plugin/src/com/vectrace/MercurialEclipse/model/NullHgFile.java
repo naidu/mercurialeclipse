@@ -12,8 +12,11 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.InputStream;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+
+import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 
 /**
  * @author Ge Zhong
@@ -27,6 +30,10 @@ public class NullHgFile extends HgFile {
 
 	public NullHgFile(HgRoot hgRoot, String revision, IPath path) {
  		super(hgRoot, revision, path);
+ 	}
+
+	public NullHgFile(HgRoot hgRoot, IFile file) {
+ 		super(hgRoot, HgIdentClient.VERSION_ZERO, file);
  	}
 
 	@Override

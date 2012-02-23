@@ -30,6 +30,8 @@ public class JHgChangeSet extends ChangeSet {
 
 	private Tag[] tags;
 
+	// constructors
+
 	public JHgChangeSet(HgRoot hgRoot, Changeset changeset, IHgRepositoryLocation remote,
 			Direction direction, File bundle) {
 		this.changeset = changeset;
@@ -37,6 +39,22 @@ public class JHgChangeSet extends ChangeSet {
 		this.remote = remote;
 		this.direction = direction;
 		this.bundle = bundle;
+
+		setName(getChangesetIndex() + ":" + getNodeShort());
+	}
+
+	public JHgChangeSet(HgRoot hgRoot, Changeset changeset) {
+		this(hgRoot, changeset, null, Direction.LOCAL, null);
+	}
+
+	// operations
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getName();
 	}
 
 	/**

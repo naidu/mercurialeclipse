@@ -75,11 +75,9 @@ public class MercurialRevisionStorage implements IHgFile {
 		public InputStream createStream() {
 			if (bytes != null) {
 				return new ByteArrayInputStream(bytes);
-			} else {
-				return EMPTY_STREAM;
 			}
+			return EMPTY_STREAM;
 		}
-
 	}
 
 	/**

@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -238,35 +237,29 @@ public class MercurialHistory extends FileHistory {
 			return;
 		}
 
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		int logBatchSize = store.getInt(LOG_BATCH_SIZE);
+		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		final int logBatchSize = store.getInt(LOG_BATCH_SIZE);
 
-		Map<IPath, Set<ChangeSet>> map;
 		IPath location;
+		List<ChangeSet> list;
+
 		if(!isRootHistory()) {
-			map = HgLogClient.getProjectLog(resource, logBatchSize, from, false);
+			list = HgLogClient.getResourceLog(hgRoot, resource, logBatchSize, from);
 			location = ResourceUtils.getPath(resource);
 		} else {
-			map = HgLogClient.getRootLog(hgRoot, logBatchSize, from, false);
+			list = HgLogClient.getRootLog(hgRoot, logBatchSize, from);
 			location = hgRoot.getIPath();
 		}
 
 		// no result -> bottom reached
-		if (map.isEmpty()) {
-			lastReqRevision = from;
-			return;
-		}
-
-		// still changesets there -> process
-		Set<ChangeSet> localChangeSets = map.get(location);
-		if (localChangeSets == null) {
+		if (list.isEmpty()) {
 			lastReqRevision = from;
 			return;
 		}
 
 		// We need these to be in order for the GChangeSets to display properly
 		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(CS_COMPARATOR);
-		changeSets.addAll(localChangeSets);
+		changeSets.addAll(list);
 
 		if (revisions.size() < changeSets.size()
 				|| !(location.equals(ResourceUtils.getPath(revisions.get(0).getResource())))) {

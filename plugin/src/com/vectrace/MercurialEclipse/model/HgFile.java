@@ -25,6 +25,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Ge Zhong
@@ -41,6 +42,10 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	public HgFile(HgRoot hgRoot, String changeset, IPath path) {
 		super(hgRoot, changeset, path);
+	}
+
+	public HgFile(HgRoot hgRoot, String changeset, IFile file) {
+		this(hgRoot, changeset, hgRoot.toRelative(ResourceUtils.getPath(file)));
 	}
 
 	public HgFile(HgRoot hgRoot, ChangeSet changeset, IPath path) {
