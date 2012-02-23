@@ -133,7 +133,7 @@ public class ChangesetTable extends Composite {
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getAuthor().compareTo(b.getAuthor());
+				return a.getUser().compareTo(b.getUser());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {

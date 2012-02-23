@@ -30,11 +30,12 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.DumbChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
@@ -162,7 +163,7 @@ final class ChangesetContentHandler implements ContentHandler {
 		} else if ("cs".equals(name)) {
 			// only collect changesets from requested branch. Null is: collect everything.
 			if(expectedBranch == null || BranchUtils.same(branchStr, expectedBranch)){
-				ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
+				DumbChangeSet.Builder csb = new DumbChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
 				csb.tags(tags);
 				csb.nodeShort(nodeShort);
 				csb.description(untab(unescape(description)));
@@ -220,7 +221,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	 * from the revision + short node of the previous run.
 	 * @param csb
 	 */
-	private void addParentsInfo(ChangeSet.Builder csb) {
+	private void addParentsInfo(DumbChangeSet.Builder csb) {
 		String[] myParents = splitWords(parents);
 		if(myParents.length == 0 && prevRev == rev - 1 && prevNodeShort != null){
 			myParents = new String[]{prevRev + ":" + prevNodeShort};

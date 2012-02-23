@@ -23,7 +23,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.IHgResource;
@@ -34,12 +33,10 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 class CompareRevisionAction extends BaseSelectionListenerAction {
 
 	private Object[] selection;
-	private final MercurialHistoryPage page;
 	private boolean enableCompareWithPrev;
 
-	CompareRevisionAction(String text, MercurialHistoryPage page) {
+	CompareRevisionAction(String text) {
 		super(text);
-		this.page = page;
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/compare_with_local.gif")); //$NON-NLS-1$
 	}
 
@@ -128,12 +125,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 	 * the info is fetched...
 	 * @param monitor
 	 */
-	private IHgResource getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
-		if(rev.getParent() == null){
-			// see issue #10302: this is a dirty trick to make sure to get content even
-			// if the file was renamed/copied.
-			HgLogClient.getLogWithBranchInfo(rev, page.getMercurialHistory(), monitor);
-		}
+	private static IHgResource getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
 		return (IHgResource) rev.getStorage(monitor);
 	}
 }

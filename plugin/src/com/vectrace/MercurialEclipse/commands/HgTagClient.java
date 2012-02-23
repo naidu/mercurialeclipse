@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,15 +59,13 @@ public class HgTagClient extends AbstractClient {
 		return itags;
 	}
 
-	/**
-	 * Fetches all tags for given root.
-	 * @param hgRoot non null
-	 * @return never null, might be empty array
-	 */
-	public static List<Tag> getTags(HgRoot hgRoot, String[] tagNames) {
+	public static Tag[] getTags(HgRoot hgRoot, Collection<String> tagNames) {
+		return getTags(hgRoot, tagNames.toArray(new String[tagNames.size()]));
+	}
+
+	public static Tag[] getTags(HgRoot hgRoot, String[] tagNames) {
 		Tag[] tags = getTags(hgRoot);
-		List<Tag> l = new ArrayList<Tag>(
-				tagNames.length);
+		List<Tag> l = new ArrayList<Tag>(tagNames.length);
 
 		for (int i = 0; i < tagNames.length; i++) {
 			for (int j = 0; j < tags.length; j++) {
@@ -77,7 +76,7 @@ public class HgTagClient extends AbstractClient {
 		}
 
 		Collections.sort(l, new TagComparator());
-		return l;
+		return l.toArray(new Tag[l.size()]);
 	}
 
 	/**

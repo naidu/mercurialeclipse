@@ -15,19 +15,12 @@ import java.util.List;
 import java.util.WeakHashMap;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
@@ -37,10 +30,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -152,75 +141,32 @@ public class ChangePathsTableProvider extends TableViewer {
 		}
 
 		private void fetchPaths(final MercurialRevision rev) {
-			final MercurialHistory history = page.getMercurialHistory();
-			final ChangeSet [] cs = new ChangeSet[1];
-			Job.getJobManager().cancel(ChangePathsTableContentProvider.class);
-			Job pathJob = new Job(NLS.bind(
-					Messages.ChangePathsTableProvider_retrievingAffectedPaths, rev.getChangeSet())) {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					synchronized(revToFiles){
-						if(revToFiles.get(rev) != null || monitor.isCanceled()){
-							return Status.CANCEL_STATUS;
-						}
-					}
-					try {
-						cs[0] = HgLogClient.getLogWithBranchInfo(rev, history, monitor);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-						return e.getStatus();
-					}
-					return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+			synchronized(revToFiles){
+				if(revToFiles.containsKey(rev)) {
+					return;
 				}
+			}
 
-				@Override
-				public boolean belongsTo(Object family) {
-					return ChangePathsTableContentProvider.class == family;
+			List <FileStatus> status = rev.getChangeSet().getChangedFiles();
+
+			synchronized(revToFiles){
+				if(!revToFiles.containsKey(rev)) {
+					revToFiles.put(rev, status.toArray(new FileStatus[status.size()]));
+				}
+			}
+
+			if(disposed){
+				return;
+			}
+
+			Runnable refresh = new Runnable() {
+				public void run() {
+					if(!disposed && viewer != null) {
+						viewer.refresh();
+					}
 				}
 			};
-			pathJob.setRule(new ExclusiveHistoryRule());
-			pathJob.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event) {
-					if(!event.getResult().isOK()){
-						return;
-					}
-					FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
-					ChangeSet fullCs = cs[0];
-					if(fullCs != null) {
-						ChangeSet revCs = rev.getChangeSet();
-						// TODO this is a workaround: we copy some info from freshly retrieved cs
-						// because this data is NOT currently available in the history view changesets (different template)
-						// but it is nice to show it in the properties view
-						revCs.setTags(fullCs.getTags());
-						revCs.setTagsStr(fullCs.getTagsStr());
-						List<FileStatus> list = fullCs.getChangedFiles();
-						changedFiles = list.toArray(new FileStatus[list.size()]);
-						if(changedFiles.length == 0){
-							changedFiles = EMPTY_CHANGE_PATHS;
-						}
-					}
-					synchronized(revToFiles){
-						if(!revToFiles.containsKey(rev)) {
-							revToFiles.put(rev, changedFiles);
-						}
-					}
-					if(disposed){
-						return;
-					}
-					Runnable refresh = new Runnable() {
-						public void run() {
-							if(!disposed && viewer != null) {
-								viewer.refresh();
-							}
-						}
-					};
-					Display.getDefault().asyncExec(refresh);
-				}
-			});
-			if(!disposed) {
-				page.getHistoryPage().scheduleInPage(pathJob);
-			}
+			Display.getDefault().asyncExec(refresh);
 		}
 
 		public void dispose() {

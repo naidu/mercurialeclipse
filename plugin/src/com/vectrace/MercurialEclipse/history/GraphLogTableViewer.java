@@ -89,7 +89,7 @@ public class GraphLogTableViewer extends TableViewer {
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
 		if (from != lastReqVersion && from >= 0 && mhp.getMercurialHistory().getLastVersion() > 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
-				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
+				MercurialHistoryPage.RefreshMercurialHistoryJob refreshJob = mhp.new RefreshMercurialHistoryJob(
 						from);
 				refreshJob.addJobChangeListener(new JobChangeAdapter() {
 					@Override

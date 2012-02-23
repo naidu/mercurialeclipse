@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.utils;
 import junit.framework.TestCase;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.DumbChangeSet;
 
 /**
  * Tests for {@link ChangeSetUtils}.
@@ -27,16 +28,16 @@ public class ChangeSetUtilsTest extends TestCase {
 	public void testGetPrintableTagsString() {
 		assertEquals("no changeset", "", ChangeSetUtils.getPrintableTagsString(null));
 
-		ChangeSet changeSet = new ChangeSet.Builder(0, "a", "b", "c", "d", null).build();
+		ChangeSet changeSet = new DumbChangeSet.Builder(0, "a", "b", "c", "d", null).build();
 		assertEquals("changeset without tags", "", ChangeSetUtils.getPrintableTagsString(changeSet));
 
-		changeSet = new ChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1").build();
+		changeSet = new DumbChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1").build();
 		assertEquals("changeset with one tag", "tag1", ChangeSetUtils.getPrintableTagsString(changeSet));
 
-		changeSet = new ChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1_,_tag2").build();
+		changeSet = new DumbChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1_,_tag2").build();
 		assertEquals("changeset with two tags", "tag1, tag2", ChangeSetUtils.getPrintableTagsString(changeSet));
 
-		changeSet = new ChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1_,_tag2_,_tag3").build();
+		changeSet = new DumbChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1_,_tag2_,_tag3").build();
 		assertEquals("changeset with three tags", "tag1, tag2, tag3", ChangeSetUtils.getPrintableTagsString(changeSet));
 	}
 
@@ -46,10 +47,10 @@ public class ChangeSetUtilsTest extends TestCase {
 	public void testGetPrintableRevisionShort() {
 		assertEquals("no changeset", "", ChangeSetUtils.getPrintableRevisionShort(null));
 
-		ChangeSet changeSet = new ChangeSet.Builder(1, "a", "b", "c", "d", null).build();
+		ChangeSet changeSet = new DumbChangeSet.Builder(1, "a", "b", "c", "d", null).build();
 		assertEquals("changeset without short revision", "1", ChangeSetUtils.getPrintableRevisionShort(changeSet));
 
-		changeSet = new ChangeSet.Builder(1, "a", "b", "c", "d", null).nodeShort("cafebeef").build();
+		changeSet = new DumbChangeSet.Builder(1, "a", "b", "c", "d", null).nodeShort("cafebeef").build();
 		assertEquals("changeset with short revision", "1:cafebeef", ChangeSetUtils.getPrintableRevisionShort(changeSet));
 	}
 }

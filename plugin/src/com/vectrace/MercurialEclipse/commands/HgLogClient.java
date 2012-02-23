@@ -22,20 +22,17 @@ import java.util.Set;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.flags.HeadsCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.history.MercurialHistory;
-import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -70,12 +67,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * /**
+	 * Helper method to transform JavaHg changesets into normal changesets
+	 */
+	public static ChangeSet getChangeSet(HgRoot root, Changeset cs, IHgRepositoryLocation remote,
+			Direction direction, File bundle) {
+		return new JHgChangeSet(root, cs, remote, direction, bundle);
+	}
+
+	/**
 	 * Helper method to transform JavaHg changesets into normal changesets
 	 */
 	public static ChangeSet getChangeSet(HgRoot root, Changeset cs) {
-		return new ChangeSet.Builder(cs.getRevision(), cs.getNode(), cs.getBranch(), cs
-				.getTimestamp().getHgString() /*TODO*/, cs.getUser(), root).description(cs.getMessage()).build();
+		return new JHgChangeSet(root, cs, null, null, null);
 	}
 
 	/**
@@ -228,109 +231,6 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 	private static void setLimit(AbstractShellCommand command, int limitNumber) {
 		command.addOptions("--limit", (limitNumber > 0) ? limitNumber + "" : NOLIMIT); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	/**
-	 * This method modifies given revision: it may change the revision's parent file
-	 *
-	 * @param rev non null
-	 * @param history non null
-	 * @param monitor non null
-	 * @return may return null
-	 */
-	public static ChangeSet getLogWithBranchInfo(MercurialRevision rev,
-			MercurialHistory history, IProgressMonitor monitor) throws HgException {
-		ChangeSet changeSet = rev.getChangeSet();
-		IResource resource = rev.getResource();
-		int limitNumber = 1;
-		Map<IPath, Set<ChangeSet>> map;
-		if(resource instanceof HgRootContainer) {
-			map = getRootLog(((HgRootContainer) resource).getHgRoot(), limitNumber, changeSet
-					.getChangesetIndex(), true);
-		} else {
-			map = getProjectLog(resource, limitNumber, changeSet.getChangesetIndex(), true);
-		}
-
-		IPath location = ResourceUtils.getPath(resource);
-		if(location.isEmpty()) {
-			return null;
-		}
-		if(!map.isEmpty()) {
-			return Collections.min(map.get(location));
-		}
-		File possibleParent = rev.getParent();
-		MercurialRevision next = rev;
-		if(possibleParent == null && !monitor.isCanceled()){
-			HgRoot hgRoot = changeSet.getHgRoot();
-			File file = location.toFile();
-
-			// try first to guess the parent (and avoid the while loop below), see issue #10302
-			possibleParent = HgStatusClient.guessPossibleSourcePath(hgRoot, file, rev.getRevision());
-			if(possibleParent != null && !possibleParent.equals(location.toFile())){
-				// got different parent, may be it's the right one?
-				// validate if the possible parent IS the parent for this version
-				map = getPathLog(resource.getType() == IResource.FILE,
-						possibleParent, hgRoot, limitNumber, rev.getRevision(), true);
-			}
-
-			// go up one revision step by step, looking for the fist time "branch" occurence
-			// this may take a long time...
-			while(map.isEmpty() && (next = history.getNext(next)) != null && !monitor.isCanceled()){
-				if(next.getParent() == null) {
-					int revision = next.getRevision();
-					possibleParent = HgStatusClient.getPossibleSourcePath(hgRoot, file, revision);
-				} else {
-					possibleParent = next.getParent();
-				}
-				if(possibleParent != null){
-					// validate if the possible parent IS the parent for this version
-					map = getPathLog(resource.getType() == IResource.FILE,
-							possibleParent, hgRoot, limitNumber, rev.getRevision(), true);
-					if(!map.isEmpty()) {
-						// bingo, log is not null
-						break;
-					}
-					// see issue 10302: file seems to be copied/renamed multiple times
-					// restart the search from the beginning with the newly obtained path
-					// if it is different to the original one
-					if(possibleParent.equals(location.toFile())){
-						// give up
-						possibleParent = null;
-						break;
-					}
-					// restart
-					next = rev;
-					file = possibleParent;
-				}
-			}
-
-			if(monitor.isCanceled()){
-				return null;
-			}
-
-			// remember parent for all visited versions
-			if(possibleParent != null) {
-				while(next != rev && (next = history.getPrev(next)) != rev){
-					if(next == null) {
-						break;
-					}
-					next.setParent(possibleParent);
-				}
-			}
-		}
-
-		if(possibleParent != null){
-			rev.setParent(possibleParent);
-			if(map.isEmpty() && !monitor.isCanceled()) {
-				map = getPathLog(resource.getType() == IResource.FILE,
-						possibleParent, MercurialTeamProvider.getHgRoot(resource),
-						limitNumber, rev.getRevision(), true);
-			}
-			if(!map.isEmpty()) {
-				return Collections.min(map.get(new Path(possibleParent.getAbsolutePath())));
-			}
-		}
-		return null;
 	}
 
 	public static ChangeSet getChangeset(IResource res, String nodeId,

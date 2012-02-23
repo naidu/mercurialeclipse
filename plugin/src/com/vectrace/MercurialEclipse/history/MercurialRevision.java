@@ -14,7 +14,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,12 +24,10 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
@@ -43,7 +40,6 @@ import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 /**
  * @author zingo
@@ -54,11 +50,10 @@ public class MercurialRevision extends FileRevision implements IHgResource {
 	private final ChangeSet changeSet;
 
 	/** Cached data */
-	private MercurialRevisionStorage mercurialRevisionStorage;
+	private HgFile mercurialRevisionStorage;
 	private final GChangeSet gChangeSet;
 	private final int revision;
 	private final Signature signature;
-	private File parent;
 
 	/**
 	 * Tags sorted by revision
@@ -254,24 +249,8 @@ public class MercurialRevision extends FileRevision implements IHgResource {
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
 		if (mercurialRevisionStorage == null) {
-			if(!resource.exists()) {
-				if (parent != null) {
-					IFile parentRes =  ResourcesPlugin.getWorkspace().getRoot()
-						.getFileForLocation(new Path(parent.getAbsolutePath()));
-					mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
-							revision, getContentIdentifier(), changeSet);
-				} else if(resource instanceof IFile ){
-					HgRoot hgRoot = changeSet.getHgRoot();
-					HgFile hgFile = new HgFile(hgRoot, changeSet, (IFile)resource);
-					return hgFile;
-				}
-			} else {
-				if(resource instanceof IFile){
-
-					mercurialRevisionStorage = new MercurialRevisionStorage((IFile) resource,
-							revision, getContentIdentifier(), changeSet);
-					mercurialRevisionStorage.setParent(parent);
-				}
+			if(resource instanceof IFile) {
+				mercurialRevisionStorage = new HgFile(changeSet, (IFile)resource);
 			}
 		}
 		return mercurialRevisionStorage;
@@ -303,21 +282,6 @@ public class MercurialRevision extends FileRevision implements IHgResource {
 	}
 
 	/**
-	 * @return the possible parent (after the copy or rename operation), may be null
-	 */
-	public File getParent() {
-		return parent;
-	}
-
-	/**
-	 * @param parent the possible parent (after the copy or rename operation)
-	 */
-	public void setParent(File parent) {
-		this.parent = parent;
-	}
-
-	/**
-	 *
 	 * @return true, if the resource represented by this revision is file
 	 */
 	@DoNotDisplayMe
@@ -346,10 +310,6 @@ public class MercurialRevision extends FileRevision implements IHgResource {
 		if (gChangeSet != null) {
 			builder.append("gChangeSet="); //$NON-NLS-1$
 			builder.append(gChangeSet);
-		}
-		if (parent != null) {
-			builder.append("parent="); //$NON-NLS-1$
-			builder.append(parent);
 		}
 		if (tags != null) {
 			builder.append("tags="); //$NON-NLS-1$

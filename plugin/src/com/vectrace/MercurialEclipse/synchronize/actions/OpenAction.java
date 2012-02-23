@@ -35,7 +35,7 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
+import com.vectrace.MercurialEclipse.model.DumbChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
@@ -167,7 +167,7 @@ public class OpenAction extends Action {
 							}
 						}
 						if(parentCs == null) {
-							parentCs = new ParentChangeSet(parentId, cs);
+							parentCs = new DumbChangeSet.ParentChangeSet(parentId, cs);
 						}
 						parentRev = new MercurialRevisionStorage(
 								parentFile, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);

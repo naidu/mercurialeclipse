@@ -143,7 +143,7 @@ public class HgCommand extends AbstractShellCommand {
 	 * @return non null string with escaped quotes (depending on the OS)
 	 */
 	private static String quote(String str) {
-		if (!MercurialUtilities.isWindows()) {
+		if (!MercurialUtilities.isWindows() || str == null) {
 			return str;
 		}
 		// escape quotes, otherwise commit will fail at least on windows

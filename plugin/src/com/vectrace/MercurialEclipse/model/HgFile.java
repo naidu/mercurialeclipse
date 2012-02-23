@@ -51,13 +51,13 @@ public class HgFile extends HgResource implements IHgFile {
 		super(hgRoot, file);
 	}
 
-	/**
-	 * @param hgRoot
-	 * @param changeSet
-	 * @param file
-	 */
 	public HgFile(HgRoot hgRoot, ChangeSet changeSet, IFile file) {
 		super(hgRoot, file);
+		changeset = changeSet;
+	}
+
+	public HgFile(ChangeSet changeSet, IFile file) {
+		super(changeSet.getHgRoot(), file);
 		changeset = changeSet;
 	}
 
