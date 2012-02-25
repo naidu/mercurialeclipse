@@ -352,8 +352,9 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 		if (changedFiles == null) {
 			List<FileStatus> l = new ArrayList<FileStatus>();
 
-			StatusResult res = StatusCommandFlags.on(hgRoot.getRepository()).rev(getRevision().getChangeset()).added().modified()
-					.deleted().removed().copies().execute();
+			StatusResult res = StatusCommandFlags.on(hgRoot.getRepository())
+					.rev(getParentRevision(0).getChangeset(), getRevision().getChangeset()).added()
+					.modified().deleted().removed().copies().execute();
 
 			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
 				l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
