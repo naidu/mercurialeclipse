@@ -64,7 +64,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 
 	public static final Date UNKNOWN_DATE = new Date(0);
 
-	private List<FileStatus> changedFiles;
+	protected List<FileStatus> changedFiles;
 
 	private Set<IFile> files;
 
@@ -91,6 +91,41 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 
 	public abstract String getChangeset();
 
+	/**
+	 * Returns index:nodeId
+	 *
+	 * @see org.eclipse.team.internal.core.subscribers.ChangeSet#getName()
+	 */
+	@Override
+	public final String getName() {
+		return super.getName();
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.core.subscribers.ChangeSet#setName(java.lang.String)
+	 */
+	@Override
+	protected void setName(String name) {
+		super.setName(name);
+	}
+
+	/**
+	 * @see org.eclipse.team.internal.core.subscribers.ChangeSet#getComment()
+	 */
+	@Override
+	public abstract String getComment();
+
+	/**
+	 * @see org.eclipse.team.internal.core.subscribers.CheckedInChangeSet#getAuthor()
+	 */
+	@Override
+	public abstract String getAuthor();
+
+	/**
+	 * @see org.eclipse.team.internal.core.subscribers.CheckedInChangeSet#getDate()
+	 */
+	@Override
+	public abstract Date getDate();
 
 	/**
 	 * @return not modifiable set of files changed/added/removed in this changeset, never null. The

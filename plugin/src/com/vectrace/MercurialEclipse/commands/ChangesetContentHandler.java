@@ -44,7 +44,9 @@ import com.vectrace.MercurialEclipse.utils.BranchUtils;
  * objects.
  *
  * @author Bastian Doetsch
+ * @deprecated
  */
+@Deprecated
 final class ChangesetContentHandler implements ContentHandler {
 
 	private static final String[] EMPTY = new String[0];

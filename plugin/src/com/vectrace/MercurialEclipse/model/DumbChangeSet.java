@@ -36,7 +36,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
-@SuppressWarnings("restriction")
+/**
+ * @deprecated
+ */
+@Deprecated
 public class DumbChangeSet extends ChangeSet {
 
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
@@ -50,7 +53,6 @@ public class DumbChangeSet extends ChangeSet {
 	private final String user;
 	private final String date;
 	private String tagsStr;
-	private List<FileStatus> changedFiles;
 	private String comment;
 	private String nodeShort;
 	private String[] parents;
@@ -413,13 +415,5 @@ public class DumbChangeSet extends ChangeSet {
 	@Override
 	public Date getDate() {
 		return getRealDate();
-	}
-
-	/**
-	 * Returns index:fullchangesetid pair
-	 */
-	@Override
-	public String getName() {
-		return super.getName();
 	}
 }

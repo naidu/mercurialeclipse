@@ -13,10 +13,8 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.dialogs.IPageChangingListener;
 import org.eclipse.jface.dialogs.PageChangingEvent;
 import org.eclipse.jface.wizard.IWizardContainer;
@@ -37,11 +35,12 @@ import com.vectrace.MercurialEclipse.operations.UpdateOperation;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
 import com.vectrace.MercurialEclipse.storage.RootDataLoader;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * The page allows to choose the working directory version (revision/tag/head/branch/bookmark)
- * during the clone repository operation, after cloning te remote repository to the local disk, but
+ * during the clone repository operation, after cloning the remote repository to the local disk, but
  * before updating working directory to selected version.
  *
  * @author Andrei
@@ -201,10 +200,13 @@ public class SelectRevisionPage extends WizardPage {
 		return false;
 	}
 
-
 	private boolean validateVersion(String revision) {
-		// TODO Auto-generated method stub
-		return true;
+		try {
+			return LocalChangesetCache.getInstance().get(hgRoot, revision) != null;
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
 	}
 
 	/**
@@ -228,8 +230,8 @@ public class SelectRevisionPage extends WizardPage {
 		if(noRevSpecified){
 			// take latest available changeset
 			// lookup one (latest) revision only
-			Map<IPath, Set<ChangeSet>> log = HgLogClient.getRootLog(hgRoot, 1, -1, false);
-			Set<ChangeSet> set = log.get(hgRoot.getIPath());
+			List<ChangeSet> set = HgLogClient.getRootLog(hgRoot, 1, -1);
+
 			if(set == null || set.isEmpty()){
 				return false;
 			}

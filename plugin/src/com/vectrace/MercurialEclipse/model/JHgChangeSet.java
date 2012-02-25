@@ -145,6 +145,10 @@ public class JHgChangeSet extends ChangeSet {
 	 */
 	@Override
 	public String[] getParents() {
+		if (changeset.getParent1() == null) {
+			return new String[0];
+		}
+
 		if (changeset.getParent2() == null) {
 			return new String[] { changeset.getParent1().getNode() };
 		}
@@ -196,7 +200,7 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see org.eclipse.team.internal.core.subscribers.CheckedInChangeSet#getAuthor()
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getAuthor()
 	 */
 	@Override
 	public String getAuthor() {
@@ -204,7 +208,7 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see org.eclipse.team.internal.core.subscribers.CheckedInChangeSet#getDate()
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getDate()
 	 */
 	@Override
 	public Date getDate() {
@@ -212,7 +216,7 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see org.eclipse.team.internal.core.subscribers.ChangeSet#getComment()
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getComment()
 	 */
 	@Override
 	public String getComment() {

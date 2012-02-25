@@ -105,11 +105,11 @@ public class CompareAction extends SingleResourceAction {
 				try {
 					String[] parents = HgParentClient.getParentNodeIds(resource);
 					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
-					ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(root, parents[0]);
+					ChangeSet cs = LocalChangesetCache.getInstance().get(root, parents[0]);
 					if (cs == null) {
 						// refetch cache and try again
 						LocalChangesetCache.getInstance().fetchRevisions(root, false, 0, 0, false);
-						cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(root, parents[0]);
+						cs = LocalChangesetCache.getInstance().get(root, parents[0]);
 					}
 
 					if (cs != null) {

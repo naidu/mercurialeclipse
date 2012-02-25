@@ -38,7 +38,7 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 
 		LocalChangesetCache cache = LocalChangesetCache.getInstance();
 
-		this.changeset = cache.getOrFetchChangeSetById(root, changeset);
+		this.changeset = cache.get(root, changeset);
 
 		Assert.isNotNull(this.changeset);
 	}

@@ -291,7 +291,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			try {
 				mercurialHistory.refresh(monitor, from);
 				if(resource != null) {
-					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRoot(resource);
 				} else {
 					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 				}

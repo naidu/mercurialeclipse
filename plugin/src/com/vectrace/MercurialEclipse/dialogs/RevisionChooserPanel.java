@@ -183,7 +183,7 @@ public class RevisionChooserPanel extends Composite {
 
 				String changeSetId = proposal.getContent().split(" ", 2)[0]; //$NON-NLS-1$
 				try {
-					data.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(
+					data.changeSet = LocalChangesetCache.getInstance().get(
 							dataLoader.getHgRoot(), changeSetId);
 				} catch (HgException e) {
 					data.changeSet = null;
@@ -229,23 +229,12 @@ public class RevisionChooserPanel extends Composite {
 			HgRoot hgRoot = dataLoader.getHgRoot();
 			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
-				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getChangeset());
-				} catch (HgException ex) {
-					logError(
-							Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-									tag.getChangeset().getRevision(), tag.getChangeset().getNode()), ex);
-				}
+				data.changeSet = localCache.get(hgRoot, tag.getChangeset());
 			} else if(branch != null) {
-				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getBranchTip());
-				} catch (HgException ex) {
-					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-							branch.getBranchTip().getRevision(), branch.getBranchTip().getNode()), ex);
-				}
+				data.changeSet = localCache.get(hgRoot, branch.getBranchTip());
 			} else if (bookmark != null) {
 				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, bookmark.getRevision()
+					data.changeSet = localCache.get(hgRoot, bookmark.getRevision()
 							+ ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",

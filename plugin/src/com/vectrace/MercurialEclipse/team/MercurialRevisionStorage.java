@@ -90,7 +90,7 @@ public class MercurialRevisionStorage implements IHgFile {
 		resource = res;
 		try {
 			if(changeset != null) {
-				this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, changeset);
+				this.changeSet = LocalChangesetCache.getInstance().get(res, changeset);
 			}
 			if(changeSet != null){
 				this.revision = changeSet.getChangesetIndex();
@@ -132,7 +132,7 @@ public class MercurialRevisionStorage implements IHgFile {
 		this.resource = res;
 		ChangeSet cs = null;
 		try {
-			cs = LocalChangesetCache.getInstance().getChangesetByRootId(res);
+			cs = LocalChangesetCache.getInstance().getChangesetByRoot(res);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -151,7 +151,9 @@ public class MercurialRevisionStorage implements IHgFile {
 		this.parent = parent;
 	}
 
-	@SuppressWarnings("rawtypes")
+	/**
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
 	public Object getAdapter(Class adapter) {
 		if (adapter.equals(IResource.class)) {
 			return resource;
@@ -313,7 +315,7 @@ public class MercurialRevisionStorage implements IHgFile {
 			if (!localKnown) {
 				return;
 			}
-			this.changeSet = cache.getOrFetchChangeSetById(res, String.valueOf(rev));
+			this.changeSet = cache.get(res, String.valueOf(rev));
 			if (changeSet != null) {
 				this.revision = changeSet.getChangesetIndex();
 				this.global = changeSet.getChangeset();

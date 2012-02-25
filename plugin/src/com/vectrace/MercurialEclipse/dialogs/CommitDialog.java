@@ -19,12 +19,10 @@ package com.vectrace.MercurialEclipse.dialogs;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -72,7 +70,6 @@ import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -339,14 +336,7 @@ public class CommitDialog extends TitleAreaDialog {
 		amendCheckbox.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				if (amendCheckbox.getSelection() && currentChangeset != null) {
-					try {
-						openSash();
-					} catch (HgException e1) {
-						setErrorMessage("Cannot amend.");
-						closeSash();
-						amendCheckbox.setSelection(false);
-						amendCheckbox.setEnabled(false);
-					}
+					openSash();
 				} else {
 					closeSash();
 				}
@@ -516,9 +506,6 @@ public class CommitDialog extends TitleAreaDialog {
 					setErrorMessage(Messages.getString("CommitDialog.amendingOnlyForOneRoot"));
 					return;
 				}
-
-				// load additional changeset information (files, parents)
-				updateChangeset(pm);
 
 				// only proceed if files are present
 				if (currentChangeset.getChangedFiles().isEmpty()) {
@@ -792,7 +779,7 @@ public class CommitDialog extends TitleAreaDialog {
 		return user;
 	}
 
-	private void openSash() throws HgException {
+	private void openSash() {
 		IProgressMonitor pm = this.monitor;
 		monitor.setVisible(true);
 		pm.beginTask("Loading amend data.", 2);
@@ -805,8 +792,6 @@ public class CommitDialog extends TitleAreaDialog {
 			amendCheckbox.setSelection(false);
 		}
 
-		// determine current changeset
-		updateChangeset(pm);
 		pm.done();
 		monitor.setVisible(false);
 
@@ -853,22 +838,6 @@ public class CommitDialog extends TitleAreaDialog {
 			}
 		});
 		this.tray = t;
-	}
-
-	private void updateChangeset(IProgressMonitor pm) throws HgException {
-		if (!currentChangeset.getChangedFiles().isEmpty()) {
-			// no update necessary
-			return;
-		}
-		int startRev = currentChangeset.getChangesetIndex();
-
-		// update to get file status information
-		Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev, true);
-		pm.worked(1);
-		if (!changesets.isEmpty()) {
-			currentChangeset = changesets.get(root.getIPath()).iterator().next();
-			pm.worked(1);
-		}
 	}
 
 	private void closeSash() {
