@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.xml.sax.InputSource;
@@ -34,10 +33,8 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset objects.
@@ -141,31 +138,6 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 		}
 	}
 
-	/**
-	 * Parse log output into a set of changesets.
-	 * <p>
-	 * Format of input is defined in the two style files in /styles directory
-	 *
-	 * @param input
-	 *            output from the hg log command
-	 * @param direction
-	 *            Incoming, Outgoing or Local changesets
-	 * @param repository
-	 * @param bundleFile
-	 * @return map where the key is an absolute file path, never null
-	 * @throws HgException
-	 */
-	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(
-			IResource res, String input,
-			Direction direction, IHgRepositoryLocation repository,
-			File bundleFile, String branch) throws HgException {
-
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
-		IPath path = ResourceUtils.getPath(res);
-
-		return createLocalRevisions(path, input, direction, repository, bundleFile, branch, hgRoot);
-	}
-
 	protected static RemoteData createRemoteRevisions(RemoteKey key, String input,
 			Direction direction, File bundleFile)
 			throws HgException {
@@ -186,7 +158,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @return map where the key is an absolute file path, never null
 	 * @throws HgException
 	 */
-	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(IPath path, String input,
+	private static Map<IPath, Set<ChangeSet>> createLocalRevisions(IPath path, String input,
 			Direction direction, IHgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
