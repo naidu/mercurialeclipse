@@ -55,21 +55,27 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 			.unmodifiableList(new ArrayList<FileStatus>());
 	private final IFile[] EMPTY_FILES = new IFile[0];
 
+	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
+			"yyyy-MM-dd HH:mm");
+
+	protected static final Date UNKNOWN_DATE = new Date(0);
+
 	public static enum Direction {
 		INCOMING, OUTGOING, LOCAL;
 	}
 
-	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(
-			"yyyy-MM-dd HH:mm");
-
-	public static final Date UNKNOWN_DATE = new Date(0);
+	// .. cached data
 
 	protected List<FileStatus> changedFiles;
 
 	private Set<IFile> files;
 
+	// constructor
+
 	public ChangeSet() {
 	}
+
+	// operations
 
 	public int compareTo(ChangeSet o) {
 		if (o.getChangeset().equals(this.getChangeset())) {

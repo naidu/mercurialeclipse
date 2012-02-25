@@ -16,6 +16,7 @@ import org.eclipse.team.core.history.ITag;
 
 import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 
 /**
  * @author Bastian
@@ -82,32 +83,46 @@ public class Tag implements ITag, Comparable<Tag> {
 		return tag.toString();
 	}
 
-	public int compareTo(Tag tag) {
+	public int compareTo(Tag other) {
 		/* "tip" must be always the first in the collection */
-		if (tag == null || getName() == null || isTip()) {
+		if (other == null || getName() == null || isTip()) {
 			return -1;
 		}
 
-		if (tag.isTip()) {
+		if (other.isTip()) {
 			return 1;
 		}
 
-		int cmp = tag.getRevision() - getRevision();
+		int cmp = other.getRevision() - getRevision();
 		if(cmp != 0){
 			// sort by revision first
 			return cmp;
 		}
 
 		// sort by name
-		cmp = getName().compareToIgnoreCase(tag.getName());
+		cmp = getName().compareToIgnoreCase(other.getName());
 		if (cmp == 0) {
 			// Check it case sensitive
-			cmp = getName().compareTo(tag.getName());
+			cmp = getName().compareTo(other.getName());
 		}
 		return cmp;
 	}
 
 	public boolean isTip(){
 		return TIP.equals(getName());
+	}
+
+	public static Tag makeLight(String name, Changeset cs) {
+		return new Tag(new com.aragost.javahg.commands.Tag(name, cs, false)) {
+			/**
+			 * @see com.vectrace.MercurialEclipse.model.Tag#isLocal()
+			 */
+			@Override
+			@DoNotDisplayMe
+			public boolean isLocal() {
+				// TODO query for actual data
+				throw new UnsupportedOperationException();
+			}
+		};
 	}
 }

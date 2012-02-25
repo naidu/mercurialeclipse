@@ -12,10 +12,10 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
 
 import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.commands.HgTagClient;
 
 /**
  * Changeset backed by a JavaHg changeset
@@ -79,17 +79,6 @@ public class JHgChangeSet extends ChangeSet {
 	@Override
 	public String getChangeset() {
 		return changeset.getNode();
-	}
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getTags()
-	 */
-	@Override
-	public Tag[] getTags() {
-		if (tags == null) {
-			tags = HgTagClient.getTags(hgRoot, changeset.tags());
-		}
-		return tags;
 	}
 
 	/**
@@ -189,6 +178,20 @@ public class JHgChangeSet extends ChangeSet {
 			b.append(',');
 		}
 		return b.length() == 0 ? "" : b.substring(0, b.length() - 1);
+	}
+
+	@Override
+	public final Tag[] getTags() {
+		if (tags == null) {
+			List<String> tagNames = changeset.tags();
+
+			tags = new Tag[tagNames.size()];
+
+			for (int i = 0; i < tags.length; i++) {
+				tags[i] = Tag.makeLight(tagNames.get(i), changeset);
+			}
+		}
+		return tags;
 	}
 
 	/**
