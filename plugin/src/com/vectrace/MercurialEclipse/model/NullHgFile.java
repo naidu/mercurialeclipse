@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author Ge Zhong
@@ -28,12 +29,12 @@ public class NullHgFile extends HgFile {
 		super(hgRoot, changeset, path);
 	}
 
-	public NullHgFile(HgRoot hgRoot, String revision, IPath path) {
+	public NullHgFile(HgRoot hgRoot, String revision, IPath path) throws HgException {
  		super(hgRoot, revision, path);
  	}
 
-	public NullHgFile(HgRoot hgRoot, IFile file) {
- 		super(hgRoot, HgIdentClient.VERSION_ZERO, file);
+	public NullHgFile(HgRoot hgRoot, IFile file) throws HgException {
+ 		super(hgRoot, HgIdentClient.VERSION_ZERO, hgRoot.getRelativePath(file));
  	}
 
 	@Override

@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.aragost.javahg.Repository;
@@ -305,8 +306,19 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		return projectAdapter;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgRepositoryLocation#toHgRoot()
+	 */
 	public HgRoot toHgRoot() {
 		return this;
 	}
 
+	/**
+	 * Helper method to get root relative path for a resource under this root
+	 * @param res The resource to query
+	 * @return The root relative path
+	 */
+	public IPath getRelativePath(IResource res) {
+		return ResourceUtils.getPath(res).makeRelativeTo(getIPath());
+	}
 }

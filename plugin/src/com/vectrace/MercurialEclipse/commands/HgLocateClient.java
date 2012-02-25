@@ -13,9 +13,6 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.IOException;
 import java.util.SortedSet;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -23,14 +20,14 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
+import com.vectrace.MercurialEclipse.model.HgRevisionResource;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Ge Zhong
@@ -38,19 +35,16 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class HgLocateClient extends AbstractClient {
 
-	public static IHgResource getHgResources(IResource resource, ChangeSet cs, SortedSet<String> filter) throws HgException {
-
-		HgRoot hgRoot = getHgRoot(resource);
-		if (cs == null) {
-			// local resource
-			if (resource instanceof IFile) {
-				return new HgFile(hgRoot, (IFile)resource);
-			}
-			if (resource instanceof IContainer) {
-				return new HgFolder(hgRoot, (IContainer)resource, filter);
-			}
-			return null;
-		}
+	/**
+	 * Get the {@link HgRevisionResource} for the given resource at the given changeset
+	 *
+	 * @param resource The resource to use
+	 * @param cs The changeset to use
+	 * @param filter Optional filter
+	 * @return The revision resource or a NullHgFile if it couldn't be located
+	 * @throws HgException
+	 */
+	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file, ChangeSet cs, SortedSet<String> filter) throws HgException {
 
 		String revision = cs.getChangeset();
 		HgCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
@@ -67,9 +61,7 @@ public class HgLocateClient extends AbstractClient {
 			command.addOptions("-r", revision); //$NON-NLS-1$
 		}
 
-		IPath relpath = ResourceUtils.getPath(resource).makeRelativeTo(hgRoot.getIPath());
-
-		command.addOptions(getHgResourceSearchPattern(resource));
+		command.addOptions(getHgResourceSearchPattern(hgRoot, relpath, file));
 
 		String[] lines = null;
 		try {
@@ -78,7 +70,7 @@ public class HgLocateClient extends AbstractClient {
 			// it is normal that the resource does not exist.
 		}
 
-		if (resource instanceof IStorage) {
+		if (file) {
 			if (lines == null || lines.length == 0) {
 				return new NullHgFile(hgRoot, cs, relpath);
 			}
@@ -90,7 +82,7 @@ public class HgLocateClient extends AbstractClient {
 		return new HgFolder(hgRoot, cs, relpath, lines, filter);
 	}
 
-	public static IHgResource getHgResources(IHgResource hgResource, String revision, SortedSet<String> filter) {
+	public static IHgResource getHgResources(IHgResource hgResource, String revision, SortedSet<String> filter) throws HgException {
 		HgRoot hgRoot = hgResource.getHgRoot();
 		AbstractShellCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
 
@@ -121,8 +113,11 @@ public class HgLocateClient extends AbstractClient {
 			}
 		}
 
-		return new HgFolder(hgRoot, revision, hgResource.getIPath(), lines, filter);
-
-
+		try {
+			return new HgFolder(hgRoot, revision, hgResource.getIPath(), lines, filter);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
 	}
 }

@@ -22,7 +22,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
@@ -39,12 +38,12 @@ public class CompareWithParentDelegate implements IObjectActionDelegate {
 			return;
 		}
 		ChangeSet cs = fileFromChangeSet.getChangeset();
-		MercurialRevisionStorage left = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
+		HgFile left = fileFromChangeSet.toHgFile();
 
 		try {
 			HgFile right = MercurialUtilities.getParentRevision(cs, fileFromChangeSet.getFile());
 
-			CompareUtils.openEditor(left, right, false);
+			CompareUtils.openEditor(left, right, false, null);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);

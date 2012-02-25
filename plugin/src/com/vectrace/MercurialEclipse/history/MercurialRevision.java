@@ -36,7 +36,10 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IResourceHolder;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
@@ -44,13 +47,13 @@ import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 /**
  * @author zingo
  */
-public class MercurialRevision extends FileRevision implements IHgResource {
+public class MercurialRevision extends FileRevision implements IHgResource, IChangeSetHolder, IResourceHolder {
 
 	private final IResource resource;
 	private final ChangeSet changeSet;
 
 	/** Cached data */
-	private HgFile mercurialRevisionStorage;
+	private IHgFile mercurialRevisionStorage;
 	private final GChangeSet gChangeSet;
 	private final int revision;
 	private final Signature signature;
@@ -250,7 +253,8 @@ public class MercurialRevision extends FileRevision implements IHgResource {
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
 		if (mercurialRevisionStorage == null) {
 			if(resource instanceof IFile) {
-				mercurialRevisionStorage = new HgFile(changeSet, (IFile)resource);
+				mercurialRevisionStorage = new HgFile(changeSet.getHgRoot(), changeSet, changeSet
+						.getHgRoot().getRelativePath(resource));
 			}
 		}
 		return mercurialRevisionStorage;

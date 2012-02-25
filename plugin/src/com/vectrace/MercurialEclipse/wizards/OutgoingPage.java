@@ -30,13 +30,10 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -105,34 +102,12 @@ public class OutgoingPage extends IncomingPage {
 			IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 
 			if (file != null) {
-				// See issue #10249: Push/Pull diff problem on outgoing/incoming stage
-				// This doesn't work here (seems to work only for incoming? or should be fixed there too?)
-				// CompareUtils.openEditor(file, cs, true, true);
-				MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
-				MercurialRevisionStorage parentRev;
-				String[] parents = cs.getParents();
-				if(parents.length == 0){
-					// TODO for some reason, we do not always have right parent info in the changesets
-					// if we are on the different branch then the changeset. So simply enforce the parents resolving
-					try {
-						parents = HgParentClient.getParentNodeIds(file, cs);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
+				try {
+					CompareUtils.openCompareWithParentEditor(cs, file, true, null);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+					MercurialEclipsePlugin.showError(e);
 				}
-
-				if(cs.getRevision().getRevision() == 0 || parents.length == 0){
-					parentRev = new NullRevision(file, cs);
-
-				} else if(clickedFileStatus.isCopied()){
-					IPath fileCopySrcPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativeCopySourcePath());
-					IFile copySrc = ResourceUtils.getFileHandle(fileCopySrcPath);
-					parentRev = new MercurialRevisionStorage(copySrc, parents[0]);
-
-				}else{
-					parentRev = new MercurialRevisionStorage(file, parents[0]);
-				}
-				CompareUtils.openEditor(thisRev, parentRev, true);
 			} else {
 				// It is possible that file has been removed or part of the
 				// repository but not the project (and has incoming changes)

@@ -15,9 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
@@ -25,13 +22,12 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Ge Zhong
  *
  */
-public class HgFile extends HgResource implements IHgFile {
+public class HgFile extends HgRevisionResource implements IHgFile {
 
 	protected static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
@@ -39,45 +35,23 @@ public class HgFile extends HgResource implements IHgFile {
 	 * @param hgRoot
 	 * @param changeset global changeset id
 	 * @param path relative path to HgRoot
+	 * @throws HgException
 	 */
-	public HgFile(HgRoot hgRoot, String changeset, IPath path) {
+	public HgFile(HgRoot hgRoot, String changeset, IPath path) throws HgException {
 		super(hgRoot, changeset, path);
-	}
-
-	public HgFile(HgRoot hgRoot, String changeset, IFile file) {
-		this(hgRoot, changeset, hgRoot.toRelative(ResourceUtils.getPath(file)));
 	}
 
 	public HgFile(HgRoot hgRoot, ChangeSet changeset, IPath path) {
 		super(hgRoot, changeset, path);
 	}
 
-	public HgFile(HgRoot hgRoot, IFile file) {
-		super(hgRoot, file);
-	}
-
-	public HgFile(HgRoot hgRoot, ChangeSet changeSet, IFile file) {
-		super(hgRoot, file);
-		changeset = changeSet;
-	}
-
-	public HgFile(ChangeSet changeSet, IFile file) {
-		super(changeSet.getHgRoot(), file);
-		changeset = changeSet;
-	}
+	// operations
 
 	/**
 	 * @see com.vectrace.MercurialEclipse.model.IHgFile#getFileExtension()
 	 */
 	public String getFileExtension() {
 		return path.getFileExtension();
-	}
-
-	/**
-	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
-	 */
-	public String getCharset() throws CoreException {
-		return this.getHgRoot().getEncoding();
 	}
 
 	/**
@@ -93,23 +67,15 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	public IPath getFullPath() {
 		IPath p = this.getHgRoot().getIPath().append(path);
-		if (resource == null) {
-			String extension = p.getFileExtension();
-			String version = " [" + changeset.getChangesetIndex() + "]";
-			if(extension != null) {
-				version += "." + extension;
-			}
-			p = p.append(version);
-		}
-		return p;
-	}
 
-	@Override
-	public Object getAdapter(Class adapter) {
-		if(adapter == IResource.class) {
-			return getResource();
+		String extension = p.getFileExtension();
+		String version = " [" + changeset.getChangesetIndex() + "]";
+		if(extension != null) {
+			version += "." + extension;
 		}
-		return null;
+		p = p.append(version);
+
+		return p;
 	}
 
 	/**
@@ -117,29 +83,6 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	@Override
 	protected InputStream createStream() throws CoreException {
-		if (resource != null && resource.exists()) {
-			if (resource instanceof IStorage) {
-				InputStream is= null;
-				IStorage storage= (IStorage) resource;
-				try {
-					is= storage.getContents();
-				} catch (CoreException e) {
-					if (e.getStatus().getCode() == IResourceStatus.OUT_OF_SYNC_LOCAL) {
-						resource.refreshLocal(IResource.DEPTH_INFINITE, null);
-						is= storage.getContents();
-					} else {
-						// if the file is deleted or inaccessible
-						// log the error and return empty stream
-						MercurialEclipsePlugin.logError(e);
-					}
-				}
-				if (is != null) {
-					return is;
-				}
-			}
-			return EMPTY_STREAM;
-		}
-
 		byte[] result = null;
 		// Setup and run command
 		if (changeset.getDirection() == Direction.INCOMING && changeset.getBundleFile() != null) {
@@ -163,6 +106,14 @@ public class HgFile extends HgResource implements IHgFile {
 			return new ByteArrayInputStream(result);
 		}
 		return EMPTY_STREAM;
+	}
+
+	public static HgFile make(HgRoot root, IFile file, String cs) throws HgException {
+		return new HgFile(root, cs, root.getRelativePath(file));
+	}
+
+	public static HgFile make(ChangeSet cs, IFile file) {
+		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
 	}
 
 }

@@ -33,13 +33,13 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.MultiRule;
 
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IResourceHolder;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public abstract class HgResourceAdapter extends DummyResourceAdapter implements IHgResource {
+public abstract class HgResourceAdapter extends DummyResourceAdapter implements IHgResource, IResourceHolder {
 
 	private final File file;
 	private final IPath path;
@@ -253,10 +253,6 @@ public abstract class HgResourceAdapter extends DummyResourceAdapter implements 
 		}
 		HgResourceAdapter other = (HgResourceAdapter) obj;
 		return file.equals(other.file);
-	}
-
-	public ChangeSet getChangeSet() {
-		return null;
 	}
 
 	public IPath getIPath() {

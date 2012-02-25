@@ -419,7 +419,7 @@ public final class MercurialUtilities {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
-		return new HgFile(cs.getHgRoot(), parents[0], file);
+		return HgFile.make(cs.getHgRoot(), file, parents[0]);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {

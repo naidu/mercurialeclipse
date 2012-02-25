@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -77,12 +76,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 				storage = tmpStore;
 			}
 			if(storage != null){
-				IResource file = storage.getResource();
-				if(file != null){
-					fileName = file.getName();
-				} else {
-					fileName = storage.getName();
-				}
+				fileName = storage.getName();
 			} else {
 				fileName = fileRevision.getName();
 			}
@@ -142,7 +136,6 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 			return getName();
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public Object getAdapter(Class adapter) {
 			if (adapter == IWorkbenchAdapter.class) {

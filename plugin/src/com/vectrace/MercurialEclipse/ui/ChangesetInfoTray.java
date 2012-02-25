@@ -33,12 +33,10 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.SimpleLabelImageProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -175,18 +173,10 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 					IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 					if (file != null) {
 						try {
-							String[] parents = HgParentClient.getParentNodeIds(file, cs);
-							// our amend changeset was a merge changeset. diff is difficult...
-							if (parents == null || parents.length == 2) {
-								return;
-							}
-							MercurialRevisionStorage left = new MercurialRevisionStorage(file, cs
-									.getChangesetIndex());
-							MercurialRevisionStorage right = new MercurialRevisionStorage(file,
-									parents[0]);
-							CompareUtils.openEditor(left, right, true);
+							CompareUtils.openCompareWithParentEditor(cs, file, true, null);
 						} catch (HgException e) {
 							MercurialEclipsePlugin.logError(e);
+							MercurialEclipsePlugin.showError(e);
 						}
 					}
 				}

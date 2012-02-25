@@ -52,13 +52,17 @@ import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
-import com.vectrace.MercurialEclipse.model.HgFolder;
+import com.vectrace.MercurialEclipse.model.HgResource;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
+import com.vectrace.MercurialEclipse.model.HgWorkspaceFolder;
+import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
@@ -74,51 +78,52 @@ public final class CompareUtils {
 		// hide constructor of utility class.
 	}
 
-	public static void openEditor(IFile file, ChangeSet changeset) throws HgException {
-		int changesetIndex = changeset == null ? 0 : changeset.getChangesetIndex();
-		String changesetId = changeset == null ? null : changeset.getChangeset();
-
-		openEditor(file, new MercurialRevisionStorage(file, changesetIndex, changesetId, changeset), false, null);
-	}
-
+	/**
+	 * Compare workspace with workspace as it was at a changeset
+	 */
 	public static void openEditor(IResource resource, ChangeSet changeset) throws HgException {
-		String changesetId = changeset == null ? null : changeset.getChangeset();
+		String changesetId = changeset.getChangeset();
 
 		IHgResource left = null;
 		IHgResource right = null;
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
 
 		if(resource instanceof IContainer) {
-			String inPattern = AbstractClient.getHgResourceSearchPattern(resource);
+			String inPattern = AbstractClient.getHgResourceSearchPattern(root,
+					root.getRelativePath(resource), false);
 			String[] status = HgStatusClient.getStatus(root, changesetId, null, "-mardu", inPattern, null);
 			TreeSet<String> filter = HgStatusClient.removeStatusIndicator(status);
-			left = new HgFolder(root, (IContainer)resource, filter);
-			right = HgLocateClient.getHgResources(resource, changeset, filter);
+
+			left = new HgWorkspaceFolder(root, (IContainer)resource, filter);
+			right = HgLocateClient.getHgResources(root, root.getRelativePath(resource), false, changeset, filter);
 		} else if (resource instanceof IFile) {
-			left = new HgFile(root, (IFile)resource);
-			right = HgLocateClient.getHgResources(resource, changeset, null);
+			left = new HgWorkspaceFile(root, (IFile)resource);
+			right = HgLocateClient.getHgResources(root, root.getRelativePath(resource), true, changeset, null);
 		}
 
 		openEditor(new RevisionNode(left), new RevisionNode(right), false, null);
 	}
 
-	public static void openEditor(IHgResource left, IHgResource right, boolean dialog) {
-		openEditor(left, right, dialog, null);
+	public static void openCompareWithParentEditor(ChangeSet cs, IFile resource, boolean dialog,
+			ISynchronizePageConfiguration configuration) throws HgException {
+		CompareUtils.openEditor(HgFile.make(cs, resource),
+				MercurialUtilities.getParentRevision(cs, resource), false, configuration);
 	}
 
-	public static void openEditor(IHgResource left, IHgResource right,
-			boolean dialog, ISynchronizePageConfiguration configuration) {
-		if (right == null && left != null) {
-			// comparing with file-system
-			try {
-				openEditor(left.getResource(), left, dialog, configuration);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-		} else {
-			RevisionNode leftNode = getNode(left);
-			RevisionNode rightNode = getNode(right);
+	public static void openEditor(HgResource left, HgResource right, boolean dialog,
+			ISynchronizePageConfiguration configuration) {
+
+		Assert.isNotNull(left);
+		Assert.isNotNull(right);
+
+		RevisionNode leftNode = new RevisionNode(left);
+		RevisionNode rightNode = new RevisionNode(right);
+
+		try {
 			openEditor(leftNode, rightNode, dialog, configuration);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
 		}
 	}
 
@@ -128,7 +133,7 @@ public final class CompareUtils {
 	 * @param configuration might be null
 	 */
 	public static void openEditor(final RevisionNode left, final RevisionNode right,
-			final boolean dialog, final ISynchronizePageConfiguration configuration) {
+			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
 		if (dialog) {
 			// TODO: is it intentional the config is ignored?
@@ -147,7 +152,7 @@ public final class CompareUtils {
 	public static void openEditor(final IResource left, final IHgResource right,
 			final boolean dialog, final ISynchronizePageConfiguration configuration) throws HgException {
 		Assert.isNotNull(right);
-		openEditor(left, getNode(right), dialog, configuration);
+		openEditor(left, getNode(right, left), dialog, configuration);
 	}
 
 	public static void openEditor(final IResource left, final RevisionNode right,
@@ -241,7 +246,7 @@ public final class CompareUtils {
 	 * @param configuration might be null
 	 */
 	private static CompareEditorInput getCompareInput(RevisionNode left, RevisionNode right,
-			ISynchronizePageConfiguration configuration) {
+			ISynchronizePageConfiguration configuration) throws HgException {
 		// switch left to right if left is null and put local to left
 		RevisionNode leftNode = left != null ? left : right;
 
@@ -249,9 +254,14 @@ public final class CompareUtils {
 				right, findCommonAncestorIfExists(left, right), configuration);
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	public static CompareEditorInput getPrecomputedCompareInput(IResource leftResource,
 			MercurialRevisionStorage ancestor, MercurialRevisionStorage right) throws HgException {
-		return getPrecomputedCompareInput(null, leftResource, getNode(ancestor), getNode(right));
+		return getPrecomputedCompareInput(null, leftResource,
+				getNode(ancestor, ancestor.getResource()), getNode(right, right.getResource()));
 	}
 
 	private static CompareEditorInput getPrecomputedCompareInput(
@@ -285,36 +295,56 @@ public final class CompareUtils {
 		return storage == null ? null : new MercurialResourceVariant(storage);
 	}
 
-	private static RevisionNode getNode(IHgResource rev) {
+	private static RevisionNode getNode(IHgResource rev, IResource resource) {
 		if (rev == null) {
 			return null;
 		}
+		final ChangeSet changeSet = rev instanceof IChangeSetHolder ? ((IChangeSetHolder) rev).getChangeSet() : null;
 		IHgResource hgresource = null;
-		try {
-			hgresource = HgLocateClient.getHgResources(rev.getResource(), rev.getChangeSet(), null);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+
+		if (changeSet == null) {
+
+			// local resource
+			if (resource instanceof IFile) {
+				hgresource = new HgWorkspaceFile(rev.getHgRoot(), (IFile)resource);
+			}
+			if (resource instanceof IContainer) {
+				hgresource = new HgWorkspaceFolder(rev.getHgRoot(), (IContainer)resource, null);
+			}
+		} else {
+			try {
+				hgresource = HgLocateClient.getHgResources(rev, changeSet.getChangeset(), null);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
-		if (hgresource != null) {
-			// existing file
-			return new RevisionNode(hgresource);
-		}
+
 		// non-existing file
-		IResource file = rev.getResource();
-		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
-		return new RevisionNode(new NullHgFile(hgRoot, rev.getChangeSet(),
-				file.getFullPath().makeRelativeTo(hgRoot.getIPath())));
+		if (hgresource == null) {
+			HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(resource);
+
+			hgresource = new NullHgFile(hgRoot, changeSet, hgRoot.getRelativePath(resource));
+		}
+
+		return new RevisionNode(hgresource);
 	}
 
-	private static RevisionNode findCommonAncestorIfExists(RevisionNode lNode, RevisionNode rNode) {
+	private static RevisionNode findCommonAncestorIfExists(RevisionNode lNode, RevisionNode rNode) throws HgException {
 		if (lNode == null || lNode.isWorkingCopy() || rNode.isWorkingCopy()) {
 			return null;
 		}
 
 		HgRoot hgRoot = lNode.getHgResource().getHgRoot();
-		ChangeSet lCS = lNode.getHgResource().getChangeSet();
-		ChangeSet rCS = rNode.getHgResource().getChangeSet();
-		if (hgRoot == null || lCS == null || rCS == null) {
+
+		if (hgRoot == null || !(lNode.getHgResource() instanceof IChangeSetHolder)
+				|| !(lNode.getHgResource() instanceof IChangeSetHolder)) {
+			return null;
+		}
+
+		ChangeSet lCS = ((IChangeSetHolder) lNode.getHgResource()).getChangeSet();
+		ChangeSet rCS = ((IChangeSetHolder) rNode.getHgResource()).getChangeSet();
+
+		if (lCS == null || rCS == null) {
 			return null;
 		}
 

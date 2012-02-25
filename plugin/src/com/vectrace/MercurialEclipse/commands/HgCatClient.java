@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -41,7 +42,7 @@ public class HgCatClient extends AbstractClient {
 		return command.executeToBytes();
 	}
 
-	public static byte[] getContent(IHgFile hgfile) throws HgException {
+	public static byte[] getContent(HgFile hgfile) throws HgException {
 		HgRoot hgRoot = hgfile.getHgRoot();
 		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
 

@@ -3,15 +3,8 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.InputStream;
 
 import org.eclipse.compare.BufferedContent;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /*******************************************************************************
  * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
@@ -33,69 +26,21 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 	/**
 	 * Not null
 	 */
-	protected HgRoot root;
+	protected final HgRoot root;
 
 	/**
 	 * Not null
 	 */
-	protected IPath path;
+	protected final IPath path;
 
-	/**
-	 * If not null representing a local file in Hg working copy
-	 */
-	protected IResource resource;
+	// constructors
 
-	/**
-	 * If a local resource then then null
-	 */
-	protected ChangeSet changeset;
-
-	/**
-	 * @param root the HgRoot, not null
-	 * @param changeset is null if and only if resource != null, or this is a NullHgFile
-	 * @param path relative path to HgRoot, not null
-	 */
-	public HgResource(HgRoot root, String changeset, IPath path) {
-		try {
-			if(changeset != null && changeset.length() != 0) {
-				LocalChangesetCache cache = LocalChangesetCache.getInstance();
-				this.changeset = cache.getOrFetchChangeSetById(root, changeset);
-				if (this.changeset == null) {
-					// refetch cache and try again
-					cache.fetchRevisions(root, false, 0, 0, false);
-					this.changeset = cache.getOrFetchChangeSetById(root, changeset);
-				}
-			}
-			this.root = root;
-			this.path = path.removeTrailingSeparator();
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-	}
-
-	/**
-	 * @param root the HgRoot, not null
-	 * @param changeset =null if and only if wResource != null or this is a NullHgFile
-	 * @param path relative path to HgRoot, not null
-	 */
-	public HgResource(HgRoot root, ChangeSet changeset, IPath path) {
-		if(changeset != null){
-			this.changeset = changeset;
-			this.root = root;
-			this.path = path.removeTrailingSeparator();
-		}
-	}
-
-	/**
-	 * Wraps a local resource as HgResource
-	 * @param root the HgRoot, not null
-	 * @param resource a local resource
-	 */
-	public HgResource(HgRoot root, IResource resource) {
+	protected HgResource(HgRoot root, IPath path) {
 		this.root = root;
-		this.resource = resource;
-		path = root.toRelative(ResourceUtils.getPath(resource));
+		this.path = path;
 	}
+
+	// operations
 
 	/**
 	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getHgRoot()
@@ -104,34 +49,15 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 		return root;
 	}
 
-	public String getName() {
-		String name = path.lastSegment();
-		if(name == null) {
-			return root.getIPath().lastSegment();
-		}
-		return name;
-	}
-
-	public ChangeSet getChangeSet() {
-		return changeset;
-	}
-
 	public IPath getIPath() {
 		return path;
 	}
 
+	/**
+	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	 */
 	public Object getAdapter(Class adapter) {
 		return null;
-	}
-
-	public boolean isReadOnly() {
-		if (resource != null) {
-			ResourceAttributes attributes = resource.getResourceAttributes();
-			if (attributes != null) {
-				return attributes.isReadOnly();
-			}
-		}
-		return true;
 	}
 
 	@Override
@@ -151,10 +77,6 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 		return (root.hashCode() << 16) & path.hashCode();
 	}
 
-	public IResource getResource() {
-		return resource;
-	}
-
 	/**
 	 * @see org.eclipse.compare.BufferedContent#createStream()
 	 */
@@ -163,4 +85,10 @@ public abstract class HgResource extends BufferedContent implements IHgResource 
 		return null;
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
+	 */
+	public String getCharset() {
+		return this.getHgRoot().getEncoding();
+	}
 }

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 
@@ -26,28 +25,22 @@ public interface IHgResource extends IAdaptable {
 	HgRoot getHgRoot();
 
 	/**
+	 * The name of the file.
+	 *
 	 * @return never null
 	 */
 	String getName();
 
 	/**
-	 * @return may return null for local resource
-	 */
-	ChangeSet getChangeSet();
-
-	/**
+	 * The root relative path to the file
+	 *
 	 * @return relative path to hg root, never null
 	 */
 	IPath getIPath();
 
 	/**
-	 * @return true if this resource does not exist in the working copy
+	 * @return True if this resource does not exist in the working copy
 	 */
 	boolean isReadOnly();
-
-	/**
-	 * @return may return null
-	 */
-	IResource getResource();
 
 }

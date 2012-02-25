@@ -32,6 +32,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -807,7 +808,8 @@ public final class ResourceUtils {
 		}
 		if(cs != null){
 			try {
-				return HgLocateClient.getHgResources(resource, cs, null);
+				return HgLocateClient.getHgResources(hgRoot, hgRoot.getRelativePath(resource),
+						resource instanceof IStorage, cs, null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -818,13 +820,13 @@ public final class ResourceUtils {
 	/**
 	 * Convert deprecated MercurialRevisionStorage to HgFile
 	 */
-	public static IHgResource convertToHgFile(MercurialRevisionStorage rev) {
+	public static HgFile convertToHgFile(MercurialRevisionStorage rev) {
 		IFile file = rev.getResource();
 		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
 		IPath relPath = ResourceUtils.getPath(file).makeRelativeTo(hgRoot.getIPath());
 		if (rev instanceof NullRevision) {
 			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
 		}
-		return new HgFile(hgRoot, rev.getChangeSet(), file);
+		return new HgFile(hgRoot, rev.getChangeSet(), relPath);
 	}
 }
