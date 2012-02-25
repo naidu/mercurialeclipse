@@ -78,24 +78,22 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	// operations
 
 	public int compareTo(ChangeSet o) {
-		if (o.getChangeset().equals(this.getChangeset())) {
+		if (o.getNode().equals(this.getNode())) {
 			return 0;
 		}
-		int result = this.getChangesetIndex() - o.getChangesetIndex();
+		int result = this.getIndex() - o.getIndex();
 		if (result != 0) {
 			return result;
 		}
-		if (getRealDate() != UNKNOWN_DATE && o.getRealDate() != UNKNOWN_DATE) {
-			return getRealDate().compareTo(o.getRealDate());
+		if (getDate() != UNKNOWN_DATE && o.getDate() != UNKNOWN_DATE) {
+			return getDate().compareTo(o.getDate());
 		}
 		return 0;
 	}
 
-	public abstract Date getRealDate();
+	public abstract int getIndex();
 
-	public abstract int getChangesetIndex();
-
-	public abstract String getChangeset();
+	public abstract String getNode();
 
 	/**
 	 * Returns index:nodeId
@@ -232,7 +230,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	 * @return the ageDate
 	 */
 	public final String getAgeDate() {
-		double delta = (System.currentTimeMillis() - getRealDate().getTime());
+		double delta = (System.currentTimeMillis() - getDate().getTime());
 
 		delta /= 1000 * 60; // units is minutes
 
@@ -330,7 +328,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	public abstract Direction getDirection();
 
 	public final String getDateString() {
-		Date d = getRealDate();
+		Date d = getDate();
 		if (d != null) {
 			return formatDate(d);
 		}
@@ -359,7 +357,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 			List<FileStatus> l = new ArrayList<FileStatus>();
 
 			StatusResult res = StatusCommandFlags.on(hgRoot.getRepository())
-					.rev(getParentRevision(0).getChangeset(), getRevision().getChangeset()).added()
+					.rev(getParentRevision(0).getNode(), getRevision().getNode()).added()
 					.modified().deleted().removed().copies().execute();
 
 			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {

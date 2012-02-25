@@ -402,11 +402,11 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		if (!STATUS_CACHE.isAdded(ResourceUtils.getPath(resource))) {
 			ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
 			if (fileCs != null) {
-				suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
+				suffix = " [" + fileCs.getIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
 					+ fileCs.getAgeDate() + " - " + fileCs.getAuthor() + "]";
 
 				if (cs != null) {
-					suffix += " < [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
+					suffix += " < [" + cs.getIndex() + ":" //$NON-NLS-1$
 						+ cs.getNodeShort() + " - " + cs.getAgeDate()
 						+ " - " + cs.getAuthor() + "]";
 				}
@@ -455,7 +455,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// rev info
-			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
+			suffix.append(changeSet.getIndex()).append(':').append(hex);
 
 			// branch
 			String branch = MercurialTeamProvider.getCurrentBranch(root);

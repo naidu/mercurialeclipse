@@ -104,7 +104,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		Assert.isNotNull(nodeId);
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
 
-		return getChangeset(root, nodeId);
+		return getChangeSet(root, nodeId);
 	}
 
 	/**
@@ -123,7 +123,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 *            non null
 	 * @return might return null if the changeset is not known/existing in the repo
 	 */
-	public static ChangeSet getChangeset(HgRoot root, String nodeId) {
+	public static ChangeSet getChangeSet(HgRoot root, String nodeId) {
 		return getChangeSet(root, LogCommandFlags.on(root.getRepository()).rev(nodeId).execute()
 				.get(0));
 	}

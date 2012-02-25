@@ -35,7 +35,7 @@ public class MercurialResourceVariant implements IResourceVariant {
 
 	public String getContentIdentifier() {
 		ChangeSet cs = ((IChangeSetHolder) rev.getHgResource()).getChangeSet();
-		return cs.getChangesetIndex() + ":" + cs.getChangeset();
+		return cs.getIndex() + ":" + cs.getNode();
 	}
 
 	public String getName() {

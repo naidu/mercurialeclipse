@@ -46,7 +46,7 @@ public class HgLocateClient extends AbstractClient {
 	 */
 	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file, ChangeSet cs, SortedSet<String> filter) throws HgException {
 
-		String revision = cs.getChangeset();
+		String revision = cs.getNode();
 		HgCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
 
 		if (cs.getDirection() == Direction.INCOMING && cs.getBundleFile() != null) {

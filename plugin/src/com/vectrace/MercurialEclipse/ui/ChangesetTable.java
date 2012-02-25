@@ -121,15 +121,15 @@ public class ChangesetTable extends Composite {
 		int[] widths = { 60, 80, 100, 80, 70, 70, 300 };
 		@SuppressWarnings("unchecked") Comparator[] comparators = { new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return TableSortListener.sort(a.getChangesetIndex(), b.getChangesetIndex());
+				return TableSortListener.sort(a.getIndex(), b.getIndex());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getChangeset().compareTo(b.getChangeset());
+				return a.getNode().compareTo(b.getNode());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getRealDate().compareTo(b.getRealDate());
+				return a.getDate().compareTo(b.getDate());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
@@ -190,12 +190,12 @@ public class ChangesetTable extends Composite {
 				if (ChangesetTable.this.strategy != null) {
 					ChangeSet rev = ChangesetTable.this.strategy.getChangeSet(table.indexOf(row));
 
-					if (parents != null && isParent(rev.getChangesetIndex())) {
+					if (parents != null && isParent(rev.getIndex())) {
 						row.setFont(PARENT_FONT);
 					}
 
-					row.setText(0, Integer.toString(rev.getChangesetIndex()));
-					row.setText(1, rev.getChangeset());
+					row.setText(0, Integer.toString(rev.getIndex()));
+					row.setText(1, rev.getNode());
 					row.setText(2, rev.getDateString());
 					row.setText(3, rev.getAuthor());
 					row.setText(4, rev.getBranch());
@@ -391,12 +391,12 @@ public class ChangesetTable extends Composite {
 			int prevLen = fetched.length;
 
 			if (!set.isEmpty()) {
-				int smallestInCache = set.first().getChangesetIndex();
+				int smallestInCache = set.first().getIndex();
 
 				// TODO: what if the cache is flushed requested from elsewhere meaning we'd have a
 				// gap in revs. Should not happen.
 				if (fetched.length != 0
-						&& smallestInCache >= fetched[fetched.length - 1].getChangesetIndex()) {
+						&& smallestInCache >= fetched[fetched.length - 1].getIndex()) {
 					set = getMore(cache, batchSize, smallestInCache);
 				}
 

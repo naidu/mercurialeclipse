@@ -329,7 +329,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		Assert.isNotNull(nodeId);
 		SortedSet<ChangeSet> sets = getOrFetchChangeSets(hgRoot);
 		for (ChangeSet changeSet : sets) {
-			if(nodeId.equals(changeSet.getChangeset())
+			if(nodeId.equals(changeSet.getNode())
 					|| nodeId.equals(changeSet.toString())
 					|| nodeId.equals(changeSet.getName())){
 				return changeSet;
@@ -337,7 +337,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 
 		// TODO: Cache by root?
-		return HgLogClient.getChangeset(hgRoot, nodeId);
+		return HgLogClient.getChangeSet(hgRoot, nodeId);
 	}
 
 	public ChangeSet get(IResource res, String nodeId) throws HgException {
@@ -367,7 +367,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			}
 			String nodeId = HgIdentClient.getCurrentChangesetId(root);
 			if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
-				ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
+				ChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
 				if (lastSet != null) {
 					latestChangesets.put(root, lastSet);
 				}
@@ -393,7 +393,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
 			synchronized (latestChangesets) {
 				ChangeSet lastSet = latestChangesets.get(root);
-				if (lastSet != null && !nodeId.equals(lastSet.getChangeset())) {
+				if (lastSet != null && !nodeId.equals(lastSet.getNode())) {
 					latestChangesets.remove(root);
 				}
 			}
@@ -529,7 +529,7 @@ public final class LocalChangesetCache extends AbstractCache {
 			}
 			for (ChangeSet changeSet : changes) {
 				map.put(changeSet.toString(), changeSet);
-				map.put(changeSet.getChangeset(), changeSet);
+				map.put(changeSet.getNode(), changeSet);
 				map.put(changeSet.getName(), changeSet);
 			}
 		}

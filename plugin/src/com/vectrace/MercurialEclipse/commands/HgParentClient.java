@@ -64,7 +64,7 @@ public class HgParentClient extends AbstractClient {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				"Finding parent revisions", cs.getHgRoot(), false);
 		command.addOptions("--template", template + "\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getChangeset());
+				.getNode());
 		return parseParentsCommand(command);
 	}
 
@@ -72,7 +72,7 @@ public class HgParentClient extends AbstractClient {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				"Finding parent revisions", resource, false);
 		command.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getChangeset());
+				.getNode());
 		return parseParentsCommand(command);
 	}
 
@@ -139,7 +139,7 @@ public class HgParentClient extends AbstractClient {
 				}
 			}
 
-			command.addOptions(cs1.getChangeset(), cs2.getChangeset());
+			command.addOptions(cs1.getNode(), cs2.getNode());
 
 			result = command.executeToString().trim();
 			Matcher m = ANCESTOR_PATTERN.matcher(result);

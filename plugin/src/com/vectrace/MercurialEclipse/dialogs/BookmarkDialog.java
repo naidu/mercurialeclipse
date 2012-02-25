@@ -219,9 +219,9 @@ public class BookmarkDialog extends TrayDialog {
 		try {
 			if (!modifyTab) {
 				// create new bookmark
-				String targetRev = HgRevision.TIP.getChangeset();
+				String targetRev = HgRevision.TIP.getNode();
 				if (csTable.getSelection() != null) {
-					targetRev = csTable.getSelection().getChangeset();
+					targetRev = csTable.getSelection().getNode();
 				}
 				HgBookmarkClient.create(hgRoot, bmNameTextBox.getText(), targetRev);
 			} else {

@@ -82,7 +82,7 @@ public final class CompareUtils {
 	 * Compare workspace with workspace as it was at a changeset
 	 */
 	public static void openEditor(IResource resource, ChangeSet changeset) throws HgException {
-		String changesetId = changeset.getChangeset();
+		String changesetId = changeset.getNode();
 
 		IHgResource left = null;
 		IHgResource right = null;
@@ -313,7 +313,7 @@ public final class CompareUtils {
 			}
 		} else {
 			try {
-				hgresource = HgLocateClient.getHgResources(rev, changeSet.getChangeset(), null);
+				hgresource = HgLocateClient.getHgResources(rev, changeSet.getNode(), null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -356,8 +356,8 @@ public final class CompareUtils {
 				// continue
 			}
 
-		String lId = lCS.getChangeset();
-		String rId = rCS.getChangeset();
+		String lId = lCS.getNode();
+		String rId = rCS.getNode();
 
 		if (commonAncestor == null || commonAncestor.length() == 0){
 			try {
@@ -367,8 +367,8 @@ public final class CompareUtils {
 			}
 		}
 
-		if (commonAncestor == null || commonAncestor.equals(lCS.getChangeset()) ||
-				commonAncestor.equals(rCS.getChangeset())) {
+		if (commonAncestor == null || commonAncestor.equals(lCS.getNode()) ||
+				commonAncestor.equals(rCS.getNode())) {
 			return null;
 		}
 

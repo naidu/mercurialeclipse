@@ -330,7 +330,7 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 		String branch = MercurialTeamProvider.getCurrentBranch(root);
 		String label = Messages.getString("CommitDialog.amendCurrentChangeset1")
-				+ currentChangeset.getChangesetIndex()
+				+ currentChangeset.getIndex()
 				+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
 		amendCheckbox.addSelectionListener(new SelectionListener() {

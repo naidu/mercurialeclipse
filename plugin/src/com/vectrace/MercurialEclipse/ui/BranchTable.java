@@ -100,7 +100,7 @@ public class BranchTable extends Composite {
 
 				if (branches != null && 0 <= index && index < branches.length) {
 					Branch branch = branches[index];
-					if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
+					if (showTip || !HgRevision.TIP.getNode().equals(branch.getName())) {
 						if ((parents != null && isParent(branch.getBranchTip().getRevision()))
 								|| BranchUtils.same(highlightBranch,
 										branch.getName())) {

@@ -46,7 +46,7 @@ public class HgCatClient extends AbstractClient {
 		HgRoot hgRoot = hgfile.getHgRoot();
 		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
 
-		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getChangeset();
+		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getNode();
 		if (revision != null && revision.length() != 0) {
 			command.addOptions("-r", revision); //$NON-NLS-1$
 		}

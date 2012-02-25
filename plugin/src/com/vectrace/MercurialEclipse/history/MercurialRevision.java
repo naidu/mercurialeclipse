@@ -85,7 +85,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 		Assert.isNotNull(resource);
 		this.changeSet = changeSet;
 		this.gChangeSet = gChangeSet;
-		this.revision = changeSet.getChangesetIndex();
+		this.revision = changeSet.getIndex();
 		this.resource = resource;
 		this.signature = sig;
 		this.bisectStatus = bisectStatus;
@@ -148,7 +148,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	@Override
 	@DoNotDisplayMe
 	public String getContentIdentifier() {
-		return changeSet.getChangeset();
+		return changeSet.getNode();
 	}
 
 	@Override

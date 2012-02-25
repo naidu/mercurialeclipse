@@ -237,14 +237,14 @@ public class SelectRevisionPage extends WizardPage {
 			}
 			expected = set.iterator().next();
 		} else {
-			expected = HgLogClient.getChangeset(hgRoot, revision);
+			expected = HgLogClient.getChangeSet(hgRoot, revision);
 		}
 		if(expected == null){
 			return false;
 		}
 		String changesetId = HgIdentClient.getCurrentChangesetId(hgRoot);
-		revisionRef[0] = "" + expected.getChangesetIndex();
-		return expected.getChangeset().equals(changesetId);
+		revisionRef[0] = "" + expected.getIndex();
+		return expected.getNode().equals(changesetId);
 	}
 
 }

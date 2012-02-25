@@ -40,7 +40,7 @@ public class JHgChangeSet extends ChangeSet {
 		this.direction = direction;
 		this.bundle = bundle;
 
-		setName(getChangesetIndex() + ":" + getNodeShort());
+		setName(getIndex() + ":" + getNodeShort());
 	}
 
 	public JHgChangeSet(HgRoot hgRoot, Changeset changeset) {
@@ -58,26 +58,18 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getRealDate()
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getIndex()
 	 */
 	@Override
-	public Date getRealDate() {
-		return changeset.getTimestamp().getDate();
-	}
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getChangesetIndex()
-	 */
-	@Override
-	public int getChangesetIndex() {
+	public int getIndex() {
 		return changeset.getRevision();
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getChangeset()
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getNode()
 	 */
 	@Override
-	public String getChangeset() {
+	public String getNode() {
 		return changeset.getNode();
 	}
 

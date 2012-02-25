@@ -69,7 +69,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		IPath p = this.getHgRoot().getIPath().append(path);
 
 		String extension = p.getFileExtension();
-		String version = " [" + changeset.getChangesetIndex() + "]";
+		String version = " [" + changeset.getIndex() + "]";
 		if(extension != null) {
 			version += "." + extension;
 		}
@@ -89,7 +89,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 			// incoming: overlay repository with bundle and extract then via cat
 			try {
 				result = HgCatClient.getContentFromBundle(this,
-						changeset.getRevision().getChangeset(),
+						changeset.getRevision().getNode(),
 						changeset.getBundleFile());
 			} catch (IOException e) {
 				throw new HgException("Unable to determine canonical path for " + changeset.getBundleFile(), e);

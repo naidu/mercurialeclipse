@@ -106,7 +106,7 @@ public final class HgSignClient {
 			command.addUserName(user);
 		}
 
-		command.addOptions(cs.getChangeset());
+		command.addOptions(cs.getNode());
 		String result;
 		try {
 			result = command.executeToString();

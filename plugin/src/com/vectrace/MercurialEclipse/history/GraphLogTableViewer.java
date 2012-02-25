@@ -120,7 +120,7 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 
 		if (mhp.getCurrentWorkdirChangeset() != null) {
-			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
+			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getIndex()) {
 				tableItem.setFont(JFaceResources.getFontRegistry().getBold(
 						JFaceResources.DEFAULT_FONT));
 			}

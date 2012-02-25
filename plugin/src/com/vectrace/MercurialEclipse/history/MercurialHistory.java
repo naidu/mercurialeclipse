@@ -69,8 +69,8 @@ public class MercurialHistory extends FileHistory {
 			// we need to cover the situation when repo-indices are the same
 			if (result == 0 && o1.getChangeSet().getDateString() != null
 					&& o2.getChangeSet().getDateString() != null) {
-				result = o2.getChangeSet().getRealDate().compareTo(
-						o1.getChangeSet().getRealDate());
+				result = o2.getChangeSet().getDate().compareTo(
+						o1.getChangeSet().getDate());
 			}
 
 			return result;
@@ -287,9 +287,9 @@ public class MercurialHistory extends FileHistory {
 		setBisectStarted(!bisectMap.isEmpty());
 
 		for (ChangeSet cs : changeSets) {
-			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getChangeset()) : null;
-			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getChangeset()) : null;
-			GChangeSet set = gChangeSets.get(Integer.valueOf(cs.getChangesetIndex()));
+			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getNode()) : null;
+			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getNode()) : null;
+			GChangeSet set = gChangeSets.get(Integer.valueOf(cs.getIndex()));
 			revisions.add(new MercurialRevision(cs, set, revisionResource, sig, bisectStatus));
 		}
 		Collections.sort(revisions, REV_COMPARATOR);

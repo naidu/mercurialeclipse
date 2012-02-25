@@ -243,7 +243,7 @@ public class RevisionChooserPanel extends Composite {
 			}
 		}
 		if (data.changeSet != null) {
-			int changesetIndex = data.changeSet.getChangesetIndex();
+			int changesetIndex = data.changeSet.getIndex();
 			if(changesetIndex >= 0){
 				data.revision = Integer.toString(changesetIndex);
 			} else {
@@ -297,7 +297,7 @@ public class RevisionChooserPanel extends Composite {
 				branch = null;
 				bookmark = null;
 				ChangeSet selection = table.getSelection();
-				text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
 				data.changeSet = selection;
 			}
 			@Override
@@ -506,8 +506,8 @@ public class RevisionChooserPanel extends Composite {
 				bookmark = null;
 				ChangeSet selection = table.getSelection();
 				data.changeSet = selection;
-				if(selection.getChangesetIndex() >= 0) {
-					text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				if(selection.getIndex() >= 0) {
+					text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
 				} else {
 					text.setText(""); //$NON-NLS-1$
 				}

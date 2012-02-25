@@ -117,7 +117,7 @@ public class MergeHandler extends RootHandler {
 		boolean conflict = false;
 		try {
 			try {
-				result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(), forced);
+				result = HgMergeClient.merge(hgRoot, cs.getRevision().getNode(), forced);
 			} catch (HgException e) {
 				if (HgMergeClient.isConflict(e)) {
 					conflict = true;
@@ -127,7 +127,7 @@ public class MergeHandler extends RootHandler {
 				}
 			}
 
-			String mergeChangesetId = cs.getChangeset();
+			String mergeChangesetId = cs.getNode();
 			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 
 			if (conflict) {
@@ -187,7 +187,7 @@ public class MergeHandler extends RootHandler {
 		Changeset csToRemove = null;
 		for (Changeset cs : result) {
 			// can't be the current
-			if (cs.getNode().equals(currentRevision.getChangeset())) {
+			if (cs.getNode().equals(currentRevision.getNode())) {
 				csToRemove = cs;
 				break;
 			}

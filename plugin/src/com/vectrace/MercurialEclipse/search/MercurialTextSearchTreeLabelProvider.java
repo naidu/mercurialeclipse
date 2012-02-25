@@ -103,7 +103,7 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 			if(cs == null) {
 				return new StyledString("");
 			}
-			return new StyledString(cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ("
+			return new StyledString(cs.getIndex() + " [" + cs.getAuthor() + "] ("
 					+ cs.getAgeDate() + ")");
 		}
 
@@ -263,7 +263,7 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 	 */
 	protected String getCsInfoString(MercurialRevisionStorage mrs) {
 		ChangeSet cs = mrs.getChangeSet();
-		String csInfo = cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ("
+		String csInfo = cs.getIndex() + " [" + cs.getAuthor() + "] ("
 				+ cs.getAgeDate() + ") ";
 		return csInfo;
 	}

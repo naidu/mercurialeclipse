@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
  */
 public class Tag implements ITag, Comparable<Tag> {
 
-	private static final String TIP = HgRevision.TIP.getChangeset();
+	private static final String TIP = HgRevision.TIP.getNode();
 
 	private final com.aragost.javahg.commands.Tag tag;
 

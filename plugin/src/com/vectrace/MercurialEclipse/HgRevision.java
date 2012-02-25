@@ -30,7 +30,7 @@ public class HgRevision {
 		this.revision = revision;
 	}
 
-	public String getChangeset() {
+	public String getNode() {
 		return changeset;
 	}
 

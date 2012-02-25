@@ -57,7 +57,7 @@ public abstract class WorkingChangeSet extends DumbChangeSet {
 
 	@Override
 	public String toString() {
-		String changeset = getChangeset();
+		String changeset = getNode();
 		int size = getFiles().size();
 		if(size == 0){
 			return changeset + " (empty)";

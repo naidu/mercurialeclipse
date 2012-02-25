@@ -147,7 +147,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		if (csOutgoing != null) {
 			outgoingIStorage = new MercurialRevisionStorage(file,
 					csOutgoing.getRevision().getRevision(),
-					csOutgoing.getChangeset(), csOutgoing);
+					csOutgoing.getNode(), csOutgoing);
 
 			outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
 			hasOutgoingChanges = true;
@@ -175,7 +175,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				}
 				// construct base revision
 				outgoingIStorage = new MercurialRevisionStorage(file,
-						csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
+						csOutgoing.getIndex(), csOutgoing.getNode(), csOutgoing);
 
 				outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
 			} else {
@@ -227,7 +227,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					if(parents.length > 0){
 						parentCs = parents[0];
 					} else {
-						ChangeSet tmpCs = getChangeset(file, first.getChangeset(), null);
+						ChangeSet tmpCs = getChangeset(file, first.getNode(), null);
 						if(tmpCs != null && tmpCs.getParents().length > 0){
 							parentCs = tmpCs.getParents()[0];
 						}
@@ -401,7 +401,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			ChangeSet csRemote) {
 		MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
 				resource, csRemote.getRevision().getRevision(), csRemote
-				.getChangeset(), csRemote);
+				.getNode(), csRemote);
 		return incomingIStorage;
 	}
 

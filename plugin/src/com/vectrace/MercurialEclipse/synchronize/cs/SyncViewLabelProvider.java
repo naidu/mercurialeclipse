@@ -127,7 +127,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			ChangeSet cset = (ChangeSet) elementOrPath;
 			StringBuilder sb = new StringBuilder();
 			if(!(cset instanceof WorkingChangeSet)){
-				sb.append(cset.getChangesetIndex());
+				sb.append(cset.getIndex());
 
 				if (cset.isCurrentOutgoing()) {
 					sb.append('*');

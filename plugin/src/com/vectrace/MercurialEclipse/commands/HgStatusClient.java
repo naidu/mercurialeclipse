@@ -273,7 +273,7 @@ public class HgStatusClient extends AbstractClient {
 		//   source_file
 		// in case the given file was known between "firstKnownRevision" and "tip"
 		// TODO not sure if "tip" works always as expected, but now it's my best guess for the upper limit
-		return getPossibleSourcePath(root, file, firstKnownRevision, HgRevision.TIP.getChangeset());
+		return getPossibleSourcePath(root, file, firstKnownRevision, HgRevision.TIP.getNode());
 	}
 
 	private static File getPossibleSourcePath(HgRoot root, File file, int firstRev, String secondRev) throws HgException{
@@ -321,7 +321,7 @@ public class HgStatusClient extends AbstractClient {
 	public static String getStatusForChangeset(ChangeSet cs) throws HgException {
 		HgCommand command = new HgCommand(
 				"status", //$NON-NLS-1$
-				"Calcuting resources changes in changeset " + cs.getChangeset(), cs.getHgRoot(),
+				"Calcuting resources changes in changeset " + cs.getNode(), cs.getHgRoot(),
 				true);
 
 		if (cs.getBundleFile() != null) {
@@ -334,8 +334,8 @@ public class HgStatusClient extends AbstractClient {
 
 		// modified, added, removed, deleted
 		command.addOptions("-mard"); //$NON-NLS-1$
-		command.addOptions("--rev", cs.getParentRevision(0).getChangeset());
-		command.addOptions("--rev", cs.getRevision().getChangeset());
+		command.addOptions("--rev", cs.getParentRevision(0).getNode());
+		command.addOptions("--rev", cs.getRevision().getNode());
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 

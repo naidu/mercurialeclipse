@@ -157,12 +157,12 @@ public class DumbChangeSet extends ChangeSet {
 	}
 
 	@Override
-	public int getChangesetIndex() {
+	public int getIndex() {
 		return changesetIndex;
 	}
 
 	@Override
-	public String getChangeset() {
+	public String getNode() {
 		return changeset;
 	}
 
@@ -234,8 +234,8 @@ public class DumbChangeSet extends ChangeSet {
 		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
-			if (getChangeset().equals(other.getChangeset())
-					&& getChangesetIndex() == other.getChangesetIndex()) {
+			if (getNode().equals(other.getNode())
+					&& getIndex() == other.getIndex()) {
 				return true;
 			}
 		}
@@ -245,29 +245,6 @@ public class DumbChangeSet extends ChangeSet {
 	@Override
 	public int hashCode() {
 		return 31 + ((changeset == null) ? 0 : changeset.hashCode()) + changesetIndex;
-	}
-
-	/**
-	 * @return never returns null. Returns {@link ChangeSet#UNKNOWN_DATE} if the date can't be
-	 *         parsed
-	 */
-	@Override
-	public Date getRealDate() {
-		try {
-			if (realDate == null) {
-				if (date != null) {
-					// needed because static date format instances are not thread safe
-					synchronized (INPUT_DATE_FORMAT) {
-						realDate = INPUT_DATE_FORMAT.parse(date);
-					}
-				} else {
-					realDate = UNKNOWN_DATE;
-				}
-			}
-		} catch (ParseException e) {
-			realDate = UNKNOWN_DATE;
-		}
-		return realDate;
 	}
 
 	/**
@@ -290,7 +267,7 @@ public class DumbChangeSet extends ChangeSet {
 	 */
 	@Override
 	public HgRevision getParentRevision(int ordinal) {
-		if (getChangesetIndex() != 0 && (parents == null || parents.length == 0)) {
+		if (getIndex() != 0 && (parents == null || parents.length == 0)) {
 			try {
 				parents = HgParentClient.getParentNodeIds(this, "{rev}:{node}");
 			} catch (HgException e) {
@@ -352,8 +329,6 @@ public class DumbChangeSet extends ChangeSet {
 		return hgRoot;
 	}
 
-
-
 	@Override
 	public String getAuthor() {
 		return user;
@@ -361,6 +336,20 @@ public class DumbChangeSet extends ChangeSet {
 
 	@Override
 	public Date getDate() {
-		return getRealDate();
+		try {
+			if (realDate == null) {
+				if (date != null) {
+					// needed because static date format instances are not thread safe
+					synchronized (INPUT_DATE_FORMAT) {
+						realDate = INPUT_DATE_FORMAT.parse(date);
+					}
+				} else {
+					realDate = UNKNOWN_DATE;
+				}
+			}
+		} catch (ParseException e) {
+			realDate = UNKNOWN_DATE;
+		}
+		return realDate;
 	}
 }

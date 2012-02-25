@@ -56,7 +56,7 @@ public class HgRevertClient extends AbstractClient {
 		if(size == 1 && cs != null && (cs.isMoved(firstFile) || cs.isRemoved(firstFile))) {
 				HgRevision parentRevision = cs.getParentRevision(0);
 				HgCommand command = createRevertCommand(hgRoot, "Reverting " + firstFile.getName());
-				command.addOptions("--rev", parentRevision.getChangeset());
+				command.addOptions("--rev", parentRevision.getNode());
 				command.addFiles(firstFile);
 				if(cs.isMoved(firstFile)) {
 					FileStatus status = cs.getStatus(firstFile);
@@ -77,7 +77,7 @@ public class HgRevertClient extends AbstractClient {
 					// the last argument will be replaced with a path
 					HgCommand command = createRevertCommand(hgRoot, "Reverting resource " + i + " of " + size);
 					if (cs != null) {
-						command.addOptions("--rev", cs.getChangeset());
+						command.addOptions("--rev", cs.getNode());
 					}
 					command.addFiles(resources.subList(i, Math.min(i + delta, size)));
 					command.executeToString();
@@ -87,7 +87,7 @@ public class HgRevertClient extends AbstractClient {
 				// the last argument will be replaced with a path
 				HgCommand command = createRevertCommand(hgRoot, "Reverting " + size + " resources");
 				if (cs != null) {
-					command.addOptions("--rev", cs.getChangeset());
+					command.addOptions("--rev", cs.getNode());
 				}
 				command.addFiles(resources);
 				command.executeToString();

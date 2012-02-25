@@ -157,7 +157,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	private static ChangeSet getParentChangeset(IResource resource) throws HgException {
 		String[] parents = HgParentClient.getParentNodeIds(resource);
 		ChangeSet cs = LocalChangesetCache.getInstance().get(resource, parents[0]);
-		if(cs != null && cs.getChangesetIndex() != 0) {
+		if(cs != null && cs.getIndex() != 0) {
 			parents = cs.getParents();
 			if (parents == null || parents.length == 0) {
 				if(MercurialStatusCache.getInstance().isClean(resource)){

@@ -1371,7 +1371,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		@Override
 		protected Object getHistoryEntry(Revision selected) {
 			if (selected instanceof ShowAnnotationOperation.MercurialRevision) {
-				return MercurialHistoryPage.this.mercurialHistory.getFileRevision(((ShowAnnotationOperation.MercurialRevision)selected).getChangeSet().getChangeset());
+				return MercurialHistoryPage.this.mercurialHistory.getFileRevision(((ShowAnnotationOperation.MercurialRevision)selected).getChangeSet().getNode());
 			}
 			return null;
 		}

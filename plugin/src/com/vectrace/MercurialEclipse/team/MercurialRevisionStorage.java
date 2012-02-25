@@ -93,8 +93,8 @@ public class MercurialRevisionStorage implements IHgFile {
 				this.changeSet = LocalChangesetCache.getInstance().get(res, changeset);
 			}
 			if(changeSet != null){
-				this.revision = changeSet.getChangesetIndex();
-				this.global = changeSet.getChangeset();
+				this.revision = changeSet.getIndex();
+				this.global = changeSet.getNode();
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -137,9 +137,9 @@ public class MercurialRevisionStorage implements IHgFile {
 			MercurialEclipsePlugin.logError(e);
 		}
 		if(cs != null){
-			this.revision = cs.getChangesetIndex(); // should be fetched
+			this.revision = cs.getIndex(); // should be fetched
 			// from id
-			this.global = cs.getChangeset();
+			this.global = cs.getNode();
 		}
 		this.changeSet = cs;
 	}
@@ -205,7 +205,7 @@ public class MercurialRevisionStorage implements IHgFile {
 			// incoming: overlay repository with bundle and extract then via cat
 			try {
 				result = HgCatClient.getContentFromBundle(file,
-						changeSet.getRevision().getChangeset(),
+						changeSet.getRevision().getNode(),
 						changeSet.getBundleFile());
 			} catch (IOException e) {
 				throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
@@ -216,7 +216,7 @@ public class MercurialRevisionStorage implements IHgFile {
 				// for existing but unknown files, simply return dummy content
 				return new ContentHolder((byte[]) null);
 			}
-			result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
+			result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getIndex()).toString());
 		}
 		return new ContentHolder(result);
 	}
@@ -311,14 +311,14 @@ public class MercurialRevisionStorage implements IHgFile {
 			}
 			ChangeSet tip = cache.getNewestChangeSet(hgRoot);
 
-			boolean localKnown = tip.getChangesetIndex() >= rev;
+			boolean localKnown = tip.getIndex() >= rev;
 			if (!localKnown) {
 				return;
 			}
 			this.changeSet = cache.get(res, String.valueOf(rev));
 			if (changeSet != null) {
-				this.revision = changeSet.getChangesetIndex();
-				this.global = changeSet.getChangeset();
+				this.revision = changeSet.getIndex();
+				this.global = changeSet.getNode();
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

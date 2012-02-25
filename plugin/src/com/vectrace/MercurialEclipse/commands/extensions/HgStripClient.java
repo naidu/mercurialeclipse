@@ -41,7 +41,7 @@ public final class HgStripClient {
 	 */
 	public static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, ChangeSet changeset)
 			throws HgException {
-		return strip(hgRoot, keep, backup, force, changeset.getChangeset());
+		return strip(hgRoot, keep, backup, force, changeset.getNode());
 	}
 
 	private static String strip(final HgRoot hgRoot, boolean keep, boolean backup, boolean force, String changeset)

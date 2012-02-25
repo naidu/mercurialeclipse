@@ -268,7 +268,7 @@ public class TagDialog extends Dialog {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				targetRevision = Integer.toString(table.getSelection()
-						.getChangesetIndex());
+						.getIndex());
 			}
 		});
 
@@ -287,7 +287,7 @@ public class TagDialog extends Dialog {
 					ChangeSet changeset = table.getSelection();
 					if (changeset != null) {
 					targetRevision = Integer.toString(changeset
-							.getChangesetIndex());
+							.getIndex());
 				}
 			}
 		});
