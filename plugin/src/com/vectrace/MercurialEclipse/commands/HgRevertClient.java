@@ -54,7 +54,7 @@ public class HgRevertClient extends AbstractClient {
 		}
 		IResource firstFile = resources.get(0);
 		if(size == 1 && cs != null && (cs.isMoved(firstFile) || cs.isRemoved(firstFile))) {
-				HgRevision parentRevision = cs.getParentRevision(0, true);
+				HgRevision parentRevision = cs.getParentRevision(0);
 				HgCommand command = createRevertCommand(hgRoot, "Reverting " + firstFile.getName());
 				command.addOptions("--rev", parentRevision.getChangeset());
 				command.addFiles(firstFile);

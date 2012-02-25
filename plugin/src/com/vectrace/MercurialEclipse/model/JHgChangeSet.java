@@ -179,14 +179,6 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParentRevision(int, boolean)
-	 */
-	@Override
-	public HgRevision getParentRevision(int i, boolean b) {
-		return getParentRevision(i);
-	}
-
-	/**
 	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getTagsStr()
 	 */
 	@Override

@@ -281,23 +281,23 @@ public class DumbChangeSet extends ChangeSet {
 
 	@Override
 	public String[] getParents() {
+		getParentRevision(0);
 		return parents;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParentRevision(int)
+	 */
 	@Override
-	public HgRevision getParentRevision(int ordinal, boolean bQuery) {
-		if (bQuery && getChangesetIndex() != 0 && (parents == null || parents.length == 0)) {
+	public HgRevision getParentRevision(int ordinal) {
+		if (getChangesetIndex() != 0 && (parents == null || parents.length == 0)) {
 			try {
 				parents = HgParentClient.getParentNodeIds(this, "{rev}:{node}");
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
-		return getParentRevision(ordinal);
-	}
 
-	@Override
-	public HgRevision getParentRevision(int ordinal) {
 		if (parents != null && 0 <= ordinal && ordinal < parents.length) {
 			return HgRevision.parse(parents[ordinal]);
 		}

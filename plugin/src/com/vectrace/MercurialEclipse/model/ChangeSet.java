@@ -400,8 +400,6 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 
 	public abstract HgRevision getParentRevision(int i);
 
-	public abstract HgRevision getParentRevision(int i, boolean b);
-
 	public abstract String getTagsStr();
 
 	/**
