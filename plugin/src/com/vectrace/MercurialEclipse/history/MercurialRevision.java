@@ -53,7 +53,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	private final ChangeSet changeSet;
 
 	/** Cached data */
-	private IHgFile mercurialRevisionStorage;
+	private IHgFile storage;
 	private final GChangeSet gChangeSet;
 	private final int revision;
 	private final Signature signature;
@@ -251,13 +251,13 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
-		if (mercurialRevisionStorage == null) {
+		if (storage == null) {
 			if(resource instanceof IFile) {
-				mercurialRevisionStorage = new HgFile(changeSet.getHgRoot(), changeSet, changeSet
+				storage = new HgFile(changeSet.getHgRoot(), changeSet, changeSet
 						.getHgRoot().getRelativePath(resource));
 			}
 		}
-		return mercurialRevisionStorage;
+		return storage;
 	}
 
 	@DoNotDisplayMe

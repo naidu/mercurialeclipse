@@ -15,6 +15,7 @@ import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -30,6 +31,7 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -144,8 +146,9 @@ public class CompareAction extends SingleResourceAction {
 	 */
 	private static void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
 		try {
-			MercurialRevisionStorage ancestorNode;
-			MercurialRevisionStorage mergeNode;
+			IHgResource ancestorNode;
+			IHgResource mergeNode;
+			HgRoot root = MercurialRootCache.getInstance().getHgRoot(file);
 
 			if (workspaceUpdateConflict) {
 				String[] changeSets = HgResolveClient.restartMergeAndGetChangeSetsForCompare(file);
@@ -165,8 +168,11 @@ public class CompareAction extends SingleResourceAction {
 					return;
 				}
 
-				mergeNode = new MercurialRevisionStorage(file, otherId);
-				ancestorNode = new MercurialRevisionStorage(file, ancestorId);
+				// TODO: renames
+				IPath path = root.getRelativePath(file);
+
+				mergeNode = new HgFile(root, otherId, path);
+				ancestorNode = new HgFile(root, ancestorId, path);
 			} else {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
 				if(hgRoot == null) {
@@ -176,10 +182,12 @@ public class CompareAction extends SingleResourceAction {
 				}
 				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
 				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-				int ancestor = Integer.parseInt(HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1])[0]);
+				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				IPath path = root.getRelativePath(file);
 
-				mergeNode = new MercurialRevisionStorage(file, mergeNodeId);
-				ancestorNode = (ancestor <= 0) ? null : new MercurialRevisionStorage(file, ancestor);
+				// TODO: renames
+				mergeNode = new HgFile(root, mergeNodeId, path);
+				ancestorNode = (ancestor == null) ? null : new HgFile(root, ancestor, path);
 			}
 
 			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,

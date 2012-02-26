@@ -89,11 +89,10 @@ public class HgParentClient extends AbstractClient {
 	 * @param hgRoot The root that these nodes are in
 	 * @param node1 The first changeset id
 	 * @param node2 The second changeset id
-	 * @return An array of length 2 with the revision index at index 0 and the global node id at
-	 *         index 1. The revision index is -1 for unrelated.
+	 * @return The common ancestor node id, or null.
 	 * @throws HgException
 	 */
-	public static String[] findCommonAncestor(HgRoot hgRoot, String node1, String node2)
+	public static String findCommonAncestor(HgRoot hgRoot, String node1, String node2)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
 				"Finding common ancestor", hgRoot, false);
@@ -101,10 +100,7 @@ public class HgParentClient extends AbstractClient {
 		String result = command.executeToString().trim();
 		Matcher m = ANCESTOR_PATTERN.matcher(result);
 		if (m.matches()) {
-			String local = m.group(1);
-			String global = m.group(2);
-			String[] revision = {local, global};
-			return revision;
+			return m.group(2);
 		}
 		throw new HgException("Parse exception: '" + result + "'");
 	}
@@ -120,11 +116,10 @@ public class HgParentClient extends AbstractClient {
 	 *            first changeset
 	 * @param cs2
 	 *            second changeset
-	 * @return An array of length 2 with the revision index at index 0 and the global node id at
-	 *         index 1. The revision index is -1 for unrelated.
+	 * @return The common ancestor node id, or null.
 	 * @throws HgException
 	 */
-	public static String[] findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
+	public static String findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
 			throws HgException {
 		String result;
 		try {
@@ -144,10 +139,7 @@ public class HgParentClient extends AbstractClient {
 			result = command.executeToString().trim();
 			Matcher m = ANCESTOR_PATTERN.matcher(result);
 			if (m.matches()) {
-				String local = m.group(1);
-				String global = m.group(2);
-				String[] revision = {local, global};
-				return revision;
+				return m.group(2);
 			}
 			throw new HgException("Parse exception: '" + result + "'");
 		} catch (NumberFormatException e) {

@@ -61,7 +61,6 @@ import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -254,14 +253,10 @@ public final class CompareUtils {
 				right, findCommonAncestorIfExists(left, right), configuration);
 	}
 
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
 	public static CompareEditorInput getPrecomputedCompareInput(IResource leftResource,
-			MercurialRevisionStorage ancestor, MercurialRevisionStorage right) throws HgException {
-		return getPrecomputedCompareInput(null, leftResource,
-				getNode(ancestor, ancestor.getResource()), getNode(right, right.getResource()));
+			IHgResource ancestor, IHgResource right) throws HgException {
+		return getPrecomputedCompareInput(null, leftResource, getNode(ancestor, leftResource),
+				getNode(right, leftResource));
 	}
 
 	private static CompareEditorInput getPrecomputedCompareInput(
@@ -350,18 +345,18 @@ public final class CompareUtils {
 
 		String commonAncestor = null;
 
-			try {
-				commonAncestor = HgParentClient.findCommonAncestor(hgRoot,lCS, rCS)[1];
-			} catch (HgException e) {
-				// continue
-			}
+		try {
+			commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lCS, rCS);
+		} catch (HgException e) {
+			// continue
+		}
 
 		String lId = lCS.getNode();
 		String rId = rCS.getNode();
 
 		if (commonAncestor == null || commonAncestor.length() == 0){
 			try {
-				commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lId, rId)[1];
+				commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lId, rId);
 			} catch (HgException e) {
 				// continue: no changeset in the local repo, se issue #10616
 			}
