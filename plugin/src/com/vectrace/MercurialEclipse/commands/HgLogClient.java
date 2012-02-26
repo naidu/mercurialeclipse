@@ -73,7 +73,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
 
 		if (isFile) {
-			command.follow();
+			command.follow().removed();
 		}
 
 		return getChangeSets(root, command.execute(ResourceUtils.getPath(res).toOSString()));
