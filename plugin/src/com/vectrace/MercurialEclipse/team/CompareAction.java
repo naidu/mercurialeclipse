@@ -11,27 +11,21 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -96,7 +90,7 @@ public class CompareAction extends SingleResourceAction {
 				}
 
 				if (mergeEnabled || workspaceUpdateConflict) {
-					openMergeEditor((IFile)resource, workspaceUpdateConflict);
+					CompareUtils.openMergeEditor((IFile)resource, workspaceUpdateConflict);
 					return Status.OK_STATUS;
 				}
 				boolean clean = MercurialStatusCache.getInstance().isClean(resource);
@@ -138,69 +132,6 @@ public class CompareAction extends SingleResourceAction {
 			CompareUtils.openEditor(res, new RevisionNode(right), false, syncConfig);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
-		}
-	}
-
-	/**
-	 * @param file non null
-	 */
-	private static void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
-		try {
-			IHgResource ancestorNode;
-			IHgResource mergeNode;
-			HgRoot root = MercurialRootCache.getInstance().getHgRoot(file);
-
-			if (workspaceUpdateConflict) {
-				String[] changeSets = HgResolveClient.restartMergeAndGetChangeSetsForCompare(file);
-				String otherId = changeSets[1];
-				String ancestorId = changeSets[2];
-
-				if (otherId == null || ancestorId == null) {
-
-					getShell().getDisplay().asyncExec(new Runnable() {
-						public void run() {
-							MessageDialog.openError(getShell(), "Merge error",
-									"Couldn't retrieve merge info from Mercurial");
-						}
-					});
-
-					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id"));
-					return;
-				}
-
-				// TODO: renames
-				IPath path = root.getRelativePath(file);
-
-				mergeNode = new HgFile(root, otherId, path);
-				ancestorNode = new HgFile(root, ancestorId, path);
-			} else {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
-				if(hgRoot == null) {
-					MercurialEclipsePlugin.showError(new IllegalStateException(
-							"Failed to find hg root for: " + file.getLocation()));
-					return;
-				}
-				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
-				IPath path = root.getRelativePath(file);
-
-				// TODO: renames
-				mergeNode = new HgFile(root, mergeNodeId, path);
-				ancestorNode = (ancestor == null) ? null : new HgFile(root, ancestor, path);
-			}
-
-			final CompareEditorInput compareInput = CompareUtils.getPrecomputedCompareInput(file,
-					ancestorNode, mergeNode);
-
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					CompareUI.openCompareEditor(compareInput);
-				}
-			});
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
 		}
 	}
 

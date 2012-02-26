@@ -22,6 +22,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -46,6 +47,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
@@ -61,8 +63,10 @@ import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * This class helps to invoke the compare facilities of Eclipse.
@@ -166,7 +170,7 @@ public final class CompareUtils {
 							"Open the appropriate project (may take time)?");
 				}
 			};
-			Display.getDefault().syncExec(runnable);
+			getDisplay().syncExec(runnable);
 			if(open[0]) {
 				try {
 					left.getProject().open(null);
@@ -237,7 +241,7 @@ public final class CompareUtils {
 				CompareUI.openCompareDialog(compareInput);
 			}
 		};
-		Display.getDefault().asyncExec(uiAction);
+		getDisplay().asyncExec(uiAction);
 		return Window.CANCEL;
 	}
 
@@ -370,5 +374,72 @@ public final class CompareUtils {
 		//TODO: should apply filter here and recreate left and right
 		IHgResource hgResource = HgLocateClient.getHgResources(lNode.getHgResource(), commonAncestor, null);
 		return new RevisionNode(hgResource);
+	}
+
+	/**
+	 * @param file non null
+	 */
+	public static void openMergeEditor(final IFile file, boolean workspaceUpdateConflict){
+		try {
+			IHgResource ancestorNode;
+			IHgResource mergeNode;
+			HgRoot root = MercurialRootCache.getInstance().getHgRoot(file);
+
+			if (workspaceUpdateConflict) {
+				String[] changeSets = HgResolveClient.restartMergeAndGetChangeSetsForCompare(file);
+				String otherId = changeSets[1];
+				String ancestorId = changeSets[2];
+
+				if (otherId == null || ancestorId == null) {
+
+					getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							MessageDialog.openError(MercurialEclipsePlugin.getActiveShell(), "Merge error",
+									"Couldn't retrieve merge info from Mercurial");
+						}
+					});
+
+					MercurialEclipsePlugin.logError(new HgException("HgResolveClient returned null revision id"));
+					return;
+				}
+
+				// TODO: renames
+				IPath path = root.getRelativePath(file);
+
+				mergeNode = new HgFile(root, otherId, path);
+				ancestorNode = new HgFile(root, ancestorId, path);
+			} else {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+				if(hgRoot == null) {
+					MercurialEclipsePlugin.showError(new IllegalStateException(
+							"Failed to find hg root for: " + file.getLocation()));
+					return;
+				}
+				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
+				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
+				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				IPath path = root.getRelativePath(file);
+
+				// TODO: renames
+				mergeNode = new HgFile(root, mergeNodeId, path);
+				ancestorNode = (ancestor == null) ? null : new HgFile(root, ancestor, path);
+			}
+
+			final CompareEditorInput compareInput = getPrecomputedCompareInput(file,
+					ancestorNode, mergeNode);
+
+			getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					CompareUI.openCompareEditor(compareInput);
+				}
+			});
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+		}
+	}
+
+	private static Display getDisplay() {
+		return MercurialEclipsePlugin.getStandardDisplay();
 	}
 }
