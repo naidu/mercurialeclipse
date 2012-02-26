@@ -12,6 +12,7 @@
 
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +24,10 @@ import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.flags.HeadsCommandFlags;
 import com.aragost.javahg.commands.flags.LogCommandFlags;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -124,7 +128,24 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	 * @return might return null if the changeset is not known/existing in the repo
 	 */
 	public static ChangeSet getChangeSet(HgRoot root, String nodeId) {
-		return getChangeSet(root, LogCommandFlags.on(root.getRepository()).rev(nodeId).execute()
-				.get(0));
+		return getChangeSet(root, nodeId, null, null, null);
+	}
+
+	public static ChangeSet getChangeSet(HgRoot root, String nodeId, IHgRepositoryLocation remote,
+			Direction direction, File bundle) {
+		LogCommand command = LogCommandFlags.on(root.getRepository()).rev(nodeId);
+
+		if (bundle != null) {
+			command.cmdAppend("--repository", bundle.toString());
+		}
+
+		Changeset cs = command.single();
+
+		if (bundle != null) {
+			// TODO: cache?
+			return new JHgChangeSet(root, cs, remote, direction, bundle);
+		}
+
+		return getChangeSet(root, cs);
 	}
 }

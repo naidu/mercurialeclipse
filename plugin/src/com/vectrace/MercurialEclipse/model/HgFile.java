@@ -108,10 +108,6 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		return EMPTY_STREAM;
 	}
 
-	public static HgFile make(HgRoot root, IFile file, String cs) throws HgException {
-		return new HgFile(root, cs, root.getRelativePath(file));
-	}
-
 	public static HgFile make(ChangeSet cs, IFile file) {
 		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
 	}

@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -54,6 +55,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -387,7 +389,7 @@ public final class MercurialUtilities {
 	 *
 	 * Note: May query and update the file status of cs.
 	 *
-	 * @param cs The changeset to query for
+	 * @param cs The changeset in which the file was modified
 	 * @param file The file as of cs's revision
 	 * @return Storage for the parent revision
 	 * @throws HgException
@@ -397,6 +399,7 @@ public final class MercurialUtilities {
 		if(cs.getRevision().getRevision() == 0){
 			return new NullHgFile(cs.getHgRoot(), file);
 		} else if (parents.length == 0) {
+			assert false;
 			// TODO for some reason, we do not always have right parent info in the changesets
 			// If we are on the different branch then the changeset? or if the changeset
 			// logs was created for a file, and not each version of a *file* has
@@ -419,7 +422,17 @@ public final class MercurialUtilities {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
-		return HgFile.make(cs.getHgRoot(), file, parents[0]);
+		ChangeSet parentCs;
+
+		if (cs.getBundleFile() == null) {
+			parentCs = LocalChangesetCache.getInstance().get(cs.getHgRoot(), parents[0]);
+		} else {
+			// TODO: from cache?
+			parentCs = HgLogClient.getChangeSet(cs.getHgRoot(), parents[0], cs.getRepository(),
+					cs.getDirection(), cs.getBundleFile());
+		}
+
+		return HgFile.make(parentCs, file);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {
