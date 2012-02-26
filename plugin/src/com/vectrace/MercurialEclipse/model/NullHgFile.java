@@ -33,10 +33,6 @@ public class NullHgFile extends HgFile {
  		super(hgRoot, revision, path);
  	}
 
-	public NullHgFile(HgRoot hgRoot, IFile file) throws HgException {
- 		super(hgRoot, HgIdentClient.VERSION_ZERO, hgRoot.getRelativePath(file));
- 	}
-
 	@Override
 	public InputStream getContents() throws CoreException {
 		return EMPTY_STREAM;
@@ -44,7 +40,15 @@ public class NullHgFile extends HgFile {
 
 	@Override
 	public String getName() {
-		return super.getName() + ": DOES NOT EXIST";
+		return super.getName() + ": no content";
 	}
 
+	public static NullHgFile make(HgRoot root, IFile file) {
+		try {
+			return new NullHgFile(root, HgIdentClient.VERSION_ZERO, root.getRelativePath(file));
+		} catch (HgException e) {
+			// 00000..00 should always be a valid revision
+			throw new IllegalStateException();
+		}
+	}
 }

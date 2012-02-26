@@ -210,4 +210,68 @@ public class JHgChangeSet extends ChangeSet {
 		return changeset.getMessage();
 	}
 
+	/**
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
+		result = prime * result + ((changeset == null) ? 0 : changeset.hashCode());
+		result = prime * result + ((direction == null) ? 0 : direction.hashCode());
+		result = prime * result + ((hgRoot == null) ? 0 : hgRoot.hashCode());
+		result = prime * result + ((remote == null) ? 0 : remote.hashCode());
+		return result;
+	}
+
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		JHgChangeSet other = (JHgChangeSet) obj;
+		if (bundle == null) {
+			if (other.bundle != null) {
+				return false;
+			}
+		} else if (!bundle.equals(other.bundle)) {
+			return false;
+		}
+		if (changeset == null) {
+			if (other.changeset != null) {
+				return false;
+			}
+		} else if (!changeset.equals(other.changeset)) {
+			return false;
+		}
+		if (direction != other.direction) {
+			return false;
+		}
+		if (hgRoot == null) {
+			if (other.hgRoot != null) {
+				return false;
+			}
+		} else if (!hgRoot.equals(other.hgRoot)) {
+			return false;
+		}
+		if (remote == null) {
+			if (other.remote != null) {
+				return false;
+			}
+		} else if (!remote.equals(other.remote)) {
+			return false;
+		}
+		return true;
+	}
+
 }

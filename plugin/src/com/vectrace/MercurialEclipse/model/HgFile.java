@@ -22,6 +22,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * @author Ge Zhong
@@ -112,4 +114,13 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
 	}
 
+	/**
+	 * Make an instance that is the clean version of the given file
+	 */
+	public static HgFile makeAtCurrentRev(IFile remoteFile) throws HgException {
+		HgRoot root = MercurialRootCache.getInstance().getHgRoot(remoteFile);
+		ChangeSet cs = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+
+		return new HgFile(cs.getHgRoot(), cs, root.getRelativePath(remoteFile));
+	}
 }

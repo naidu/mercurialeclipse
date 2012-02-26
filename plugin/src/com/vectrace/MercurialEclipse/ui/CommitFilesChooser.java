@@ -61,9 +61,9 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
@@ -365,7 +365,7 @@ public class CommitFilesChooser extends Composite {
 	 *
 	 * @param res
 	 */
-	private CommitResource[] createCommitResources(List<IResource> res) {
+	private static CommitResource[] createCommitResources(List<IResource> res) {
 		return CommitResourceUtil.getCommitResources(res);
 	}
 
@@ -429,9 +429,9 @@ public class CommitFilesChooser extends Composite {
 
 	private void showDiffForSelection() {
 		if (selectedFile != null) {
-			MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
 			try {
-				CompareUtils.openEditor(selectedFile, iStorage, true, null);
+				HgFile cleanFile = HgFile.makeAtCurrentRev(selectedFile);
+				CompareUtils.openEditor(selectedFile, cleanFile, true, null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}

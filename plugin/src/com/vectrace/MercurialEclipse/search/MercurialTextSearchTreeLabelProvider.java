@@ -15,8 +15,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
-import java.util.Comparator;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -34,7 +32,7 @@ import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 public class MercurialTextSearchTreeLabelProvider extends LabelProvider implements IStyledLabelProvider {
 
@@ -44,34 +42,17 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 
 	private static final String FG_SEPARATOR_FORMAT = "{0} - {1}"; //$NON-NLS-1$
 
-	private static final String FG_ELLIPSES = " ... "; //$NON-NLS-1$
-
 	private final WorkbenchLabelProvider fLabelProvider;
 	private final AbstractTextSearchViewPage fPage;
-	private final Comparator<MercurialMatch> fMatchComparator;
-
 	private final Image fLineMatchImage;
 
-	private int fOrder;
+	private final int fOrder;
 
 	public MercurialTextSearchTreeLabelProvider(AbstractTextSearchViewPage page, int orderFlag) {
 		fLabelProvider = new WorkbenchLabelProvider();
 		fOrder = orderFlag;
 		fPage = page;
 		fLineMatchImage = SearchPluginImages.get(SearchPluginImages.IMG_OBJ_TEXT_SEARCH_LINE);
-		fMatchComparator = new Comparator<MercurialMatch>() {
-			public int compare(MercurialMatch o1, MercurialMatch o2) {
-				return o1.getLineNumber() - o2.getLineNumber();
-			}
-		};
-	}
-
-	public void setOrder(int orderFlag) {
-		fOrder = orderFlag;
-	}
-
-	public int getOrder() {
-		return fOrder;
 	}
 
 	@Override
@@ -97,8 +78,8 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 	}
 
 	public StyledString getStyledText(Object element) {
-		if (element instanceof MercurialRevisionStorage) {
-			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
+		if (element instanceof HgFile) {
+			HgFile mrs = (HgFile) element;
 			ChangeSet cs = mrs.getChangeSet();
 			if(cs == null) {
 				return new StyledString("");
@@ -190,7 +171,7 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 		return styledString; // no change
 	}
 
-	private StyledString getMercurialMatchLabel(MercurialMatch match) {
+	private static StyledString getMercurialMatchLabel(MercurialMatch match) {
 		int lineNumber = match.getLineNumber();
 		String becomesMatch = match.isBecomesMatch() ? "+" : "-";
 		StyledString str = new StyledString(lineNumber + " (" + becomesMatch + ") ",
@@ -201,15 +182,9 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 		return str.append(content);
 	}
 
-	private static final int MIN_MATCH_CONTEXT = 10; // minimal number of
-
-	// characters shown
-	// after and before a
-	// match
-
 	@Override
 	public Image getImage(Object element) {
-		if (element instanceof MercurialRevisionStorage) {
+		if (element instanceof HgFile) {
 			return MercurialEclipsePlugin.getImage("elcl16/changeset_obj.gif");
 		}
 
@@ -257,11 +232,7 @@ public class MercurialTextSearchTreeLabelProvider extends LabelProvider implemen
 		fLabelProvider.addListener(listener);
 	}
 
-	/**
-	 * @param mrs
-	 * @return
-	 */
-	protected String getCsInfoString(MercurialRevisionStorage mrs) {
+	protected static String getCsInfoString(HgFile mrs) {
 		ChangeSet cs = mrs.getChangeSet();
 		String csInfo = cs.getIndex() + " [" + cs.getAuthor() + "] ("
 				+ cs.getAgeDate() + ") ";

@@ -397,7 +397,7 @@ public final class MercurialUtilities {
 	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
 		String[] parents = cs.getParents();
 		if(cs.getRevision().getRevision() == 0){
-			return new NullHgFile(cs.getHgRoot(), file);
+			return NullHgFile.make(cs.getHgRoot(), file);
 		} else if (parents.length == 0) {
 			assert false;
 			// TODO for some reason, we do not always have right parent info in the changesets
@@ -412,7 +412,7 @@ public final class MercurialUtilities {
 				MercurialEclipsePlugin.logError(e);
 			}
 			if (parents.length == 0) {
-				return new NullHgFile(cs.getHgRoot(), file);
+				return NullHgFile.make(cs.getHgRoot(), file);
 			}
 		}
 

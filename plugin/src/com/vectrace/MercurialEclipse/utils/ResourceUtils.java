@@ -58,14 +58,10 @@ import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
-import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -815,18 +811,5 @@ public final class ResourceUtils {
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Convert deprecated MercurialRevisionStorage to HgFile
-	 */
-	public static HgFile convertToHgFile(MercurialRevisionStorage rev) {
-		IFile file = rev.getResource();
-		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
-		IPath relPath = ResourceUtils.getPath(file).makeRelativeTo(hgRoot.getIPath());
-		if (rev instanceof NullRevision) {
-			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
-		}
-		return new HgFile(hgRoot, rev.getChangeSet(), relPath);
 	}
 }

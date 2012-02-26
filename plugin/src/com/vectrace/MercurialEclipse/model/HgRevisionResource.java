@@ -77,4 +77,40 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 	public final boolean isReadOnly() {
 		return true;
 	}
+
+	/**
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((changeset == null) ? 0 : changeset.hashCode());
+		return result;
+	}
+
+	/**
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		HgRevisionResource other = (HgRevisionResource) obj;
+		if (changeset == null) {
+			if (other.changeset != null) {
+				return false;
+			}
+		} else if (!changeset.equals(other.changeset)) {
+			return false;
+		}
+		return true;
+	}
 }

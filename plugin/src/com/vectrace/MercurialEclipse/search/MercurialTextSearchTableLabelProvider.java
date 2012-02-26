@@ -14,7 +14,7 @@ import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.search.ui.text.AbstractTextSearchViewPage;
 import org.eclipse.swt.graphics.Image;
 
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 /**
  * @author bastian
@@ -22,20 +22,16 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
  */
 public class MercurialTextSearchTableLabelProvider extends MercurialTextSearchTreeLabelProvider {
 
-	/**
-	 * @param page
-	 * @param orderFlag
-	 */
 	public MercurialTextSearchTableLabelProvider(AbstractTextSearchViewPage page, int orderFlag) {
 		super(page, orderFlag);
 	}
 
 	@Override
 	public StyledString getStyledText(Object element) {
-		if (element instanceof MercurialRevisionStorage) {
-			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
+		if (element instanceof HgFile) {
+			HgFile mrs = (HgFile) element;
 			String csInfo = getCsInfoString(mrs);
-			return new StyledString(csInfo + mrs.getResource().getFullPath().toOSString());
+			return new StyledString(csInfo);
 		}
 
 		return super.getStyledText(element);
@@ -43,10 +39,6 @@ public class MercurialTextSearchTableLabelProvider extends MercurialTextSearchTr
 
 	@Override
 	public Image getImage(Object element) {
-		if (element instanceof MercurialRevisionStorage) {
-			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
-			return super.getResourceImage(mrs.getResource());
-		}
 		return super.getImage(element);
 	}
 

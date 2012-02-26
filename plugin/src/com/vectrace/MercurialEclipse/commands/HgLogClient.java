@@ -148,4 +148,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 		return getChangeSet(root, cs);
 	}
+
+	public static ChangeSet getChangeSet(HgRoot root, int rev) {
+		return getChangeSet(root, rev + ":" + rev);
+	}
 }

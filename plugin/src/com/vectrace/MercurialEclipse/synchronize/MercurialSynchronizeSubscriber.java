@@ -51,11 +51,11 @@ import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -137,7 +137,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
 		ChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
-		MercurialRevisionStorage outgoingIStorage;
+		HgFile outgoingIStorage;
 		IResourceVariant outgoing;
 		// determine outgoing revision
 		boolean hasOutgoingChanges = false;
@@ -145,11 +145,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		if (csOutgoing != null) {
-			outgoingIStorage = new MercurialRevisionStorage(file,
-					csOutgoing.getRevision().getRevision(),
-					csOutgoing.getNode(), csOutgoing);
+			outgoingIStorage = HgFile.make(csOutgoing, file);
 
-			outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
+			outgoing = new MercurialResourceVariant(new RevisionNode(outgoingIStorage));
 			hasOutgoingChanges = true;
 		} else {
 			boolean exists = file.exists();
@@ -174,10 +172,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return null;
 				}
 				// construct base revision
-				outgoingIStorage = new MercurialRevisionStorage(file,
-						csOutgoing.getIndex(), csOutgoing.getNode(), csOutgoing);
+				outgoingIStorage = HgFile.make(csOutgoing, file);
 
-				outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
+				outgoing = new MercurialResourceVariant(new RevisionNode(outgoingIStorage));
 			} else {
 				// new incoming file - no local available
 				outgoingIStorage = null;
@@ -187,7 +184,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// determine incoming revision get newest incoming changeset
 		ChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
-		MercurialRevisionStorage incomingIStorage;
+		HgFile incomingIStorage;
 		int syncMode = -1;
 		if (csIncoming != null) {
 			hasIncomingChanges = true;
@@ -236,7 +233,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 						ChangeSet baseChangeset = getChangeset(file, parentCs, null);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
-						outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
+						outgoing = new MercurialResourceVariant(new RevisionNode(incomingIStorage));
 						syncMode = SyncInfo.OUTGOING | SyncInfo.CHANGE;
 					}
 				}
@@ -250,7 +247,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		IResourceVariant incoming;
 		if (incomingIStorage != null) {
-			incoming = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
+			incoming = new MercurialResourceVariant(new RevisionNode(incomingIStorage));
 		} else {
 			// neither base nor outgoing nor incoming revision
 			incoming = null;
@@ -397,12 +394,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				&& (isSupervised(resource) || (!resource.exists()));
 	}
 
-	private static MercurialRevisionStorage getIncomingIStorage(IFile resource,
-			ChangeSet csRemote) {
-		MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
-				resource, csRemote.getRevision().getRevision(), csRemote
-				.getNode(), csRemote);
-		return incomingIStorage;
+	private static HgFile getIncomingIStorage(IFile resource, ChangeSet csRemote) {
+		return HgFile.make(csRemote, resource);
 	}
 
 	@Override

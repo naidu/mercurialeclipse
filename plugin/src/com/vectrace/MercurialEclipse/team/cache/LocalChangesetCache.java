@@ -344,6 +344,20 @@ public final class LocalChangesetCache extends AbstractCache {
 		return get(MercurialRootCache.getInstance().getHgRoot(res), nodeId);
 	}
 
+	public ChangeSet get(HgRoot root, int rev) throws HgException {
+		Assert.isNotNull(root);
+		Assert.isLegal(rev >= 0);
+		SortedSet<ChangeSet> sets = getOrFetchChangeSets(root);
+		for (ChangeSet changeSet : sets) {
+			if (changeSet.getIndex() == rev) {
+				return changeSet;
+			}
+		}
+
+		// TODO: Cache by root?
+		return HgLogClient.getChangeSet(root, rev);
+	}
+
 	/**
 	 * @return may return null
 	 */
