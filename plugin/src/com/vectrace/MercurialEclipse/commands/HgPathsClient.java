@@ -17,11 +17,11 @@ import java.io.FileNotFoundException;
 import java.util.Map;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 public class HgPathsClient extends AbstractClient {
-	public static final String DEFAULT = Branch.DEFAULT;
+	public static final String DEFAULT = BranchUtils.DEFAULT;
 	public static final String DEFAULT_PULL = "default-pull"; //$NON-NLS-1$
 	public static final String DEFAULT_PUSH = "default-push"; //$NON-NLS-1$
 

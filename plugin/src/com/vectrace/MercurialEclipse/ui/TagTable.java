@@ -76,13 +76,14 @@ public class TagTable extends Composite {
 		String[] titles = {
 				Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 		int[] widths = { 60, 150, 200, 70, 300 };
+		@SuppressWarnings("rawtypes")
 		Comparator[] comparators = { new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
-				return TableSortListener.sort(a.tag.getRevision(), b.tag.getRevision());
+				return TableSortListener.sort(a.tag.getChangeset().getRevision(), b.tag.getChangeset().getRevision());
 			}
 		}, new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
-				return a.tag.getGlobalId().compareTo(b.tag.getGlobalId());
+				return a.tag.getChangeset().getNode().compareTo(b.tag.getChangeset().getNode());
 			}
 		}, new Comparator<ItemMediator>() {
 			public int compare(ItemMediator a, ItemMediator b) {
@@ -141,7 +142,7 @@ public class TagTable extends Composite {
 		List<ItemMediator> filtered = new ArrayList<ItemMediator>(tags.length);
 
 		for (Tag tag : tags) {
-			if (showTip || !tag.isTip()) {
+			if (showTag(tag)) {
 				filtered.add(new ItemMediator(tag));
 			}
 		}
@@ -151,6 +152,10 @@ public class TagTable extends Composite {
 		table.setItemCount(data.length);
 
 		fetchChangesetInfo(data);
+	}
+
+	private boolean showTag(Tag tag) {
+		return showTip || !"tip".equals(tag.getName());
 	}
 
 	/**
@@ -185,7 +190,7 @@ public class TagTable extends Composite {
 					if(monitor.isCanceled()) {
 						return Status.CANCEL_STATUS;
 					}
-					if (showTip || !tag.tag.isTip()) {
+					if (showTag(tag.tag)) {
 						ChangeSet changeSet = tagged.get(tag.tag.getName());
 						if(changeSet != null) {
 							tagToCs.put(tag, changeSet);
@@ -281,11 +286,11 @@ public class TagTable extends Composite {
 		 *            The table row
 		 */
 		public void setTableItem(TableItem curItem) {
-			if (isParent(tag.getRevision())) {
+			if (isParent(tag.getChangeset().getRevision())) {
 				curItem.setFont(PARENT_FONT);
 			}
-			curItem.setText(0, Integer.toString(tag.getRevision()));
-			curItem.setText(1, tag.getGlobalId());
+			curItem.setText(0, Integer.toString(tag.getChangeset().getRevision()));
+			curItem.setText(1, tag.getChangeset().getNode());
 			curItem.setText(2, tag.getName());
 			curItem.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") //$NON-NLS-1$
 					: Messages.getString("TagTable.stateGlobal"));

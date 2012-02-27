@@ -23,7 +23,6 @@ import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -146,13 +145,20 @@ public abstract class AbstractClient {
 		return returnValue;
 	}
 
-	public static String getHgResourceSearchPattern(IResource resource) throws HgException {
+	/**
+	 * Get a glob pattern to be passed to status or locate to locate the given resource and it's children in history
+	 *
+	 * @param root Hg root
+	 * @param relPath Root relative path
+	 * @param file True if the path is a file
+	 * @return A glob pattern
+	 * @throws HgException
+	 */
+	public static String getHgResourceSearchPattern(HgRoot root, IPath relPath, boolean file) throws HgException {
 
-		HgRoot hgRoot = getHgRoot(resource);
 		String pattern = null;
 
-		IPath relPath = ResourceUtils.getPath(resource).makeRelativeTo(hgRoot.getIPath());
-		if (resource instanceof IStorage) {
+		if (file) {
 			pattern = "glob:" + relPath.toOSString();
 		} else {
 			String pathString = relPath.toOSString();

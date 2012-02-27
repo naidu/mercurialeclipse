@@ -153,7 +153,7 @@ public class TransplantOptionsPage extends HgWizardPage {
 			}
 			public void widgetSelected(SelectionEvent e) {
 				ChangeSet changeSet = pruneNodeIdTable.getSelection();
-				pruneNodeId = changeSet == null? null : changeSet.getChangeset();
+				pruneNodeId = changeSet == null? null : changeSet.getNode();
 				validatePage();
 			}
 		};
@@ -195,7 +195,7 @@ public class TransplantOptionsPage extends HgWizardPage {
 			}
 			public void widgetSelected(SelectionEvent e) {
 				ChangeSet changeSet = mergeNodeIdTable.getSelection();
-				mergeNodeId = changeSet == null? null : changeSet.getChangeset();
+				mergeNodeId = changeSet == null? null : changeSet.getNode();
 				validatePage();
 			}
 		};

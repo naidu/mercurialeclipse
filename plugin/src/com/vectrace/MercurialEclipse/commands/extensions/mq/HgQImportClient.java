@@ -62,7 +62,7 @@ public class HgQImportClient extends AbstractClient {
 		command.addOptions("--git"); //$NON-NLS-1$
 
 		if (changesets != null && changesets.length>0) {
-			command.addOptions("--rev", changesets[changesets.length-1].getChangeset()+ ":" +changesets[0].getChangeset()); //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--rev", changesets[changesets.length-1].getNode()+ ":" +changesets[0].getNode()); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
 			Assert.isNotNull(patchFile);
 			if (existing) {

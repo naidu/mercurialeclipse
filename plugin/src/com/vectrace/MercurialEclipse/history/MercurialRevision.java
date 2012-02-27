@@ -14,7 +14,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,36 +24,39 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
+import com.vectrace.MercurialEclipse.model.IHgFile;
+import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IResourceHolder;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 /**
  * @author zingo
  */
-public class MercurialRevision extends FileRevision {
+public class MercurialRevision extends FileRevision implements IHgResource, IChangeSetHolder, IResourceHolder {
 
 	private final IResource resource;
 	private final ChangeSet changeSet;
 
 	/** Cached data */
-	private MercurialRevisionStorage mercurialRevisionStorage;
+	private IHgFile storage;
 	private final GChangeSet gChangeSet;
 	private final int revision;
 	private final Signature signature;
-	private File parent;
 
 	/**
 	 * Tags sorted by revision
@@ -83,7 +85,7 @@ public class MercurialRevision extends FileRevision {
 		Assert.isNotNull(resource);
 		this.changeSet = changeSet;
 		this.gChangeSet = gChangeSet;
-		this.revision = changeSet.getChangesetIndex();
+		this.revision = changeSet.getIndex();
 		this.resource = resource;
 		this.signature = sig;
 		this.bisectStatus = bisectStatus;
@@ -146,7 +148,7 @@ public class MercurialRevision extends FileRevision {
 	@Override
 	@DoNotDisplayMe
 	public String getContentIdentifier() {
-		return changeSet.getChangeset();
+		return changeSet.getNode();
 	}
 
 	@Override
@@ -249,21 +251,13 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
-		if (mercurialRevisionStorage == null) {
-			if(!resource.exists() && parent != null){
-				IFile parentRes =  ResourcesPlugin.getWorkspace().getRoot()
-					.getFileForLocation(new Path(parent.getAbsolutePath()));
-				mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
-						revision, getContentIdentifier(), changeSet);
-			} else {
-				if(resource instanceof IFile){
-					mercurialRevisionStorage = new MercurialRevisionStorage((IFile) resource,
-							revision, getContentIdentifier(), changeSet);
-					mercurialRevisionStorage.setParent(parent);
-				}
+		if (storage == null) {
+			if(resource instanceof IFile) {
+				storage = new HgFile(changeSet.getHgRoot(), changeSet, changeSet
+						.getHgRoot().getRelativePath(resource));
 			}
 		}
-		return mercurialRevisionStorage;
+		return storage;
 	}
 
 	@DoNotDisplayMe
@@ -292,21 +286,6 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	/**
-	 * @return the possible parent (after the copy or rename operation), may be null
-	 */
-	public File getParent() {
-		return parent;
-	}
-
-	/**
-	 * @param parent the possible parent (after the copy or rename operation)
-	 */
-	public void setParent(File parent) {
-		this.parent = parent;
-	}
-
-	/**
-	 *
 	 * @return true, if the resource represented by this revision is file
 	 */
 	@DoNotDisplayMe
@@ -336,10 +315,6 @@ public class MercurialRevision extends FileRevision {
 			builder.append("gChangeSet="); //$NON-NLS-1$
 			builder.append(gChangeSet);
 		}
-		if (parent != null) {
-			builder.append("parent="); //$NON-NLS-1$
-			builder.append(parent);
-		}
 		if (tags != null) {
 			builder.append("tags="); //$NON-NLS-1$
 			builder.append(Arrays.asList(tags));
@@ -364,6 +339,25 @@ public class MercurialRevision extends FileRevision {
 	 */
 	public void setBisectStatus(Status bisectStatus) {
 		this.bisectStatus = bisectStatus;
+	}
+
+	public Object getAdapter(Class adapter) {
+		if(adapter == IResource.class) {
+			return resource;
+		}
+		return null;
+	}
+
+	public HgRoot getHgRoot() {
+		return changeSet.getHgRoot();
+	}
+
+	public IPath getIPath() {
+		return getHgRoot().toRelative(resource.getLocation());
+	}
+
+	public boolean isReadOnly() {
+		return true;
 	}
 
 }

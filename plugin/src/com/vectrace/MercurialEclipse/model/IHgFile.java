@@ -17,5 +17,5 @@ import org.eclipse.core.resources.IEncodedStorage;
  *
  */
 public interface IHgFile extends IHgResource, IEncodedStorage {
-
+	String getFileExtension();
 }

@@ -25,7 +25,7 @@ import org.eclipse.core.resources.IResource;
  * as a usual changeset, as many of it's functionality is not supported or limited.
  * @author Andrei
  */
-public abstract class WorkingChangeSet extends ChangeSet {
+public abstract class WorkingChangeSet extends DumbChangeSet {
 
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
@@ -57,7 +57,7 @@ public abstract class WorkingChangeSet extends ChangeSet {
 
 	@Override
 	public String toString() {
-		String changeset = getChangeset();
+		String changeset = getNode();
 		int size = getFiles().size();
 		if(size == 0){
 			return changeset + " (empty)";

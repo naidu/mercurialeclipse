@@ -17,12 +17,12 @@ import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgIncomingClient extends AbstractParseChangesetClient {
@@ -45,7 +45,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 
 		addInsecurePreference(command);
 		String branch = key.getBranch();
-		if (!Branch.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
+		if (!BranchUtils.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
 			// this branch is not known remote, so there can be NO incoming changes
 			return new RemoteData(key, Direction.INCOMING);
 		}

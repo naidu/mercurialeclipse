@@ -8,6 +8,7 @@
  * Contributors:
  *     bastian					- implementation
  *     Andrei Loskutov			- bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -23,9 +24,12 @@ import java.util.Map.Entry;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.resource.ImageDescriptor;
 
+import com.aragost.javahg.Repository;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -82,6 +86,8 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	private final IProject projectAdapter;
 
+	private Repository repository;
+
 	public HgRoot(String pathname) throws IOException {
 		this(new File(pathname));
 	}
@@ -94,6 +100,18 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		} else {
 			projectAdapter = new HgRootContainer(this);
 		}
+	}
+
+	public static HgRoot get(File file) throws IOException {
+		return MercurialRootCache.getInstance().getCached(new HgRoot(file));
+	}
+
+	public Repository getRepository() {
+		if (repository == null) {
+			repository = Repository.open(HgClients.getRepoConfig(), this);
+		}
+
+		return repository;
 	}
 
 	public void setEncoding(String charset) {
@@ -288,8 +306,19 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 		return projectAdapter;
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgRepositoryLocation#toHgRoot()
+	 */
 	public HgRoot toHgRoot() {
 		return this;
 	}
 
+	/**
+	 * Helper method to get root relative path for a resource under this root
+	 * @param res The resource to query
+	 * @return The root relative path
+	 */
+	public IPath getRelativePath(IResource res) {
+		return ResourceUtils.getPath(res).makeRelativeTo(getIPath());
+	}
 }

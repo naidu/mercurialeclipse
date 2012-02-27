@@ -12,8 +12,12 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.InputStream;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+
+import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author Ge Zhong
@@ -25,7 +29,7 @@ public class NullHgFile extends HgFile {
 		super(hgRoot, changeset, path);
 	}
 
-	public NullHgFile(HgRoot hgRoot, String revision, IPath path) {
+	public NullHgFile(HgRoot hgRoot, String revision, IPath path) throws HgException {
  		super(hgRoot, revision, path);
  	}
 
@@ -36,7 +40,15 @@ public class NullHgFile extends HgFile {
 
 	@Override
 	public String getName() {
-		return super.getName() + ": DOES NOT EXIST";
+		return super.getName() + ": no content";
 	}
 
+	public static NullHgFile make(HgRoot root, IFile file) {
+		try {
+			return new NullHgFile(root, HgIdentClient.VERSION_ZERO, root.getRelativePath(file));
+		} catch (HgException e) {
+			// 00000..00 should always be a valid revision
+			throw new IllegalStateException();
+		}
+	}
 }

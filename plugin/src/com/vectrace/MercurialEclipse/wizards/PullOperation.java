@@ -112,7 +112,7 @@ class PullOperation extends HgOperation {
 	}
 
 	private String performPull(final IHgRepositoryLocation repository,
-			IProgressMonitor monitor) throws CoreException {
+			IProgressMonitor monitor) throws HgException {
 		monitor.worked(1);
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$
 		String r = Messages.getString("PullRepoWizard.pullOperation.pull.header"); //$NON-NLS-1$
@@ -213,8 +213,8 @@ class PullOperation extends HgOperation {
 			if (merge) {
 				output += performMerge(monitor);
 			}
-		} catch (CoreException e) {
-			throw new InvocationTargetException(e, e.getMessage());
+		} catch (HgException e) {
+			throw new InvocationTargetException(e, e.getConciseMessage());
 		}
 		monitor.done();
 	}

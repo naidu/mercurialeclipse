@@ -308,7 +308,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		    // logEntriesByRevision may not contain transplanted changesets
 			if (logEntry == null) {
 				HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
-				logEntry = HgLogClient.getChangeset(root, block.getRevision().getChangeset());
+				logEntry = HgLogClient.getChangeSet(root, block.getRevision().getNode());
 				Assert.isNotNull(logEntry);
 				logEntriesByRevision.put(Integer.valueOf(logEntry.getRevision().getRevision()),
 						logEntry);

@@ -107,6 +107,6 @@ public class MergeWithCurrentChangesetAction extends Action {
 			return selectedRevisions[0];
 		}
 		ChangeSet cs = mhp.getCurrentWorkdirChangeset();
-		return (MercurialRevision) mhp.getMercurialHistory().getFileRevision(cs.getChangeset());
+		return (MercurialRevision) mhp.getMercurialHistory().getFileRevision(cs.getNode());
 	}
 }

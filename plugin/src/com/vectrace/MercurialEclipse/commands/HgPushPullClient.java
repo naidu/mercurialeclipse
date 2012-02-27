@@ -161,12 +161,12 @@ public class HgPushPullClient extends AbstractClient {
 			return op + " all changes" + ((branch == null) ? "" : " in " + branch);
 		}
 
-		return op + " changeset " + changeset.getChangeset();
+		return op + " changeset " + changeset.getNode();
 	}
 
 	protected static void applyChangeset(AbstractShellCommand command, ChangeSet changeset) {
 		if (changeset != null) {
-			String cs = changeset.getChangeset();
+			String cs = changeset.getNode();
 
 			if (cs != null && (cs = cs.trim()).length() > 0) {
 				command.addOptions("-r", cs); //$NON-NLS-1$
