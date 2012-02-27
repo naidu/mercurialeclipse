@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -107,7 +109,7 @@ public enum HgFeatures {
 	public static void setToVersion(Version current) {
 		HgFeatures[] values = HgFeatures.values();
 		for (HgFeatures feature : values) {
-			feature.setEnabled(feature.getRequired().compareTo(current)<= 0);
+			feature.setEnabled(doCompare(feature.getRequired(), current)<= 0);
 		}
 	}
 
@@ -124,7 +126,7 @@ public enum HgFeatures {
 			if(!feature.isMandatory()) {
 				continue;
 			}
-			result &= feature.getRequired().compareTo(current)<= 0;
+			result &= doCompare(feature.getRequired(), current)<= 0;
 		}
 		return result;
 	}
@@ -139,7 +141,7 @@ public enum HgFeatures {
 		HgFeatures[] values = HgFeatures.values();
 		boolean result = true;
 		for (HgFeatures feature : values) {
-			result &= feature.getRequired().compareTo(current)<= 0;
+			result &= doCompare(feature.getRequired(), current)<= 0;
 		}
 		return result;
 	}
@@ -154,7 +156,7 @@ public enum HgFeatures {
 	public static Version getPreferredVersion() {
 		return Collections.max(Arrays.asList(HgFeatures.values()), new Comparator<HgFeatures>() {
 			public int compare(HgFeatures o1, HgFeatures o2) {
-				return o1.getRequired().compareTo(o2.getRequired());
+				return doCompare(o1.getRequired(), o2.getRequired());
 			}
 		}).getRequired();
 	}
@@ -167,7 +169,7 @@ public enum HgFeatures {
 				} else if(!o1.isMandatory() && o2.isMandatory()){
 					return 1;
 				}
-				return o1.getRequired().compareTo(o2.getRequired());
+				return doCompare(o1.getRequired(), o2.getRequired());
 			}
 		}).getRequired();
 	}
@@ -179,5 +181,49 @@ public enum HgFeatures {
 			sb.append(feature.toString()).append("\n");
 		}
 		return sb.toString();
+	}
+
+	/**
+	 * Support comparing versions without requiring a particular version of OSGi.
+	 *
+	 * See: http://computerfloss.com/2011/11/a-little-problem-in-the-osgi-version-class/
+	 *
+	 * Remove after Eclipse 3.6 is not supported.
+	 *
+	 * @param v1 The left version
+	 * @param v2 The right version
+	 * @return The result of left.compareTo(right)
+	 * @see Version#compareTo(Version)
+	 * @see Version#compareTo(Object)
+	 */
+	protected static int doCompare(Version v1, Version v2) {
+		Class<Version> versionClass = Version.class;
+		Method compareToMethod = null;
+
+		try {
+		    // Works on Eclipse 3.7
+		    compareToMethod = versionClass.getMethod("compareTo", Version.class);
+		} catch (NoSuchMethodException e1) {
+		    // "We're on Eclipse 3.6 or earlier. Fall back compareTo(Object).";
+		    try {
+		        // Works on Eclipse 3.6 and earlier
+		        compareToMethod = versionClass.getMethod("compareTo", Object.class);
+		    } catch (NoSuchMethodException e2) {
+		        MercurialEclipsePlugin.logError("Unexpected error: cannot find compareTo() in Version", e2);
+		        return 0;
+		    }
+		}
+
+		try {
+			return ((Integer)compareToMethod.invoke(v1, v2)).intValue();
+		} catch (IllegalArgumentException e) {
+			MercurialEclipsePlugin.logError("Unexpected error: comparing version", e);
+		} catch (IllegalAccessException e) {
+			MercurialEclipsePlugin.logError("Unexpected error: comparing version", e);
+		} catch (InvocationTargetException e) {
+			MercurialEclipsePlugin.logError("Unexpected error: comparing version", e);
+		}
+
+		return 0;
 	}
 }
