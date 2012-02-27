@@ -1,6 +1,7 @@
 
 syntax: regexp
 ^plugin/bin$
+^plugin/out$
 
 syntax: regexp
 ^@dot$
