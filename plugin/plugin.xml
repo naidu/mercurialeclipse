@@ -450,11 +450,7 @@
         <handler commandId="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
                  class="com.vectrace.MercurialEclipse.menu.RootHistoryHandler">
             <enabledWhen>
-                <and>
-                    <count value="1"/>
-                    <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
-                    <reference definitionId="com.vectrace.MercurialEclipse.def.notRoot"/>
-                </and>
+                <count value="1"/>
             </enabledWhen>
         </handler>
 

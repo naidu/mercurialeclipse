@@ -49,6 +49,8 @@ public abstract class RootHandler extends AbstractHandler {
 	 * @see org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands.ExecutionEvent)
 	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+		selection = null;
+
 		ISelection selectionObject = HandlerUtil.getCurrentSelection(event);
 		try {
 			if (selectionObject != null && selectionObject instanceof IStructuredSelection) {
