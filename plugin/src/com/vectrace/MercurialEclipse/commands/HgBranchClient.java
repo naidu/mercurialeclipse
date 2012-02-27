@@ -12,34 +12,21 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import com.aragost.javahg.commands.Branch;
+import com.aragost.javahg.commands.flags.BranchesCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
-import com.vectrace.MercurialEclipse.utils.StringUtils;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 public class HgBranchClient extends AbstractClient {
-	/**
-	 * matches branch names which may also contain spaces or consist of only one letter.
-	 * Valid examples:
-	 * "a test                         3:066ee3f79d2a"
-	 * "*                              2:5a953790aa12 (inactive)"
-	 * "default                        0:fd83cc49d230 (inactive)"
-	 */
-	private static final Pattern GET_BRANCHES_PATTERN = Pattern.compile(
-		// (branch name) (version):(hash) (optional "inactive" flag)
-		"^(.*[^ ]+) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
 	private static final Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
 
@@ -50,36 +37,10 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("branches", "Listing branches", hgRoot, false); //$NON-NLS-1$
-		command.addOptions("-v"); //$NON-NLS-1$
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		List<Branch> branches = new ArrayList<Branch>();
-		for (String line : lines) {
-			if(StringUtils.isEmpty(line)){
-				continue;
-			}
-
-			Branch branch = parseBranch(line);
-			if (branch != null) {
-				branches.add(branch);
-			} else {
-				HgException ex = new HgException("Failed to parse branch from '" + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-				MercurialEclipsePlugin.logWarning("Failed to parse branch", ex); //$NON-NLS-1$
-			}
-		}
-		Collections.sort(branches, Branch.COMPARATOR);
+		List<Branch> branches = BranchesCommandFlags.on(
+				hgRoot.getRepository()).execute();
 
 		return branches.toArray(new Branch[branches.size()]);
-	}
-
-	protected static Branch parseBranch(String line) {
-		Matcher m = GET_BRANCHES_PATTERN.matcher(line.trim());
-		if (m.matches()) {
-			Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
-			return branch;
-		}
-
-		return null;
 	}
 
 	/**
@@ -117,7 +78,7 @@ public class HgBranchClient extends AbstractClient {
 	 */
 	public static boolean isKnownRemote(RemoteKey key) {
 		String branch = key.getBranch();
-		if(Branch.isDefault(branch)){
+		if(BranchUtils.isDefault(branch)){
 			// default is always there
 			return true;
 		}

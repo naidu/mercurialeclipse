@@ -54,7 +54,7 @@ public class UpdateHandler extends RunnableHandler {
 	}
 
 	public void setRevision(HgRevision rev) {
-		this.revision = rev.getChangeset();
+		this.revision = rev.getNode();
 	}
 
 	/**

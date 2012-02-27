@@ -17,11 +17,11 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 public class ChangeSetComparator implements Comparator<ChangeSet> {
 
 	public int compare(ChangeSet o1, ChangeSet o2) {
-		int result = o2.getChangesetIndex() - o1.getChangesetIndex();
+		int result = o2.getIndex() - o1.getIndex();
 
 		// we need to cover the situation when repo-indices are the same
 		if (result == 0 && o1.getDateString() != null && o2.getDateString() != null) {
-			int dateCompare = o2.getRealDate().compareTo(o1.getRealDate());
+			int dateCompare = o2.getDate().compareTo(o1.getDate());
 			if (dateCompare != 0) {
 				result = dateCompare;
 			}

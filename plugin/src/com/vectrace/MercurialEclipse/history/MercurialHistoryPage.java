@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
@@ -103,6 +104,7 @@ import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
+import org.osgi.framework.Version;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
@@ -128,19 +130,29 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
 
-	public static final String REMOTE_MODE = null;
-	private GraphLogTableViewer viewer;
+	private static final boolean ECLISPE_BEFORE_38 = Platform.getBundle("org.eclipse.ui.ide")
+			.getVersion().compareTo(new Version(3, 8, 0)) < 0;
+
+	// attributes
+
+	private boolean showTags;
+	protected boolean showGoTo;
+
 	IResource resource;
 	private HgRoot hgRoot;
-	private ChangeLogContentProvider changeLogViewContentProvider;
-	private MercurialHistory mercurialHistory;
-	private RefreshMercurialHistory refreshFileHistoryJob;
-	private ChangedPathsPage changedPaths;
+
 	private ChangeSet currentWorkdirChangeset;
+	private MercurialHistory mercurialHistory;
+	private HistoryContentProposalProvider proposalProvider;
+	private RevisionAnnotationController rulerSelectionListener;
+	private Job refreshFileHistoryJob;
+	private Job fetchAllJob;
+
+	// .. actions
+
 	private OpenMercurialRevisionAction openAction;
 	private BaseSelectionListenerAction openEditorAction;
 	private BaseSelectionListenerAction focusOnSelectedFileAction;
-	private boolean showTags;
 	private CompareRevisionAction compareWithCurrAction;
 	private CompareRevisionAction compareWithPrevAction;
 	private CompareRevisionAction compareWithOtherAction;
@@ -154,13 +166,14 @@ public class MercurialHistoryPage extends HistoryPage {
 	private final IAction mergeWithCurrentChangesetAction = new MergeWithCurrentChangesetAction(this);
 	private Action stripAction;
 	private Action backoutAction;
-	protected boolean showGoTo;
+
+	// .. controls
+
+	private ChangedPathsPage changedPaths;
+	private GraphLogTableViewer viewer;
 	private Text gotoText;
 	private Composite rootControl;
 	private Composite gotoPanel;
-	private HistoryContentProposalProvider proposalProvider;
-	private Job fetchAllJob;
-	private RevisionAnnotationController rulerSelectionListener;
 
 
 	/**
@@ -260,10 +273,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	class RefreshMercurialHistory extends Job {
+	class RefreshMercurialHistoryJob extends Job {
 		private final int from;
 
-		public RefreshMercurialHistory(int from) {
+		public RefreshMercurialHistoryJob(int from) {
 			super("Retrieving Mercurial revisions..."); //$NON-NLS-1$
 			this.from = from;
 			setRule(new ExclusiveHistoryRule());
@@ -278,7 +291,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			try {
 				mercurialHistory.refresh(monitor, from);
 				if(resource != null) {
-					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRoot(resource);
 				} else {
 					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 				}
@@ -659,8 +672,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		layout.addColumnData(new ColumnWeightData(25, true));
 
 		viewer.setLabelProvider(new ChangeSetLabelProvider());
-		changeLogViewContentProvider = new ChangeLogContentProvider();
-		viewer.setContentProvider(changeLogViewContentProvider);
+		viewer.setContentProvider(new ChangeLogContentProvider());
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
 				getCompareWithPreviousAction();
@@ -981,7 +993,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		getCompareWithCurrentAction();
 		getCompareWithOtherAction();
 		getRevertAction();
-		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){ //$NON-NLS-1$
+		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label")){ //$NON-NLS-1$
 			@Override
 			protected boolean updateSelection(IStructuredSelection selection) {
 				if(selection.size() != 2){
@@ -1051,14 +1063,14 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	CompareRevisionAction getCompareWithCurrentAction() {
 		if(compareWithCurrAction == null) {
-			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this); //$NON-NLS-1$
+			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label")); //$NON-NLS-1$
 		}
 		return compareWithCurrAction;
 	}
 
 	CompareRevisionAction getCompareWithPreviousAction() {
 		if(compareWithPrevAction == null) {
-			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this); //$NON-NLS-1$
+			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label")); //$NON-NLS-1$
 			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif")); //$NON-NLS-1$
 			compareWithPrevAction.setCompareWithPrevousEnabled(true);
 		}
@@ -1067,7 +1079,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	CompareRevisionAction getCompareWithOtherAction() {
 		if(compareWithOtherAction == null) {
-			compareWithOtherAction = new CompareRevisionAction(Messages.getString("CompareWithOtherAction.label"), this) { //$NON-NLS-1$
+			compareWithOtherAction = new CompareRevisionAction(Messages.getString("CompareWithOtherAction.label")) { //$NON-NLS-1$
 
 				private IFile file;
 				private MercurialRevision selectedRev;
@@ -1152,9 +1164,12 @@ public class MercurialHistoryPage extends HistoryPage {
 		return currentWorkdirChangeset;
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.history.IHistoryPage#refresh()
+	 */
 	public void refresh() {
 		if (refreshFileHistoryJob == null) {
-			refreshFileHistoryJob = new RefreshMercurialHistory(Integer.MAX_VALUE);
+			refreshFileHistoryJob = new RefreshMercurialHistoryJob(Integer.MAX_VALUE);
 		}
 
 		if (refreshFileHistoryJob.getState() != Job.NONE) {
@@ -1318,10 +1333,15 @@ public class MercurialHistoryPage extends HistoryPage {
 	 * Set the selection provider for current history view
 	 */
 	void setSelectionProvider(ISelectionProvider provider) {
-		getSite().setSelectionProvider(provider);
-		// it looks crazy, but the fact is that the page site doesn't set global
-		// selection provider, so we must have it set properly to support Properties view
-		getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
+		getHistoryPageSite().setSelectionProvider(provider);
+
+		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=366468:
+		// the code below doesn't work with Eclipse 3.8 anymore, but the hack is not needed anymore
+		if(ECLISPE_BEFORE_38) {
+			// it looks crazy, but the fact is that the page site doesn't set global
+			// selection provider, so we must have it set properly to support Properties view
+			getSite().getPage().findView(IHistoryView.VIEW_ID).getSite().setSelectionProvider(provider);
+		}
 	}
 
 	/**
@@ -1351,7 +1371,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		@Override
 		protected Object getHistoryEntry(Revision selected) {
 			if (selected instanceof ShowAnnotationOperation.MercurialRevision) {
-				return MercurialHistoryPage.this.mercurialHistory.getFileRevision(((ShowAnnotationOperation.MercurialRevision)selected).getChangeSet().getChangeset());
+				return MercurialHistoryPage.this.mercurialHistory.getFileRevision(((ShowAnnotationOperation.MercurialRevision)selected).getChangeSet().getNode());
 			}
 			return null;
 		}

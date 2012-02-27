@@ -19,7 +19,8 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -35,12 +36,10 @@ public class CompareWithCurrentDelegate implements IObjectActionDelegate {
 			return;
 		}
 		ChangeSet cs = fileFromChangeSet.getChangeset();
+		HgWorkspaceFile left = HgWorkspaceFile.make(fileFromChangeSet.getFile());
+		HgFile right = HgFile.make(cs, fileFromChangeSet.getFile());
 
-		MercurialRevisionStorage left = new MercurialRevisionStorage(fileFromChangeSet.getFile());
-		// TODO handle cases when file was renamed/copied
-		// see com.vectrace.MercurialEclipse.history.CompareRevisionAction.getStorage()
-		MercurialRevisionStorage right = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
-		CompareUtils.openEditor(left, right, false);
+		CompareUtils.openEditor(left, right, false, null);
 	}
 
 	/**

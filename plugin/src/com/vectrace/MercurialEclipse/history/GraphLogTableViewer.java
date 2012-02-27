@@ -89,7 +89,7 @@ public class GraphLogTableViewer extends TableViewer {
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
 		if (from != lastReqVersion && from >= 0 && mhp.getMercurialHistory().getLastVersion() > 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
-				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
+				MercurialHistoryPage.RefreshMercurialHistoryJob refreshJob = mhp.new RefreshMercurialHistoryJob(
 						from);
 				refreshJob.addJobChangeListener(new JobChangeAdapter() {
 					@Override
@@ -120,7 +120,7 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 
 		if (mhp.getCurrentWorkdirChangeset() != null) {
-			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
+			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getIndex()) {
 				tableItem.setFont(JFaceResources.getFontRegistry().getBold(
 						JFaceResources.DEFAULT_FONT));
 			}

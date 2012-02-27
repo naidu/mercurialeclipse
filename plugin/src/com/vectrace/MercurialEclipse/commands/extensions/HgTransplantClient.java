@@ -52,7 +52,7 @@ public final class HgTransplantClient {
 				return "Transplanting " + nodes.size() + " revisions";
 			}
 
-			return "Transplanting revision " + nodes.first().getChangeset();
+			return "Transplanting revision " + nodes.first().getNode();
 		}
 	}
 
@@ -104,7 +104,7 @@ public final class HgTransplantClient {
 
 			if (!options.all && options.nodes != null && options.nodes.size() > 0) {
 				for (ChangeSet node : options.nodes) {
-					command.addOptions(node.getChangeset());
+					command.addOptions(node.getNode());
 				}
 			}
 

@@ -15,9 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceStatus;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
@@ -25,12 +22,14 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
 /**
  * @author Ge Zhong
  *
  */
-public class HgFile extends HgResource implements IHgFile {
+public class HgFile extends HgRevisionResource implements IHgFile {
 
 	protected static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
@@ -38,8 +37,9 @@ public class HgFile extends HgResource implements IHgFile {
 	 * @param hgRoot
 	 * @param changeset global changeset id
 	 * @param path relative path to HgRoot
+	 * @throws HgException
 	 */
-	public HgFile(HgRoot hgRoot, String changeset, IPath path) {
+	public HgFile(HgRoot hgRoot, String changeset, IPath path) throws HgException {
 		super(hgRoot, changeset, path);
 	}
 
@@ -47,15 +47,13 @@ public class HgFile extends HgResource implements IHgFile {
 		super(hgRoot, changeset, path);
 	}
 
-	public HgFile(HgRoot hgRoot, IFile file) {
-		super(hgRoot, file);
-	}
+	// operations
 
 	/**
-	 * @see org.eclipse.core.resources.IEncodedStorage#getCharset()
+	 * @see com.vectrace.MercurialEclipse.model.IHgFile#getFileExtension()
 	 */
-	public String getCharset() throws CoreException {
-		return this.getHgRoot().getEncoding();
+	public String getFileExtension() {
+		return path.getFileExtension();
 	}
 
 	/**
@@ -71,19 +69,15 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	public IPath getFullPath() {
 		IPath p = this.getHgRoot().getIPath().append(path);
-		if (resource == null) {
-			p = p.append(" [" + changeset.getChangesetIndex() + "]");
-		}
-		return p;
-	}
 
-	/**
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
-	@Override
-	public Object getAdapter(Class adapter) {
-		// TODO Auto-generated method stub
-		return null;
+		String extension = p.getFileExtension();
+		String version = " [" + changeset.getIndex() + "]";
+		if(extension != null) {
+			version += "." + extension;
+		}
+		p = p.append(version);
+
+		return p;
 	}
 
 	/**
@@ -91,36 +85,13 @@ public class HgFile extends HgResource implements IHgFile {
 	 */
 	@Override
 	protected InputStream createStream() throws CoreException {
-		if (resource != null) {
-			if (resource instanceof IStorage) {
-				InputStream is= null;
-				IStorage storage= (IStorage) resource;
-				try {
-					is= storage.getContents();
-				} catch (CoreException e) {
-					if (e.getStatus().getCode() == IResourceStatus.OUT_OF_SYNC_LOCAL) {
-						resource.refreshLocal(IResource.DEPTH_INFINITE, null);
-						is= storage.getContents();
-					} else {
-						// if the file is deleted or inaccessible
-						// log the error and return empty stream
-						MercurialEclipsePlugin.logError(e);
-					}
-				}
-				if (is != null) {
-					return is;
-				}
-			}
-			return EMPTY_STREAM;
-		}
-
 		byte[] result = null;
 		// Setup and run command
 		if (changeset.getDirection() == Direction.INCOMING && changeset.getBundleFile() != null) {
 			// incoming: overlay repository with bundle and extract then via cat
 			try {
 				result = HgCatClient.getContentFromBundle(this,
-						changeset.getRevision().getChangeset(),
+						changeset.getRevision().getNode(),
 						changeset.getBundleFile());
 			} catch (IOException e) {
 				throw new HgException("Unable to determine canonical path for " + changeset.getBundleFile(), e);
@@ -139,4 +110,17 @@ public class HgFile extends HgResource implements IHgFile {
 		return EMPTY_STREAM;
 	}
 
+	public static HgFile make(ChangeSet cs, IFile file) {
+		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
+	}
+
+	/**
+	 * Make an instance that is the clean version of the given file
+	 */
+	public static HgFile makeAtCurrentRev(IFile remoteFile) throws HgException {
+		HgRoot root = MercurialRootCache.getInstance().getHgRoot(remoteFile);
+		ChangeSet cs = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+
+		return new HgFile(cs.getHgRoot(), cs, root.getRelativePath(remoteFile));
+	}
 }

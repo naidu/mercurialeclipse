@@ -32,6 +32,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -57,14 +58,10 @@ import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
-import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -188,11 +185,11 @@ public final class ResourceUtils {
 		// first try with the unresolved path. In most cases it's enough
 		String fullPath = child.getAbsolutePath();
 		String parentpath = parent.getPath();
-		if (!fullPath.startsWith(parentpath)) {
+		if (!pathStartsWith(parentpath, fullPath)) {
 			try {
 				// ok, now try to resolve all the links etc. this takes A LOT of time...
 				fullPath = child.getCanonicalPath();
-				if (!fullPath.startsWith(parentpath)) {
+				if (!pathStartsWith(parentpath, fullPath)) {
 					return child.getPath();
 				}
 			} catch (IOException e) {
@@ -200,11 +197,21 @@ public final class ResourceUtils {
 				return child.getPath();
 			}
 		}
-		if(fullPath.equals(parentpath)){
+		if (fullPath.equals(parentpath)) {
 			return Path.EMPTY.toOSString();
 		}
+
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(parentpath.length() + 1);
+	}
+
+	private static boolean pathStartsWith(String parentpath, String childPath) {
+		final int nParentLen = parentpath.length();
+		return childPath.startsWith(parentpath) && (childPath.length() == nParentLen || isDirSep(childPath.charAt(nParentLen)));
+	}
+
+	private static boolean isDirSep(char ch) {
+		return ch == '/' || ch == '\\';
 	}
 
 	/**
@@ -234,6 +241,7 @@ public final class ResourceUtils {
 	 * Tries to determine the encoding for a file resource. Returns null, if the encoding cannot be
 	 * determined.
 	 */
+	@SuppressWarnings("unused")
 	public static String getFileEncoding(IFile resource){
 		try{
 			String charset = resource.getCharset(true);
@@ -796,24 +804,12 @@ public final class ResourceUtils {
 		}
 		if(cs != null){
 			try {
-				return HgLocateClient.getHgResources(resource, cs, null);
+				return HgLocateClient.getHgResources(hgRoot, hgRoot.getRelativePath(resource),
+						resource instanceof IStorage, cs, null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Convert deprecated MercurialRevisionStorage to HgFile
-	 */
-	public static IHgResource convertToHgFile(MercurialRevisionStorage rev) {
-		IFile file = rev.getResource();
-		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(file);
-		IPath relPath = ResourceUtils.getPath(file).makeRelativeTo(hgRoot.getIPath());
-		if (rev instanceof NullRevision) {
-			return new NullHgFile(hgRoot, rev.getChangeSet(), relPath);
-		}
-		return new HgFile(hgRoot, rev.getChangeSet(), relPath);
 	}
 }

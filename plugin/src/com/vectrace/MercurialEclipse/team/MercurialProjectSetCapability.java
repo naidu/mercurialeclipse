@@ -21,7 +21,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.core.ProjectSetCapability;
 import org.eclipse.team.core.ProjectSetSerializationContext;
 import org.eclipse.team.core.TeamException;
@@ -29,6 +28,7 @@ import org.eclipse.team.core.TeamException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.AddToWorkspaceAction;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -95,10 +95,8 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		try {
 			action.run(monitor);
 		} catch (Exception e) {
-			MessageDialog
-					.openError(
-							MercurialEclipsePlugin.getStandardDisplay().getActiveShell(),
-							Messages.getString("MercurialProjectSetCapability.errorWhileImporting"), e.getMessage()); //$NON-NLS-1$
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(new HgException(Messages.getString("MercurialProjectSetCapability.errorWhileImporting"), e));
 		}
 		return action.getProjectsCreated();
 	}

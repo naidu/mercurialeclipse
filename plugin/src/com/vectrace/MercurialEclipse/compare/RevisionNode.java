@@ -34,8 +34,12 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgResource;
+import com.vectrace.MercurialEclipse.model.HgRevisionResource;
+import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgFolder;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IResourceHolder;
 
 public class RevisionNode implements IEncodedStreamContentAccessor, IStructureComparator, ITypedElement,
 IEditableContent, IModificationDate, IEditableContentExtension {
@@ -64,9 +68,11 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	public String getLabel()
 	{
 		String name = resource.getName();
-		if (resource.getChangeSet() != null) {
-			name = name + " [" + resource.getChangeSet().toString() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+
+		if (resource instanceof IChangeSetHolder) {
+			name = name + " [" + ((IChangeSetHolder) resource).getChangeSet().toString() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
+
 		return name;
 	}
 
@@ -98,7 +104,8 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	}
 
 	public boolean isWorkingCopy() {
-		return resource.getResource() != null;
+		return resource instanceof IResourceHolder
+				&& ((IResourceHolder) resource).getResource() != null;
 	}
 
 	/**
@@ -112,16 +119,17 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	 * @see org.eclipse.compare.IEditableContentExtension#validateEdit(org.eclipse.swt.widgets.Shell)
 	 */
 	public IStatus validateEdit(Shell shell) {
-		IResource res = resource.getResource();
+		if (resource instanceof IResourceHolder) {
+			IResource res = ((IResourceHolder) resource).getResource();
 
-		if (res instanceof IFile) {
-			// See org.eclipse.compare.ResourceNode.validateEdit(Shell)
-			if (isReadOnly()) {
-				return ResourcesPlugin.getWorkspace().validateEdit(new IFile[] { (IFile)res}, shell);
+			if (res instanceof IFile) {
+				// See org.eclipse.compare.ResourceNode.validateEdit(Shell)
+				if (isReadOnly()) {
+					return ResourcesPlugin.getWorkspace().validateEdit(new IFile[] { (IFile)res}, shell);
+				}
+				return Status.OK_STATUS;
 			}
-			return Status.OK_STATUS;
 		}
-
 		// Not in workspace
 		return Status.CANCEL_STATUS;
 	}
@@ -155,8 +163,8 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 		if (resource instanceof IHgFolder) {
 			return ITypedElement.FOLDER_TYPE;
 		}
-		if (resource != null) {
-			String s= resource.getFileExtension();
+		if (resource instanceof IHgFile) {
+			String s = ((IHgFile)resource).getFileExtension();
 			if (s != null) {
 				return s;
 			}
@@ -192,10 +200,12 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	 * @see org.eclipse.compare.IModificationDate#getModificationDate()
 	 */
 	public long getModificationDate() {
-		IResource res = resource.getResource();
+		if (resource instanceof IResourceHolder) {
+			IResource res = ((IResourceHolder) resource).getResource();
 
-		if (res != null) {
-			return res.getLocalTimeStamp();
+			if (res != null) {
+				return res.getLocalTimeStamp();
+			}
 		}
 
 		// Future: get timestamp from commit time?
@@ -206,15 +216,19 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	 * @see org.eclipse.compare.IEditableContent#setContent(byte[])
 	 */
 	public void setContent(byte[] newContent) {
-		if (resource.getResource() instanceof IFile) {
-			InputStream is = new ByteArrayInputStream(newContent);
-			try {
-				// update cache
-				((HgResource) resource).setContent(newContent);
-				// update local file
-				((IFile) resource.getResource()).setContents(is, true, true, null);
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
+		if (resource instanceof IResourceHolder) {
+			IResource res = ((IResourceHolder) resource).getResource();
+
+			if (res instanceof IFile) {
+				InputStream is = new ByteArrayInputStream(newContent);
+				try {
+					// update cache
+					((HgResource) resource).setContent(newContent);
+					// update local file
+					((IFile) res).setContents(is, true, true, null);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		}
 	}

@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -41,17 +42,17 @@ public class HgCatClient extends AbstractClient {
 		return command.executeToBytes();
 	}
 
-	public static byte[] getContent(IHgFile hgfile) throws HgException {
+	public static byte[] getContent(HgFile hgfile) throws HgException {
 		HgRoot hgRoot = hgfile.getHgRoot();
 		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
 
-		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getChangeset();
+		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getNode();
 		if (revision != null && revision.length() != 0) {
 			command.addOptions("-r", revision); //$NON-NLS-1$
 		}
 
 		command.addOptions("--decode"); //$NON-NLS-1$
-		command.addOptions(hgfile.getHgRootRelativePath());
+		command.addOptions(hgfile.getIPath().toOSString());
 
 		return command.executeToBytes();
 	}
@@ -86,7 +87,7 @@ public class HgCatClient extends AbstractClient {
 			hgCommand.addOptions("-r", revision);
 		}
 
-		hgCommand.addOptions("--decode", hgfile.getHgRootRelativePath());
+		hgCommand.addOptions("--decode", hgfile.getIPath().toOSString());
 
 		return hgCommand.executeToBytes();
 	}

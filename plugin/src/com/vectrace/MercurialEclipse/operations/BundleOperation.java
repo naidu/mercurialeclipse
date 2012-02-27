@@ -56,7 +56,7 @@ public class BundleOperation extends HgOperation {
 			monitor.subTask("Calling Mercurial bundle command...");
 			monitor.worked(1);
 			this.result = HgBundleClient.bundle(root, rev, repo, bundleFile,
-					false, base.getChangeset());
+					false, base.getNode());
 			monitor.worked(1);
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);

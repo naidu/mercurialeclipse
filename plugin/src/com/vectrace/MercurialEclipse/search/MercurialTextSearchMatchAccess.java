@@ -24,8 +24,10 @@ import org.eclipse.search.core.text.TextSearchMatchAccess;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -34,15 +36,14 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	private final HgRoot root;
-	private int rev;
-	private int lineNumber;
-	private String user;
-	private String date;
-	private IFile file;
-	private boolean becomesMatch = true;
+	private final ChangeSet changeset;
+	private final int lineNumber;
+	private final String user;
+	private final IFile file;
+	private final boolean becomesMatch;
 	private final String extract;
 	private String fileContent;
-	private MercurialRevisionStorage mercurialRevisionStorage;
+	private HgFile hgFile;
 
 	/**
 	 * Expects a line like filename:rev:linenumber:-|+:username:date
@@ -53,14 +54,17 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	public MercurialTextSearchMatchAccess(HgRoot root, String line, boolean all) throws HgException {
 		this.root = root;
 		try {
-			String[] split = line.trim().split(":");
+			String[] split = line.trim().split(":", all ? 6 : 5);
 			int i=0;
 			Path path = new Path(root.getAbsolutePath() + File.separator + split[i++]);
 			this.file = ResourceUtils.getFileHandle(path);
-			this.rev = Integer.parseInt(split[i++]);
+
+			this.changeset = LocalChangesetCache.getInstance().get(root, Integer.parseInt(split[i++]));
 			this.lineNumber = Integer.parseInt(split[i++]);
 			if (all) {
 				this.becomesMatch = !"-".equals(split[i++]);
+			} else {
+				this.becomesMatch = true;
 			}
 			this.user = split[i++];
 			this.extract = split[i++];
@@ -75,10 +79,9 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + (becomesMatch ? 1231 : 1237);
-		result = prime * result + ((date == null) ? 0 : date.hashCode());
 		result = prime * result + ((file == null) ? 0 : file.hashCode());
 		result = prime * result + lineNumber;
-		result = prime * result + rev;
+		result = prime * result + changeset.hashCode();
 		result = prime * result + ((user == null) ? 0 : user.hashCode());
 		return result;
 	}
@@ -98,13 +101,6 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		if (becomesMatch != other.becomesMatch) {
 			return false;
 		}
-		if (date == null) {
-			if (other.date != null) {
-				return false;
-			}
-		} else if (!date.equals(other.date)) {
-			return false;
-		}
 		if (file == null) {
 			if (other.file != null) {
 				return false;
@@ -115,7 +111,7 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		if (lineNumber != other.lineNumber) {
 			return false;
 		}
-		if (rev != other.rev) {
+		if (changeset != other.changeset) {
 			return false;
 		}
 		if (user == null) {
@@ -128,36 +124,16 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		return true;
 	}
 
-	public int getRev() {
-		return rev;
-	}
-
-	public void setRev(int rev) {
-		this.rev = rev;
+	public ChangeSet getRev() {
+		return changeset;
 	}
 
 	public int getLineNumber() {
 		return lineNumber;
 	}
 
-	public void setLineNumber(int lineNumber) {
-		this.lineNumber = lineNumber;
-	}
-
 	public String getUser() {
 		return user;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
-	public String getDate() {
-		return date;
-	}
-
-	public void setDate(String date) {
-		this.date = date;
 	}
 
 	@Override
@@ -165,16 +141,8 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		return file;
 	}
 
-	public void setFile(IFile file) {
-		this.file = file;
-	}
-
 	public boolean isBecomesMatch() {
 		return becomesMatch;
-	}
-
-	public void setBecomesMatch(boolean becomesMatch) {
-		this.becomesMatch = becomesMatch;
 	}
 
 	@Override
@@ -192,10 +160,9 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	 */
 	private String getFileContent() {
 		if (fileContent == null) {
-			getMercurialRevisionStorage();
 			BufferedReader reader = null;
 			try {
-				InputStream is = mercurialRevisionStorage.getContents();
+				InputStream is = getHgFile().getContents();
 
 				if (is != null) {
 					StringBuilder sb = new StringBuilder();
@@ -259,20 +226,10 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 		return extract;
 	}
 
-	public void setFileContent(String fileContent) {
-		this.fileContent = fileContent;
-	}
-
-	public MercurialRevisionStorage getMercurialRevisionStorage() {
-		if (mercurialRevisionStorage == null) {
-			mercurialRevisionStorage = new MercurialRevisionStorage(file, rev);
+	public HgFile getHgFile() {
+		if (hgFile == null) {
+			hgFile = HgFile.make(changeset, file);
 		}
-		return mercurialRevisionStorage;
+		return hgFile;
 	}
-
-	public void setMercurialRevisionStorage(
-			MercurialRevisionStorage mercurialRevisionStorage) {
-		this.mercurialRevisionStorage = mercurialRevisionStorage;
-	}
-
 }

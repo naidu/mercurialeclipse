@@ -688,7 +688,7 @@ public class ChangedPathsPage {
 	/**
 	 * @return might return null, if the file is outside Eclipse workspace
 	 */
-	private MercurialRevision getDerivedRevision(FileStatus fileStatus, MercurialRevision base) {
+	private static MercurialRevision getDerivedRevision(FileStatus fileStatus, MercurialRevision base) {
 		IFile file = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
 		if(file == null){
 			return null;

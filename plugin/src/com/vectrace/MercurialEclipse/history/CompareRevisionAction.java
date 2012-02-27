@@ -12,7 +12,6 @@ package com.vectrace.MercurialEclipse.history;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -23,10 +22,11 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgResource;
+import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -34,12 +34,10 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 class CompareRevisionAction extends BaseSelectionListenerAction {
 
 	private Object[] selection;
-	private final MercurialHistoryPage page;
 	private boolean enableCompareWithPrev;
 
-	CompareRevisionAction(String text, MercurialHistoryPage page) {
+	CompareRevisionAction(String text) {
 		super(text);
-		this.page = page;
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/compare_with_local.gif")); //$NON-NLS-1$
 	}
 
@@ -49,31 +47,40 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 
 	@Override
 	public void run() {
-		final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
-		final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
+		final HgResource [] right = new HgResource [1];
+		final HgResource [] left = new HgResource [1];
 		final Job job = new Job(Messages.CompareRevisionAction_retrievingDiffData) {
 
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				try {
 					if(selection.length > 0 && !monitor.isCanceled()){
-						left[0] = getStorage((MercurialRevision) selection[0], monitor);
-						if(selection.length > 1 && !monitor.isCanceled()){
-							if(enableCompareWithPrev && selection[1] instanceof FileStatus){
+						MercurialRevision mercRev = (MercurialRevision) selection[0];
+						IFile file = (IFile) mercRev.getResource();
+						ChangeSet cs = mercRev.getChangeSet();
+
+						if(selection.length > 1 && !monitor.isCanceled()) {
+							if(enableCompareWithPrev && selection[1] instanceof FileStatus) {
 								FileStatus clickedFileStatus = (FileStatus) selection[1];
-								ChangeSet cs = left[0].getChangeSet();
-								IPath fileAbsPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath());
-								IFile file = ResourceUtils.getFileHandle(fileAbsPath);
+
+								file = ResourceUtils.getFileHandle(cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath()));
+
 								if(file != null) {
+									left[0] = HgFile.make(cs, file);
 									right[0] = MercurialUtilities.getParentRevision(cs, file);
 								}
 							} else if(selection[1] instanceof MercurialRevision) {
-								right[0] = getStorage((MercurialRevision) selection[1], monitor);
+								left[0] = HgFile.make(cs, file);
+								// TODO: file may be renamed between the two revisions
+								right[0] = HgFile.make(((MercurialRevision) selection[1]).getChangeSet(), file);
 							}
-						} else if(enableCompareWithPrev){
-							ChangeSet cs = left[0].getChangeSet();
-							IFile file = left[0].getResource();
+						} else if(enableCompareWithPrev) {
+							left[0] = HgFile.make(cs, file);
 							right[0] = MercurialUtilities.getParentRevision(cs, file);
+						} else {
+							left[0] = HgWorkspaceFile.make(file);
+							// TODO: file may be renamed between the two revisions
+							right[0] = HgFile.make(cs, file);
 						}
 					}
 				} catch (CoreException e) {
@@ -94,7 +101,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 					return;
 				}
 
-				CompareUtils.openEditor(left[0], right[0], false);
+				CompareUtils.openEditor(left[0], right[0], false, null);
 			}
 		});
 		job.schedule();
@@ -121,19 +128,5 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 		}
 		selection = sSelection.toArray();
 		return true;
-	}
-
-	/**
-	 * this can take a lot of time, and UI must take care that it will not be frozen until
-	 * the info is fetched...
-	 * @param monitor
-	 */
-	private MercurialRevisionStorage getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
-		if(rev.getParent() == null){
-			// see issue #10302: this is a dirty trick to make sure to get content even
-			// if the file was renamed/copied.
-			HgLogClient.getLogWithBranchInfo(rev, page.getMercurialHistory(), monitor);
-		}
-		return (MercurialRevisionStorage) rev.getStorage(monitor);
 	}
 }

@@ -18,6 +18,7 @@ import org.eclipse.team.core.variants.IResourceVariant;
 
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
 import com.vectrace.MercurialEclipse.model.IHgFolder;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 
@@ -33,8 +34,8 @@ public class MercurialResourceVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		ChangeSet cs = rev.getHgResource().getChangeSet();
-		return cs.getChangesetIndex() + ":" + cs.getChangeset();
+		ChangeSet cs = ((IChangeSetHolder) rev.getHgResource()).getChangeSet();
+		return cs.getIndex() + ":" + cs.getNode();
 	}
 
 	public String getName() {

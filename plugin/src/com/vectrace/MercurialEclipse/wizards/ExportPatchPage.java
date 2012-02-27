@@ -208,7 +208,7 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 
 						ChangeSet cset = (ChangeSet) element;
 						StringBuilder sb = new StringBuilder();
-						sb.append(cset.getChangesetIndex());
+						sb.append(cset.getIndex());
 
 						sb.append(" [").append(cset.getAuthor()).append(']');
 						sb.append(" (").append(cset.getAgeDate()).append(')');
@@ -240,7 +240,7 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 		protected String getFileName() {
 			HgRoot root = cs.getHgRoot();
 			List<IProject> projects = (root == null) ? null : MercurialTeamProvider.getKnownHgProjects(root);
-			String sFile = cs.getChangeset().substring(0, 10) + HgPatchClient.PATCH_EXTENSION;
+			String sFile = cs.getNode().substring(0, 10) + HgPatchClient.PATCH_EXTENSION;
 
 			if (projects != null)
 			{

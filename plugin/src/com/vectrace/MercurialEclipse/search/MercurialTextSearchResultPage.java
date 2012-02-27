@@ -49,7 +49,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 @SuppressWarnings("restriction")
 public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage implements IAdaptable {
@@ -98,12 +98,13 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 		viewer.setComparator(new ViewerComparator() {
 			@Override
 			public int compare(Viewer v, Object e1, Object e2) {
-				if (e1 instanceof MercurialRevisionStorage
-						&& e2 instanceof MercurialRevisionStorage) {
-					MercurialRevisionStorage mrs1 = (MercurialRevisionStorage) e1;
-					MercurialRevisionStorage mrs2 = (MercurialRevisionStorage) e2;
-					if (mrs1.getResource().equals(mrs2.getResource())) {
-						return mrs2.getRevision() - mrs1.getRevision();
+				if (e1 instanceof HgFile
+						&& e2 instanceof HgFile) {
+					HgFile mrs1 = (HgFile) e1;
+					HgFile mrs2 = (HgFile) e2;
+
+					if (mrs1.getIPath().equals(mrs2.getIPath())) {
+						return mrs1.getChangeSet().compareTo(mrs2.getChangeSet());
 					}
 				} else if (e1 instanceof MercurialMatch && e2 instanceof MercurialMatch) {
 					MercurialMatch m1 = (MercurialMatch) e1;
@@ -130,7 +131,7 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 						MercurialMatch m = (MercurialMatch) firstElement;
 						// open an editor with the content of the changeset this matc
 						MercurialRevision revision = new MercurialRevision(m
-								.getMercurialRevisionStorage().getChangeSet(), null, m.getFile(),
+								.getHgFile().getChangeSet(), null, m.getFile(),
 								null, null);
 						IEditorPart editor = Utils.openEditor(getSite().getPage(), revision,
 								new NullProgressMonitor());
@@ -220,7 +221,6 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 		memento.putInteger(KEY_LIMIT, getElementLimit().intValue());
 	}
 
-	@SuppressWarnings("unchecked")
 	public Object getAdapter(Class adapter) {
 		return null;
 	}

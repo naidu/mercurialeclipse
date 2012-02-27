@@ -75,7 +75,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 					} else {
 						result = cache.getOrFetchChangeSets(hgRoot);
 					}
-					if(result.isEmpty() || result.first().getChangesetIndex() > 0) {
+					if(result.isEmpty() || result.first().getIndex() > 0) {
 						if(resource != null) {
 							cache.fetchRevisions(resource, false, 0, 0, false);
 							result = cache.getOrFetchChangeSets(resource);
@@ -108,7 +108,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		try {
 			for (ChangeSet changeSet : changeSets.get()) {
 				if (changeSet.getName().toLowerCase().startsWith(filter)
-						|| changeSet.getChangeset().startsWith(filter)) {
+						|| changeSet.getNode().startsWith(filter)) {
 					result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
 				} else {
 					String value = getTagsStartingWith(filter, changeSet);
@@ -238,7 +238,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		}
 
 		private String createLabel() {
-			StringBuilder builder = new StringBuilder(String.valueOf(changeSet.getChangesetIndex()));
+			StringBuilder builder = new StringBuilder(String.valueOf(changeSet.getIndex()));
 			builder.append(": "); //$NON-NLS-1$
 
 			String text;
