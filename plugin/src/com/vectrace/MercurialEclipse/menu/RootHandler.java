@@ -45,30 +45,33 @@ public abstract class RootHandler extends AbstractHandler {
 		return selection;
 	}
 
+	/**
+	 * @see org.eclipse.core.commands.AbstractHandler#execute(org.eclipse.core.commands.ExecutionEvent)
+	 */
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		ISelection selectionObject = HandlerUtil.getCurrentSelection(event);
 		try {
 			if (selectionObject != null && selectionObject instanceof IStructuredSelection) {
-				Object listEntry = ((IStructuredSelection)selectionObject).getFirstElement();
+				Object listEntry = ((IStructuredSelection) selectionObject).getFirstElement();
 				if (listEntry instanceof IAdaptable) {
 					IAdaptable adaptable = (IAdaptable) listEntry;
 					selection = MercurialEclipsePlugin.getAdapter(adaptable, HgRoot.class);
 				}
-					if(selection == null){
+				if (selection == null) {
 					IResource resource = ResourceUtils.getResource(listEntry);
-						if(resource != null){
-							selection = MercurialTeamProvider.getHgRoot(resource);
-						}
+					if (resource != null) {
+						selection = MercurialTeamProvider.getHgRoot(resource);
 					}
 				}
+			}
 			if (selection == null) {
 				IFile file = ResourceUtils.getActiveResourceFromEditor();
-				if(file != null){
+				if (file != null) {
 					selection = MercurialTeamProvider.getHgRoot(file);
 				}
 			}
 
-			if(selection == null){
+			if (selection == null) {
 				MessageDialog.openError(getShell(), "Error", "Hg root not known!");
 				return null;
 			}
