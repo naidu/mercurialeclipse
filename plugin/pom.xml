@@ -10,8 +10,8 @@
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<testSourceDirectory>test</testSourceDirectory>
-		<outputDirectory>out</outputDirectory>
-		<testOutputDirectory>out</testOutputDirectory>
+		<outputDirectory>bin</outputDirectory>
+		<testOutputDirectory>bin</testOutputDirectory>
 		<resources>
 			<resource>
 				<filtering>false</filtering>
