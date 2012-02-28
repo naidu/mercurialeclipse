@@ -42,6 +42,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
@@ -52,6 +53,7 @@ import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -155,18 +157,12 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	private static ChangeSet getParentChangeset(IResource resource) throws HgException {
-		String[] parents = HgParentClient.getParentNodeIds(resource);
-		ChangeSet cs = LocalChangesetCache.getInstance().get(resource, parents[0]);
-		if(cs != null && cs.getIndex() != 0) {
-			parents = cs.getParents();
-			if (parents == null || parents.length == 0) {
-				if(MercurialStatusCache.getInstance().isClean(resource)){
-					parents = HgParentClient.getParentNodeIds(resource, cs);
-				}
-			}
-			if (parents != null && parents.length > 0) {
-				return LocalChangesetCache.getInstance().get(resource, parents[0]);
-			}
+		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(resource);
+		Changeset[] parents = HgParentClient.getParents(hgRoot, resource);
+		ChangeSet cs = LocalChangesetCache.getInstance().get(hgRoot, parents[0]);
+
+		if (cs != null && cs.getIndex() != 0) {
+			return LocalChangesetCache.getInstance().get(hgRoot, cs.getParents()[0]);
 		}
 		return null;
 	}

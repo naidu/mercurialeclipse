@@ -43,6 +43,7 @@ import org.eclipse.ui.IReusableEditor;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.progress.UIJob;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgLocateClient;
@@ -416,8 +417,8 @@ public final class CompareUtils {
 					return;
 				}
 				String mergeNodeId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
-				String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0], parents[1]);
+				Changeset[] parents = HgParentClient.getParents(hgRoot);
+				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0].getNode(), parents[1].getNode());
 				IPath path = root.getRelativePath(file);
 
 				// TODO: renames

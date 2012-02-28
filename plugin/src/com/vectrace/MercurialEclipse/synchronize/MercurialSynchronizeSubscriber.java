@@ -268,7 +268,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	protected static ChangeSet getChangeset(IResource file, String nodeId, HgRoot root) throws HgException {
 		try {
-			return LOCAL_CACHE.get(file, nodeId);
+			return LOCAL_CACHE.get(root, nodeId);
 		} catch (HgException e) {
 			// workaround for the case where the root version is not up-to-date anymore
 			// simply clear the cache and restart
