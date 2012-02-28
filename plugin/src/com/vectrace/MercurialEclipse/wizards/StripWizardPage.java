@@ -78,11 +78,7 @@ public class StripWizardPage extends HgWizardPage {
 
 		};
 
-		try {
-			changesetTable.highlightParents(HgParentClient.getParents(hgRoot));
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
-		}
+		changesetTable.highlightParents(HgParentClient.getParentIndexes(hgRoot));
 
 		changesetTable.addSelectionListener(listener);
 		changesetTable.setEnabled(true);

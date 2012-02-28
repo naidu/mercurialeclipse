@@ -12,15 +12,18 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.flags.ParentsCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgParentClient extends AbstractClient {
 
@@ -29,37 +32,41 @@ public class HgParentClient extends AbstractClient {
 
 	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
-	public static int[] getParents(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", hgRoot, false);
-		command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = getLines(command.executeToString());
-		int[] parents = new int[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = Integer.parseInt(lines[i]);
+	public static int[] getParentIndexes(HgRoot hgRoot) {
+		Changeset[] parents = getParents(hgRoot);
+		int[] idxs = new int[parents.length];
+
+		for (int i = 0; i < idxs.length; i++) {
+			idxs[i] = parents[i].getRevision();
 		}
-		return parents;
+
+		return idxs;
 	}
 
-	public static String[] getParentNodeIds(HgRoot hgRoot)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", "Finding parent revisions", hgRoot,
-				false);
-		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		return parseParentsCommand(command);
+	public static Changeset[] getParents(HgRoot hgRoot) {
+		List<Changeset> cs = ParentsCommandFlags.on(hgRoot.getRepository()).execute();
+
+		return cs.toArray(new Changeset[cs.size()]);
 	}
 
-	public static String[] getParentNodeIds(IResource file)
-	throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", file, false);
-		if(file instanceof IFile) {
-			command.addFiles(file);
-		}
-		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		return parseParentsCommand(command);
+	public static Changeset[] getParents(HgRoot hgRoot, IResource file) {
+		List<Changeset> cs = ParentsCommandFlags.on(hgRoot.getRepository()).execute(
+				ResourceUtils.getPath(file).toOSString());
+
+		return cs.toArray(new Changeset[cs.size()]);
 	}
 
+	public static Changeset[] getParents(HgRoot hgRoot, IResource resource, ChangeSet cs) {
+		List<Changeset> parents = ParentsCommandFlags.on(hgRoot.getRepository()).rev(cs.getNode()).execute(
+				ResourceUtils.getPath(resource).toOSString());
+
+		return parents.toArray(new Changeset[parents.size()]);
+	}
+
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	public static String[] getParentNodeIds(ChangeSet cs, String template) throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				"Finding parent revisions", cs.getHgRoot(), false);
@@ -68,14 +75,10 @@ public class HgParentClient extends AbstractClient {
 		return parseParentsCommand(command);
 	}
 
-	public static String[] getParentNodeIds(IResource resource, ChangeSet cs) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", resource, false);
-		command.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getNode());
-		return parseParentsCommand(command);
-	}
-
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static String[] parseParentsCommand(AbstractShellCommand parentsCommand) throws HgException {
 		String[] lines = getLines(parentsCommand.executeToString());
 		String[] parents = new String[lines.length];
@@ -86,6 +89,8 @@ public class HgParentClient extends AbstractClient {
 	}
 
 	/**
+	 * TODO: use JavaHg
+	 *
 	 * @param hgRoot The root that these nodes are in
 	 * @param node1 The first changeset id
 	 * @param node2 The second changeset id
@@ -106,6 +111,8 @@ public class HgParentClient extends AbstractClient {
 	}
 
 	/**
+	 * TODO: use JavaHg
+	 *
 	 * This methods finds the common ancestor of two changesets, supporting
 	 * overlays for using incoming changesets. Only one changeset may be
 	 * incoming.

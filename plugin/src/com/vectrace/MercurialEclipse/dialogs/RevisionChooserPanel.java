@@ -154,13 +154,7 @@ public class RevisionChooserPanel extends Composite {
 
 	public void setDataLoader(DataLoader loader) {
 		dataLoader = loader;
-		int[] p = {};
-		try {
-			p = loader.getParents();
-		} catch (HgException e) {
-			logError(e);
-		}
-		parents = p;
+		parents = loader.getParents();
 	}
 
 	/**

@@ -42,8 +42,8 @@ public abstract class DataLoader {
 		return HgLogClient.getHeads(getHgRoot());
 	}
 
-	public int[] getParents() throws HgException {
-		return HgParentClient.getParents(getHgRoot());
+	public int[] getParents() {
+		return HgParentClient.getParentIndexes(getHgRoot());
 	}
 
 }

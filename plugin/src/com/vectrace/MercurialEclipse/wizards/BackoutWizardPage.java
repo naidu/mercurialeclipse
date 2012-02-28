@@ -74,11 +74,7 @@ public class BackoutWizardPage extends HgWizardPage {
 		gridData.minimumHeight = 50;
 		changesetTable.setLayoutData(gridData);
 
-		try {
-			changesetTable.highlightParents(HgParentClient.getParents(hgRoot));
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
-		}
+		changesetTable.highlightParents(HgParentClient.getParentIndexes(hgRoot));
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {

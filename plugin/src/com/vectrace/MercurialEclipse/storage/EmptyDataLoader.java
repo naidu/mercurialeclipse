@@ -45,7 +45,7 @@ public final class EmptyDataLoader extends DataLoader {
 	}
 
 	@Override
-	public int[] getParents() throws HgException {
+	public int[] getParents() {
 		return new int[0];
 	}
 

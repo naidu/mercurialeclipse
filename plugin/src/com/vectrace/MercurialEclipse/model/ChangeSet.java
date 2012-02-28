@@ -403,6 +403,11 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 				&& !StringUtils.isEmpty(parents[1]);
 	}
 
+	/**
+	 * TODO: use Changeset
+	 * @deprecated
+	 */
+	@Deprecated
 	public abstract HgRevision getParentRevision(int i);
 
 	public abstract String getTagsStr();

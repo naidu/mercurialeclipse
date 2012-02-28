@@ -324,6 +324,13 @@ public final class LocalChangesetCache extends AbstractCache {
 		return logBatchSize;
 	}
 
+	/**
+	 * Get a changeset
+	 *
+	 * @param hgRoot The root
+	 * @param nodeId The node
+	 * @return Never null
+	 */
 	public ChangeSet get(HgRoot hgRoot, String nodeId) throws HgException {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(nodeId);
@@ -338,10 +345,6 @@ public final class LocalChangesetCache extends AbstractCache {
 
 		// TODO: Cache by root?
 		return HgLogClient.getChangeSet(hgRoot, nodeId);
-	}
-
-	public ChangeSet get(IResource res, String nodeId) throws HgException {
-		return get(MercurialRootCache.getInstance().getHgRoot(res), nodeId);
 	}
 
 	public ChangeSet get(HgRoot root, int rev) throws HgException {

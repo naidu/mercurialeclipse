@@ -21,6 +21,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
@@ -99,14 +100,9 @@ public class CompareAction extends SingleResourceAction {
 					return Status.OK_STATUS;
 				}
 				try {
-					String[] parents = HgParentClient.getParentNodeIds(resource);
 					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+					Changeset[] parents = HgParentClient.getParents(root, resource);
 					ChangeSet cs = LocalChangesetCache.getInstance().get(root, parents[0]);
-					if (cs == null) {
-						// refetch cache and try again
-						LocalChangesetCache.getInstance().fetchRevisions(root, false, 0, 0, false);
-						cs = LocalChangesetCache.getInstance().get(root, parents[0]);
-					}
 
 					if (cs != null) {
 						// TODO: compare with parent on a project?
