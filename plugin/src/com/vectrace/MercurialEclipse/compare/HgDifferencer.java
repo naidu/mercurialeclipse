@@ -40,13 +40,13 @@ public class HgDifferencer extends Differencer {
 			node = new DiffNode((IDiffContainer) data, Differencer.CHANGE,
 					(ITypedElement) ancestor, (ITypedElement) left, (ITypedElement) right);
 
-			Set allSet = new HashSet(20);
-			Map ancestorSet = null;
-			Map rightSet = null;
-			Map leftSet = null;
+			Set<Object> allSet = new HashSet<Object>(20);
+			Map<Object, Object> ancestorSet = null;
+			Map<Object, Object> rightSet = null;
+			Map<Object, Object> leftSet = null;
 
 			if (ancestorChildren != null) {
-				ancestorSet = new HashMap(10);
+				ancestorSet = new HashMap<Object, Object>(10);
 				for (int i = 0; i < ancestorChildren.length; i++) {
 					Object ancestorChild = ancestorChildren[i];
 					ancestorSet.put(ancestorChild, ancestorChild);
@@ -55,7 +55,7 @@ public class HgDifferencer extends Differencer {
 			}
 
 			if (rightChildren != null) {
-				rightSet = new HashMap(10);
+				rightSet = new HashMap<Object, Object>(10);
 				for (int i = 0; i < rightChildren.length; i++) {
 					Object rightChild = rightChildren[i];
 					rightSet.put(rightChild, rightChild);
@@ -64,7 +64,7 @@ public class HgDifferencer extends Differencer {
 			}
 
 			if (leftChildren != null) {
-				leftSet = new HashMap(10);
+				leftSet = new HashMap<Object, Object>(10);
 				for (int i = 0; i < leftChildren.length; i++) {
 					Object leftChild = leftChildren[i];
 					leftSet.put(leftChild, leftChild);
@@ -72,7 +72,7 @@ public class HgDifferencer extends Differencer {
 				}
 			}
 
-			Iterator e = allSet.iterator();
+			Iterator<Object> e = allSet.iterator();
 			while (e.hasNext()) {
 				Object keyChild = e.next();
 				Object ancestorChild = ancestorSet != null ? ancestorSet.get(keyChild) : null;
