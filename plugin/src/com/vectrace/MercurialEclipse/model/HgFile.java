@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IPath;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 
@@ -86,22 +85,13 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	@Override
 	protected InputStream createStream() throws CoreException {
 		byte[] result = null;
-		// Setup and run command
-		if (changeset.getDirection() == Direction.INCOMING && changeset.getBundleFile() != null) {
-			// incoming: overlay repository with bundle and extract then via cat
-			try {
-				result = HgCatClient.getContentFromBundle(this,
-						changeset.getRevision().getNode(),
-						changeset.getBundleFile());
-			} catch (IOException e) {
-				throw new HgException("Unable to determine canonical path for " + changeset.getBundleFile(), e);
-			}
-		} else {
-			try {
-				result = HgCatClient.getContent(this);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+
+		try {
+			result = HgCatClient.getContent(this);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (IOException e) {
+			throw new HgException("Unable to determine canonical path for " + changeset.getBundleFile(), e);
 		}
 
 		if(result != null){
