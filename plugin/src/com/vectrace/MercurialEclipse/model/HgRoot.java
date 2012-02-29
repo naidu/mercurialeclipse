@@ -29,17 +29,17 @@ import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.aragost.javahg.Repository;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
- * Hg root represents the root of hg repository as <b>canonical path</b>
- * (see {@link File#getCanonicalPath()})
+ * Hg root represents the root of hg repository as <b>canonical path</b> (see
+ * {@link File#getCanonicalPath()})
  *
  * @author bastian
  */
@@ -86,7 +86,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	private final IProject projectAdapter;
 
-	private Repository repository;
+	// constructors
 
 	public HgRoot(String pathname) throws IOException {
 		this(new File(pathname));
@@ -95,23 +95,27 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	public HgRoot(File file) throws IOException {
 		super(file);
 		Object adapter = super.getAdapter(IProject.class);
-		if(adapter instanceof IProject) {
+		if (adapter instanceof IProject) {
 			projectAdapter = (IProject) adapter;
 		} else {
 			projectAdapter = new HgRootContainer(this);
 		}
 	}
 
+	// operations
+
+	/**
+	 * Helper method to invoke the root cache to get the hgroot that the given file identifies
+	 *
+	 * @param file
+	 *            The .hg folder
+	 */
 	public static HgRoot get(File file) throws IOException {
 		return MercurialRootCache.getInstance().getCached(new HgRoot(file));
 	}
 
 	public Repository getRepository() {
-		if (repository == null) {
-			repository = Repository.open(HgClients.getRepoConfig(), this);
-		}
-
-		return repository;
+		return CommandServerCache.getInstance().get(this);
 	}
 
 	public void setEncoding(String charset) {
@@ -122,7 +126,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	 * @return never null, root specific encoding (may differ from the OS default encoding)
 	 */
 	public String getEncoding() {
-		if(encoding == null){
+		if (encoding == null) {
 			setEncoding(MercurialEclipsePlugin.getDefaultEncoding());
 		}
 		return encoding;
@@ -131,7 +135,8 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	/**
 	 * Gets the resource hgrc as a {@link java.io.File}.
 	 *
-	 * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't exist.
+	 * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't
+	 *         exist.
 	 */
 	protected File getConfig() {
 		if (config == null) {
@@ -158,8 +163,10 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	/**
 	 * Get the entries from the paths section of the config file if available
+	 *
 	 * @return A map from logical names to paths
-	 * @throws FileNotFoundException If the config file doesn't exist
+	 * @throws FileNotFoundException
+	 *             If the config file doesn't exist
 	 */
 	public Map<String, String> getPaths() throws FileNotFoundException {
 		File hgrc = getConfig();
@@ -174,7 +181,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 			for (Entry<String, String> entry : section.entrySet()) {
 				String logicalName = entry.getKey();
 				String path = entry.getValue();
-				if(!StringUtils.isEmpty(logicalName) && !StringUtils.isEmpty(path)) {
+				if (!StringUtils.isEmpty(logicalName) && !StringUtils.isEmpty(path)) {
 					paths.put(logicalName, path);
 				}
 			}
@@ -187,7 +194,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	 * @return The fallback encoding as specified in the config file, otherwise windows-1251
 	 */
 	public Charset getFallbackencoding() {
-		if(fallbackencoding == null){
+		if (fallbackencoding == null) {
 			// set fallbackencoding to windows standard codepage
 			String fallback = getConfigItem("ui", "fallbackencoding");
 			if (fallback == null || fallback.length() == 0) {
@@ -209,10 +216,10 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	}
 
 	public int compareTo(IHgRepositoryLocation loc) {
-		if(getLocation() == null) {
+		if (getLocation() == null) {
 			return -1;
 		}
-		if(loc.getLocation() == null){
+		if (loc.getLocation() == null) {
 			return 1;
 		}
 		return getLocation().compareToIgnoreCase(loc.getLocation());
@@ -235,16 +242,16 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	}
 
 	public String getUser() {
-		if(user == null){
+		if (user == null) {
 			String configItem = getConfigItem("ui", "username");
-			if(StringUtils.isEmpty(configItem)){
+			if (StringUtils.isEmpty(configItem)) {
 				// set to empty string to avoid multiple reads from file
 				user = "";
 			} else {
 				user = configItem.trim();
 			}
 		}
-		return StringUtils.isEmpty(user)? null : user;
+		return StringUtils.isEmpty(user) ? null : user;
 	}
 
 	@Override
@@ -271,7 +278,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	@Override
 	public Object getAdapter(Class adapter) {
-		if(adapter == IHgRepositoryLocation.class){
+		if (adapter == IHgRepositoryLocation.class) {
 			return this;
 		}
 		Object object = super.getAdapter(adapter);
@@ -286,15 +293,16 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	}
 
 	public IProject getResource() {
-		if(projectAdapter instanceof HgRootContainer) {
+		if (projectAdapter instanceof HgRootContainer) {
 			HgRootContainer container = (HgRootContainer) projectAdapter;
 			container.init();
 		} else {
 			// Ideally we'd open the project. See: http://www.javaforge.com/issue/19998
-			// TODO: find a way to do this caching more explicitly. a get method shouldn't have side effects.
+			// TODO: find a way to do this caching more explicitly. a get method shouldn't have side
+			// effects.
 			// projectAdapter.open(IResource.BACKGROUND_REFRESH, null);
-			if(projectAdapter.isOpen()) {
-				if(!MercurialRootCache.isHgTeamProviderFor(projectAdapter)) {
+			if (projectAdapter.isOpen()) {
+				if (!MercurialRootCache.isHgTeamProviderFor(projectAdapter)) {
 					try {
 						MercurialRootCache.markAsCached(projectAdapter, this);
 					} catch (CoreException e) {
@@ -315,7 +323,9 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	/**
 	 * Helper method to get root relative path for a resource under this root
-	 * @param res The resource to query
+	 *
+	 * @param res
+	 *            The resource to query
 	 * @return The root relative path
 	 */
 	public IPath getRelativePath(IResource res) {
