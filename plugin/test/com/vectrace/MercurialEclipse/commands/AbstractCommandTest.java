@@ -43,7 +43,7 @@ public class AbstractCommandTest extends TestCase {
 		HgClients.initialize(cfg, cfg, cfg);
 	}
 
-	private void createEmptyRepository(File zip, File dest) {
+	private static void createEmptyRepository(File zip, File dest) {
 		try {
 			ZipInputStream zipped = new ZipInputStream(new FileInputStream(zip));
 			ZipEntry entry;
@@ -75,8 +75,7 @@ public class AbstractCommandTest extends TestCase {
 		}
 	}
 
-	public final HgRoot getRepository() throws IOException {
-
+	public final static HgRoot getRepository() throws IOException {
 		String testRepoRoot = System.getProperty("java.io.tmpdir") + File.separator + "test/repo";
 		HgRoot where = new HgRoot(testRepoRoot);
 		return where;
@@ -112,11 +111,9 @@ public class AbstractCommandTest extends TestCase {
 
 	public void testCreateRepo() throws Exception {
 		assertTrue(getRepository().exists());
-
 	}
 
-	protected void addToRepository(File newFile) throws InterruptedException,
-	IOException {
+	protected static void addToRepository(File newFile) throws InterruptedException, IOException {
 		Runtime runtime = Runtime.getRuntime();
 		runtime.exec("hg add " + newFile.getCanonicalPath(), null, getRepository()).waitFor();
 	}
