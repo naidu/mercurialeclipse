@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -31,6 +30,8 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 public class HgFile extends HgRevisionResource implements IHgFile {
 
 	protected static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
+
+	// constructors
 
 	/**
 	 * @param hgRoot
@@ -84,20 +85,11 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 */
 	@Override
 	protected InputStream createStream() throws CoreException {
-		byte[] result = null;
-
 		try {
-			result = HgCatClient.getContent(this);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+			return HgCatClient.getContent(this);
 		} catch (IOException e) {
-			throw new HgException("Unable to determine canonical path for " + changeset.getBundleFile(), e);
+			throw new HgException("Unable to get contents", e);
 		}
-
-		if(result != null){
-			return new ByteArrayInputStream(result);
-		}
-		return EMPTY_STREAM;
 	}
 
 	public static HgFile make(ChangeSet cs, IFile file) {
