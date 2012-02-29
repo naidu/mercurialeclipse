@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -133,11 +134,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 	public static ChangeSet getChangeSet(HgRoot root, String nodeId, IHgRepositoryLocation remote,
 			Direction direction, File bundle) {
-		LogCommand command = LogCommandFlags.on(root.getRepository()).rev(nodeId);
-
-		if (bundle != null) {
-			command.cmdAppend("--repository", bundle.toString());
-		}
+		LogCommand command = LogCommandFlags.on(CommandServerCache.getInstance().get(root, bundle)).rev(nodeId);
 
 		Changeset cs = command.single();
 
