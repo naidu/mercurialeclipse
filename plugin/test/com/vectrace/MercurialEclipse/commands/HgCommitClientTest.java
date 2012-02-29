@@ -50,11 +50,11 @@ public class HgCommitClientTest extends AbstractCommandTest {
 				"dummy2.txt");
 	}
 
-	private void doCommit(String user, String message) throws Exception {
+	private static void doCommit(String user, String message) throws Exception {
 		doCommit(user, message, "dummy.txt");
 	}
 
-	private void doCommit(String user, String message, String commitFileName) throws Exception {
+	private static void doCommit(String user, String message, String commitFileName) throws Exception {
 		File root = getRepository();
 		File newFile = new File(root.getAbsolutePath(), commitFileName);
 		assertTrue("Unable to create file to commit", newFile.createNewFile());
