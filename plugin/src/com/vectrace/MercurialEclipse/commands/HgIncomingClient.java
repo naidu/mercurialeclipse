@@ -13,20 +13,17 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.io.IOException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.aragost.javahg.Bundle;
+import com.aragost.javahg.commands.IncomingCommand;
+import com.aragost.javahg.commands.flags.IncomingCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
-import com.vectrace.MercurialEclipse.utils.BranchUtils;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class HgIncomingClient extends AbstractParseChangesetClient {
-
+public class HgIncomingClient extends AbstractClient {
 
 	/**
 	 * Gets all File Revisions that are incoming and saves them in a bundle
@@ -39,70 +36,28 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 */
 	public static RemoteData getHgIncoming(RemoteKey key) throws HgException {
 		HgRoot hgRoot = key.getRoot();
-		HgCommand command = new HgCommand("incoming", "Calculating incoming changesets", hgRoot, false); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+		IncomingCommand command = IncomingCommandFlags.on(hgRoot.getRepository());
 
-		addInsecurePreference(command);
-		String branch = key.getBranch();
-		if (!BranchUtils.isDefault(branch) && !HgBranchClient.isKnownRemote(key)) {
-			// this branch is not known remote, so there can be NO incoming changes
-			return new RemoteData(key, Direction.INCOMING);
+		if (key.getBranch() != null) {
+			command.branch(key.getBranch());
 		}
 
-		// see issue 10495, 11093: there can be many branch heads: "--rev branch" cannot be used
-		if (branch != null) {
-			command.addOptions("--branch", branch);
+		if (isInsecure()) {
+			command.insecure();
 		}
 
 		if (key.isAllowUnrelated()) {
-			command.addOptions("-f");
+			command.force();
 		}
 
-		File bundleFile = null;
-		try {
-			try {
-				bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
-						hgRoot.getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
-				bundleFile.deleteOnExit();
+		String location = setupForRemote(key.getRepo(), command);
 
-				boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
-				// Fix (?) for issue #10859: in some cases (multiple projects under the same root)
-				// hg fails to find right parent for incoming changesets,
-				// therefore it seems that we must use "--debug"
-				command.addOptions("--debug");
-				command.addStyleFile(computeFullStatus ? AbstractParseChangesetClient.STYLE_WITH_FILES
-						: AbstractParseChangesetClient.STYLE_WITH_FILES_FAST);
-				command.addOptions("--bundle", bundleFile.getCanonicalPath()); //$NON-NLS-1$
-			} catch (HgException e) {
-				ResourceUtils.delete(bundleFile, false);
-				throw e;
-			} catch (IOException e) {
-				ResourceUtils.delete(bundleFile, false);
-				throw new HgException(e.getMessage(), e);
-			}
+		Bundle bundle = command.execute(location);
 
-			addRepoToHgCommand(key.getRepo(), command);
+		File file = bundle.getFile();
+		bundle.setManageFile(false);
+		file.deleteOnExit();
 
-			try {
-				String result = command.executeToString();
-				if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
-					return new RemoteData(key, Direction.INCOMING);
-				}
-				RemoteData revisions = createRemoteRevisions(key, result, Direction.INCOMING, bundleFile);
-				return revisions;
-			} catch (HgException hg) {
-				if (hg.getStatus().getCode() == 1) {
-					return new RemoteData(key, Direction.INCOMING);
-				}
-				ResourceUtils.delete(bundleFile, false);
-				throw new HgException("Incoming comand failed for " + key.getRoot() + ". " + hg.getMessage(), hg);
-			}
-		} finally {
-			// NEVER delete bundle files, because they are used to access not yet pulled content
-			// during diffs from the synchronize view
-			// TODO Andrei: it would make sense to track created bundle files and delete
-			// them on the next incoming operation for same repo/branch pair
-		}
+		return new RemoteData(key, Direction.INCOMING, bundle.getChangesets(), file);
 	}
 }

@@ -20,8 +20,6 @@ import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -52,7 +50,7 @@ public class DumbChangeSet extends ChangeSet {
 	private final String branch;
 	private final String user;
 	private final String date;
-	private String tagsStr;
+	private final String tagsStr;
 	private String comment;
 	private String nodeShort;
 	private String[] parents;
@@ -63,77 +61,6 @@ public class DumbChangeSet extends ChangeSet {
 	private final HgRoot hgRoot;
 	Set<IFile> files;
 	private Tag[] tags;
-
-	/**
-	 * This class is getting too tangled up with everything else, has a a large amount of fields
-	 * (17) and worse is that it is not immutable, which makes the entanglement even more dangerous.
-	 *
-	 * My plan is to make it immutable by using the builder pattern and remove all setters.
-	 * FileStatus fetching may(or may not) be feasable to put elsewhere or fetched "on-demand" by
-	 * this class itself. Currently, it has no operations and it purely a data class which isn't
-	 * very OO efficent.
-	 *
-	 * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing, isLocal)
-	 * @deprecated
-	 */
-	@Deprecated
-	public static class Builder {
-		private DumbChangeSet cs;
-
-		public Builder(int revision, String changeSet, String branch, String date, String user,
-				HgRoot root) {
-			this.cs = new DumbChangeSet(revision, changeSet, user, date, branch == null ? "" : branch,
-					root);
-		}
-
-		public Builder tags(String tags) {
-			this.cs.tagsStr = tags;
-			return this;
-		}
-
-		public Builder description(String description) {
-			cs.setComment(description);
-			return this;
-		}
-
-		public Builder parents(String[] parents) {
-			this.cs.setParents(parents);
-			return this;
-		}
-
-		public Builder direction(Direction direction) {
-			this.cs.direction = direction;
-			return this;
-		}
-
-		public Builder changedFiles(FileStatus[] changedFiles) {
-			this.cs.changedFiles = changedFiles == null ? EMPTY_STATUS : Collections
-					.unmodifiableList(Arrays.asList(changedFiles));
-			return this;
-		}
-
-		public Builder bundleFile(File bundleFile) {
-			this.cs.bundleFile = bundleFile;
-			return this;
-		}
-
-		public Builder repository(IHgRepositoryLocation repository) {
-			this.cs.repository = repository;
-			return this;
-		}
-
-		// nodeShort should be first X of changeset, this is superfluous
-		public Builder nodeShort(String nodeShort) {
-			this.cs.nodeShort = nodeShort;
-			return this;
-		}
-
-		public ChangeSet build() {
-			ChangeSet result = this.cs;
-			this.cs = null;
-			return result;
-		}
-	}
 
 	DumbChangeSet(int changesetIndex, String changeSet, String tags, String branch, String user,
 			String date, String description, String[] parents, HgRoot root) {
@@ -149,11 +76,6 @@ public class DumbChangeSet extends ChangeSet {
 		setParents(parents);
 		// remember index:fullchangesetid
 		setName(getIndexAndName());
-	}
-
-	private DumbChangeSet(int changesetIndex, String changeSet, String user, String date,
-			String branch, HgRoot root) {
-		this(changesetIndex, changeSet, null, branch, user, date, "", null, root); //$NON-NLS-1$
 	}
 
 	@Override

@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class HgLogClient extends AbstractParseChangesetClient {
+public class HgLogClient extends AbstractClient {
 
 	public static final String NOLIMIT = "999999999999";
 
@@ -74,7 +74,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
 
 		if (isFile) {
-			command.follow().removed();
+			command.follow();
 		}
 
 		return getChangeSets(root, command.execute(ResourceUtils.getPath(res).toOSString()));

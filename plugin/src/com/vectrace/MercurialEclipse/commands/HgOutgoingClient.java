@@ -12,68 +12,42 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import java.util.List;
+
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.OutgoingCommand;
+import com.aragost.javahg.commands.flags.OutgoingCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
 
-public class HgOutgoingClient extends AbstractParseChangesetClient {
+public class HgOutgoingClient extends AbstractClient {
 
 	/**
-	 * @return never return null
+	 * @return Not null
 	 */
 	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
-		HgCommand command = getCommand(key);
-		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
-		addInsecurePreference(command);
-		command.addStyleFile(computeFullStatus ? AbstractParseChangesetClient.STYLE_WITH_FILES
-				: AbstractParseChangesetClient.STYLE_WITH_FILES_FAST);
+		HgRoot hgRoot = key.getRoot();
+		OutgoingCommand command = OutgoingCommandFlags.on(hgRoot.getRepository());
+
+		if (key.getBranch() != null) {
+			command.branch(key.getBranch());
+		}
+
+		if (isInsecure()) {
+			command.insecure();
+		}
 
 		if (key.isAllowUnrelated()) {
-			command.addOptions("-f");
+			command.force();
 		}
 
-		addRepoToHgCommand(key.getRepo(), command);
+		String location = setupForRemote(key.getRepo(), command);
 
-		String result = getResult(command);
-		if (result == null) {
-			return new RemoteData(key, Direction.OUTGOING);
-		}
+		List<Changeset> changesets = command.execute(location);
 
-		RemoteData revisions = createRemoteRevisions(key, result, Direction.OUTGOING, null);
-		return revisions;
+		return new RemoteData(key, Direction.OUTGOING, changesets, null);
 	}
-
-	private static String getResult(AbstractShellCommand command) throws HgException {
-		try {
-			String result = command.executeToString();
-			if (result.endsWith("no changes found")) { //$NON-NLS-1$
-				return null;
-			}
-			return result;
-		} catch (HgException hg) {
-			if (hg.getStatus().getCode() == 1) {
-				return null;
-			}
-			throw hg;
-		}
-	}
-
-	private static HgCommand getCommand(RemoteKey key) {
-		HgRoot hgRoot = key.getRoot();
-		HgCommand command = new HgCommand("outgoing", "Calculating outgoing changesets", hgRoot, false); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-
-		// see issue 10495, 11093: there can be many branch heads: "--rev branch" cannot be used
-		if (key.getBranch() != null) {
-			command.addOptions("--branch", key.getBranch());
-		}
-
-		return command;
-	}
-
 }
