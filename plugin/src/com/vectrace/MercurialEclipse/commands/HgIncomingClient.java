@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.Collections;
 
 import com.aragost.javahg.Bundle;
 import com.aragost.javahg.commands.IncomingCommand;
@@ -54,10 +55,15 @@ public class HgIncomingClient extends AbstractClient {
 
 		Bundle bundle = command.execute(location);
 
-		File file = bundle.getFile();
-		bundle.setManageFile(false);
-		file.deleteOnExit();
+		if (bundle != null) {
+			File file = bundle.getFile();
+			bundle.setManageFile(false);
+			file.deleteOnExit();
 
-		return new RemoteData(key, Direction.INCOMING, bundle.getChangesets(), file);
+			return new RemoteData(key, Direction.INCOMING, bundle.getChangesets(), file);
+		}
+
+		// Nothing incoming
+		return new RemoteData(key, Direction.INCOMING, Collections.EMPTY_LIST, null);
 	}
 }
