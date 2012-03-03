@@ -34,6 +34,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
+import com.aragost.javahg.Repository;
 import com.aragost.javahg.commands.StatusResult;
 import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
@@ -41,6 +42,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -355,8 +357,9 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 
 		if (changedFiles == null) {
 			List<FileStatus> l = new ArrayList<FileStatus>();
+			Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
 
-			StatusResult res = StatusCommandFlags.on(hgRoot.getRepository())
+			StatusResult res = StatusCommandFlags.on(repo)
 					.rev(getParentRevision(0).getNode(), getRevision().getNode()).added()
 					.modified().deleted().removed().copies().execute();
 

@@ -10,23 +10,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.io.File;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -39,20 +39,9 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class RemoteData {
 
-	private static final SortedSet<ChangeSet> EMPTY_SETS = Collections
-			.unmodifiableSortedSet(new TreeSet<ChangeSet>());
-	private final Map<IProject, ProjectCache> projectMap;
 	private final Direction direction;
-	private final Map<IPath, Set<ChangeSet>> changesets;
+	private final SortedSet<ChangeSet> changesets;
 	private final RemoteKey key;
-
-	public RemoteData(RemoteKey key, Direction direction) {
-		this(key.getRepo(), key.getRoot(), key.getBranch(), direction, new HashMap<IPath, Set<ChangeSet>>());
-	}
-
-	public RemoteData(IHgRepositoryLocation repo, HgRoot root, String branch, Direction direction) {
-		this(repo, root, branch, direction, new HashMap<IPath, Set<ChangeSet>>());
-	}
 
 	/**
 	 * @param changesets this map contains AT LEAST a key corresponding to the hgroot of
@@ -60,114 +49,55 @@ public class RemoteData {
 	 * the given hgroot.
 	 * @param branch can be null (means all branches)
 	 */
-	public RemoteData(IHgRepositoryLocation repo, HgRoot root, String branch, Direction direction,
-			Map<IPath, Set<ChangeSet>> changesets) {
+	public RemoteData(RemoteKey key, Direction direction, List<Changeset> changesets, File bundleFile) {
 		super();
+
 		this.direction = direction;
-		this.changesets = changesets;
-		key = new RemoteKey(root, repo, branch);
-		projectMap = new HashMap<IProject, ProjectCache>();
+		this.changesets = new TreeSet<ChangeSet>();
+		this.key = key;
+
+		for (int i = 0, n = changesets.size(); i < n; i++) {
+			this.changesets.add(new JHgChangeSet(key.getRoot(), changesets.get(i), key.getRepo(), direction, bundleFile));
+		}
 	}
 
+	// operations
+
 	public SortedSet<ChangeSet> getChangeSets(IResource resource){
-		if(resource == null || changesets.isEmpty()){
-			return EMPTY_SETS;
+		if (resource instanceof IProject) {
+			return changesets;
 		}
-		IProject project = resource.getProject();
-		if(project == null){
-			return EMPTY_SETS;
-		}
-		ProjectCache cache = projectMap.get(project);
-		if(cache == null) {
-			synchronized (projectMap) {
-				populateCache(resource.getProject());
+
+		SortedSet<ChangeSet> filtered = new TreeSet<ChangeSet>();
+		IPath rootRelative = null;
+		mainLoop: for (ChangeSet cs : changesets) {
+			if (rootRelative == null) {
+				File path = ResourceUtils.getFileHandle(resource);
+				if (path == null || path.getPath().length() == 0) {
+					return changesets;
+				}
+				rootRelative = new Path(cs.getHgRoot().toRelative(path));
+				if (rootRelative.isEmpty()) {
+					// hg root: return everything
+					return changesets;
+				}
 			}
-			return getChangeSets(resource);
+			List<FileStatus> files = cs.getChangedFiles();
+			for (FileStatus fs : files) {
+				if (rootRelative.equals(fs.getRootRelativePath())) {
+					filtered.add(cs);
+					continue mainLoop;
+				}
+			}
 		}
-		if (cache.isEmpty()) {
-			return EMPTY_SETS;
-		}
-		if(resource instanceof IProject){
-			return cache.getChangesets();
-		}
-		return cache.getChangesets(resource);
+		return filtered;
 	}
 
 	/**
 	 * @return ALL changesets known by the hg root, or empty set, never null
 	 */
 	public SortedSet<ChangeSet> getChangeSets(){
-		if(changesets.isEmpty()){
-			return EMPTY_SETS;
-		}
-		Set<ChangeSet> set = changesets.get(new Path(getRoot().getAbsolutePath()));
-		if(set == null || set.isEmpty()) {
-			return EMPTY_SETS;
-		}
-		if(set instanceof SortedSet) {
-			return Collections.unmodifiableSortedSet((SortedSet) set);
-		}
-		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>(set);
-		return Collections.unmodifiableSortedSet(sorted);
-	}
-
-	private void populateCache(IProject project) {
-		if(projectMap.containsKey(project)){
-			return;
-		}
-		TreeSet<ChangeSet> psets = new TreeSet<ChangeSet>();
-		ProjectCache cache = new ProjectCache(project, getBranch(), psets);
-		projectMap.put(project, cache);
-		IPath projectPath = ResourceUtils.getPath(project);
-		Set<ChangeSet> set = changesets.get(projectPath);
-		if(set != null){
-			psets.addAll(set);
-			return;
-		}
-		Path rootPath = new Path(getRoot().getAbsolutePath());
-		set = changesets.get(rootPath);
-		for (ChangeSet changeSet : set) {
-			Set<IFile> files = changeSet.getFiles();
-			for (IFile file : files) {
-				IPath path = ResourceUtils.getPath(file);
-				if(!path.isEmpty() && projectPath.isPrefixOf(path)){
-					// TODO filter by branch, or it is already filtered?
-					// if(Branch.same(branch, changeSet.getBranch()))
-					psets.add(changeSet);
-					break;
-				}
-			}
-		}
-	}
-
-	public boolean isValid(IProject project){
-		synchronized (projectMap) {
-			return projectMap.containsKey(project);
-		}
-	}
-
-	public boolean clear(IProject project){
-		ProjectCache removed;
-		synchronized (projectMap) {
-			removed = projectMap.remove(project);
-		}
-		return removed != null && !removed.isEmpty();
-	}
-
-	public boolean clear(){
-		boolean changed;
-		synchronized (projectMap) {
-			changed = !projectMap.isEmpty();
-			projectMap.clear();
-		}
-		return changed;
-	}
-
-	/**
-	 * @return never null, a list with all projects contained by related hg root directory
-	 */
-	public Set<IProject> getRelatedProjects(){
-		return ResourceUtils.getProjects(getRoot());
+		return changesets;
 	}
 
 	public IHgRepositoryLocation getRepo() {
@@ -187,10 +117,6 @@ public class RemoteData {
 
 	public Direction getDirection(){
 		return direction;
-	}
-
-	public boolean matches(RemoteKey otherKey){
-		return key.equals(otherKey);
 	}
 
 	public RemoteKey getKey(){

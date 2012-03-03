@@ -29,9 +29,9 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -163,11 +163,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
-		synchronized (repoDatas) {
-			for (RemoteData data : fastRepoMap.values()) {
-				data.clear(project);
-			}
-		}
 	}
 
 	/**
