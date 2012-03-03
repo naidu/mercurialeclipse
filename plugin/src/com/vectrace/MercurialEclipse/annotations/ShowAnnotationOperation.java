@@ -16,7 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -52,13 +51,8 @@ import org.eclipse.ui.texteditor.ITextEditorExtension4;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgAnnotateClient;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -68,27 +62,22 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		private final ChangeSet entry;
 
-		private final String id;
-
 		private final AnnotateBlock block;
 
-		private MercurialRevision(CommitterColors colors, ChangeSet entry,
-				String string, AnnotateBlock block) {
+		private MercurialRevision(CommitterColors colors, ChangeSet entry, AnnotateBlock block) {
 			this.colors = colors;
 			this.entry = entry;
-			this.id = string;
 			this.block = block;
 
 			Assert.isNotNull(colors);
 			Assert.isNotNull(entry);
-			Assert.isNotNull(string);
 			Assert.isNotNull(block);
 		}
 
 		@Override
 		public Object getHoverInfo() {
 			return entry.getAuthor()
-					+ " " + id + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					+ " " + getId() + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 					(entry.getComment() != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}
 
@@ -101,12 +90,12 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		@Override
 		public String getAuthor() {
-			return block.getUser();
+			return block.getChangeSet().getPerson();
 		}
 
 		@Override
 		public String getId() {
-			return id;
+			return block.getChangeSet().getRevision().toString();
 		}
 
 		@Override
@@ -264,19 +253,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 	}
 
 	private RevisionInformation createRevisionInformation(
-			final AnnotateBlocks annotateBlocks, IProgressMonitor monitor)
-			throws HgException {
-		Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
-		LocalChangesetCache.getInstance().refreshAllLocalRevisions(
-				res, true);
-		Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance()
-				.getOrFetchChangeSets(res);
-		for (ChangeSet changeSet : revisions) {
-			logEntriesByRevision.put(Integer.valueOf(changeSet.getRevision()
-					.getRevision()),
-					changeSet);
-		}
-
+			final AnnotateBlocks annotateBlocks, IProgressMonitor monitor) {
 		RevisionInformation info = new RevisionInformation();
 
 		final class AnnotationControlCreator implements IInformationControlCreator {
@@ -301,30 +278,15 @@ public class ShowAnnotationOperation extends TeamOperation {
 		HashMap<String, Revision> sets = new HashMap<String, Revision>();
 
 		for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks()) {
-			final String revisionString = block.getRevision().toString();
-		    ChangeSet logEntry = logEntriesByRevision.get(
-					Integer.valueOf(block.getRevision().getRevision()));
+			ChangeSet logEntry = block.getChangeSet();
 
-		    // logEntriesByRevision may not contain transplanted changesets
-			if (logEntry == null) {
-				HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
-				logEntry = HgLogClient.getChangeSet(root, block.getRevision().getNode());
-				Assert.isNotNull(logEntry);
-				logEntriesByRevision.put(Integer.valueOf(logEntry.getRevision().getRevision()),
-						logEntry);
-			}
-
-			block.setUser(logEntry.getPerson());
-
-			Revision revision = sets.get(revisionString);
+			Revision revision = sets.get(logEntry.getNode());
 			if (revision == null) {
-				revision = new MercurialRevision(colors, logEntry,
-						revisionString, block);
-				sets.put(revisionString, revision);
+				revision = new MercurialRevision(colors, logEntry, block);
+				sets.put(logEntry.getNode(), revision);
 				info.addRevision(revision);
 			}
-			revision.addRange(new LineRange(block.getStartLine(), block
-					.getEndLine()
+			revision.addRange(new LineRange(block.getStartLine(), block.getEndLine()
 					- block.getStartLine() + 1));
 		}
 		return info;

@@ -15,32 +15,22 @@
 
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.HgRevision;
+import com.aragost.javahg.commands.AnnotateLine;
+import com.aragost.javahg.commands.flags.AnnotateCommandFlags;
 import com.vectrace.MercurialEclipse.annotations.AnnotateBlock;
 import com.vectrace.MercurialEclipse.annotations.AnnotateBlocks;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgAnnotateClient {
-	private static final Pattern ANNOTATE = Pattern
-			.compile("^\\s*(.+?)\\s+(\\d+)\\s+(\\w+)\\s+(\\w+ \\w+ \\d+ \\d+:\\d+:\\d+ \\d+ [\\+\\-]\\d+)"); //$NON-NLS-1$
-
-	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
-			"EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
 	public static AnnotateBlocks execute(IResource file) throws HgException {
 
@@ -48,42 +38,24 @@ public class HgAnnotateClient {
 			return null;
 		}
 
-		HgCommand command = new HgCommand("annotate", "Fetching annotations for resource", file, true);
+		HgRoot root = AbstractClient.getHgRoot(file);
 
-		command.addOptions("--follow", "--user", "--number", "--changeset", "--date");
-		command.addFiles(file);
-
-		return createFromStdOut(new StringReader(command.executeToString()));
-	}
-
-	public static AnnotateBlocks createFromStdOut(InputStream contents) {
-		return createFromStdOut(new InputStreamReader(contents));
-	}
-
-	protected static synchronized AnnotateBlocks createFromStdOut(Reader contents) {
-		AnnotateBlocks blocks = new AnnotateBlocks();
 		try {
-			BufferedReader reader = new BufferedReader(contents);
-			int count = 0;
-			String line;
-			while ((line = reader.readLine()) != null) {
-				Matcher matcher = ANNOTATE.matcher(line);
-				if (!matcher.find()) {
-					// ignore empty lines
-					continue;
-				}
-				String author = matcher.group(1);
-				int revision = Integer.parseInt(matcher.group(2));
-				String changeset = matcher.group(3);
-				Date date = DATE_FORMAT.parse(matcher.group(4));
-				blocks.add(new AnnotateBlock(
-						new HgRevision(changeset, revision), author, date,
-						count, count));
-				count++;
+			AnnotateBlocks blocks = new AnnotateBlocks();
+			List<AnnotateLine> lines = AnnotateCommandFlags.on(root.getRepository()).execute(
+					ResourceUtils.getPath(file).toOSString());
+
+			int i = 0;
+
+			for (AnnotateLine line : lines) {
+				blocks.add(new AnnotateBlock(LocalChangesetCache.getInstance().get(root,
+						line.getChangeset()), i, i));
+				i += 1;
 			}
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+
+			return blocks;
+		} catch (IOException e) {
+			throw new HgException("Couldn't get annotation lines", e);
 		}
-		return blocks;
 	}
 }
