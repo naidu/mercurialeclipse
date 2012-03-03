@@ -16,9 +16,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.vectrace.MercurialEclipse.commands.HgAnnotateClient;
-
 import junit.framework.TestCase;
+
+import com.vectrace.MercurialEclipse.commands.HgAnnotateClient;
 
 public class AnnotateCommandTest extends TestCase {
 	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH);
@@ -39,7 +39,7 @@ public class AnnotateCommandTest extends TestCase {
 		checkBlock(blocks, 1, "zingo", "151:893d61d581c6", "Thu Mar 27 21:47:06 2008 +0000", 1, 5);
 	}
 
-	private void checkBlock(List<AnnotateBlock> blocks, int i, String user, String rev, String date, int startLine, int endLine){
+	private static void checkBlock(List<AnnotateBlock> blocks, int i, String user, String rev, String date, int startLine, int endLine){
 		AnnotateBlock block = blocks.get(i);
 		assertEquals(user, block.getUser());
 		assertEquals(rev, block.getRevision().toString());

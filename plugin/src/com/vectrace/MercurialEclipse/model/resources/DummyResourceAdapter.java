@@ -62,7 +62,10 @@ public abstract class DummyResourceAdapter implements IResource {
 		return false;
 	}
 
-	public Map getPersistentProperties() throws CoreException {
+	/**
+	 * @see org.eclipse.core.resources.IResource#getPersistentProperties()
+	 */
+	public Map<QualifiedName,String> getPersistentProperties() throws CoreException {
 		return Collections.EMPTY_MAP;
 	}
 

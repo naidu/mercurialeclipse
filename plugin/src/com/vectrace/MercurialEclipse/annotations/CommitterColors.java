@@ -66,13 +66,13 @@ final class CommitterColors {
 		return rgb;
 	}
 
-	private RGB computeRGB(int ordinal) {
+	private static RGB computeRGB(int ordinal) {
 		float hue= computeHue(ordinal);
 		RGB rgb= new RGB(hue, 1.0f, 1.0f);
 		return rgb;
 	}
 
-	private float computeHue(int ordinal) {
+	private static float computeHue(int ordinal) {
 		int base= 3;
 		int l = ordinal < base
 		        ? 0

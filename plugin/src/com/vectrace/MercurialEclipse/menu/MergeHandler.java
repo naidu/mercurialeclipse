@@ -156,7 +156,7 @@ public class MergeHandler extends RootHandler {
 			output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
 					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 		} else {
-			output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
+			output += CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);
 

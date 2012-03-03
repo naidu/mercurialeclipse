@@ -34,7 +34,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgResource;
-import com.vectrace.MercurialEclipse.model.HgRevisionResource;
 import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgFolder;

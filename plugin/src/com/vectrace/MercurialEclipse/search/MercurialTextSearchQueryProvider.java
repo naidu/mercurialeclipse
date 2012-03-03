@@ -33,7 +33,7 @@ public class MercurialTextSearchQueryProvider {
 	 *
 	 * @seeorg.eclipse.search.ui.text.TextSearchQueryProvider#createQuery( TextSearchInput)
 	 */
-	public ISearchQuery createQuery(TextSearchPageInput input) {
+	public static ISearchQuery createQuery(TextSearchPageInput input) {
 		MercurialTextSearchScope scope = input.getScope();
 		String text = input.getSearchText();
 		return new MercurialTextSearchQuery(text, scope);
