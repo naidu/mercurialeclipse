@@ -215,11 +215,17 @@ public abstract class AbstractClient {
 		if (proxyService == null || host == null) {
 			return null;
 		}
-		// check if there is an applicable proxy for the location
 
-		// TODO the method we calling is deprecated, but we have to use it
-		// to be compatible with Eclipse 3.4 API...
-		return proxyService.getProxyDataForHost(host, repository.getScheme());
+		// check if there is an applicable proxy for the location
+		IProxyData[] proxyData = proxyService.select(repository);
+
+		for (int i = 0; i < proxyData.length; i++) {
+			if (proxyData[i].getHost() != null) {
+				return proxyData[i];
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -234,7 +240,7 @@ public abstract class AbstractClient {
 	protected static void addProxyToHgCommand(URI repository, AbstractShellCommand command) {
 		IProxyData proxy = getProxyData(repository);
 
-		if (proxy == null || proxy.getHost() == null) {
+		if (proxy == null) {
 			return;
 		}
 
@@ -269,7 +275,7 @@ public abstract class AbstractClient {
 	protected static void addProxyToHgCommand(URI repository, com.aragost.javahg.internals.AbstractCommand command) {
 		IProxyData proxy = getProxyData(repository);
 
-		if (proxy == null || proxy.getHost() == null) {
+		if (proxy == null) {
 			return;
 		}
 

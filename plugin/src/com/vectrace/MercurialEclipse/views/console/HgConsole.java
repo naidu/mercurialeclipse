@@ -349,7 +349,7 @@ public class HgConsole extends MessageConsole {
 	 *            an NLSd message based on the status returned from the Hg
 	 *            command.
 	 */
-	private String messageLineForStatus(IStatus status) {
+	private static String messageLineForStatus(IStatus status) {
 		if (status.getSeverity() == IStatus.ERROR) {
 			return Messages.getString("HgConsole.error") + status.getMessage(); //$NON-NLS-1$
 		} else if (status.getSeverity() == IStatus.WARNING) {
@@ -363,7 +363,7 @@ public class HgConsole extends MessageConsole {
 	/**
 	 * Returns a color instance based on data from a preference field.
 	 */
-	private Color createColor(IPreferenceStore store, String preference) {
+	private static Color createColor(IPreferenceStore store, String preference) {
 		Display display = MercurialEclipsePlugin.getStandardDisplay();
 		RGB rgb = PreferenceConverter.getColor(store, preference);
 		return new Color(display, rgb);
