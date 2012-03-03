@@ -344,6 +344,10 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 		}
 	}
 
+	/**
+	 * @return the bundleFile, may be null. The file can contain additional changeset information,
+	 *         if this is a changeset used by "incoming" or "pull" operation
+	 */
 	public abstract File getBundleFile();
 
 	public abstract String[] getParents();

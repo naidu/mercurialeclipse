@@ -10,8 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -20,19 +22,163 @@ import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
+
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
  * as a usual changeset, as many of it's functionality is not supported or limited.
  * @author Andrei
  */
-public abstract class WorkingChangeSet extends DumbChangeSet {
+public abstract class WorkingChangeSet extends ChangeSet {
+
+	private static final Tag[] EMPTY_TAGS = new Tag[0];
+
+	private final HgRevision revision;
+	private final String name;
+	private String comment;
+	Set<IFile> files;
 
 	public WorkingChangeSet(String name) {
-		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 
-		direction = Direction.OUTGOING;
+		this.name = name;
+		this.revision = new HgRevision(name, -1);
+
+		setComment("");
 		files = new LinkedHashSet<IFile>();
 		setName(name);
+	}
+
+	@Override
+	@DoNotDisplayMe
+	public int getIndex() {
+		return -1;
+	}
+
+	@Override
+	public String getNode() {
+		return name;
+	}
+
+	/**
+	 * @return tags array (all tags associated with current changeset). May return empty array, but
+	 *         never null
+	 * @see ChangeSetUtils#getPrintableTagsString(ChangeSet)
+	 */
+	@Override
+	@DoNotDisplayMe
+	public Tag[] getTags() {
+		return EMPTY_TAGS;
+	}
+
+	/**
+	 * @return the tagsStr
+	 */
+	@Override
+	@DoNotDisplayMe
+	public String getTagsStr() {
+		return null;
+	}
+
+	@Override
+	public String getBranch() {
+		return null;
+	}
+
+	@Override
+	public String getComment() {
+		return comment;
+	}
+
+	@Override
+	public HgRevision getRevision() {
+		return revision;
+	}
+
+	protected String getIndexAndName() {
+		return -1 + ":" + name; //$NON-NLS-1$
+	}
+
+	/**
+	 * @return the nodeShort
+	 */
+	@DoNotDisplayMe
+	@Override
+	public String getNodeShort() {
+		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getBundleFile()
+	 */
+	@Override
+	@DoNotDisplayMe
+	public File getBundleFile() {
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParents()
+	 */
+	@Override
+	@DoNotDisplayMe
+	public String[] getParents() {
+		return null;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParentRevision(int)
+	 */
+	@Override
+	@DoNotDisplayMe
+	public HgRevision getParentRevision(int ordinal) {
+		return null;
+	}
+
+	public void setComment(String comment) {
+		if (comment != null) {
+			this.comment = comment;
+		} else {
+			this.comment = "";
+		}
+	}
+
+	/**
+	 * @return the repository
+	 */
+	@Override
+	@DoNotDisplayMe
+	public IHgRepositoryLocation getRepository() {
+		return null;
+	}
+
+	/**
+	 * @return the direction
+	 */
+	@Override
+	public Direction getDirection() {
+		return Direction.OUTGOING;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getHgRoot()
+	 */
+	@Override
+	public HgRoot getHgRoot() {
+		return null;
+	}
+
+	@Override
+	@DoNotDisplayMe
+	public String getAuthor() {
+		return "";
+	}
+
+	@Override
+	@DoNotDisplayMe
+	public Date getDate() {
+		return UNKNOWN_DATE;
 	}
 
 	@Override
@@ -57,12 +203,11 @@ public abstract class WorkingChangeSet extends DumbChangeSet {
 
 	@Override
 	public String toString() {
-		String changeset = getNode();
 		int size = getFiles().size();
 		if(size == 0){
-			return changeset + " (empty)";
+			return name + " (empty)";
 		}
-		return changeset + " (" + size + ")";
+		return name + " (" + size + ")";
 	}
 
 	public void clear(){
