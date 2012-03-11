@@ -17,6 +17,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
@@ -63,6 +64,7 @@ public final class HgStripClient {
 		}
 		command.addOptions(changeset);
 		String result = command.executeToString();
+		LocalChangesetCache.getInstance().clear(hgRoot);
 		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		return result;
 	}
