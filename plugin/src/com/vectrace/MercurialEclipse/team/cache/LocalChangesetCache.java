@@ -108,7 +108,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		return oldCS != null ? oldCS : newCS;
 	}
 
-	public void clear(HgRoot root, boolean notify) {
+	public void clear(HgRoot root) {
 		synchronized (latestChangesets) {
 			latestChangesets.remove(root);
 		}
@@ -117,7 +117,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 		Set<IProject> projects = ResourceUtils.getProjects(root);
 		for (IProject project : projects) {
-			clear(project, notify);
+			clear(project);
 		}
 	}
 
@@ -128,7 +128,7 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @deprecated {@link #clear(HgRoot, boolean)} should be used in most cases
 	 */
 	@Deprecated
-	public void clear(IResource resource, boolean notify) {
+	public void clear(IResource resource) {
 		Set<IResource> members = ResourceUtils.getMembers(resource);
 		if(resource instanceof IProject && !resource.exists()) {
 			members.remove(resource);
@@ -147,7 +147,7 @@ public final class LocalChangesetCache extends AbstractCache {
 
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
-		clear(project, false);
+		clear(project);
 	}
 
 	/**
@@ -225,58 +225,24 @@ public final class LocalChangesetCache extends AbstractCache {
 		return null;
 	}
 
-
-	/**
-	 * Refreshes all local revisions. If limit is set, it looks up the default
-	 * number of revisions to get and fetches the topmost till limit is reached.
-	 *
-	 * If preference is set to display changeset information on label decorator,
-	 * and a resource version can't be found in the topmost revisions,
-	 * the last revision of this file is obtained via additional
-	 * calls.
-	 *
-	 * @param res non null
-	 * @param limit whether to limit or to have full project log
-	 * @throws HgException
-	 *
-	 * @see #refreshAllLocalRevisions(IResource, boolean, boolean)
-	 */
-	public void refreshAllLocalRevisions(IResource res, boolean limit) throws HgException {
-		refreshAllLocalRevisions(res, limit, true);
-	}
-
 	/**
 	 * Refreshes all local revisions. If limit is set, it looks up the default
 	 * number of revisions to get and fetches the topmost till limit is reached.
 	 * <p>
 	 * A clear of all existing data for the given resource is triggered.
-	 * <p>
-	 * If withFiles is true and a resource version can't be found in the topmost
-	 * revisions, the last revision of this file is obtained via additional
-	 * calls.
 	 *
 	 * @param res non null
 	 * @param limit
 	 *            whether to limit or to have full project log
-	 * @param withFiles
-	 *            true = include file in changeset
 	 * @throws HgException
 	 */
-	public void refreshAllLocalRevisions(IResource res, boolean limit, boolean withFiles) throws HgException {
+	public void refreshAllLocalRevisions(IResource res, boolean limit) throws HgException {
 		Assert.isNotNull(res);
 		IProject project = res.getProject();
 		if (MercurialTeamProvider.isHgTeamProviderFor(project)) {
-			clear(res, false);
-			int versionLimit = getLogBatchSize();
-			if(withFiles && versionLimit > 1) {
-				versionLimit = 1;
-			}
-			fetchRevisions(res, limit, versionLimit, -1, withFiles);
+			clear(res);
+			fetchRevisions(res, limit, getLogBatchSize(), -1);
 		}
-	}
-
-	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit) throws HgException {
-		return refreshAllLocalRevisions(hgRoot, limit, true);
 	}
 
 	/**
@@ -284,27 +250,17 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * number of revisions to get and fetches the topmost till limit is reached.
 	 * <p>
 	 * A clear of all existing data for the given resource is triggered.
-	 * <p>
-	 * If withFiles is true and a resource version can't be found in the topmost
-	 * revisions, the last revision of this file is obtained via additional
-	 * calls.
 	 *
 	 * @param hgRoot non null
 	 * @param limit
 	 *            whether to limit or to have full project log
-	 * @param withFiles
-	 *            true = include file in changeset
 	 * @throws HgException
 	 */
-	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit,
-			boolean withFiles) throws HgException {
+	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit) throws HgException {
 		Assert.isNotNull(hgRoot);
-		clear(hgRoot, false);
-		int versionLimit = getLogBatchSize();
-		if(withFiles && versionLimit > 1) {
-			versionLimit = 1;
-		}
-		return fetchRevisions(hgRoot, limit, versionLimit, -1, withFiles);
+		clear(hgRoot);
+
+		return fetchRevisions(hgRoot, limit, getLogBatchSize(), -1);
 	}
 
 	@Override
@@ -436,7 +392,7 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @throws HgException
 	 */
 	public void fetchRevisions(IResource res, boolean limit,
-			int limitNumber, int startRev, boolean withFiles) throws HgException {
+			int limitNumber, int startRev) throws HgException {
 		Assert.isNotNull(res);
 		IProject project = res.getProject();
 		if (!project.isOpen() || !STATUS_CACHE.isSupervised(res)) {
@@ -479,7 +435,7 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @throws HgException
 	 */
 	public Set<ChangeSet> fetchRevisions(HgRoot hgRoot, boolean limit,
-			int limitNumber, int startRev, boolean withFiles) throws HgException {
+			int limitNumber, int startRev) throws HgException {
 		Assert.isNotNull(hgRoot);
 
 		List<ChangeSet> revisions;

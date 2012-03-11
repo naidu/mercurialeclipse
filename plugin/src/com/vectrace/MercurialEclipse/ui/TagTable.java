@@ -173,7 +173,7 @@ public class TagTable extends Composite {
 				// this data in background
 				Map<String, ChangeSet> tagged = new HashMap<String, ChangeSet>();
 				try {
-					Set<ChangeSet> allLocalRevisions = cache.refreshAllLocalRevisions(hgRoot, false, false);
+					Set<ChangeSet> allLocalRevisions = cache.refreshAllLocalRevisions(hgRoot, false);
 					for (ChangeSet cs : allLocalRevisions) {
 						if(monitor.isCanceled()) {
 							return Status.CANCEL_STATUS;
