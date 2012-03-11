@@ -432,7 +432,7 @@ public class ChangesetTable extends Composite {
 
 		@Override
 		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
-			cache.fetchRevisions(resource, true, batchSize, startRev, false);
+			cache.fetchRevisions(resource, true, batchSize, startRev);
 			return get(cache);
 		}
 	}
@@ -451,7 +451,7 @@ public class ChangesetTable extends Composite {
 
 		@Override
 		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
-			cache.fetchRevisions(root, true, batchSize, startRev, false);
+			cache.fetchRevisions(root, true, batchSize, startRev);
 			return get(cache);
 		}
 	}

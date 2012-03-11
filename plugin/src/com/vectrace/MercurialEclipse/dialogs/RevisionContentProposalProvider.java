@@ -77,10 +77,10 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 					}
 					if(result.isEmpty() || result.first().getIndex() > 0) {
 						if(resource != null) {
-							cache.fetchRevisions(resource, false, 0, 0, false);
+							cache.fetchRevisions(resource, false, 0, 0);
 							result = cache.getOrFetchChangeSets(resource);
 						} else {
-							cache.fetchRevisions(hgRoot, false, 0, 0, false);
+							cache.fetchRevisions(hgRoot, false, 0, 0);
 							result = cache.getOrFetchChangeSets(hgRoot);
 						}
 
