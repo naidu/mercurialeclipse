@@ -156,7 +156,7 @@ public class TagDialog extends Dialog {
 		label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
 		label.setLayoutData(createGridData(1));
 
-		final TagTable table = new TagTable(composite, hgRoot);
+		final TagTable table = new TagTable(composite);
 		table.hideTip();
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = 150;
@@ -212,7 +212,7 @@ public class TagDialog extends Dialog {
 		item.setText(Messages.getString("TagDialog.removeTag")); //$NON-NLS-1$
 		Composite composite = SWTWidgetHelper.createComposite(folder, 1);
 
-		final TagTable tt = new TagTable(composite, hgRoot);
+		final TagTable tt = new TagTable(composite);
 		tt.hideTip();
 
 		GridData data = new GridData(GridData.FILL_BOTH);
