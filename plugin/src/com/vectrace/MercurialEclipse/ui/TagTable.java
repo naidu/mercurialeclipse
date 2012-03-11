@@ -15,15 +15,8 @@ package com.vectrace.MercurialEclipse.ui;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -36,12 +29,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -54,14 +42,11 @@ public class TagTable extends Composite {
 	private int[] parents;
 	private boolean showTip;
 
-	private HgRoot hgRoot;
-	private ItemMediator[] data;
+	private Tag[] data;
 
-	@SuppressWarnings("unchecked")
-	public TagTable(Composite parent, HgRoot hgRoot) {
+	public TagTable(Composite parent) {
 		super(parent, SWT.NONE);
 		showTip = true;
-		this.hgRoot = hgRoot;
 
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
@@ -77,25 +62,25 @@ public class TagTable extends Composite {
 				Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 		int[] widths = { 60, 150, 200, 70, 300 };
 		@SuppressWarnings("rawtypes")
-		Comparator[] comparators = { new Comparator<ItemMediator>() {
-			public int compare(ItemMediator a, ItemMediator b) {
-				return TableSortListener.sort(a.tag.getChangeset().getRevision(), b.tag.getChangeset().getRevision());
+		Comparator[] comparators = { new Comparator<Tag>() {
+			public int compare(Tag a, Tag b) {
+				return TableSortListener.sort(a.getChangeset().getRevision(), b.getChangeset().getRevision());
 			}
-		}, new Comparator<ItemMediator>() {
-			public int compare(ItemMediator a, ItemMediator b) {
-				return a.tag.getChangeset().getNode().compareTo(b.tag.getChangeset().getNode());
+		}, new Comparator<Tag>() {
+			public int compare(Tag a, Tag b) {
+				return a.getChangeset().getNode().compareTo(b.getChangeset().getNode());
 			}
-		}, new Comparator<ItemMediator>() {
-			public int compare(ItemMediator a, ItemMediator b) {
-				return a.tag.getName().compareTo(b.tag.getName());
+		}, new Comparator<Tag>() {
+			public int compare(Tag a, Tag b) {
+				return a.getName().compareTo(b.getName());
 			}
-		}, new Comparator<ItemMediator>() {
-			public int compare(ItemMediator a, ItemMediator b) {
-				return TableSortListener.sort(a.tag.isLocal() ? 0 : 1, b.tag.isLocal() ? 0 : 1);
+		}, new Comparator<Tag>() {
+			public int compare(Tag a, Tag b) {
+				return TableSortListener.sort(a.isLocal() ? 0 : 1, b.isLocal() ? 0 : 1);
 			}
-		}, new Comparator<ItemMediator>() {
-			public int compare(ItemMediator a, ItemMediator b) {
-				return a.summary.compareTo(b.summary);
+		}, new Comparator<Tag>() {
+			public int compare(Tag a, Tag b) {
+				return a.getChangeset().getMessage().compareTo(b.getChangeset().getMessage());
 			}
 		} };
 
@@ -119,7 +104,18 @@ public class TagTable extends Composite {
 				int index = table.indexOf(item);
 
 				if (data != null && 0 <= index && index < data.length) {
-					data[index].setTableItem(item);
+					Tag tag = data[index];
+
+					if (isParent(tag.getChangeset().getRevision())) {
+						item.setFont(PARENT_FONT);
+					}
+					item.setText(0, Integer.toString(tag.getChangeset().getRevision()));
+					item.setText(1, tag.getChangeset().getNode());
+					item.setText(2, tag.getName());
+					item.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") //$NON-NLS-1$
+							: Messages.getString("TagTable.stateGlobal"));
+					item.setText(4, tag.getChangeset().getMessage());
+					item.setData(tag);
 				}
 			}
 		});
@@ -133,85 +129,22 @@ public class TagTable extends Composite {
 		this.parents = newParents;
 	}
 
-	public void setHgRoot(HgRoot newRoot) {
-		this.hgRoot = newRoot;
-		table.removeAll();
-	}
-
 	public void setTags(Tag[] tags) {
-		List<ItemMediator> filtered = new ArrayList<ItemMediator>(tags.length);
+		List<Tag> filtered = new ArrayList<Tag>(tags.length);
 
 		for (Tag tag : tags) {
 			if (showTag(tag)) {
-				filtered.add(new ItemMediator(tag));
+				filtered.add(tag);
 			}
 		}
 
-		data = filtered.toArray(new ItemMediator[filtered.size()]);
+		data = filtered.toArray(new Tag[filtered.size()]);
 		table.clearAll();
 		table.setItemCount(data.length);
-
-		fetchChangesetInfo(data);
 	}
 
 	private boolean showTag(Tag tag) {
 		return showTip || !"tip".equals(tag.getName());
-	}
-
-	/**
-	 * Fetch changeset comments.
-	 *
-	 * @param tags That tags for which to get comments
-	 */
-	void fetchChangesetInfo(final ItemMediator[] tags) {
-		final LocalChangesetCache cache = LocalChangesetCache.getInstance();
-		Job fetchJob = new Job("Retrieving changesets info") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				// this can cause UI hang for big projects. Should be done in a job.
-				// the only reason we need this is to show the changeset comments, so we can complete
-				// this data in background
-				Map<String, ChangeSet> tagged = new HashMap<String, ChangeSet>();
-				try {
-					Set<ChangeSet> allLocalRevisions = cache.refreshAllLocalRevisions(hgRoot, false);
-					for (ChangeSet cs : allLocalRevisions) {
-						if(monitor.isCanceled()) {
-							return Status.CANCEL_STATUS;
-						}
-						for (Tag tag : cs.getTags()) {
-							tagged.put(tag.getName(), cs);
-						}
-					}
-				} catch (HgException e1) {
-					MercurialEclipsePlugin.logError(e1);
-				}
-				final Map<ItemMediator, ChangeSet> tagToCs = new HashMap<ItemMediator, ChangeSet>();
-				for (ItemMediator tag : tags) {
-					if(monitor.isCanceled()) {
-						return Status.CANCEL_STATUS;
-					}
-					if (showTag(tag.tag)) {
-						ChangeSet changeSet = tagged.get(tag.tag.getName());
-						if(changeSet != null) {
-							tagToCs.put(tag, changeSet);
-						}
-					}
-				}
-
-				Runnable updateTable = new Runnable() {
-					public void run() {
-						for (ItemMediator item : data) {
-							if (tagToCs.get(item) != null) {
-								item.setSummary(tagToCs.get(item).getSummary());
-							}
-						}
-					}
-				};
-				MercurialEclipsePlugin.getStandardDisplay().asyncExec(updateTable);
-				return Status.OK_STATUS;
-			}
-		};
-		fetchJob.schedule();
 	}
 
 	public Tag getSelection() {
@@ -243,64 +176,6 @@ public class TagTable extends Composite {
 			//$FALL-THROUGH$
 		default:
 			return false;
-		}
-	}
-
-	// inner types
-
-	/**
-	 * This would require synchronization, but it's only being called from the UI thread.
-	 */
-	private class ItemMediator
-	{
-		public final Tag tag;
-
-		private TableItem item;
-
-		public String summary;
-
-		// constructor
-
-		public ItemMediator(Tag tag) {
-			this.tag = tag;
-		}
-
-		// operations
-
-		/**
-		 * Set the summary. Must be called from the UI thread.
-		 * @param summary The summary to set
-		 */
-		public void setSummary(String summary) {
-			this.summary = summary;
-
-			if (item != null && !item.isDisposed()) {
-				item.setText(4, summary);
-			}
-		}
-
-		/**
-		 * Apply the tag information to the row. Must be called from the UI thread.
-		 *
-		 * @param curItem
-		 *            The table row
-		 */
-		public void setTableItem(TableItem curItem) {
-			if (isParent(tag.getChangeset().getRevision())) {
-				curItem.setFont(PARENT_FONT);
-			}
-			curItem.setText(0, Integer.toString(tag.getChangeset().getRevision()));
-			curItem.setText(1, tag.getChangeset().getNode());
-			curItem.setText(2, tag.getName());
-			curItem.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") //$NON-NLS-1$
-					: Messages.getString("TagTable.stateGlobal"));
-			curItem.setData(tag);
-
-			this.item = curItem;
-
-			if (summary != null) {
-				item.setText(4, summary);
-			}
 		}
 	}
 }

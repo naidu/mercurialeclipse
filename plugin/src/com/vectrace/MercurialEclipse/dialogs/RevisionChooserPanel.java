@@ -326,7 +326,7 @@ public class RevisionChooserPanel extends Composite {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-		final TagTable table = new TagTable(folder, dataLoader.getHgRoot());
+		final TagTable table = new TagTable(folder);
 		table.highlightParents(parents);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -352,9 +352,7 @@ public class RevisionChooserPanel extends Composite {
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						try {
-							Tag[] tags = dataLoader.getTags();
-							table.setHgRoot(dataLoader.getHgRoot());
-							table.setTags(tags);
+							table.setTags(dataLoader.getTags());
 							return Status.OK_STATUS;
 						} catch (HgException e) {
 							logError(e);
