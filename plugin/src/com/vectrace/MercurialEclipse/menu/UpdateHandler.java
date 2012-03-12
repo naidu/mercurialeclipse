@@ -38,7 +38,7 @@ public class UpdateHandler extends RunnableHandler {
 	public void run(HgRoot hgRoot) throws HgException {
 		UpdateJob job = new UpdateJob(revision, cleanEnabled, hgRoot, handleCrossBranches);
 
-		if (!job.confirmDataLoss(getShell())) {
+		if (cleanEnabled && !job.confirmDataLoss(getShell())) {
 			return;
 		}
 
