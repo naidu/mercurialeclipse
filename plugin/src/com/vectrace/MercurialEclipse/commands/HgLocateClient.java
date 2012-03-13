@@ -35,6 +35,10 @@ import com.vectrace.MercurialEclipse.model.NullHgFile;
  */
 public class HgLocateClient extends AbstractClient {
 
+	public static HgFile getHgFile(HgRoot hgRoot, IPath relpath, ChangeSet cs) throws HgException {
+		return (HgFile) getHgResources(hgRoot, relpath, true, cs, null);
+	}
+
 	/**
 	 * Get the {@link HgRevisionResource} for the given resource at the given changeset
 	 *

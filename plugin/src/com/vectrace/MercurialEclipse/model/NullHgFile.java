@@ -40,7 +40,7 @@ public class NullHgFile extends HgFile {
 
 	@Override
 	public String getName() {
-		return super.getName() + ": no content";
+		return super.getName() + ": nonexistent!";
 	}
 
 	public static NullHgFile make(HgRoot root, IFile file) {
