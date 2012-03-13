@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
+import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -26,6 +27,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 /**
  * @author Ge Zhong
  *
+ * @see NullHgFile
  */
 public class HgFile extends HgRevisionResource implements IHgFile {
 
@@ -92,8 +94,29 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		}
 	}
 
+	/**
+	 * Helper method to create a new instance that definitely exists at the given revision
+	 *
+	 * @param cs The changeset
+	 * @param file The file
+	 * @return A new HgFile instance
+	 * @see #locate(ChangeSet, IFile)
+	 */
 	public static HgFile make(ChangeSet cs, IFile file) {
 		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
+	}
+
+	/**
+	 * Use when the existence of the file is not known at the given changeset
+	 *
+	 * @param cs The changeset
+	 * @param file The file
+	 * @return A NullHgFile or a HgFile
+	 * @throws HgException
+	 * @see {@link HgLocateClient#getHgFile(HgRoot, IPath, ChangeSet)}
+	 */
+	public static HgFile locate(ChangeSet cs, IFile file) throws HgException {
+		return HgLocateClient.getHgFile(cs.getHgRoot(), cs.getHgRoot().toRelative(file), cs);
 	}
 
 	/**

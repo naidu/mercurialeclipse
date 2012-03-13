@@ -45,7 +45,6 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
-import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -418,7 +417,7 @@ public final class MercurialUtilities {
 					cs.getDirection(), cs.getBundleFile());
 		}
 
-		return HgLocateClient.getHgFile(parentCs.getHgRoot(), parentCs.getHgRoot().toRelative(file), parentCs);
+		return HgFile.locate(parentCs, file);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {
