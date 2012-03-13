@@ -404,13 +404,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Assert.isNotNull(hgRoot);
 		String branch = BRANCH_MAP.get(hgRoot);
 		if(branch == null){
-			try {
-				branch = HgBranchClient.getActiveBranch(hgRoot);
-				BRANCH_MAP.put(hgRoot, branch);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-				return BranchUtils.DEFAULT;
-			}
+			branch = HgBranchClient.getActiveBranch(hgRoot);
+			BRANCH_MAP.put(hgRoot, branch);
 		}
 		return branch;
 	}
