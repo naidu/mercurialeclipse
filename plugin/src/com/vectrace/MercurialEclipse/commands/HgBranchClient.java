@@ -14,6 +14,8 @@ package com.vectrace.MercurialEclipse.commands;
 import java.util.List;
 
 import com.aragost.javahg.commands.Branch;
+import com.aragost.javahg.commands.BranchCommand;
+import com.aragost.javahg.commands.flags.BranchCommandFlags;
 import com.aragost.javahg.commands.flags.BranchesCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -38,14 +40,14 @@ public class HgBranchClient extends AbstractClient {
 	 *            if null, uses the default user
 	 * @throws HgException
 	 */
-	public static String addBranch(HgRoot hgRoot, String name, String user, boolean force) throws HgException {
-		HgCommand command = new HgCommand("branch", "Creating branch " + name, hgRoot, false); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+	public static void addBranch(HgRoot hgRoot, String name, boolean force) {
+		BranchCommand command = BranchCommandFlags.on(hgRoot.getRepository());
+
 		if (force) {
-			command.addOptions("-f"); //$NON-NLS-1$
+			command.force();
 		}
-		command.addOptions(name);
-		return command.executeToString();
+
+		command.set(name);
 	}
 
 	/**
@@ -57,8 +59,7 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 *             if a hg error occurred
 	 */
-	public static String getActiveBranch(HgRoot workingDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("branch", "Retrieving current branch name", workingDir, false); //$NON-NLS-1$
-		return command.executeToString().replaceAll("\n", "");
+	public static String getActiveBranch(HgRoot hgRoot) {
+		return BranchCommandFlags.on(hgRoot.getRepository()).get();
 	}
 }

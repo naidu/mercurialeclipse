@@ -31,7 +31,6 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog.Options;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -74,8 +73,7 @@ public class AddBranchWizard extends HgWizard {
 					}
 				}
 
-				HgBranchClient.addBranch(hgRoot, branchPage.getBranchName(), HgCommitMessageManager
-						.getDefaultCommitName(hgRoot), branchPage.isForceEnabled());
+				HgBranchClient.addBranch(hgRoot, branchPage.getBranchName(), branchPage.isForceEnabled());
 
 				monitor.worked(1);
 
