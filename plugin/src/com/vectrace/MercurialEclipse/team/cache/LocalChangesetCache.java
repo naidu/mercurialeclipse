@@ -32,7 +32,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import com.aragost.javahg.Changeset;
 import com.google.common.collect.MapMaker;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -338,8 +337,8 @@ public final class LocalChangesetCache extends AbstractCache {
 			if(changeSet != null) {
 				return changeSet;
 			}
-			String nodeId = HgIdentClient.getCurrentChangesetId(root);
-			if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
+			String nodeId = HgLogClient.getCurrentChangesetId(root);
+			if (!HgLogClient.VERSION_ZERO.equals(nodeId)) {
 				ChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
 				if (lastSet != null) {
 					latestChangesets.put(root, lastSet);
@@ -363,7 +362,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		if (nodeId == null || root == null) {
 			return;
 		}
-		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
+		if (!HgLogClient.VERSION_ZERO.equals(nodeId)) {
 			synchronized (latestChangesets) {
 				ChangeSet lastSet = latestChangesets.get(root);
 				if (lastSet != null && !nodeId.equals(lastSet.getNode())) {
