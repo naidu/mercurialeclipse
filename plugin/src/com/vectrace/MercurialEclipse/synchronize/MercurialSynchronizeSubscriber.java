@@ -47,7 +47,7 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -368,7 +368,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	static String getCurrentChangesetId(HgRoot root) throws HgException {
 		String nodeId = CURRENT_CS_MAP.get(root);
 		if(nodeId == null){
-			nodeId = HgIdentClient.getCurrentChangesetId(root);
+			nodeId = HgLogClient.getCurrentChangesetId(root);
 			CURRENT_CS_MAP.put(root, nodeId);
 		}
 		return nodeId;

@@ -23,6 +23,7 @@ import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.flags.HeadsCommandFlags;
 import com.aragost.javahg.commands.flags.LogCommandFlags;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -37,8 +38,27 @@ public class HgLogClient extends AbstractClient {
 
 	public static final String NOLIMIT = "999999999999";
 
+	public static final String VERSION_ZERO = "0000000000000000000000000000000000000000";
+
+	/**
+	 * Get the heads of the given repository
+	 * @param hgRoot The repository
+	 * @return All the heads
+	 */
 	public static Changeset[] getHeads(HgRoot hgRoot) {
 		return toArray(HeadsCommandFlags.on(hgRoot.getRepository()).execute());
+	}
+
+	/**
+	 * Returns the current node-id as a String
+	 *
+	 * @param repository
+	 *            the root of the repository to identify
+	 * @return Returns the node-id for the current changeset
+	 * @throws HgException
+	 */
+	public static String getCurrentChangesetId(HgRoot repository) throws HgException {
+		return LogCommandFlags.on(repository.getRepository()).rev(".").limit(1).single().getNode();
 	}
 
 	private static Changeset[] toArray(List<Changeset> list) {
@@ -146,6 +166,13 @@ public class HgLogClient extends AbstractClient {
 		return getChangeSet(root, cs);
 	}
 
+	/**
+	 * Get a changeset by revision index
+	 *
+	 * @param root The root
+	 * @param rev The index
+	 * @return The change set
+	 */
 	public static ChangeSet getChangeSet(HgRoot root, int rev) {
 		return getChangeSet(root, rev + ":" + rev);
 	}

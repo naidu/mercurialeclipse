@@ -24,7 +24,6 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserPanel;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserPanel.Settings;
@@ -242,7 +241,7 @@ public class SelectRevisionPage extends WizardPage {
 		if(expected == null){
 			return false;
 		}
-		String changesetId = HgIdentClient.getCurrentChangesetId(hgRoot);
+		String changesetId = HgLogClient.getCurrentChangesetId(hgRoot);
 		revisionRef[0] = "" + expected.getIndex();
 		return expected.getNode().equals(changesetId);
 	}
