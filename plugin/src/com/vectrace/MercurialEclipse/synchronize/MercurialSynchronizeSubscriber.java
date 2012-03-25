@@ -54,6 +54,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -136,7 +137,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
-		ChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
+		JHgChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
 		HgFile outgoingIStorage;
 		IResourceVariant outgoing;
 		// determine outgoing revision
@@ -183,7 +184,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		// determine incoming revision get newest incoming changeset
-		ChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
+		JHgChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
 		HgFile incomingIStorage;
 		int syncMode = -1;
 		if (csIncoming != null) {
@@ -210,7 +211,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 			// TODO validate if code below fixes the issue 10486
 			try {
-				SortedSet<ChangeSet> sets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+				SortedSet<JHgChangeSet> sets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 				int size = sets.size();
 
 				// case where we have one outgoung changeset AND one not committed change
@@ -230,7 +231,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 						}
 					}
 					if(parentCs != null){
-						ChangeSet baseChangeset = LOCAL_CACHE.get(root, parentCs);
+						JHgChangeSet baseChangeset = LOCAL_CACHE.get(root, parentCs);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
 						outgoing = new MercurialResourceVariant(new RevisionNode(incomingIStorage));
@@ -281,11 +282,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
-	private static ChangeSet getNewestOutgoing(IFile file, String currentBranch,
+	private static JHgChangeSet getNewestOutgoing(IFile file, String currentBranch,
 			IHgRepositoryLocation repo) {
-		ChangeSet csOutgoing = null;
+		JHgChangeSet csOutgoing = null;
 
-		SortedSet<ChangeSet> changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+		SortedSet<JHgChangeSet> changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 		if (!changeSets.isEmpty()) {
 			csOutgoing = changeSets.last();
 		}
@@ -293,10 +294,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return csOutgoing;
 	}
 
-	private static ChangeSet getNewestIncoming(IFile file, String currentBranch,
+	private static JHgChangeSet getNewestIncoming(IFile file, String currentBranch,
 			IHgRepositoryLocation repo) {
-		ChangeSet csIncoming = null;
-		SortedSet<ChangeSet> changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
+		JHgChangeSet csIncoming = null;
+		SortedSet<JHgChangeSet> changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
 		if (!changeSets.isEmpty()) {
 			csIncoming = changeSets.last();
 		}
@@ -318,7 +319,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		boolean changedLocal = !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN);
-		SortedSet<ChangeSet> changeSets = null;
+		SortedSet<JHgChangeSet> changeSets = null;
 		if(!changedLocal){
 			changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 			changedLocal = hasChanges(file, changeSets);
@@ -353,7 +354,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return ((DelayedSyncInfo) info).getDiff();
 	}
 
-	private static boolean hasChanges(IFile file, SortedSet<ChangeSet> changeSets) {
+	private static boolean hasChanges(IFile file, SortedSet<JHgChangeSet> changeSets) {
 		if(changeSets == null || changeSets.isEmpty()){
 			return false;
 		}
@@ -380,7 +381,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				&& (isSupervised(resource) || (!resource.exists()));
 	}
 
-	private static HgFile getIncomingIStorage(IFile resource, ChangeSet csRemote) {
+	private static HgFile getIncomingIStorage(IFile resource, JHgChangeSet csRemote) {
 		return HgFile.make(csRemote, resource);
 	}
 

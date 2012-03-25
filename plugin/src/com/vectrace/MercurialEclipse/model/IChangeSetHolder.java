@@ -11,5 +11,5 @@
 package com.vectrace.MercurialEclipse.model;
 
 public interface IChangeSetHolder {
-	public ChangeSet getChangeSet();
+	public JHgChangeSet getChangeSet();
 }

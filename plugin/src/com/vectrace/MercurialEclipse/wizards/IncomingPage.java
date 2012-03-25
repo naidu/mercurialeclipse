@@ -48,6 +48,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -62,7 +63,7 @@ public class IncomingPage extends HgWizardPage {
 	private IHgRepositoryLocation location;
 	protected Button revisionCheckBox;
 	private ChangeSet revision;
-	private SortedSet<ChangeSet> changesets;
+	private SortedSet<JHgChangeSet> changesets;
 	private boolean svn;
 	private boolean force;
 
@@ -89,27 +90,27 @@ public class IncomingPage extends HgWizardPage {
 			monitor.done();
 		}
 
-		private SortedSet<ChangeSet> getIncomingInternal() {
+		private SortedSet<JHgChangeSet> getIncomingInternal() {
 			if (isSvn()) {
-				return new TreeSet<ChangeSet>();
+				return new TreeSet<JHgChangeSet>();
 			}
 			IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
 			try {
 				cache.clear(hgRoot, false);
-				Set<ChangeSet> set = cache.getChangeSets(hgRoot, location, null, isForce());
-				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+				Set<JHgChangeSet> set = cache.getChangeSets(hgRoot, location, null, isForce());
+				SortedSet<JHgChangeSet> revertedSet = new TreeSet<JHgChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(set);
 				return revertedSet;
 			} catch (HgException e) {
 				MercurialEclipsePlugin.showError(e);
-				return new TreeSet<ChangeSet>();
+				return new TreeSet<JHgChangeSet>();
 			}
 		}
 	}
 
 	protected class IncomingDoubleClickListener implements IDoubleClickListener {
 		public void doubleClick(DoubleClickEvent event) {
-			ChangeSet cs = getSelectedChangeSet();
+			JHgChangeSet cs = getSelectedChangeSet();
 			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
 			FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
 
@@ -147,7 +148,7 @@ public class IncomingPage extends HgWizardPage {
 		this.revision = revision;
 	}
 
-	public void setChangesets(SortedSet<ChangeSet> changesets) {
+	public void setChangesets(SortedSet<JHgChangeSet> changesets) {
 		this.changesets = changesets;
 	}
 
@@ -227,12 +228,12 @@ public class IncomingPage extends HgWizardPage {
 		makeActions();
 	}
 
-	ChangeSet getSelectedChangeSet() {
+	protected JHgChangeSet getSelectedChangeSet() {
 		IStructuredSelection sel = (IStructuredSelection) changeSetViewer
 				.getSelection();
 		Object firstElement = sel.getFirstElement();
-		if (firstElement instanceof ChangeSet) {
-			return (ChangeSet) firstElement;
+		if (firstElement instanceof JHgChangeSet) {
+			return (JHgChangeSet) firstElement;
 		}
 		return null;
 	}
@@ -241,7 +242,7 @@ public class IncomingPage extends HgWizardPage {
 		changeSetViewer
 				.addSelectionChangedListener(new ISelectionChangedListener() {
 					public void selectionChanged(SelectionChangedEvent event) {
-						ChangeSet change = getSelectedChangeSet();
+						JHgChangeSet change = getSelectedChangeSet();
 						revision = change;
 						if (change != null) {
 							fileStatusViewer.setInput(change.getChangedFiles());
@@ -296,7 +297,7 @@ public class IncomingPage extends HgWizardPage {
 		return revision;
 	}
 
-	public SortedSet<ChangeSet> getChangesets() {
+	public SortedSet<JHgChangeSet> getChangesets() {
 		return changesets;
 	}
 

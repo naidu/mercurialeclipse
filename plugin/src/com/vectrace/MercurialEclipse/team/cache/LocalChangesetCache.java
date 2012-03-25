@@ -69,24 +69,24 @@ public final class LocalChangesetCache extends AbstractCache {
 	/**
 	 * Contains all the loaded changesets for each of the paths (resources)
 	 */
-	private final Map<IPath, SortedSet<ChangeSet>> localChangeSets;
+	private final Map<IPath, SortedSet<JHgChangeSet>> localChangeSets;
 	/**
 	 * Stores all changesets for each project. changesets can be retreived by its rev:node or rev:shortnode strings. Only actually used for reading in
 	 * getChangesetById(Project, String) which is private. This can probably be removed without adverse effect.
 	 */
-	private final Map<IProject, Map<String, ChangeSet>> changesets;
+	private final Map<IProject, Map<String, JHgChangeSet>> changesets;
 	/**
 	 * Stores the latest changeset for each root
 	 */
-	private final Map<HgRoot, ChangeSet> latestChangesets;
+	private final Map<HgRoot, JHgChangeSet> latestChangesets;
 
 	private int logBatchSize;
 
 	private LocalChangesetCache() {
 		super();
-		localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
-		changesets = new HashMap<IProject, Map<String, ChangeSet>>();
-		latestChangesets = new HashMap<HgRoot, ChangeSet>();
+		localChangeSets = new HashMap<IPath, SortedSet<JHgChangeSet>>();
+		changesets = new HashMap<IProject, Map<String, JHgChangeSet>>();
+		latestChangesets = new HashMap<HgRoot, JHgChangeSet>();
 	}
 
 	public static synchronized LocalChangesetCache getInstance() {
@@ -153,13 +153,13 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @param resource non null
 	 * @return never null, but possibly empty set
 	 */
-	public SortedSet<ChangeSet> getOrFetchChangeSets(IResource resource) throws HgException {
+	public SortedSet<JHgChangeSet> getOrFetchChangeSets(IResource resource) throws HgException {
 		IPath location = ResourceUtils.getPath(resource);
 		if(location.isEmpty()) {
 			return EMPTY_SET;
 		}
 
-		SortedSet<ChangeSet> revisions;
+		SortedSet<JHgChangeSet> revisions;
 		synchronized(localChangeSets){
 			revisions = localChangeSets.get(location);
 			if (revisions == null) {
@@ -182,10 +182,10 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @param hgRoot non null
 	 * @return never null, but possibly empty set
 	 */
-	public SortedSet<ChangeSet> getOrFetchChangeSets(HgRoot hgRoot) throws HgException {
+	public SortedSet<JHgChangeSet> getOrFetchChangeSets(HgRoot hgRoot) throws HgException {
 		IPath location = hgRoot.getIPath();
 
-		SortedSet<ChangeSet> revisions;
+		SortedSet<JHgChangeSet> revisions;
 		synchronized(localChangeSets){
 			revisions = localChangeSets.get(location);
 			if (revisions == null) {
@@ -207,16 +207,16 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @return may return null
 	 * @throws HgException
 	 */
-	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
-		SortedSet<ChangeSet> revisions = getOrFetchChangeSets(resource);
+	public JHgChangeSet getNewestChangeSet(IResource resource) throws HgException {
+		SortedSet<JHgChangeSet> revisions = getOrFetchChangeSets(resource);
 		if (revisions.size() > 0) {
 			return revisions.last();
 		}
 		return null;
 	}
 
-	public ChangeSet getNewestChangeSet(HgRoot hgRoot) throws HgException {
-		SortedSet<ChangeSet> revisions = getOrFetchChangeSets(hgRoot);
+	public JHgChangeSet getNewestChangeSet(HgRoot hgRoot) throws HgException {
+		SortedSet<JHgChangeSet> revisions = getOrFetchChangeSets(hgRoot);
 		if (revisions.size() > 0) {
 			return revisions.last();
 		}
@@ -255,7 +255,7 @@ public final class LocalChangesetCache extends AbstractCache {
 	 *            whether to limit or to have full project log
 	 * @throws HgException
 	 */
-	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit) throws HgException {
+	public Set<JHgChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit) throws HgException {
 		Assert.isNotNull(hgRoot);
 		clear(hgRoot);
 
@@ -286,11 +286,11 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @param nodeId The node
 	 * @return Never null
 	 */
-	public ChangeSet get(HgRoot hgRoot, String nodeId) throws HgException {
+	public JHgChangeSet get(HgRoot hgRoot, String nodeId) throws HgException {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(nodeId);
-		SortedSet<ChangeSet> sets = getOrFetchChangeSets(hgRoot);
-		for (ChangeSet changeSet : sets) {
+		SortedSet<JHgChangeSet> sets = getOrFetchChangeSets(hgRoot);
+		for (JHgChangeSet changeSet : sets) {
 			if(nodeId.equals(changeSet.getNode())
 					|| nodeId.equals(changeSet.toString())
 					|| nodeId.equals(changeSet.getName())){
@@ -302,11 +302,11 @@ public final class LocalChangesetCache extends AbstractCache {
 		return HgLogClient.getChangeSet(hgRoot, nodeId);
 	}
 
-	public ChangeSet get(HgRoot root, int rev) throws HgException {
+	public JHgChangeSet get(HgRoot root, int rev) throws HgException {
 		Assert.isNotNull(root);
 		Assert.isLegal(rev >= 0);
-		SortedSet<ChangeSet> sets = getOrFetchChangeSets(root);
-		for (ChangeSet changeSet : sets) {
+		SortedSet<JHgChangeSet> sets = getOrFetchChangeSets(root);
+		for (JHgChangeSet changeSet : sets) {
 			if (changeSet.getIndex() == rev) {
 				return changeSet;
 			}
@@ -330,16 +330,16 @@ public final class LocalChangesetCache extends AbstractCache {
 	/**
 	 * @return may return null
 	 */
-	public ChangeSet getChangesetForRoot(HgRoot root) throws HgException {
+	public JHgChangeSet getChangesetForRoot(HgRoot root) throws HgException {
 		// for projects in the same root try to use root cache
 		synchronized (latestChangesets) {
-			ChangeSet changeSet = latestChangesets.get(root);
+			JHgChangeSet changeSet = latestChangesets.get(root);
 			if(changeSet != null) {
 				return changeSet;
 			}
 			String nodeId = HgLogClient.getCurrentChangesetId(root);
 			if (!HgLogClient.VERSION_ZERO.equals(nodeId)) {
-				ChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
+				JHgChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
 				if (lastSet != null) {
 					latestChangesets.put(root, lastSet);
 				}
@@ -400,7 +400,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		HgRoot root = MercurialTeamProvider.getHgRoot(res);
 		Assert.isNotNull(root);
 
-		List<ChangeSet> revisions;
+		List<JHgChangeSet> revisions;
 		// now we may change cache state, so lock
 		synchronized(localChangeSets){
 			if (limit) {
@@ -433,11 +433,11 @@ public final class LocalChangesetCache extends AbstractCache {
 	 *            the revision to start with
 	 * @throws HgException
 	 */
-	public Set<ChangeSet> fetchRevisions(HgRoot hgRoot, boolean limit,
+	public Set<JHgChangeSet> fetchRevisions(HgRoot hgRoot, boolean limit,
 			int limitNumber, int startRev) throws HgException {
 		Assert.isNotNull(hgRoot);
 
-		List<ChangeSet> revisions;
+		List<JHgChangeSet> revisions;
 		// now we may change cache state, so lock
 		synchronized(localChangeSets){
 			if (limit) {
@@ -492,14 +492,14 @@ public final class LocalChangesetCache extends AbstractCache {
 		MercurialEclipsePlugin.logError(new UnsupportedOperationException("notifyChanged not supported"));
 	}
 
-	private void addChangesets(IProject project, Collection<ChangeSet> changes) {
+	private void addChangesets(IProject project, Collection<JHgChangeSet> changes) {
 		synchronized (changesets) {
-			Map<String, ChangeSet> map = changesets.get(project);
+			Map<String, JHgChangeSet> map = changesets.get(project);
 			if(map == null){
-				map = new ConcurrentHashMap<String, ChangeSet>();
+				map = new ConcurrentHashMap<String, JHgChangeSet>();
 				changesets.put(project, map);
 			}
-			for (ChangeSet changeSet : changes) {
+			for (JHgChangeSet changeSet : changes) {
 				map.put(changeSet.toString(), changeSet);
 				map.put(changeSet.getNode(), changeSet);
 				map.put(changeSet.getName(), changeSet);
@@ -511,11 +511,11 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @param path absolute file path
 	 * @param changes may be null
 	 */
-	private void addChangesToLocalCache(IProject project, IPath path, Collection<ChangeSet> changes) {
+	private void addChangesToLocalCache(IProject project, IPath path, Collection<JHgChangeSet> changes) {
 		if (changes != null && changes.size() > 0) {
-			SortedSet<ChangeSet> existing = localChangeSets.get(path);
+			SortedSet<JHgChangeSet> existing = localChangeSets.get(path);
 			if (existing == null) {
-				existing = new TreeSet<ChangeSet>();
+				existing = new TreeSet<JHgChangeSet>();
 			}
 			localChangeSets.put(path, existing);
 			existing.addAll(changes);
@@ -525,12 +525,12 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 	}
 
-	public SortedSet<ChangeSet> getOrFetchChangeSetsByBranch(HgRoot hgRoot, String branchName)
+	public SortedSet<JHgChangeSet> getOrFetchChangeSetsByBranch(HgRoot hgRoot, String branchName)
 			throws HgException {
 
-		SortedSet<ChangeSet> changes = getOrFetchChangeSets(hgRoot);
-		SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
-		for (ChangeSet changeSet : changes) {
+		SortedSet<JHgChangeSet> changes = getOrFetchChangeSets(hgRoot);
+		SortedSet<JHgChangeSet> branchChangeSets = new TreeSet<JHgChangeSet>();
+		for (JHgChangeSet changeSet : changes) {
 			String changesetBranch = changeSet.getBranch();
 			if (BranchUtils.same(branchName, changesetBranch)) {
 				branchChangeSets.add(changeSet);

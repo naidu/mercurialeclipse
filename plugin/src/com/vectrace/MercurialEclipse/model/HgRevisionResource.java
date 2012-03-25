@@ -24,7 +24,7 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 	/**
 	 * If a local resource then then null
 	 */
-	protected final ChangeSet changeset;
+	protected final JHgChangeSet changeset;
 
 	// constructors
 
@@ -48,7 +48,7 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 	 * @param changeset =null if and only if wResource != null or this is a NullHgFile
 	 * @param path relative path to HgRoot, not null
 	 */
-	public HgRevisionResource(HgRoot root, ChangeSet changeset, IPath path) {
+	public HgRevisionResource(HgRoot root, JHgChangeSet changeset, IPath path) {
 		super(root, path.removeTrailingSeparator());
 
 		this.changeset = changeset;
@@ -56,7 +56,7 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 
 	// operations
 
-	public final ChangeSet getChangeSet() {
+	public final JHgChangeSet getChangeSet() {
 		return changeset;
 	}
 

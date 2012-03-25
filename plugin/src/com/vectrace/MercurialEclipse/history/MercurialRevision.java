@@ -32,14 +32,13 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.IResourceHolder;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
@@ -50,11 +49,10 @@ import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 public class MercurialRevision extends FileRevision implements IHgResource, IChangeSetHolder, IResourceHolder {
 
 	private final IResource resource;
-	private final ChangeSet changeSet;
+	private final JHgChangeSet changeSet;
 
 	/** Cached data */
 	private IHgFile storage;
-	private final GChangeSet gChangeSet;
 	private final int revision;
 	private final Signature signature;
 
@@ -78,13 +76,12 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	 * @param resource must be non null
 	 * @param sig may be null
 	 */
-	public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource,
+	public MercurialRevision(JHgChangeSet changeSet, IResource resource,
 			Signature sig, Status bisectStatus) {
 		super();
 		Assert.isNotNull(changeSet);
 		Assert.isNotNull(resource);
 		this.changeSet = changeSet;
-		this.gChangeSet = gChangeSet;
 		this.revision = changeSet.getIndex();
 		this.resource = resource;
 		this.signature = sig;
@@ -125,13 +122,8 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	/**
 	 * @return never null
 	 */
-	public ChangeSet getChangeSet() {
+	public JHgChangeSet getChangeSet() {
 		return changeSet;
-	}
-
-	@DoNotDisplayMe
-	public GChangeSet getGChangeSet() {
-		return gChangeSet;
 	}
 
 	@DoNotDisplayMe
@@ -310,10 +302,6 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 			builder.append("signature="); //$NON-NLS-1$
 			builder.append(signature);
 			builder.append(", "); //$NON-NLS-1$
-		}
-		if (gChangeSet != null) {
-			builder.append("gChangeSet="); //$NON-NLS-1$
-			builder.append(gChangeSet);
 		}
 		if (tags != null) {
 			builder.append("tags="); //$NON-NLS-1$

@@ -130,9 +130,8 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 					try {
 						MercurialMatch m = (MercurialMatch) firstElement;
 						// open an editor with the content of the changeset this matc
-						MercurialRevision revision = new MercurialRevision(m
-								.getHgFile().getChangeSet(), null, m.getFile(),
-								null, null);
+					MercurialRevision revision = new MercurialRevision(
+							m.getHgFile().getChangeSet(), m.getFile(), null, null);
 						IEditorPart editor = Utils.openEditor(getSite().getPage(), revision,
 								new NullProgressMonitor());
 						if (editor instanceof ITextEditor) {

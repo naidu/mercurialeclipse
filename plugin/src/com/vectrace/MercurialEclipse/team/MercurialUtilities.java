@@ -51,6 +51,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
@@ -407,7 +408,7 @@ public final class MercurialUtilities {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
-		ChangeSet parentCs;
+		JHgChangeSet parentCs;
 
 		if (cs.getBundleFile() == null) {
 			parentCs = LocalChangesetCache.getInstance().get(cs.getHgRoot(), parents[0]);

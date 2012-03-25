@@ -60,6 +60,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.PathFromChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -796,7 +797,7 @@ public final class ResourceUtils {
 		if (hgRoot == null) {
 			return null;
 		}
-		ChangeSet cs = null;
+		JHgChangeSet cs = null;
 		try {
 			cs = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 		} catch (HgException e) {

@@ -78,8 +78,8 @@ public class HgLogClient extends AbstractClient {
 		return ar;
 	}
 
-	private static List<ChangeSet> getChangeSets(HgRoot root, List<Changeset> list) {
-		List<ChangeSet> ar = new ArrayList<ChangeSet>(list.size());
+	private static List<JHgChangeSet> getChangeSets(HgRoot root, List<Changeset> list) {
+		List<JHgChangeSet> ar = new ArrayList<JHgChangeSet>(list.size());
 
 		for (int i = 0, n = list.size(); i < n; i++) {
 			ar.add(getChangeSet(root, list.get(i)));
@@ -88,7 +88,7 @@ public class HgLogClient extends AbstractClient {
 		return ar;
 	}
 
-	public static List<ChangeSet> getResourceLog(HgRoot root, IResource res, int limitNumber, int startRev) {
+	public static List<JHgChangeSet> getResourceLog(HgRoot root, IResource res, int limitNumber, int startRev) {
 		boolean isFile = res.getType() == IResource.FILE;
 
 		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
@@ -100,7 +100,7 @@ public class HgLogClient extends AbstractClient {
 		return getChangeSets(root, command.execute(ResourceUtils.getPath(res).toOSString()));
 	}
 
-	public static List<ChangeSet> getRootLog(HgRoot root, int limitNumber, int startRev) {
+	public static List<JHgChangeSet> getRootLog(HgRoot root, int limitNumber, int startRev) {
 		return getChangeSets(root,
 				addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, false)
 						.execute());
@@ -135,7 +135,7 @@ public class HgLogClient extends AbstractClient {
 	/**
 	 * Helper method to transform JavaHg changesets into normal changesets
 	 */
-	public static ChangeSet getChangeSet(HgRoot root, Changeset cs) {
+	public static JHgChangeSet getChangeSet(HgRoot root, Changeset cs) {
 		return LocalChangesetCache.getInstance().get(root, cs);
 	}
 
@@ -148,11 +148,11 @@ public class HgLogClient extends AbstractClient {
 	 *            non null
 	 * @return might return null if the changeset is not known/existing in the repo
 	 */
-	public static ChangeSet getChangeSet(HgRoot root, String nodeId) {
+	public static JHgChangeSet getChangeSet(HgRoot root, String nodeId) {
 		return getChangeSet(root, nodeId, null, null, null);
 	}
 
-	public static ChangeSet getChangeSet(HgRoot root, String nodeId, IHgRepositoryLocation remote,
+	public static JHgChangeSet getChangeSet(HgRoot root, String nodeId, IHgRepositoryLocation remote,
 			Direction direction, File bundle) {
 		LogCommand command = LogCommandFlags.on(CommandServerCache.getInstance().get(root, bundle)).rev(nodeId);
 
@@ -173,7 +173,7 @@ public class HgLogClient extends AbstractClient {
 	 * @param rev The index
 	 * @return The change set
 	 */
-	public static ChangeSet getChangeSet(HgRoot root, int rev) {
+	public static JHgChangeSet getChangeSet(HgRoot root, int rev) {
 		return getChangeSet(root, rev + ":" + rev);
 	}
 }

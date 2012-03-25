@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
 import com.aragost.javahg.Changeset;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -40,7 +39,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class RemoteData {
 
 	private final Direction direction;
-	private final SortedSet<ChangeSet> changesets;
+	private final SortedSet<JHgChangeSet> changesets;
 	private final RemoteKey key;
 
 	/**
@@ -53,7 +52,7 @@ public class RemoteData {
 		super();
 
 		this.direction = direction;
-		this.changesets = new TreeSet<ChangeSet>();
+		this.changesets = new TreeSet<JHgChangeSet>();
 		this.key = key;
 
 		for (int i = 0, n = changesets.size(); i < n; i++) {
@@ -63,14 +62,14 @@ public class RemoteData {
 
 	// operations
 
-	public SortedSet<ChangeSet> getChangeSets(IResource resource){
+	public SortedSet<JHgChangeSet> getChangeSets(IResource resource){
 		if (resource instanceof IProject) {
 			return changesets;
 		}
 
-		SortedSet<ChangeSet> filtered = new TreeSet<ChangeSet>();
+		SortedSet<JHgChangeSet> filtered = new TreeSet<JHgChangeSet>();
 		IPath rootRelative = null;
-		mainLoop: for (ChangeSet cs : changesets) {
+		mainLoop: for (JHgChangeSet cs : changesets) {
 			if (rootRelative == null) {
 				File path = ResourceUtils.getFileHandle(resource);
 				if (path == null || path.getPath().length() == 0) {
@@ -96,7 +95,7 @@ public class RemoteData {
 	/**
 	 * @return ALL changesets known by the hg root, or empty set, never null
 	 */
-	public SortedSet<ChangeSet> getChangeSets(){
+	public SortedSet<JHgChangeSet> getChangeSets(){
 		return changesets;
 	}
 

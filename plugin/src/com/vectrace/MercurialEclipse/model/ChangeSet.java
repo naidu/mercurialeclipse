@@ -22,8 +22,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -34,15 +32,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
-import com.aragost.javahg.Repository;
-import com.aragost.javahg.commands.StatusResult;
-import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
-import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -65,12 +59,6 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	public static enum Direction {
 		INCOMING, OUTGOING, LOCAL;
 	}
-
-	// .. cached data
-
-	protected List<FileStatus> changedFiles;
-
-	private Set<IFile> files;
 
 	// constructor
 
@@ -134,27 +122,11 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	public abstract Date getDate();
 
 	/**
-	 * @return not modifiable set of files changed/added/removed in this changeset, never null. The
+	 * @return non-modifiable set of files changed/added/removed in this changeset, never null. The
 	 *         returned file references might not exist (yet/anymore) on the disk or in the Eclipse
 	 *         workspace.
 	 */
-	@DoNotDisplayMe
-	public Set<IFile> getFiles() {
-		if (files == null) {
-			Set<IFile> files1 = new LinkedHashSet<IFile>();
-			List<FileStatus> changed = getChangedFiles();
-			if (changed != null) {
-				for (FileStatus fileStatus : changed) {
-					IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
-					if (fileHandle != null) {
-						files1.add(fileHandle);
-					}
-				}
-			}
-			files = Collections.unmodifiableSet(files1);
-		}
-		return files;
-	}
+	public abstract Set<IFile> getFiles();
 
 	/**
 	 * @param resource
@@ -175,6 +147,8 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	}
 
 	/**
+	 * TODO: move to JHgChangeset
+	 *
 	 * @param resource
 	 *            non null
 	 * @return file status object if this changeset contains given resource, null otherwise
@@ -353,50 +327,9 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	public abstract String[] getParents();
 
 	/**
-	 * @return the changedFiles, never null. The returned list is non modifiable so any attempt to
-	 *         modify it will lead to an exception.
+	 * TODO: move to JHGChangeset?
 	 */
-	public final List<FileStatus> getChangedFiles() {
-		HgRoot hgRoot = getHgRoot();
-
-		if (changedFiles == null) {
-			List<FileStatus> l = new ArrayList<FileStatus>();
-			Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
-
-			StatusResult res = StatusCommandFlags.on(repo)
-					.rev(getParentRevision(0).getNode(), getRevision().getNode()).added()
-					.modified().deleted().removed().copies().execute();
-
-			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
-			}
-
-			for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
-			}
-
-			for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
-			}
-
-			// TODO moves
-			for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
-				String s = it.next();
-				String source = res.getCopied().get(s);
-				l.add(new FileStatus(
-						res.getRemoved().contains(source) ? FileStatus.Action.MOVED
-								: FileStatus.Action.COPIED, s, source, hgRoot));
-			}
-
-			if (l.isEmpty()) {
-				changedFiles = EMPTY_STATUS;
-			} else {
-				changedFiles = Collections.unmodifiableList(l);
-			}
-		}
-
-		return changedFiles;
-	}
+	public abstract List<FileStatus> getChangedFiles();
 
 	public abstract IHgRepositoryLocation getRepository();
 

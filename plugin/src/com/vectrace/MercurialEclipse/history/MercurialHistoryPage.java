@@ -118,6 +118,7 @@ import com.vectrace.MercurialEclipse.menu.StripHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -1095,8 +1096,8 @@ public class MercurialHistoryPage extends HistoryPage {
 							title, file);
 					int result = dialog.open();
 					if (result == IDialogConstants.OK_ID) {
-						ChangeSet cs = dialog.getChangeSet();
-						MercurialRevision rev = new MercurialRevision(cs, null, file, null, null);
+						JHgChangeSet cs = dialog.getChangeSet();
+						MercurialRevision rev = new MercurialRevision(cs, file, null, null);
 						super.updateSelection(new StructuredSelection(new Object[] {selectedRev, rev}));
 						super.run();
 					}

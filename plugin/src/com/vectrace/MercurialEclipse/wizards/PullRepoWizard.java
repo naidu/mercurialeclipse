@@ -26,6 +26,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 
 public class PullRepoWizard extends HgWizard {
 
@@ -91,7 +92,7 @@ public class PullRepoWizard extends HgWizard {
 		}
 
 		File bundleFile = null;
-		SortedSet<ChangeSet> changesets = incomingPage.getChangesets();
+		SortedSet<JHgChangeSet> changesets = incomingPage.getChangesets();
 		if (changesets != null && changesets.size() > 0) {
 			bundleFile = changesets.first().getBundleFile();
 		}

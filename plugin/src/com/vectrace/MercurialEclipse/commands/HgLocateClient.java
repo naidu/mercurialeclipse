@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
@@ -27,6 +26,7 @@ import com.vectrace.MercurialEclipse.model.HgRevisionResource;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 
 /**
@@ -35,7 +35,7 @@ import com.vectrace.MercurialEclipse.model.NullHgFile;
  */
 public class HgLocateClient extends AbstractClient {
 
-	public static HgFile getHgFile(HgRoot hgRoot, IPath relpath, ChangeSet cs) throws HgException {
+	public static HgFile getHgFile(HgRoot hgRoot, IPath relpath, JHgChangeSet cs) throws HgException {
 		return (HgFile) getHgResources(hgRoot, relpath, true, cs, null);
 	}
 
@@ -48,7 +48,7 @@ public class HgLocateClient extends AbstractClient {
 	 * @return The revision resource or a NullHgFile if it couldn't be located
 	 * @throws HgException
 	 */
-	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file, ChangeSet cs, SortedSet<String> filter) throws HgException {
+	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file, JHgChangeSet cs, SortedSet<String> filter) throws HgException {
 
 		String revision = cs.getNode();
 		HgCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);

@@ -31,6 +31,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
@@ -95,8 +96,6 @@ public class OpenAction extends Action {
 					"Diff for files external to Eclipse workspace is not supported yet!");
 			return;
 		}
-		IFile sourceFile = fcs.getCopySourceFile();
-		final IFile parentFile = sourceFile != null? sourceFile : file;
 
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
@@ -113,7 +112,7 @@ public class OpenAction extends Action {
 			protected IStatus run(IProgressMonitor monitor) {
 
 				try {
-					CompareUtils.openCompareWithParentEditor(cs, file, false, configuration);
+					CompareUtils.openCompareWithParentEditor((JHgChangeSet)cs, file, false, configuration);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();

@@ -186,6 +186,15 @@ public abstract class WorkingChangeSet extends ChangeSet {
 		return Collections.unmodifiableSet(files);
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getChangedFiles()
+	 */
+	@Override
+	public List<FileStatus> getChangedFiles() {
+		assert false;
+		return Collections.EMPTY_LIST;
+	}
+
 	@Override
 	public void remove(IResource file){
 		// simply not supported, as it may be called not only from our code

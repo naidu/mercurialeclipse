@@ -15,13 +15,14 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -34,18 +35,19 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
+import com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -58,37 +60,23 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class MercurialHistory extends FileHistory {
 
-	private static final class RevisionComparator implements Comparator<MercurialRevision>,
-			Serializable {
-
-		private static final long serialVersionUID = 5305190339206751711L;
-
-		public int compare(MercurialRevision o1, MercurialRevision o2) {
-			int result = o2.getRevision() - o1.getRevision();
-
-			// we need to cover the situation when repo-indices are the same
-			if (result == 0 && o1.getChangeSet().getDateString() != null
-					&& o2.getChangeSet().getDateString() != null) {
-				result = o2.getChangeSet().getDate().compareTo(
-						o1.getChangeSet().getDate());
-			}
-
-			return result;
+	private static final Comparator<ChangeSet> CS_COMPARATOR = new Comparator<ChangeSet>() {
+		public int compare(ChangeSet o1, ChangeSet o2) {
+			return o2.getIndex() - o1.getIndex();
 		}
-	}
-
-	private static final ChangeSetComparator CS_COMPARATOR = new ChangeSetComparator();
-	private static final RevisionComparator REV_COMPARATOR = new RevisionComparator();
+	};
 
 	private final IResource resource;
 	private final HgRoot hgRoot;
-	private final List<MercurialRevision> revisions;
+	private final List<MercurialRevision> revisions = new ArrayList<MercurialRevision>();
+	private final Map<MercurialRevision, Integer> revisionsByIndex = new HashMap<MercurialRevision, Integer>();
 	private Tag[] tags;
-	private final Map<Integer, GChangeSet> gChangeSets;
-	private GChangeSet lastGCS;
 	private int lastReqRevision;
 	private boolean showTags;
 	private boolean bisectStarted;
+	private GraphLayout layout;
+
+	// constructors
 
 	/**
 	 * @param resource must be non null
@@ -103,8 +91,6 @@ public class MercurialHistory extends FileHistory {
 			this.resource = resource;
 		}
 		hgRoot = root;
-		revisions = new ArrayList<MercurialRevision>();
-		gChangeSets = new HashMap<Integer, GChangeSet>();
 	}
 
 	/**
@@ -115,14 +101,14 @@ public class MercurialHistory extends FileHistory {
 		Assert.isNotNull(hgRoot);
 		this.resource = null;
 		this.hgRoot = hgRoot;
-		revisions = new ArrayList<MercurialRevision>();
-		gChangeSets = new HashMap<Integer, GChangeSet>();
 	}
+
+	// operations
 
 	/**
 	 * @return true if this is a history of the hg root, otherwise it's about any sibling of it
 	 */
-	boolean isRootHistory() {
+	protected boolean isRootHistory() {
 		return resource == null;
 	}
 
@@ -226,8 +212,7 @@ public class MercurialHistory extends FileHistory {
 			// We're getting revisions up to the latest one available.
 			// So clear out the cached list, as it may contain revisions
 			// that no longer exist (e.g. after a strip/rollback).
-			revisions.clear();
-			gChangeSets.clear();
+			clear();
 			tags = null;
 			lastReqRevision = 0;
 		}
@@ -241,7 +226,7 @@ public class MercurialHistory extends FileHistory {
 		final int logBatchSize = store.getInt(LOG_BATCH_SIZE);
 
 		IPath location;
-		List<ChangeSet> list;
+		List<JHgChangeSet> list;
 
 		if(!isRootHistory()) {
 			list = HgLogClient.getResourceLog(hgRoot, resource, logBatchSize, from);
@@ -258,17 +243,38 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// We need these to be in order for the GChangeSets to display properly
-		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(CS_COMPARATOR);
+		NavigableSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
 		changeSets.addAll(list);
 
 		if (revisions.size() < changeSets.size()
 				|| !(location.equals(ResourceUtils.getPath(revisions.get(0).getResource())))) {
-			revisions.clear();
-			gChangeSets.clear();
+			clear();
 		}
 
-		// Update graph data also in batch
-		updateGraphData(changeSets, logBatchSize, from, store.getBoolean(ENABLE_FULL_GLOG));
+		// Update graph data
+		if (isRootHistory() || resource.getType() == IResource.FILE) {
+			ParentProvider parentProvider;
+
+			if (isRootHistory()) {
+				parentProvider = GraphLayout.ROOT_PARENT_PROVIDER;
+			} else {
+				throw new UnsupportedOperationException("TODO");
+			}
+
+			if (layout == null) {
+				layout = new GraphLayout();
+			}
+
+			Changeset[] changesets = new Changeset[changeSets.size()];
+
+			int i = 0;
+			for (Iterator<JHgChangeSet> it = changeSets.iterator(); it.hasNext(); i++) {
+				changesets[i] = it.next().getData();
+			}
+
+			layout.add(changesets, revisions.isEmpty() ? null : revisions.get(revisions.size() - 1)
+					.getChangeSet().getData(), parentProvider);
+		}
 
 		if(!revisions.isEmpty()){
 			// in case of a particular data fetch before, we may still have some
@@ -286,13 +292,17 @@ public class MercurialHistory extends FileHistory {
 		Map<String, Status> bisectMap = HgBisectClient.getBisectStatus(hgRoot);
 		setBisectStarted(!bisectMap.isEmpty());
 
-		for (ChangeSet cs : changeSets) {
+		int i = revisions.size();
+
+		for (JHgChangeSet cs : changeSets) {
 			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getNode()) : null;
 			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getNode()) : null;
-			GChangeSet set = gChangeSets.get(Integer.valueOf(cs.getIndex()));
-			revisions.add(new MercurialRevision(cs, set, revisionResource, sig, bisectStatus));
+			MercurialRevision rev = new MercurialRevision(cs, revisionResource, sig, bisectStatus);
+
+			revisions.add(rev);
+			revisionsByIndex.put(rev, new Integer(i));
+			i += 1;
 		}
-		Collections.sort(revisions, REV_COMPARATOR);
 		lastReqRevision = from;
 
 		if(showTags){
@@ -303,6 +313,16 @@ public class MercurialHistory extends FileHistory {
 				assignTagsToRevisions();
 			}
 		}
+	}
+
+	/**
+	 * Clear data
+	 */
+	private void clear() {
+		revisions.clear();
+		revisionsByIndex.clear();
+		layout = null;
+		// TODO: tags?
 	}
 
 	private Map<String, Signature> getSignatures() throws CoreException {
@@ -424,49 +444,6 @@ public class MercurialHistory extends FileHistory {
 		return -1;
 	}
 
-	private void updateGraphData(SortedSet<ChangeSet> changeSets, int logBatchSize, int from,
-			boolean enableFullLog) {
-		if(enableFullLog && !gChangeSets.isEmpty()){
-			return;
-		} else if (!isRootHistory() && resource.getType() == IResource.FOLDER) {
-			return;
-		}
-		logBatchSize = enableFullLog? 0 : logBatchSize;
-
-		// put glog changesets in map for later referencing
-		List<GChangeSet> gLogChangeSets;
-		try {
-			// the code below will produce sometimes bad graphs because the glog is re-set
-			// each time we request the new portion of data.
-			// the only reason why we use logBatchSize here and accept "bad" graphs is the performance
-			if(!isRootHistory()) {
-				gLogChangeSets = new HgGLogClient(resource, logBatchSize, from).getChangeSets();
-			} else {
-				gLogChangeSets = new HgGLogClient(hgRoot, logBatchSize, from).getChangeSets();
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return;
-		}
-		if(!enableFullLog && !gLogChangeSets.isEmpty()){
-			GChangeSet firstNew = gLogChangeSets.get(0);
-			GChangeSet lastOld = lastGCS;
-			if(lastOld != null) {
-				// a VERY primitive, wrong way to connect graphs. works only if there
-				// is one active branch at given changeset time
-				firstNew.clean(lastOld);
-			}
-		}
-		for (GChangeSet gs : gLogChangeSets) {
-			if (gs != null) {
-				gChangeSets.put(Integer.valueOf(gs.getRev()), gs);
-			}
-		}
-		if(!enableFullLog && !gLogChangeSets.isEmpty()) {
-			lastGCS = gLogChangeSets.get(gLogChangeSets.size() - 1);
-		}
-	}
-
 	/**
 	 * @param showTags true to show tagged changesets, even if they are not related to the
 	 * current file
@@ -475,4 +452,11 @@ public class MercurialHistory extends FileHistory {
 		this.showTags = showTags;
 	}
 
+	private int getIndex(MercurialRevision rev) {
+		return revisionsByIndex.get(rev).intValue();
+	}
+
+	public GraphRow getGraphRow(MercurialRevision rev) {
+		return layout == null ? null : layout.getRow(getIndex(rev));
+	}
 }

@@ -693,8 +693,7 @@ public class ChangedPathsPage {
 		if(file == null){
 			return null;
 		}
-		MercurialRevision derived = new MercurialRevision(base.getChangeSet(), base
-				.getGChangeSet(), file, null, null);
+		MercurialRevision derived = new MercurialRevision(base.getChangeSet(), file, null, null);
 		return derived;
 	}
 }

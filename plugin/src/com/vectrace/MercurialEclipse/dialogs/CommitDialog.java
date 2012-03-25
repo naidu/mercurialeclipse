@@ -87,6 +87,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.SwitchHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
@@ -129,7 +130,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private String commitResult;
 	private Button closeBranchCheckBox;
 	private Button amendCheckbox;
-	private ChangeSet currentChangeset;
+	private JHgChangeSet currentChangeset;
 	private ProgressMonitorPart monitor;
 	private Sash sash;
 	private ChangesetInfoTray tray;
