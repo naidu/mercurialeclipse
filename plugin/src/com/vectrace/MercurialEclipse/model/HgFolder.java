@@ -47,7 +47,7 @@ public class HgFolder extends HgRevisionResource implements IHgFolder {
 		parseListing(listing, filter);
 	}
 
-	public HgFolder(HgRoot root, ChangeSet changeset, IPath path, String[] listing,
+	public HgFolder(HgRoot root, JHgChangeSet changeset, IPath path, String[] listing,
 			SortedSet<String> filter) {
 		super(root, changeset, path);
 		parseListing(listing, filter);

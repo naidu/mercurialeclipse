@@ -31,9 +31,9 @@ import org.eclipse.swt.widgets.Composite;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -66,20 +66,20 @@ public class OutgoingPage extends IncomingPage {
 			monitor.done();
 		}
 
-		private SortedSet<ChangeSet> getOutgoingInternal() {
+		private SortedSet<JHgChangeSet> getOutgoingInternal() {
 			if (isSvn()) {
-				return new TreeSet<ChangeSet>();
+				return new TreeSet<JHgChangeSet>();
 			}
 			IHgRepositoryLocation remote = getLocation();
 			try {
-				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
+				Set<JHgChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
 						getHgRoot(), remote, null, isForce());
-				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+				SortedSet<JHgChangeSet> revertedSet = new TreeSet<JHgChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;
 			} catch (HgException e) {
 				MercurialEclipsePlugin.showError(e);
-				return new TreeSet<ChangeSet>();
+				return new TreeSet<JHgChangeSet>();
 			}
 		}
 
@@ -87,7 +87,7 @@ public class OutgoingPage extends IncomingPage {
 
 	protected class OutgoingDoubleClickListener implements IDoubleClickListener {
 		public void doubleClick(DoubleClickEvent event) {
-			ChangeSet cs = getSelectedChangeSet();
+			JHgChangeSet cs = getSelectedChangeSet();
 			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
 			FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
 
@@ -124,12 +124,12 @@ public class OutgoingPage extends IncomingPage {
 	}
 
 	@Override
-	public void setChangesets(SortedSet<ChangeSet> outgoingInternal) {
+	public void setChangesets(SortedSet<JHgChangeSet> outgoingInternal) {
 		super.setChangesets(outgoingInternal);
 	}
 
 	@Override
-	public SortedSet<ChangeSet> getChangesets() {
+	public SortedSet<JHgChangeSet> getChangesets() {
 		return super.getChangesets();
 	}
 

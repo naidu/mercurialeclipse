@@ -49,8 +49,6 @@ public final class MercurialPreferenceConstants {
 
 	public static final String PREF_ENABLE_SUBREPO_SUPPORT = "enableSubrepoSupport"; //$NON-NLS-1$
 
-	/** do not limit graphical log data to show pretty revision graphs in the history view */
-	public static final String ENABLE_FULL_GLOG = "hg.performance.enableFullGlog"; //$NON-NLS-1$
 	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$
 
 	// Timeouts

@@ -69,12 +69,6 @@ implements IWorkbenchPreferencePage {
 		addField(batchStatusSeditor);
 		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
 
-
-		addField(new BooleanFieldEditor(
-				ENABLE_FULL_GLOG,
-				Messages.getString("PerformancePreferencePage.field.enableFullGlog"), //$NON-NLS-1$
-				getFieldEditorParent()));
-
 		addField(new BooleanFieldEditor(
 				PREF_ENABLE_SUBREPO_SUPPORT,
 				Messages.getString("PerformancePreferencePage.field.enableSubrepo"), //$NON-NLS-1$

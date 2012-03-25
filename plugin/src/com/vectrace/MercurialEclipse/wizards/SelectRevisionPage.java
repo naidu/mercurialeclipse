@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.dialogs.RevisionChooserPanel.Settings;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.operations.UpdateOperation;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
@@ -229,7 +230,7 @@ public class SelectRevisionPage extends WizardPage {
 		if(noRevSpecified){
 			// take latest available changeset
 			// lookup one (latest) revision only
-			List<ChangeSet> set = HgLogClient.getRootLog(hgRoot, 1, -1);
+			List<JHgChangeSet> set = HgLogClient.getRootLog(hgRoot, 1, -1);
 
 			if(set == null || set.isEmpty()){
 				return false;

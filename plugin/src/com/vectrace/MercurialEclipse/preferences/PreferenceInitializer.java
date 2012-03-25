@@ -79,7 +79,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(LOG_BATCH_SIZE, 500);
 		store.setDefault(STATUS_BATCH_SIZE, 10);
 		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);
-		store.setDefault(ENABLE_FULL_GLOG, true);
 
 		// blue
 		store.setDefault(PREF_CONSOLE_COMMAND_COLOR, "0,0,255");

@@ -45,7 +45,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		super(hgRoot, changeset, path);
 	}
 
-	public HgFile(HgRoot hgRoot, ChangeSet changeset, IPath path) {
+	public HgFile(HgRoot hgRoot, JHgChangeSet changeset, IPath path) {
 		super(hgRoot, changeset, path);
 	}
 
@@ -102,7 +102,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 * @return A new HgFile instance
 	 * @see #locate(ChangeSet, IFile)
 	 */
-	public static HgFile make(ChangeSet cs, IFile file) {
+	public static HgFile make(JHgChangeSet cs, IFile file) {
 		return new HgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
 	}
 
@@ -115,7 +115,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 * @throws HgException
 	 * @see {@link HgLocateClient#getHgFile(HgRoot, IPath, ChangeSet)}
 	 */
-	public static HgFile locate(ChangeSet cs, IFile file) throws HgException {
+	public static HgFile locate(JHgChangeSet cs, IFile file) throws HgException {
 		return HgLocateClient.getHgFile(cs.getHgRoot(), cs.getHgRoot().toRelative(file), cs);
 	}
 
@@ -124,7 +124,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 */
 	public static HgFile makeAtCurrentRev(IFile remoteFile) throws HgException {
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(remoteFile);
-		ChangeSet cs = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+		JHgChangeSet cs = LocalChangesetCache.getInstance().getChangesetForRoot(root);
 
 		return new HgFile(cs.getHgRoot(), cs, root.getRelativePath(remoteFile));
 	}

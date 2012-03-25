@@ -27,13 +27,13 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQHeaderClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray.ChangedFilesTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgOperationWizard;
 import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard.FileOperation;
@@ -79,7 +79,7 @@ public class QRefreshWizard extends HgOperationWizard {
 
 	private static class QRefreshWizardPage extends QNewWizardPage {
 
-		private ChangeSet currentChangeset;
+		private JHgChangeSet currentChangeset;
 
 		public QRefreshWizardPage(String pageName, String title, ImageDescriptor titleImage,
 				String description, HgRoot root, boolean showPatchName) {

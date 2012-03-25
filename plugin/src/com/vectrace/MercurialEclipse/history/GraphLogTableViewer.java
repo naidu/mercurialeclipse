@@ -29,15 +29,16 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
-import com.vectrace.MercurialEclipse.model.GChangeSet;
-import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
-import com.vectrace.MercurialEclipse.model.GChangeSet.EdgeList;
+import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class GraphLogTableViewer extends TableViewer {
-	private final List<Color> colours = new ArrayList<Color>();
+	private static final int COL_WIDTH_PIXELS = 12;
+	private static int DOT_RADIUS_PIXELS = 4;
+
+	private final List<Color> colors = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
 	private final Color mergeBack;
 	private final Color mergeFore;
@@ -53,17 +54,17 @@ public class GraphLogTableViewer extends TableViewer {
 		});
 
 		Display display = parent.getDisplay();
-		colours.add(display.getSystemColor(SWT.COLOR_GREEN));
-		colours.add(display.getSystemColor(SWT.COLOR_BLUE));
-		colours.add(display.getSystemColor(SWT.COLOR_RED));
-		colours.add(display.getSystemColor(SWT.COLOR_MAGENTA));
-		colours.add(display.getSystemColor(SWT.COLOR_GRAY));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_MAGENTA));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
-		colours.add(display.getSystemColor(SWT.COLOR_DARK_RED));
+		colors.add(display.getSystemColor(SWT.COLOR_GREEN));
+		colors.add(display.getSystemColor(SWT.COLOR_BLUE));
+		colors.add(display.getSystemColor(SWT.COLOR_RED));
+		colors.add(display.getSystemColor(SWT.COLOR_MAGENTA));
+		colors.add(display.getSystemColor(SWT.COLOR_GRAY));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_MAGENTA));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_RED));
 
 		// TODO add pref store listener
 		mergeBack = MercurialUtilities
@@ -77,13 +78,12 @@ public class GraphLogTableViewer extends TableViewer {
 		if (event.index != 0) {
 			return;
 		}
+
 		MercurialRevision rev = (MercurialRevision) tableItem.getData();
-		GChangeSet gcs = rev.getGChangeSet();
-		if (gcs != null) {
-			paint(event, gcs.getBefore(), 0);
-			paint(event, gcs.getMiddle(), 1);
-			paint(event, gcs.getAfter(), 2);
-		}
+		MercurialHistory data = mhp.getMercurialHistory();
+
+		paintRow(event, data.getGraphRow(rev));
+
 		final Table table = tableItem.getParent();
 		int from = rev.getRevision() - 1;
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
@@ -113,9 +113,9 @@ public class GraphLogTableViewer extends TableViewer {
 		Signature sig = rev.getSignature();
 		if (sig != null) {
 			if (sig.validate()) {
-				tableItem.setBackground(colours.get(0));
+				tableItem.setBackground(colors.get(0));
 			} else {
-				tableItem.setBackground(colours.get(2));
+				tableItem.setBackground(colors.get(2));
 			}
 		}
 
@@ -130,27 +130,109 @@ public class GraphLogTableViewer extends TableViewer {
 		Status bisectStatus = rev.getBisectStatus();
 		if (bisectStatus != null) {
 			if (bisectStatus == Status.BAD) {
-				tableItem.setBackground(colours.get(10));
+				tableItem.setBackground(colors.get(10));
 			} else {
-				tableItem.setBackground(colours.get(9));
+				tableItem.setBackground(colors.get(9));
 			}
 		} else {
-			// use italic dark grey font for merge changesets
 			if (rev.getChangeSet().isMerge()) {
-				decorateMergeChangesets(tableItem);
+				// Don't set font here -> UI freezes on windows
+				tableItem.setBackground(mergeBack);
+				tableItem.setForeground(mergeFore);
+
 			}
 		}
 	}
 
-	private void decorateMergeChangesets(TableItem tableItem) {
-		// Don't ask me why, but it seems that setting the font here causes strange
-		// UI thread freeze periods on Windows. I guess that this causes another paint
-		// requests...
-//		tableItem.setFont(mergeFont);
-		tableItem.setBackground(mergeBack);
-		tableItem.setForeground(mergeFore);
+	/**
+	 * @param graphRow
+	 */
+	private void paintRow(Event event, GraphRow curRow) {
+		if (curRow == null) {
+			return;
+		}
+
+		GraphRow prevRow = curRow.getPrevious();
+
+		if (prevRow != null) {
+			for (int i = 0, n = prevRow.numColumns(); i < n; i++) {
+				int numParents = prevRow.numParents(i);
+
+				for (int p = 0; p < numParents; p++) {
+					int color = p == 0 ? prevRow.getColor(i) : prevRow.getParentColor(i, p);
+					paintTop(event, i, prevRow.getParentIndex(i, p), getColor(color));
+				}
+			}
+		}
+
+		for (int i = 0, n = curRow.numColumns(); i < n; i++) {
+			int numParents = curRow.numParents(i);
+
+			for (int p = 0; p < numParents; p++) {
+				int color = p == 0 ? curRow.getColor(i) : curRow.getParentColor(i, p);
+				paintBottom(event, i, curRow.getParentIndex(i, p), getColor(color));
+			}
+		}
+
+		paintDot(event, curRow.getDot());
 	}
 
+	private Color getColor(int color) {
+		return colors.get(color % colors.size());
+	}
+
+	/**
+	 * Paint the top part of the cell, between the current change set and it's children
+	 */
+	private static void paintTop(Event event, int fromCol, int toCol, Color color) {
+		GC g = event.gc;
+		g.setLineAttributes(new LineAttributes(2));
+		g.setLineStyle(SWT.LINE_SOLID);
+		g.setForeground(color);
+
+		int endY = event.y + event.height / 2;
+		int toX = getX(event, toCol);
+
+		g.drawLine(toX, event.y, toX, endY);
+	}
+
+	/**
+	 * Paint the bottom part of the cell, between the current change set and it's parents
+	 */
+	private static void paintBottom(Event event, int fromCol, int toCol, Color color) {
+		GC g = event.gc;
+		g.setLineAttributes(new LineAttributes(2));
+		g.setLineStyle(SWT.LINE_SOLID);
+		g.setForeground(color);
+
+		int fromX = getX(event, fromCol);
+		int toX = getX(event, toCol);
+		int endY = event.y + event.height;
+
+		if (fromCol == toCol) {
+			g.drawLine(fromX, event.y + event.height / 2, fromX, endY);
+		} else {
+			int horStartX = getX(event, toCol + (fromCol > toCol ? 1 : -1));
+			// horizontal line
+			if (Math.abs(toCol - fromCol) > 1) {
+				g.drawLine(fromX, event.y + event.height / 2, horStartX, event.y + event.height / 2);
+			}
+
+			// diagonal line
+			g.drawLine(horStartX, event.y + event.height / 2, toX, event.y  + event.height);
+		}
+	}
+
+	private static void paintDot(Event event, int dot) {
+		event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_BLACK));
+
+		event.gc.fillOval(getX(event, dot) - DOT_RADIUS_PIXELS, // x
+				event.y + (event.height / 2) - DOT_RADIUS_PIXELS, // y
+				DOT_RADIUS_PIXELS * 2, // width
+				DOT_RADIUS_PIXELS * 2); // height
+	}
+
+	/*
 	private void paint(Event event, EdgeList edges, int i) {
 		GC g = event.gc;
 		g.setLineAttributes(new LineAttributes(2));
@@ -176,26 +258,11 @@ public class GraphLogTableViewer extends TableViewer {
 		g.setForeground(getColor(event, e));
 		g.drawLine(getX(event, top), y, getX(event, bottom), y + div3);
 	}
-
-	private void fillOval(Event event, Edge e) {
-		int size = 6;
-		event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_BLACK));
-		int halfSize = size / 2;
-		int i = e.getTop();
-		if (e.isPlus()) {
-			event.gc.drawOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
-					size, size);
-		} else {
-			event.gc.fillOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
-					size, size);
-		}
-	}
-
-	private Color getColor(Event event, Edge edge) {
-		return colours.get(edge.getLane() % colours.size());
-	}
-
-	private int getX(Event event, int col) {
-		return event.x + (8 * col) + 5;
+*/
+	/**
+	 * @return The x coordinate of the centre of the column
+	 */
+	private static int getX(Event event, int col) {
+		return event.x + (COL_WIDTH_PIXELS * col) + 5;
 	}
 }

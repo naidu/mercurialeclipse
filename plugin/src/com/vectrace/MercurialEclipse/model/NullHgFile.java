@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class NullHgFile extends HgFile {
 
-	public NullHgFile(HgRoot hgRoot, ChangeSet changeset, IPath path) {
+	public NullHgFile(HgRoot hgRoot, JHgChangeSet changeset, IPath path) {
 		super(hgRoot, changeset, path);
 	}
 

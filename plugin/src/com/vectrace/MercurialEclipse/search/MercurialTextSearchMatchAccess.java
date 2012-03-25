@@ -27,6 +27,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -36,7 +37,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	private final HgRoot root;
-	private final ChangeSet changeset;
+	private final JHgChangeSet changeset;
 	private final int lineNumber;
 	private final String user;
 	private final IFile file;

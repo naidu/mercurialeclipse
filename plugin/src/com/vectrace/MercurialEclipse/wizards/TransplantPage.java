@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -355,8 +356,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 		FetchChangesetsOperation op = new FetchChangesetsOperation() {
 			@Override
-			protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
-				return  IncomingChangesetCache.getInstance().getChangeSets(
+			protected Set<JHgChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
+				return IncomingChangesetCache.getInstance().getChangeSets(
 						getHgRoot(), repoLocation, null);
 			}
 		};
@@ -389,8 +390,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	}
 
 	private abstract static class FetchChangesetsOperation implements IRunnableWithProgress {
-		Set<ChangeSet> changes = new HashSet<ChangeSet>();
-		Set<ChangeSet> getChanges(){
+		Set<JHgChangeSet> changes = new HashSet<JHgChangeSet>();
+		Set<JHgChangeSet> getChanges(){
 			return changes;
 		}
 		public final void run(final IProgressMonitor monitor) throws InvocationTargetException {
@@ -418,7 +419,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 				t.cancel();
 			}
 		}
-		protected abstract Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException;
+		protected abstract Set<JHgChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException;
 	}
 
 }

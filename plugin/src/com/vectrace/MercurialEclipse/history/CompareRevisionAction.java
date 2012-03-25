@@ -22,11 +22,11 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgResource;
 import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -57,7 +57,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 					if(selection.length > 0 && !monitor.isCanceled()){
 						MercurialRevision mercRev = (MercurialRevision) selection[0];
 						IFile file = (IFile) mercRev.getResource();
-						ChangeSet cs = mercRev.getChangeSet();
+						JHgChangeSet cs = mercRev.getChangeSet();
 
 						if(selection.length > 1 && !monitor.isCanceled()) {
 							if(enableCompareWithPrev && selection[1] instanceof FileStatus) {

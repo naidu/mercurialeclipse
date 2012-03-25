@@ -48,8 +48,8 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
@@ -75,7 +75,7 @@ public class RevisionChooserPanel extends Composite {
 		public boolean highlightDefaultBranch;
 		public String forceButtonText;
 		public String revision;
-		public ChangeSet changeSet;
+		public JHgChangeSet changeSet;
 	}
 
 	private DataLoader dataLoader;
@@ -290,7 +290,7 @@ public class RevisionChooserPanel extends Composite {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				ChangeSet selection = table.getSelection();
+				JHgChangeSet selection = table.getSelection();
 				text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
 				data.changeSet = selection;
 			}
@@ -496,7 +496,7 @@ public class RevisionChooserPanel extends Composite {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				ChangeSet selection = table.getSelection();
+				JHgChangeSet selection = table.getSelection();
 				data.changeSet = selection;
 				if(selection.getIndex() >= 0) {
 					text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
@@ -518,7 +518,7 @@ public class RevisionChooserPanel extends Composite {
 		return item;
 	}
 
-	public ChangeSet getChangeSet() {
+	public JHgChangeSet getChangeSet() {
 		return data.changeSet;
 	}
 

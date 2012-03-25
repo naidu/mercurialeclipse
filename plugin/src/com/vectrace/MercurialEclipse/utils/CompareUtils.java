@@ -61,6 +61,7 @@ import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
 import com.vectrace.MercurialEclipse.model.HgWorkspaceFolder;
 import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
@@ -85,7 +86,7 @@ public final class CompareUtils {
 	/**
 	 * Compare workspace with workspace as it was at a changeset
 	 */
-	public static void openEditor(IResource resource, ChangeSet changeset) throws HgException {
+	public static void openEditor(IResource resource, JHgChangeSet changeset) throws HgException {
 		String changesetId = changeset.getNode();
 
 		IHgResource left = null;
@@ -108,7 +109,7 @@ public final class CompareUtils {
 		openEditor(new RevisionNode(left), new RevisionNode(right), false, null);
 	}
 
-	public static void openCompareWithParentEditor(ChangeSet cs, IFile resource, boolean dialog,
+	public static void openCompareWithParentEditor(JHgChangeSet cs, IFile resource, boolean dialog,
 			ISynchronizePageConfiguration configuration) throws HgException {
 		CompareUtils.openEditor(HgFile.locate(cs, resource),
 				MercurialUtilities.getParentRevision(cs, resource), false, configuration);
@@ -299,7 +300,7 @@ public final class CompareUtils {
 		if (rev == null) {
 			return null;
 		}
-		final ChangeSet changeSet = rev instanceof IChangeSetHolder ? ((IChangeSetHolder) rev).getChangeSet() : null;
+		final JHgChangeSet changeSet = rev instanceof IChangeSetHolder ? ((IChangeSetHolder) rev).getChangeSet() : null;
 		IHgResource hgresource = null;
 
 		if (changeSet == null) {
