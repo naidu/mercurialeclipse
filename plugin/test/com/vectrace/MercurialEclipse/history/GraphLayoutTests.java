@@ -306,11 +306,9 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		merge(2); //4
 		update(3);
 
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		//graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
 
-		assertEquals(5, graph.numRows());
-
-		GraphRow row;
+		//assertEquals(5, graph.numRows());
 
 		merge(4); // 5
 
@@ -318,58 +316,11 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
 
 		assertEquals(6, graph.numRows());
-
-		row = graph.getRow(0);
-		assertEquals(1, row.numColumns());
-		assertEquals(5, row.getRevision(0));
-		assertTrue(row.isDot(0));
-		assertEquals(2, row.numParents(0));
-		assertEquals(0, row.getParentIndex(0, 0));
-		assertEquals(1, row.getParentIndex(0, 1));
-		assertEquals(1, row.getColor(0));
-		assertEquals(row.getColor(0), row.getParentColor(0, 0));
-		assertEquals(2, row.getParentColor(0, 1));
-
-		// 4: merge between 2 and 1 - dot at 1
-		// 1 should be the first child
-		row = graph.getRow(1);
-		assertEquals(2, row.numColumns());
-		assertTrue(row.isDot(1));
-
-		assertEquals(3, row.getRevision(0)); // col 0
-		assertEquals(1, row.numParents(0));
-		assertEquals(0, row.getParentIndex(0, 0));
-		assertEquals(1, row.getColor(0));
-
-		assertEquals(4, row.getRevision(1)); // col 1
-		assertEquals(2, row.numParents(1));
-		assertEquals(1, row.getParentIndex(1, 0));
-		assertEquals(2, row.getParentIndex(1, 1));
-		assertEquals(2, row.getColor(1));
-		assertEquals(row.getColor(1), row.getParentColor(1, 0));
-		assertEquals(3, row.getParentColor(1, 1));
-
-		// merge between 2 and 1 - dot at 0
-		row = graph.getRow(2);
-		assertEquals(3, row.numColumns());
-		assertTrue(row.isDot(0));
-
-		assertEquals(3, row.getRevision(0)); // col 0
-		assertEquals(1, row.getColor(0));
-		assertEquals(2, row.numParents(0));
-		assertEquals(0, row.getParentIndex(0, 0));
-		assertEquals(1, row.getParentIndex(0, 1));
-		assertEquals(row.getColor(0), row.getParentColor(0, 0));
-		assertEquals(4, row.getParentColor(0, 1));
-
-		assertEquals(1, row.getRevision(1)); // col 1
-		assertEquals(1, row.numParents(1));
-		assertEquals(2, row.getParentIndex(1, 0));
-		assertEquals(2, row.getColor(1));
-
-		assertEquals(1, row.numParents(2)); // col 2
-		assertEquals(0, row.getParentIndex(2, 0));
-		assertEquals(2, row.getRevision(2));
-
+		assertEquals("[*5(1)>0&1]", graph.getRow(0).toString());
+		assertEquals("[3(1)>0, *4(2)>1&2]", graph.getRow(1).toString());
+		assertEquals("[*3(1)>0&1, 1(2)>1, 2(3)>0]", graph.getRow(2).toString());
+		assertEquals("[*2(1)>0, 1(4)>1]", graph.getRow(3).toString());
+		assertEquals("[0(1)>0, *1(4)>0]", graph.getRow(4).toString());
+		assertEquals("[*0(4)]", graph.getRow(5).toString());
 	}
 }

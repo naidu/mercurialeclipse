@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.history;
 
 import com.aragost.javahg.Changeset;
+import com.google.common.base.Function;
 
 /**
  * Graph layout algorithm
@@ -114,137 +115,6 @@ public class GraphLayout {
 
 	public interface ParentProvider {
 		public Changeset[] getParents(Changeset cs);
-	}
-
-	/**
-	 * Bit twiddling functions for a row
-	 */
-	protected static class RowAccessor {
-
-		protected static final int NO_PARENT = 0xfff;
-
-		private final long[] row;
-
-		public RowAccessor(long[] row) {
-			this.row = row;
-		}
-
-		// operations
-
-		protected int getRevision(int col) {
-			return (int) ((row[col] << 2) >>> (36 + 2));
-		}
-
-		protected void setRevision(int col, int index) {
-			if (index < 0) {
-				throw new IllegalStateException();
-			}
-
-			long val = row[col];
-
-			val &= 0xC000000FFFFFFFFFl;
-			val |= (index & 0x3FFFFFFl) << 36;
-
-			row[col] = val;
-		}
-
-		protected boolean isDot(int col) {
-			return (row[col] & (1l << 62)) != 0;
-		}
-
-		protected void setDot(int col, boolean set) {
-			if (set) {
-				row[col] |= 0x4000000000000000l;
-			} else {
-				row[col] &= 0xbfffffffffffffffl;
-			}
-		}
-
-		/**
-		 * @param val
-		 *            The value
-		 * @param parentNum
-		 *            Either 0 or 1 - the parent number
-		 * @param parentIndex
-		 *            Index in the row below of the successor of this (parent)
-		 */
-		protected void setParentIndex(int col, int parentNum, int parentIndex) {
-			switch (parentNum) {
-			case 0:
-				row[col] &= 0xFFFFFFFFFFFFF000l;
-				row[col] |= mask12(parentIndex);
-				break;
-			case 1:
-				row[col] &= 0xFFFFFFFFFF000FFFl;
-				row[col] |= mask12(parentIndex) << 12;
-				break;
-			default:
-				throw new IllegalStateException();
-			}
-		}
-
-		protected int getParentIndex(int col, int parentNum) {
-			switch (parentNum) {
-			case 0:
-				return (int) (row[col] & 0x0000000000000FFFl);
-			case 1:
-				return (int) ((row[col] & 0x0000000000FFF000l) >>> 12);
-			}
-			throw new IllegalStateException();
-		}
-
-		protected void setColor(int col, int color) {
-			row[col] &= 0xFFFFFFF000FFFFFFl;
-			row[col] |= mask12(color) << 24;
-		}
-
-		protected int getColor(int col) {
-			return (int) ((row[col] & 0x0000000FFF000000l) >>> 24);
-		}
-
-		private static long mask12(long val) {
-			return val & 0x0000000000000FFFl;
-		}
-
-		public int numColumns() {
-			return row.length;
-		}
-
-		/**
-		 * @see java.lang.Object#toString()
-		 */
-		@Override
-		public String toString() {
-			StringBuilder buf = new StringBuilder(64);
-
-			buf.append('[');
-
-			for (int i = 0; i < row.length; i++) {
-				if (i != 0) {
-					buf.append(',');
-				}
-				if (isDot(i)) {
-					buf.append('*');
-				}
-				buf.append(getRevision(i));
-				buf.append('(');
-				buf.append(getColor(i));
-				buf.append(')');
-
-				if (getParentIndex(i, 0) != NO_PARENT) {
-					buf.append('>');
-					buf.append(getParentIndex(i, 0));
-					if (getParentIndex(i, 1) != NO_PARENT) {
-						buf.append('&');
-						buf.append(getParentIndex(i, 1));
-					}
-				}
-			}
-
-			buf.append(']');
-
-			return buf.toString();
-		}
 	}
 
 	/**
@@ -403,7 +273,7 @@ public class GraphLayout {
 				}
 			}
 
-			// Handle last: may correspond to zero to two cells in current.
+			// Handle lastsParents: may correspond to zero to two cells in current.
 			// May or may not be handled depending on whether currentCs is a parent
 			// of lastCs.
 			for (int p = 0; p < lastsParents.length; p++) {
@@ -419,14 +289,13 @@ public class GraphLayout {
 							last.setParentIndex(lastsIndex, p, ci);
 							current.setColor(ci, color); // overwrite color
 							handled = true;
-							// TODO: reorder cells?
 
 							break;
 						}
 					}
 				}
 
-				// Insert new cells for this parent
+				// Insert new cells for this parent as close as possible to lastIndex
 				if (!handled) {
 					for (int ci = 0; ci < currentHandled.length; ci++) {
 						if (!currentHandled[ci]) {
@@ -435,7 +304,6 @@ public class GraphLayout {
 							current.setColor(ci, color);
 							currentHandled[ci] = true;
 							handled = true;
-							// TODO: reorder cells
 
 							break;
 						}
@@ -449,6 +317,8 @@ public class GraphLayout {
 			assert nextFalse(currentHandled) < 0;
 			assert nextFalse(lastHandled) < 0;
 
+			reorder();
+
 			// Initialize successor for current
 			for (int i = 0; i < current.numColumns(); i++) {
 				current.setParentIndex(i, 0, RowAccessor.NO_PARENT);
@@ -456,6 +326,101 @@ public class GraphLayout {
 			}
 
 			return current;
+		}
+
+		/**
+		 * Reorder cells corresponding to lastParents so they're as close as possible to lastIndex
+		 * and in the correct order.
+		 */
+		private void reorder() {
+			ReorderCandidate[] reorder = getReorderCandidates();
+			int lastScore = Integer.MAX_VALUE;
+			int score = score(reorder);
+
+			while (score < lastScore && score != 0) {
+				final ReorderCandidate best = best(reorder);
+				final int newCi = best.ci - best.delta;
+
+				current.shiftRight(best.ci, newCi);
+
+				mapLastsIndexes(new Function<Integer, Integer>(){
+					public Integer apply(Integer index) {
+						if (index == best.ci) {
+							index = newCi;
+						} else if (newCi <= index && index < best.ci) {
+							index = index + 1;
+						}
+						return index;
+					}
+				});
+
+				lastScore = score;
+				reorder = getReorderCandidates();
+				score = score(reorder);
+			}
+		}
+
+		private void mapLastsIndexes(Function<Integer, Integer> fun) {
+			for (int li = 0; li < lastHandled.length; li++) {
+				for (int p = 0; p < last.numParents(li); p++) {
+					int ci = last.getParentIndex(li, p);
+
+					last.setParentIndex(li, p, fun.apply(ci));
+				}
+			}
+		}
+
+		private ReorderCandidate[] getReorderCandidates() {
+			ReorderCandidate[] reorder = new ReorderCandidate[currentHandled.length];
+
+			for (int li = 0; li < lastHandled.length; li++) {
+				for (int p = 0; p < last.numParents(li); p++) {
+					int index = last.getParentIndex(li, p);
+					int target = Math.min(li, currentHandled.length - 1);
+
+					if (p > 0) {
+						int otherParentIndex = last.getParentIndex(li, p - 1);
+
+						if (otherParentIndex == index - 1 || target == otherParentIndex) {
+							target += 1;
+						}
+					}
+
+					if (target > index) {
+						target = index;
+					}
+
+					reorder[index] = new ReorderCandidate(index, index - target).min(reorder[index]);
+				}
+			}
+
+			return reorder;
+		}
+
+		private int score(ReorderCandidate[] ar) {
+			int sum = 0;
+
+			for (int i = 0; i < ar.length; i++) {
+				if (ar[i] != null) {
+					sum += ar[i].delta;
+				}
+			}
+
+			return sum;
+		}
+
+		private ReorderCandidate best(ReorderCandidate[] ar) {
+			int max = 0;
+			int maxIndex = -1;
+
+			for (int i = 0; i < ar.length; i++) {
+				if (ar[i] != null && ar[i].delta > max) {
+					max = ar[i].delta;
+					maxIndex = i;
+				}
+			}
+
+			return ar[maxIndex];
 		}
 
 		private int nextFalse(boolean[] ar) {
@@ -486,6 +451,111 @@ public class GraphLayout {
 			return la.getColor(getParentIndex(col, parentNum));
 		}
 
+		public int getDot() {
+			for (int i = 0; i < numColumns(); i++) {
+				if (isDot(i)) {
+					return i;
+				}
+			}
+
+			return -1;
+		}
+	}
+
+	/**
+	 * Bit twiddling functions for a row
+	 */
+	protected static class RowAccessor {
+
+		protected static final int NO_PARENT = 0xfff;
+
+		private final long[] row;
+
+		public RowAccessor(long[] row) {
+			this.row = row;
+		}
+
+		// operations
+
+		protected int getRevision(int col) {
+			return (int) ((row[col] << 2) >>> (36 + 2));
+		}
+
+		protected void setRevision(int col, int index) {
+			if (index < 0) {
+				throw new IllegalStateException();
+			}
+
+			long val = row[col];
+
+			val &= 0xC000000FFFFFFFFFl;
+			val |= (index & 0x3FFFFFFl) << 36;
+
+			row[col] = val;
+		}
+
+		protected boolean isDot(int col) {
+			return (row[col] & (1l << 62)) != 0;
+		}
+
+		protected void setDot(int col, boolean set) {
+			if (set) {
+				row[col] |= 0x4000000000000000l;
+			} else {
+				row[col] &= 0xbfffffffffffffffl;
+			}
+		}
+
+		/**
+		 * @param val
+		 *            The value
+		 * @param parentNum
+		 *            Either 0 or 1 - the parent number
+		 * @param parentIndex
+		 *            Index in the row below of the successor of this (parent)
+		 */
+		protected void setParentIndex(int col, int parentNum, int parentIndex) {
+			switch (parentNum) {
+			case 0:
+				row[col] &= 0xFFFFFFFFFFFFF000l;
+				row[col] |= mask12(parentIndex);
+				break;
+			case 1:
+				row[col] &= 0xFFFFFFFFFF000FFFl;
+				row[col] |= mask12(parentIndex) << 12;
+				break;
+			default:
+				throw new IllegalStateException();
+			}
+		}
+
+		protected int getParentIndex(int col, int parentNum) {
+			switch (parentNum) {
+			case 0:
+				return (int) (row[col] & 0x0000000000000FFFl);
+			case 1:
+				return (int) ((row[col] & 0x0000000000FFF000l) >>> 12);
+			}
+			throw new IllegalStateException();
+		}
+
+		protected void setColor(int col, int color) {
+			row[col] &= 0xFFFFFFF000FFFFFFl;
+			row[col] |= mask12(color) << 24;
+		}
+
+		protected int getColor(int col) {
+			return (int) ((row[col] & 0x0000000FFF000000l) >>> 24);
+		}
+
+		private static long mask12(long val) {
+			return val & 0x0000000000000FFFl;
+		}
+
+		public int numColumns() {
+			return row.length;
+		}
+
 		public int numParents(int col) {
 			if (getParentIndex(col, 0) == NO_PARENT) {
 				return 0;
@@ -496,14 +566,92 @@ public class GraphLayout {
 			return 2;
 		}
 
-		public int getDot() {
-			for (int i = 0; i < numColumns(); i++) {
+		protected void shiftLeft(int col) {
+			long cur = row[col];
+
+			for (col = col + 1; col < row.length; col++) {
+				row [col - 1] = row[col];
+			}
+
+			row[row.length - 1] = cur;
+		}
+
+		/**
+		 * Move the cell at fromCol to toCol and shift cells in between right.
+		 */
+		protected void shiftRight(int fromCol, int toCol) {
+			assert toCol <= fromCol;
+
+			long from = row[fromCol];
+
+			for (int i = fromCol - 1; i >= toCol; i--) {
+				row[i + 1] = row[i];
+			}
+
+			row[toCol] = from;
+		}
+
+		/**
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			StringBuilder buf = new StringBuilder(64);
+
+			buf.append('[');
+
+			for (int i = 0; i < row.length; i++) {
+				if (i != 0) {
+					buf.append(", ");
+				}
 				if (isDot(i)) {
-					return i;
+					buf.append('*');
+				}
+				buf.append(getRevision(i));
+				buf.append('(');
+				buf.append(getColor(i));
+				buf.append(')');
+
+				if (getParentIndex(i, 0) != NO_PARENT) {
+					buf.append('>');
+					buf.append(getParentIndex(i, 0));
+					if (getParentIndex(i, 1) != NO_PARENT) {
+						buf.append('&');
+						buf.append(getParentIndex(i, 1));
+					}
 				}
 			}
 
-			return -1;
+			buf.append(']');
+
+			return buf.toString();
+		}
+	}
+
+	private static class ReorderCandidate {
+
+		public final int delta;
+		public final int ci;
+
+		public ReorderCandidate(int ci, int delta) {
+			this.ci = ci;
+			this.delta = delta;
+		}
+
+		public ReorderCandidate min(ReorderCandidate other) {
+			if (other != null && other.delta < this.delta) {
+				return other;
+			}
+
+			return this;
+		}
+
+		/**
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return ci + "-" + delta;
 		}
 	}
 }
