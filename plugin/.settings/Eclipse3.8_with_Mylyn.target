@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <?pde version="3.6"?>
 
-<target includeMode="feature" name="Eclipse3.6_Mylyn">
+<target includeMode="feature" name="Eclipse3.8_Mylyn">
 <locations>
 <location path="${system_property:user.home}/bin/MylynPlugins" type="Directory"/>
-<location path="${system_property:user.home}/bin/Eclipse36" type="Directory"/>
+<location path="${system_property:user.home}/bin/Eclipse38" type="Directory"/>
 </locations>
 </target>

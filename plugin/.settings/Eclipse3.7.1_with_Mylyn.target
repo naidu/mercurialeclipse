@@ -3,7 +3,7 @@
 
 <target includeMode="feature" name="Eclipse3.7.1_Mylyn">
 <locations>
-<location path="${system_property:user.dir}/bin/MylynPlugins" type="Directory"/>
-<location path="${system_property:user.dir}/bin/Eclipse371" type="Directory"/>
+<location path="${system_property:user.home}/bin/MylynPlugins" type="Directory"/>
+<location path="${system_property:user.home}/bin/Eclipse371" type="Directory"/>
 </locations>
 </target>
