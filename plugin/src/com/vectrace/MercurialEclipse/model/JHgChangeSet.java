@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IFile;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.StatusCommand;
 import com.aragost.javahg.commands.StatusResult;
 import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
@@ -239,9 +240,15 @@ public class JHgChangeSet extends ChangeSet {
 			List<FileStatus> l = new ArrayList<FileStatus>();
 			Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
 
-			StatusResult res = StatusCommandFlags.on(repo)
-					.rev(getParentRevision(0).getNode(), getRevision().getNode()).added()
-					.modified().deleted().removed().copies().execute();
+			StatusCommand command = StatusCommandFlags.on(repo);
+
+			if (getParentRevision(0) != null) {
+				command.rev(getParentRevision(0).getNode(), getRevision().getNode());
+			} else {
+				command.rev(getRevision().getNode());
+			}
+
+			StatusResult res = command.added().modified().deleted().removed().copies().execute();
 
 			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
 				l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
