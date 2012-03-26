@@ -319,8 +319,8 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		assertEquals("[*5(1)>0&1]", graph.getRow(0).toString());
 		assertEquals("[3(1)>0, *4(2)>1&2]", graph.getRow(1).toString());
 		assertEquals("[*3(1)>0&1, 1(2)>1, 2(3)>0]", graph.getRow(2).toString());
-		assertEquals("[*2(1)>0, 1(4)>1]", graph.getRow(3).toString());
-		assertEquals("[0(1)>0, *1(4)>0]", graph.getRow(4).toString());
-		assertEquals("[*0(4)]", graph.getRow(5).toString());
+		assertEquals("[*2(1)>0, 1(2)>1]", graph.getRow(3).toString());
+		assertEquals("[0(1)>0, *1(2)>0]", graph.getRow(4).toString());
+		assertEquals("[*0(1)]", graph.getRow(5).toString());
 	}
 }
