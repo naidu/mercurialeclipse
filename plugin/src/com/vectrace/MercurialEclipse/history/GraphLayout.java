@@ -20,11 +20,6 @@ public class GraphLayout {
 
 	public static ParentProvider ROOT_PARENT_PROVIDER = new ParentProvider() {
 		public Changeset[] getParents(Changeset cs) {
-
-			if (cs == null) {
-				return new Changeset[0];
-			}
-
 			Changeset p1 = cs.getParent1();
 			Changeset p2 = cs.getParent2();
 
@@ -82,7 +77,7 @@ public class GraphLayout {
 		for (int batchIndex = 0; batchIndex < changesets.length; batchIndex++) {
 			Changeset curCs = changesets[batchIndex];
 			LayoutRowOperation s = new LayoutRowOperation(last, curCs,
-					parentProvider.getParents(lastCs));
+					lastCs == null ? new Changeset[0] : parentProvider.getParents(lastCs));
 
 			last = s.run();
 			newGraph[oldGraphLen + batchIndex] = last.row;
@@ -220,7 +215,7 @@ public class GraphLayout {
 				currentsIndex = numCols - 1;
 			}
 
-			current = new RowAccessor(new long[numCols]);
+			current = new RowAccessor(numCols);
 			currentHandled = new boolean[current.numColumns()];
 		}
 
@@ -229,26 +224,14 @@ public class GraphLayout {
 			// Handle the current rev and apply forks from it - current corresponds to zero or more
 			// cells in last
 			{
-				int color = -1;
-
 				for (int li = 0; li < currentsChildren.length; li++) {
 					if (currentsChildren[li]) {
 						last.setParentIndex(li, 0, currentsIndex);
 						lastHandled[li] = true;
-
-						if (color == -1) {
-							color = last.getColor(li);
-						}
 					}
 				}
 
-				if (color == -1) {
-					// New head
-					color = nextColor();
-				}
-
 				current.setRevision(currentsIndex, currentCs.getRevision());
-				current.setColor(currentsIndex, color);
 				current.setDot(currentsIndex, true);
 				currentHandled[currentsIndex] = true;
 			}
@@ -263,7 +246,6 @@ public class GraphLayout {
 
 						last.setParentIndex(li, 0, ci);
 						current.setRevision(ci, last.getRevision(li));
-						current.setColor(ci, last.getColor(li));
 						lastHandled[li] = true;
 						currentHandled[ci] = true;
 
@@ -278,39 +260,31 @@ public class GraphLayout {
 			// of lastCs.
 			for (int p = 0; p < lastsParents.length; p++) {
 				int parentRev = lastsParents[p].getRevision();
-				// The color of this lastIndex gets copied to the first parent
-				int color = (p == 0) ? last.getColor(lastsIndex) : nextColor();
-				boolean handled = false;
+				int parentIndexInCur = -1;
 
 				// Look for existing cells that this parent is already assigned to
 				for (int ci = 0; ci < currentHandled.length; ci++) {
 					if (currentHandled[ci]) {
 						if (current.getRevision(ci) == parentRev) {
-							last.setParentIndex(lastsIndex, p, ci);
-							current.setColor(ci, color); // overwrite color
-							handled = true;
-
+							parentIndexInCur = ci;
 							break;
 						}
 					}
 				}
 
-				// Insert new cells for this parent as close as possible to lastIndex
-				if (!handled) {
+				// Insert new cells for this parent
+				if (parentIndexInCur < 0) {
 					for (int ci = 0; ci < currentHandled.length; ci++) {
 						if (!currentHandled[ci]) {
-							last.setParentIndex(lastsIndex, p, ci);
 							current.setRevision(ci, parentRev);
-							current.setColor(ci, color);
 							currentHandled[ci] = true;
-							handled = true;
-
+							parentIndexInCur = ci;
 							break;
 						}
 					}
 				}
 
-				assert handled;
+				last.setParentIndex(lastsIndex, p, parentIndexInCur);
 				lastHandled[lastsIndex] = true;
 			}
 
@@ -318,14 +292,28 @@ public class GraphLayout {
 			assert nextFalse(lastHandled) < 0;
 
 			reorder();
-
-			// Initialize successor for current
-			for (int i = 0; i < current.numColumns(); i++) {
-				current.setParentIndex(i, 0, RowAccessor.NO_PARENT);
-				current.setParentIndex(i, 1, RowAccessor.NO_PARENT);
-			}
+			setColors();
 
 			return current;
+		}
+
+		private void setColors() {
+			// Copy colors
+			for (int li = 0; li < lastHandled.length; li++) {
+				int ci = last.getParentIndex(li, 0);
+				if (ci != RowAccessor.NO_PARENT) {
+					if (current.getColor(ci) == RowAccessor.NO_COLOR) {
+						current.setColor(ci, last.getColor(li));
+					}
+				}
+			}
+
+			// New heads and 2nd merge parents
+			for (int ci = 0; ci < currentHandled.length; ci++) {
+				if (current.getColor(ci) == RowAccessor.NO_COLOR) {
+					current.setColor(ci, nextColor());
+				}
+			}
 		}
 
 		/**
@@ -343,7 +331,7 @@ public class GraphLayout {
 
 				current.shiftRight(best.ci, newCi);
 
-				mapLastsIndexes(new Function<Integer, Integer>(){
+				mapIndexes(new Function<Integer, Integer>(){
 					public Integer apply(Integer index) {
 						if (index == best.ci) {
 							index = newCi;
@@ -360,7 +348,7 @@ public class GraphLayout {
 			}
 		}
 
-		private void mapLastsIndexes(Function<Integer, Integer> fun) {
+		private void mapIndexes(Function<Integer, Integer> fun) {
 			for (int li = 0; li < lastHandled.length; li++) {
 				for (int p = 0; p < last.numParents(li); p++) {
 					int ci = last.getParentIndex(li, p);
@@ -368,6 +356,7 @@ public class GraphLayout {
 					last.setParentIndex(li, p, fun.apply(ci));
 				}
 			}
+			currentsIndex = fun.apply(currentsIndex);
 		}
 
 		private ReorderCandidate[] getReorderCandidates() {
@@ -468,11 +457,25 @@ public class GraphLayout {
 	protected static class RowAccessor {
 
 		protected static final int NO_PARENT = 0xfff;
+		protected static final int NO_COLOR = 0xfff;
 
 		private final long[] row;
 
 		public RowAccessor(long[] row) {
 			this.row = row;
+		}
+
+		/**
+		 * Constructor for new row - some fields are initialized
+		 */
+		public RowAccessor(int len) {
+			this.row = new long[len];
+
+			for (int i = 0; i < len; i++) {
+				setColor(i, NO_COLOR);
+				setParentIndex(i, 0, NO_PARENT);
+				setParentIndex(i, 1, NO_PARENT);
+			}
 		}
 
 		// operations
@@ -608,9 +611,12 @@ public class GraphLayout {
 					buf.append('*');
 				}
 				buf.append(getRevision(i));
-				buf.append('(');
-				buf.append(getColor(i));
-				buf.append(')');
+
+				if (getColor(i) != NO_COLOR) {
+					buf.append('(');
+					buf.append(getColor(i));
+					buf.append(')');
+				}
 
 				if (getParentIndex(i, 0) != NO_PARENT) {
 					buf.append('>');
