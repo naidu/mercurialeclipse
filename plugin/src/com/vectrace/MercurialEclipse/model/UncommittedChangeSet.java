@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.model;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -49,7 +48,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  *
  * @author Andrei
  */
-public class UncommittedChangeSet extends WorkingChangeSet implements Observer, IUncommitted {
+public class UncommittedChangeSet extends WorkingChangeSet implements IUncommitted {
 
 	private final List<IPropertyChangeListener> listeners;
 	private volatile boolean updateRequired;

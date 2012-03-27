@@ -23,6 +23,7 @@ import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 
 /**
  * Factory adapting our model for Property page
@@ -53,6 +54,7 @@ public class PropertyPageAdapterFactory implements IAdapterFactory {
 			if (adaptable instanceof MercurialRevision
 					|| adaptable instanceof FileStatus
 					|| adaptable instanceof FileFromChangeSet
+					|| adaptable instanceof RepositoryChangesetGroup
 					|| adaptable instanceof ChangeSet
 					|| adaptable instanceof ChangesetGroup
 					|| adaptable instanceof Tag) {

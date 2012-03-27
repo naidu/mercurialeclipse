@@ -25,7 +25,7 @@ public class HgBundleClient extends AbstractClient {
 
 
 		if (rev != null) {
-			cmd.addOptions("-r", rev.getChangeset());
+			cmd.addOptions("-r", rev.getNode());
 		}
 
 		if (all) {

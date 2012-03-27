@@ -8,19 +8,15 @@
  * Contributors:
  *     Bastian Doetsch				- implementation
  *     Andrei Loskutov              - bug fixes
+ *     Martin Olsen (Schantz)  -  Synchronization of Multiple repositories
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
@@ -46,11 +42,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope.RepositoryLocationMap;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
@@ -61,12 +56,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	implements IChangeSetProvider, ISynchronizationScopeParticipant {
 
-	private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
-	private static final String PROJECTS = "PROJECTS";
-
 	private String secondaryId;
-	private IHgRepositoryLocation repositoryLocation;
-	private Set<IProject> restoredProjects;
+	private RepositoryLocationMap repositoryLocations;
 	private HgChangeSetCapability changeSetCapability;
 
 	public MercurialSynchronizeParticipant() {
@@ -74,9 +65,9 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	}
 
 	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx,
-			IHgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
+			RepositoryLocationMap repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
-		this.repositoryLocation = repositoryLocation;
+		this.repositoryLocations = repositoryLocation;
 		secondaryId = computeSecondaryId(scope, repositoryLocation);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI
@@ -87,109 +78,67 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 	}
 
-	private String computeSecondaryId(RepositorySynchronizationScope scope, IHgRepositoryLocation repo) {
+	private static String computeSecondaryId(RepositorySynchronizationScope scope, RepositoryLocationMap repos) {
 		IProject[] projects = scope.getProjects();
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
 			sb.append("[");
-			for (IProject project : projects) {
-				sb.append(project.getName()).append(',');
+			for (IHgRepositoryLocation repo : repos.getLocations()) {
+				sb.append(repo.getLocation()).append(',');
 			}
 			sb.deleteCharAt(sb.length() - 1);
 			sb.append("] ");
 		}
-		sb.append(repo.getLocation());
-		if(sb.charAt(sb.length() - 1) == '/'){
-			sb.deleteCharAt(sb.length() - 1);
-		}
 		return sb.toString();
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#init(java.lang.String, org.eclipse.ui.IMemento)
+	 */
 	@Override
 	public void init(String secId, IMemento memento) throws PartInitException {
 		secondaryId = secId;
 
 		IMemento myMemento = memento.getChild(MercurialSynchronizeParticipant.class.getName());
-		String uri = myMemento.getString(REPOSITORY_LOCATION);
 
 		try {
-			repositoryLocation = MercurialEclipsePlugin.getRepoManager().getRepoLocation(uri);
+			repositoryLocations = new RepositoryLocationMap(myMemento);
 		} catch (HgException e) {
 			throw new PartInitException(e.getLocalizedMessage(), e);
+		} catch (IOException e) {
+			throw new PartInitException(e.getLocalizedMessage(), e);
 		}
-		restoreScope(myMemento);
+
 		super.init(secondaryId, memento);
 	}
 
-	private void restoreScope(IMemento memento) {
-		String encodedProjects = memento.getString(PROJECTS);
-		if(encodedProjects == null){
-			return;
-		}
-		String[] projectNames = encodedProjects.split(",");
-		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
-				repositoryLocation);
-		restoredProjects = new HashSet<IProject>();
-		for (String pName : projectNames) {
-			if(pName.length() == 0){
-				continue;
-			}
-			IProject project = root.getProject(pName);
-			if(project != null && (repoProjects.contains(project) || (!project.isOpen() && project.exists()))){
-				restoredProjects.add(project);
-			}
-		}
 
-		boolean addRoot = MercurialEclipsePlugin.getDefault().getPreferenceStore()
-				.getBoolean(MercurialPreferenceConstants.PREF_SYNC_ALL_PROJECTS_IN_REPO);
-		if(restoredProjects.isEmpty() && addRoot) {
-			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(repoProjects);
-			Set<HgRoot> roots = byRoot.keySet();
-			for (HgRoot hgRoot : roots) {
-				restoredProjects.add(hgRoot.getResource());
-			}
-		}
-	}
-
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#saveState(org.eclipse.ui.IMemento)
+	 */
 	@Override
 	public void saveState(IMemento memento) {
 		IMemento myMemento = memento
 			.createChild(MercurialSynchronizeParticipant.class.getName());
-		myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getLocation());
-		saveCurrentScope(myMemento);
+		repositoryLocations.serialize(myMemento);
 		super.saveState(memento);
 	}
 
-	private void saveCurrentScope(IMemento memento){
-		IProject[] projects = getContext().getScope().getProjects();
-		Set<IProject> repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(
-				repositoryLocation);
-		StringBuilder sb = new StringBuilder();
-		for (IProject project : projects) {
-			if(repoProjects.contains(project) || !project.isOpen()) {
-				sb.append(project.getName()).append(",");
-			}
-		}
-		memento.putString(PROJECTS, sb.toString());
-	}
-
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#restoreContext(org.eclipse.team.core.mapping.ISynchronizationScopeManager)
+	 */
 	@Override
 	protected MergeContext restoreContext(ISynchronizationScopeManager manager) throws CoreException {
-		Set<IProject> repoProjects;
-		if (restoredProjects != null && !restoredProjects.isEmpty()) {
-			repoProjects = restoredProjects;
-		} else {
-			repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repositoryLocation);
-		}
-		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation,
-				repoProjects.toArray(new IProject[0]));
+		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocations);
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);
 		subscriber.setParticipant(this);
 		return new HgSubscriberMergeContext(subscriber, manager2);
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#initializeContext(org.eclipse.team.core.mapping.provider.SynchronizationContext)
+	 */
 	@Override
 	protected void initializeContext(SynchronizationContext context) {
 		if(context != null) {
@@ -219,11 +168,16 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		return secondaryId;
 	}
 
-	/**
-	 * @return the repositoryLocation
-	 */
-	public IHgRepositoryLocation getRepositoryLocation() {
-		return repositoryLocation;
+	public RepositoryLocationMap getRepositoryLocations() {
+		return repositoryLocations;
+	}
+
+	public IHgRepositoryLocation getRepositoryLocation(HgRoot root) {
+		return repositoryLocations.getLocation(root);
+	}
+
+	public IHgRepositoryLocation getRepositoryLocation(IProject project) {
+		return repositoryLocations.getRepositoryLocation(project);
 	}
 
 	@Override
@@ -272,6 +226,23 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	@Override
 	public void run(IWorkbenchPart part) {
 		super.run(part);
+		/*IRefreshSubscriberListener listener = new MercurialRefreshUserNotificationPolicy(this);
+
+		ResourceMapping[] mappings = getContext().getScope().getMappings();
+		String jobName = null;
+		String taskName = null;
+		jobName = getShortTaskName();
+		taskName = getLongTaskName(mappings);
+		Job.getJobManager().cancel(this);
+		RefreshParticipantJob job = new RefreshModelParticipantJob(this, jobName, taskName, mappings, listener);
+		job.setUser(true);
+		//job.setProperty(IProgressConstants2.SHOW_IN_TASKBAR_ICON_PROPERTY, Boolean.TRUE);
+		Utils.schedule(job, null);
+
+		// Remember the last participant synchronized
+		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT, getId());
+		TeamUIPlugin.getPlugin().getPreferenceStore().setValue(IPreferenceIds.SYNCHRONIZING_DEFAULT_PARTICIPANT_SEC_ID, getSecondaryId());
+		*/
 	}
 
 	public ChangeSetCapability getChangeSetCapability() {
@@ -297,14 +268,9 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("MercurialSynchronizeParticipant [");
-		if (repositoryLocation != null) {
+		if (repositoryLocations != null) {
 			builder.append("repositoryLocation=");
-			builder.append(repositoryLocation);
-			builder.append(", ");
-		}
-		if (restoredProjects != null) {
-			builder.append("restoredProjects=");
-			builder.append(restoredProjects);
+			builder.append(repositoryLocations);
 			builder.append(", ");
 		}
 		if (secondaryId != null) {
@@ -313,9 +279,5 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 		builder.append("]");
 		return builder.toString();
-	}
-
-	public Set<IProject> getRestoredProjects() {
-		return restoredProjects;
 	}
 }

@@ -73,7 +73,7 @@ public class SwitchToSynchronizeAction extends ExportPatchSynchronizeAction {
 
 					update.setCleanEnabled(true);
 					if (isParentMode) {
-						rev = cs.getParentRevision(0, true);
+						rev = cs.getParentRevision(0);
 
 						if (rev == null && cs.getRevision().getRevision() == 0) {
 							return;

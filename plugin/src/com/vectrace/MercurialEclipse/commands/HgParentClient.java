@@ -12,88 +12,70 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.flags.ParentsCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgParentClient extends AbstractClient {
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static final Pattern ANCESTOR_PATTERN = Pattern
 			.compile("^(-?[0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
-	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
+	public static int[] getParentIndexes(HgRoot hgRoot) {
+		Changeset[] parents = getParents(hgRoot);
+		int[] idxs = new int[parents.length];
 
-	public static int[] getParents(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", hgRoot, false);
-		command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = getLines(command.executeToString());
-		int[] parents = new int[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = Integer.parseInt(lines[i]);
+		for (int i = 0; i < idxs.length; i++) {
+			idxs[i] = parents[i].getRevision();
 		}
-		return parents;
+
+		return idxs;
 	}
 
-	public static String[] getParentNodeIds(HgRoot hgRoot)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", "Finding parent revisions", hgRoot,
-				false);
-		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		return parseParentsCommand(command);
+	public static Changeset[] getParents(HgRoot hgRoot) {
+		List<Changeset> cs = ParentsCommandFlags.on(hgRoot.getRepository()).execute();
+
+		return cs.toArray(new Changeset[cs.size()]);
 	}
 
-	public static String[] getParentNodeIds(IResource file)
-	throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", file, false);
-		if(file instanceof IFile) {
-			command.addFiles(file);
-		}
-		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		return parseParentsCommand(command);
+	public static Changeset[] getParents(HgRoot hgRoot, IResource file) {
+		List<Changeset> cs = ParentsCommandFlags.on(hgRoot.getRepository()).execute(
+				ResourceUtils.getPath(file).toOSString());
+
+		return cs.toArray(new Changeset[cs.size()]);
 	}
 
-	public static String[] getParentNodeIds(ChangeSet cs, String template) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", cs.getHgRoot(), false);
-		command.addOptions("--template", template + "\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getChangeset());
-		return parseParentsCommand(command);
-	}
+	public static Changeset[] getParents(HgRoot hgRoot, Changeset cs, IPath path) {
+		List<Changeset> parents = ParentsCommandFlags.on(hgRoot.getRepository()).rev(cs.getNode())
+				.execute(path.toOSString());
 
-	public static String[] getParentNodeIds(IResource resource, ChangeSet cs) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", resource, false);
-		command.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getChangeset());
-		return parseParentsCommand(command);
-	}
-
-	private static String[] parseParentsCommand(AbstractShellCommand parentsCommand) throws HgException {
-		String[] lines = getLines(parentsCommand.executeToString());
-		String[] parents = new String[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = lines[i].trim();
-		}
-		return parents;
+		return parents.toArray(new Changeset[parents.size()]);
 	}
 
 	/**
+	 * TODO: use JavaHg
+	 *
 	 * @param hgRoot The root that these nodes are in
 	 * @param node1 The first changeset id
 	 * @param node2 The second changeset id
-	 * @return An array of length 2 with the revision index at index 0 and the global node id at
-	 *         index 1. The revision index is -1 for unrelated.
+	 * @return The common ancestor node id, or null.
 	 * @throws HgException
 	 */
-	public static String[] findCommonAncestor(HgRoot hgRoot, String node1, String node2)
+	public static String findCommonAncestor(HgRoot hgRoot, String node1, String node2)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
 				"Finding common ancestor", hgRoot, false);
@@ -101,15 +83,14 @@ public class HgParentClient extends AbstractClient {
 		String result = command.executeToString().trim();
 		Matcher m = ANCESTOR_PATTERN.matcher(result);
 		if (m.matches()) {
-			String local = m.group(1);
-			String global = m.group(2);
-			String[] revision = {local, global};
-			return revision;
+			return m.group(2);
 		}
 		throw new HgException("Parse exception: '" + result + "'");
 	}
 
 	/**
+	 * TODO: use JavaHg
+	 *
 	 * This methods finds the common ancestor of two changesets, supporting
 	 * overlays for using incoming changesets. Only one changeset may be
 	 * incoming.
@@ -120,11 +101,10 @@ public class HgParentClient extends AbstractClient {
 	 *            first changeset
 	 * @param cs2
 	 *            second changeset
-	 * @return An array of length 2 with the revision index at index 0 and the global node id at
-	 *         index 1. The revision index is -1 for unrelated.
+	 * @return The common ancestor node id, or null.
 	 * @throws HgException
 	 */
-	public static String[] findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
+	public static String findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
 			throws HgException {
 		String result;
 		try {
@@ -139,15 +119,12 @@ public class HgParentClient extends AbstractClient {
 				}
 			}
 
-			command.addOptions(cs1.getChangeset(), cs2.getChangeset());
+			command.addOptions(cs1.getNode(), cs2.getNode());
 
 			result = command.executeToString().trim();
 			Matcher m = ANCESTOR_PATTERN.matcher(result);
 			if (m.matches()) {
-				String local = m.group(1);
-				String global = m.group(2);
-				String[] revision = {local, global};
-				return revision;
+				return m.group(2);
 			}
 			throw new HgException("Parse exception: '" + result + "'");
 		} catch (NumberFormatException e) {
@@ -155,19 +132,5 @@ public class HgParentClient extends AbstractClient {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
-	}
-
-	/**
-	 * Splits an output of a command into lines. Lines are separated by a newline character (\n).
-	 *
-	 * @param output
-	 *            The output of a command.
-	 * @return The lines of the output.
-	 */
-	private static String[] getLines(String output) {
-		if (output == null || output.length() == 0) {
-			return new String[0];
-		}
-		return LINE_SEPERATOR_PATTERN.split(output);
 	}
 }

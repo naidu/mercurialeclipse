@@ -33,7 +33,7 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 	@Override
 	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		if (viewer instanceof AbstractTreeViewer) {
-			manager = new DeferredTreeContentManager(this, (AbstractTreeViewer) viewer);
+			manager = new DeferredTreeContentManager((AbstractTreeViewer) viewer);
 		}
 		super.inputChanged(viewer, oldInput, newInput);
 	}
@@ -53,14 +53,13 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 		return super.hasChildren(element);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public Object[] getChildren(Object parentElement) {
 		if (manager != null) {
 			Object[] children = manager.getChildren(parentElement);
 			if (children != null) {
 				if (parentElement instanceof IHgRepositoryLocation) {
-					ArrayList childrenArray = new ArrayList();
+					ArrayList<Object> childrenArray = new ArrayList<Object>();
 					for (int i = 0; i < children.length; i++) {
 						childrenArray.add(children[i]);
 					}

@@ -1,0 +1,13 @@
+
+Mercurial plugin for Eclipse
+============================
+
+This project uses maven. To work on or build the plugin:
+1. Install maven
+2. Optionally install m2eclipse
+3. On the command line in the plugin directory run: 
+     $ mvn eclipse:eclipse
+     or, if you are building the plugin 
+     $ mvn eclipse:eclipse -Declipse.useProjectReferences=false
+   If using m2eclipse you can invoke the two launches in the plugin/launch directory.
+

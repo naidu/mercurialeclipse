@@ -91,7 +91,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	private boolean confirmRemove(Shell shell) {
+	private static boolean confirmRemove(Shell shell) {
 		return MessageDialog.openConfirm(shell,
 				Messages.getString("ActionRemove.removeFileTitle"),
 				Messages.getString("ActionRemove.removeFileConfirmation"));

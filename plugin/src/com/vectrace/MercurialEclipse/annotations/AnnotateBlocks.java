@@ -31,7 +31,7 @@ public class AnnotateBlocks {
 			blocks.add(aBlock);
 		} else {
 			AnnotateBlock lastBlock = blocks.get(size - 1);
-			if (lastBlock.getRevision().equals(aBlock.getRevision())) {
+			if (lastBlock.getChangeSet().equals(aBlock.getChangeSet())) {
 				lastBlock.setEndLine(aBlock.getStartLine());
 			} else {
 				blocks.add(aBlock);

@@ -34,6 +34,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
@@ -45,16 +46,16 @@ import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
  */
 public class RevisionContentProposalProvider implements IContentProposalProvider {
 
-	private final Future<SortedSet<ChangeSet>> changeSets;
+	private final Future<SortedSet<JHgChangeSet>> changeSets;
 	private final Future<List<Bookmark>> bookmarks;
 
 	public RevisionContentProposalProvider(final DataLoader dataLoader) {
 
 		ExecutorService executor = Executors.newFixedThreadPool(2);
 		if(dataLoader instanceof EmptyDataLoader){
-			changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
-				public SortedSet<ChangeSet> call() throws Exception {
-					return Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+			changeSets = executor.submit(new Callable<SortedSet<JHgChangeSet>>() {
+				public SortedSet<JHgChangeSet> call() throws Exception {
+					return Collections.unmodifiableSortedSet(new TreeSet<JHgChangeSet>());
 				}
 			});
 
@@ -64,29 +65,29 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 				}
 			});
 		} else {
-			changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
-				public SortedSet<ChangeSet> call() throws Exception {
+			changeSets = executor.submit(new Callable<SortedSet<JHgChangeSet>>() {
+				public SortedSet<JHgChangeSet> call() throws Exception {
 					IResource resource = dataLoader.getResource();
 					HgRoot hgRoot = dataLoader.getHgRoot();
-					SortedSet<ChangeSet> result;
+					SortedSet<JHgChangeSet> result;
 					LocalChangesetCache cache = LocalChangesetCache.getInstance();
 					if(resource != null) {
 						result = cache.getOrFetchChangeSets(resource);
 					} else {
 						result = cache.getOrFetchChangeSets(hgRoot);
 					}
-					if(result.isEmpty() || result.first().getChangesetIndex() > 0) {
+					if(result.isEmpty() || result.first().getIndex() > 0) {
 						if(resource != null) {
-							cache.fetchRevisions(resource, false, 0, 0, false);
+							cache.fetchRevisions(resource, false, 0, 0);
 							result = cache.getOrFetchChangeSets(resource);
 						} else {
-							cache.fetchRevisions(hgRoot, false, 0, 0, false);
+							cache.fetchRevisions(hgRoot, false, 0, 0);
 							result = cache.getOrFetchChangeSets(hgRoot);
 						}
 
 						if(result == null) {
 							// fetching the change sets failed
-							result = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+							result = Collections.unmodifiableSortedSet(new TreeSet<JHgChangeSet>());
 						}
 					}
 					return result;
@@ -108,7 +109,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		try {
 			for (ChangeSet changeSet : changeSets.get()) {
 				if (changeSet.getName().toLowerCase().startsWith(filter)
-						|| changeSet.getChangeset().startsWith(filter)) {
+						|| changeSet.getNode().startsWith(filter)) {
 					result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
 				} else {
 					String value = getTagsStartingWith(filter, changeSet);
@@ -138,7 +139,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		return result.toArray(new IContentProposal[result.size()]);
 	}
 
-	private String getTagsStartingWith(String filter, ChangeSet changeSet) {
+	private static String getTagsStartingWith(String filter, ChangeSet changeSet) {
 		StringBuilder builder = new StringBuilder();
 		for(Tag tag: changeSet.getTags()) {
 			if(tag.getName().toLowerCase().startsWith(filter)) {
@@ -238,7 +239,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		}
 
 		private String createLabel() {
-			StringBuilder builder = new StringBuilder(String.valueOf(changeSet.getChangesetIndex()));
+			StringBuilder builder = new StringBuilder(String.valueOf(changeSet.getIndex()));
 			builder.append(": "); //$NON-NLS-1$
 
 			String text;

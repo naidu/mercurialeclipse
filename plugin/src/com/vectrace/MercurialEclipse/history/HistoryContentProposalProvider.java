@@ -47,7 +47,7 @@ public class HistoryContentProposalProvider implements IContentProposalProvider 
 		for (MercurialRevision revision : revisions) {
 			ChangeSet changeSet = revision.getChangeSet();
 			if (changeSet.getName().startsWith(filter)
-					|| changeSet.getChangeset().startsWith(filter)) {
+					|| changeSet.getNode().startsWith(filter)) {
 				result.add(new RevisionContentProposal(revision, ContentType.REVISION, null));
 				continue;
 			}

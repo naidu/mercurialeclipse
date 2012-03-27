@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Andrei Loskutov		 - implementation
+ *     Soren Mathiasen		 - synchronize view options
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -49,7 +50,10 @@ public class SynchronizePreferencePage extends FieldEditorPreferencePage impleme
 				PREF_SYNC_ALL_PROJECTS_IN_REPO,
 				Messages.getString("SynchronizePreferencePage.syncAllProjectsInRepo"), //$NON-NLS-1$
 				getFieldEditorParent()));
-
+		addField(new BooleanFieldEditor(
+				PREF_SYNC_SHOW_EMPTY_GROUPS,
+				Messages.getString("SynchronizePreferencePage.showEmptyGroups"), //$NON-NLS-1$
+			getFieldEditorParent()));
 	}
 
 }

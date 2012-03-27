@@ -40,6 +40,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
@@ -121,19 +122,19 @@ public class ChangesetTable extends Composite {
 		int[] widths = { 60, 80, 100, 80, 70, 70, 300 };
 		@SuppressWarnings("unchecked") Comparator[] comparators = { new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return TableSortListener.sort(a.getChangesetIndex(), b.getChangesetIndex());
+				return TableSortListener.sort(a.getIndex(), b.getIndex());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getChangeset().compareTo(b.getChangeset());
+				return a.getNode().compareTo(b.getNode());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getRealDate().compareTo(b.getRealDate());
+				return a.getDate().compareTo(b.getDate());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
-				return a.getAuthor().compareTo(b.getAuthor());
+				return a.getUser().compareTo(b.getUser());
 			}
 		}, new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
@@ -190,12 +191,12 @@ public class ChangesetTable extends Composite {
 				if (ChangesetTable.this.strategy != null) {
 					ChangeSet rev = ChangesetTable.this.strategy.getChangeSet(table.indexOf(row));
 
-					if (parents != null && isParent(rev.getChangesetIndex())) {
+					if (parents != null && isParent(rev.getIndex())) {
 						row.setFont(PARENT_FONT);
 					}
 
-					row.setText(0, Integer.toString(rev.getChangesetIndex()));
-					row.setText(1, rev.getChangeset());
+					row.setText(0, Integer.toString(rev.getIndex()));
+					row.setText(1, rev.getNode());
 					row.setText(2, rev.getDateString());
 					row.setText(3, rev.getAuthor());
 					row.setText(4, rev.getBranch());
@@ -263,20 +264,20 @@ public class ChangesetTable extends Composite {
 		table.deselectAll();
 	}
 
-	public ChangeSet[] getSelections() {
+	public JHgChangeSet[] getSelections() {
 		TableItem[] selection = table.getSelection();
 		if (selection.length == 0) {
 			return null;
 		}
 
-		ChangeSet[] csArray = new ChangeSet[selection.length];
+		JHgChangeSet[] csArray = new JHgChangeSet[selection.length];
 		for (int i = 0; i < selection.length; i++) {
-			csArray[i] = (ChangeSet) selection[i].getData();
+			csArray[i] = (JHgChangeSet) selection[i].getData();
 		}
 		return csArray;
 	}
 
-	public ChangeSet getSelection() {
+	public JHgChangeSet getSelection() {
 		if (getSelections() != null) {
 			return getSelections()[0];
 		}
@@ -387,16 +388,16 @@ public class ChangesetTable extends Composite {
 
 			// Get stuff from cache and added it to fetched
 			LocalChangesetCache cache = LocalChangesetCache.getInstance();
-			SortedSet<ChangeSet> set = get(cache);
+			SortedSet<JHgChangeSet> set = get(cache);
 			int prevLen = fetched.length;
 
 			if (!set.isEmpty()) {
-				int smallestInCache = set.first().getChangesetIndex();
+				int smallestInCache = set.first().getIndex();
 
 				// TODO: what if the cache is flushed requested from elsewhere meaning we'd have a
 				// gap in revs. Should not happen.
 				if (fetched.length != 0
-						&& smallestInCache >= fetched[fetched.length - 1].getChangesetIndex()) {
+						&& smallestInCache >= fetched[fetched.length - 1].getIndex()) {
 					set = getMore(cache, batchSize, smallestInCache);
 				}
 
@@ -407,15 +408,15 @@ public class ChangesetTable extends Composite {
 					reverseOrderSet.add(changeSet);
 				}
 
-				fetched = reverseOrderSet.toArray(new ChangeSet[reverseOrderSet.size()]);
+				fetched = reverseOrderSet.toArray(new JHgChangeSet[reverseOrderSet.size()]);
 			}
 
 			return canLoad = prevLen < fetched.length;
 		}
 
-		protected abstract SortedSet<ChangeSet> get(LocalChangesetCache cache) throws HgException;
+		protected abstract SortedSet<JHgChangeSet> get(LocalChangesetCache cache) throws HgException;
 
-		protected abstract SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException;
+		protected abstract SortedSet<JHgChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException;
 	}
 
 	public static class ResourceStrategy extends AutofetchStrategy {
@@ -425,14 +426,17 @@ public class ChangesetTable extends Composite {
 			this.resource = resource;
 		}
 
+		/**
+		 * @see com.vectrace.MercurialEclipse.ui.ChangesetTable.AutofetchStrategy#get(com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache)
+		 */
 		@Override
-		protected SortedSet<ChangeSet> get(LocalChangesetCache cache) throws HgException {
+		protected SortedSet<JHgChangeSet> get(LocalChangesetCache cache) throws HgException {
 			return cache.getOrFetchChangeSets(resource);
 		}
 
 		@Override
-		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
-			cache.fetchRevisions(resource, true, batchSize, startRev, false);
+		protected SortedSet<JHgChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
+			cache.fetchRevisions(resource, true, batchSize, startRev);
 			return get(cache);
 		}
 	}
@@ -445,13 +449,13 @@ public class ChangesetTable extends Composite {
 		}
 
 		@Override
-		protected SortedSet<ChangeSet> get(LocalChangesetCache cache) throws HgException {
+		protected SortedSet<JHgChangeSet> get(LocalChangesetCache cache) throws HgException {
 			return cache.getOrFetchChangeSets(root);
 		}
 
 		@Override
-		protected SortedSet<ChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
-			cache.fetchRevisions(root, true, batchSize, startRev, false);
+		protected SortedSet<JHgChangeSet> getMore(LocalChangesetCache cache, int batchSize, int startRev) throws HgException {
+			cache.fetchRevisions(root, true, batchSize, startRev);
 			return get(cache);
 		}
 	}
@@ -468,7 +472,7 @@ public class ChangesetTable extends Composite {
 		}
 
 		@Override
-		protected SortedSet<ChangeSet> get(LocalChangesetCache cache) throws HgException {
+		protected SortedSet<JHgChangeSet> get(LocalChangesetCache cache) throws HgException {
 			return cache.getOrFetchChangeSetsByBranch(root, branch);
 		}
 	}

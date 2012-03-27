@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
@@ -421,7 +421,7 @@ public class HgRepositoryLocationManager {
 		return null;
 	}
 
-	private String getRootKey(HgRoot root) {
+	private static String getRootKey(HgRoot root) {
 		return KEY_REPOS_PREFIX + root.getAbsolutePath();
 	}
 

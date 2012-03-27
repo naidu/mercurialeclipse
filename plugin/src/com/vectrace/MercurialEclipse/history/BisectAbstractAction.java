@@ -57,7 +57,7 @@ public abstract class BisectAbstractAction extends Action {
 		}
 		ChangeSet cs = mercurialHistoryPage.getCurrentWorkdirChangeset();
 		return (MercurialRevision) mercurialHistoryPage.getMercurialHistory().getFileRevision(
-				cs.getChangeset());
+				cs.getNode());
 	}
 
 	abstract String callBisect(final HgRoot root, final ChangeSet cs) throws HgException;

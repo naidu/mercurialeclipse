@@ -115,12 +115,12 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 				restoreExistingDirButton.addSelectionListener(this);
 			}
 
-			link = new Link(mainControl, SWT.NONE);
+			/*link = new Link(mainControl, SWT.NONE);
 			GridData gridData = new GridData();
 			gridData.horizontalSpan = 2;
 			link.setLayoutData(gridData);
 			link.setText("<a>Create new Mercurial repository at another location...</a>");
-			link.addSelectionListener(this);
+			link.addSelectionListener(this);*/
 
 			setControl(mainControl);
 			setPageComplete(true);

@@ -63,10 +63,10 @@ public final class ChangeSetUtils {
 			revisionShort = ""; //$NON-NLS-1$
 
 		} else if (changeSet.getNodeShort() == null) {
-			revisionShort = Integer.toString(changeSet.getChangesetIndex());
+			revisionShort = Integer.toString(changeSet.getIndex());
 
 		} else {
-			revisionShort = changeSet.getChangesetIndex() + ":" + changeSet.getNodeShort(); //$NON-NLS-1$
+			revisionShort = changeSet.getIndex() + ":" + changeSet.getNodeShort(); //$NON-NLS-1$
 		}
 
 		return revisionShort;

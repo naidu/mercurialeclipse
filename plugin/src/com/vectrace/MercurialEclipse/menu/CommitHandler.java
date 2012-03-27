@@ -44,7 +44,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 			for (Entry<HgRoot, List<IResource>> entry : entrySet) {
 				HgRoot hgRoot = entry.getKey();
 				if(MercurialStatusCache.getInstance().isMergeInProgress(hgRoot)){
-					new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
+					CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, getShell());
 					return;
 				}
 				if(options == null){

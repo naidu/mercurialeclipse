@@ -93,7 +93,7 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 		monitor.done();
 	}
 
-	protected boolean commit(final CommitHandler commithandler, IResource[] resources) {
+	protected final static boolean commit(final CommitHandler commithandler, IResource[] resources) {
 		try {
 			commithandler.run(Arrays.asList(resources));
 			return commithandler.getResult() == Window.OK;

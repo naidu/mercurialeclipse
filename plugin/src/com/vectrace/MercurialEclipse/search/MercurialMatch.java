@@ -4,16 +4,17 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.text.Region;
 import org.eclipse.search.ui.text.Match;
 
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 public class MercurialMatch extends Match {
 
-	private int rev = -1;
+	private ChangeSet changeset;
 	private int lineNumber;
 	private String extract;
-	private MercurialRevisionStorage mercurialRevisionStorage;
+	private HgFile hgFile;
 	private Region originalLocation;
-	private IFile file;
+	private final IFile file;
 	private boolean becomesMatch;
 
 	/**
@@ -21,11 +22,11 @@ public class MercurialMatch extends Match {
 	 */
 	public MercurialMatch(MercurialTextSearchMatchAccess ma) {
 
-		super(ma.getMercurialRevisionStorage(), -1, -1);
-		this.rev = ma.getRev();
+		super(ma.getHgFile(), -1, -1);
+		this.changeset = ma.getRev();
 		this.lineNumber = ma.getLineNumber();
 		this.extract = ma.getExtract();
-		this.mercurialRevisionStorage = ma.getMercurialRevisionStorage();
+		this.hgFile = ma.getHgFile();
 		this.becomesMatch = ma.isBecomesMatch();
 		this.file = ma.getFile();
 	}
@@ -86,8 +87,8 @@ public class MercurialMatch extends Match {
 		this.originalLocation = originalLocation;
 	}
 
-	public int getRev() {
-		return rev;
+	public ChangeSet getChangeSet() {
+		return changeset;
 	}
 
 	public int getLineNumber() {
@@ -98,29 +99,8 @@ public class MercurialMatch extends Match {
 		return extract;
 	}
 
-	public MercurialRevisionStorage getMercurialRevisionStorage() {
-		return mercurialRevisionStorage;
-	}
-
-	public void setFile(IFile file) {
-		this.file = file;
-	}
-
-	public void setRev(int rev) {
-		this.rev = rev;
-	}
-
-	public void setLineNumber(int lineNumber) {
-		this.lineNumber = lineNumber;
-	}
-
-	public void setExtract(String extract) {
-		this.extract = extract;
-	}
-
-	public void setMercurialRevisionStorage(
-			MercurialRevisionStorage mercurialRevisionStorage) {
-		this.mercurialRevisionStorage = mercurialRevisionStorage;
+	public HgFile getHgFile() {
+		return hgFile;
 	}
 
 	@Override
@@ -134,12 +114,5 @@ public class MercurialMatch extends Match {
 	 */
 	public boolean isBecomesMatch() {
 		return becomesMatch;
-	}
-
-	/**
-	 * @param becomesMatch the becomesMatch to set
-	 */
-	public void setBecomesMatch(boolean becomesMatch) {
-		this.becomesMatch = becomesMatch;
 	}
 }

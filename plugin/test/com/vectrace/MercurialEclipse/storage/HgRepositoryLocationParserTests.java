@@ -24,15 +24,15 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
  */
 public class HgRepositoryLocationParserTests extends TestCase {
 
-	public void testParseLine() throws Exception {
+	public static void testParseLine() throws Exception {
 		parseLine(false);
 	}
 
-	public void testParseLineEncrypted() throws Exception {
+	public static void testParseLineEncrypted() throws Exception {
 		parseLine(true);
 	}
 
-	public void testParseLineWithProject() throws Exception {
+	public static void testParseLineWithProject() throws Exception {
 		final String uri = "http://javaforge.com/hg/hgeclipse";
 		final String user = "test";
 		final String password = "test";
@@ -45,7 +45,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(alias, location.getLogicalName());
 	}
 
-	public void testCreateLine() throws Exception {
+	public static void testCreateLine() throws Exception {
 		final String repo = "http://javaforge.com/hg/hgeclipse";
 		final String user = "test";
 		final String password = "test";
@@ -58,7 +58,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 				location.getPassword(), location.getLogicalName(), true), repoLine);
 	}
 
-	public void testCreateLineWithProject() throws Exception {
+	public static void testCreateLineWithProject() throws Exception {
 		final String repo = "http://javaforge.com/hg/hgeclipse";
 		final String user = "test";
 		final String password = "test";
@@ -71,7 +71,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 				location.getPassword(), location.getLogicalName(), true), repoLine);
 	}
 
-	public void testParseCreateLineLocalWinOld() throws Exception {
+	public static void testParseCreateLineLocalWinOld() throws Exception {
 		final String uri = "C:\\Documents and settings\\workspace\\hgeclipse";
 		final String alias = "default";
 		final String user = "test";
@@ -98,7 +98,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 				+ HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
 	}
 
-	public void testParseCreateLineLocalLinOld() throws Exception {
+	public static void testParseCreateLineLocalLinOld() throws Exception {
 		final String uri = "/home/adam.berkes/workspace/hgeclipse";
 		final String alias = "default";
 		IHgRepositoryLocation location = HgRepositoryLocationParser.parseLine(alias, uri, null, null);
@@ -113,7 +113,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(uri + HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
 	}
 
-	private void parseLine(boolean toEncryptAuth) throws Exception {
+	private static void parseLine(boolean toEncryptAuth) throws Exception {
 		final String uri = "http://javaforge.com/hg/hgeclipse";
 		final String user = "test";
 		final String password = "test";
@@ -126,7 +126,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(alias, location.getLogicalName());
 	}
 
-	private String createTestLine(String uri, String user, String password, String alias, boolean toEncryptAuth) {
+	private static String createTestLine(String uri, String user, String password, String alias, boolean toEncryptAuth) {
 		HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
 		StringBuilder line = new StringBuilder("d");
 		line.append(uri.length());

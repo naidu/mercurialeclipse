@@ -11,6 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import com.aragost.javahg.RepositoryConfiguration;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
@@ -39,6 +40,12 @@ public final class HgClients {
 					Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
 		}
 		return config.getExecutable();
+	}
+
+	public static RepositoryConfiguration getRepoConfig() {
+		RepositoryConfiguration cfg = new RepositoryConfiguration();
+		cfg.setHgBin(HgClients.getExecutable());
+		return cfg;
 	}
 
 	public static IConsole getConsole() {
