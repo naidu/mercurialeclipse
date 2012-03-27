@@ -217,7 +217,12 @@ public abstract class HgResourceAdapter extends DummyResourceAdapter implements 
 		if (!(rule instanceof IResource)) {
 			return false;
 		}
-		return getLocation().isPrefixOf(((IResource) rule).getLocation());
+
+		IPath location = ((IResource) rule).getLocation();
+		if (location == null) {
+			return false;
+		}
+		return getLocation().isPrefixOf(location);
 	}
 
 	public boolean isConflicting(ISchedulingRule rule) {
