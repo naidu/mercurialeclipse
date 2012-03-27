@@ -194,8 +194,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		SearchPatternData data = getPatternData();
 		TextSearchPageInput input = new TextSearchPageInput(data.textPattern,
 				createTextSearchScope());
-		return new MercurialTextSearchQueryProvider(firstRevisionCheckbox.getSelection())
-				.createQuery(input);
+		return MercurialTextSearchQueryProvider.createQuery(input);
 	}
 
 	public boolean performAction() {
@@ -590,7 +589,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		return pattern.toString();
 	}
 
-	private String insertEscapeChars(String text) {
+	private static String insertEscapeChars(String text) {
 		if (StringUtils.isEmpty(text)) {
 			return ""; //$NON-NLS-1$
 		}
@@ -615,7 +614,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		return sbOut.toString();
 	}
 
-	private String getExtensionFromEditor() {
+	private static String getExtensionFromEditor() {
 		IEditorPart ep = SearchPlugin.getActivePage().getActiveEditor();
 		if (ep != null) {
 			Object elem = ep.getEditorInput();
@@ -697,7 +696,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	 *
 	 * @return the page settings to be used
 	 */
-	private IDialogSettings getDialogSettings() {
+	private static IDialogSettings getDialogSettings() {
 		return SearchPlugin.getDefault().getDialogSettingsSection(PAGE_NAME);
 	}
 

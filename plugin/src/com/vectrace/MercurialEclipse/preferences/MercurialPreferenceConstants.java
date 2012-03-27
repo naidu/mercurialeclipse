@@ -49,8 +49,6 @@ public final class MercurialPreferenceConstants {
 
 	public static final String PREF_ENABLE_SUBREPO_SUPPORT = "enableSubrepoSupport"; //$NON-NLS-1$
 
-	/** do not limit graphical log data to show pretty revision graphs in the history view */
-	public static final String ENABLE_FULL_GLOG = "hg.performance.enableFullGlog"; //$NON-NLS-1$
 	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$
 
 	// Timeouts
@@ -114,6 +112,9 @@ public final class MercurialPreferenceConstants {
 
 	// push
 	public static final String PREF_PUSH_NEW_BRANCH = "hg.pushNewBranch"; //$NON-NLS-1$
+
+	// synchronize view
+	public static final String PREF_SYNC_SHOW_EMPTY_GROUPS = "hg.sync.view.showemptygroups"; //$NON-NLS-1$
 
 	// dialogs
 	public static final String PREF_SHOW_MULTIPLE_PROJECTS_DIALOG = "hg.showMultipleProjectsDialog";

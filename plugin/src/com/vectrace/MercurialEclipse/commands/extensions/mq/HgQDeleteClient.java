@@ -58,7 +58,7 @@ public class HgQDeleteClient extends AbstractClient {
 			command.addOptions("--keep"); //$NON-NLS-1$
 		}
 		if (changeset != null) {
-			command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
+			command.addOptions("--rev", changeset.getNode()); //$NON-NLS-1$
 		} else {
 			for (String patch : patches) {
 				command.addOptions(patch);

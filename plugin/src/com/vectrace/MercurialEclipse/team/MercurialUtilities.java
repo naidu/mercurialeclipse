@@ -46,13 +46,16 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
+import com.vectrace.MercurialEclipse.model.NullHgFile;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -236,6 +239,23 @@ public final class MercurialUtilities {
 	}
 
 	/**
+	 * Get the user name trimmed to null. If user is not provided uses the default username
+	 * @see #getDefaultUserName()
+	 * @param user The user to prefer
+	 * @return The user name, may be null.
+	 */
+	public static String getDefaultUserName(String user) {
+		user = user != null ? user : getDefaultUserName();
+		if (user != null) {
+			user = user.trim();
+			if (user.length() == 0) {
+				user = null;
+			}
+		}
+		return user;
+	}
+
+	/**
 	 * Returns the username for hg as configured in preferences. If it's not defined in the
 	 * preference store, null is returned.
 	 * <p>
@@ -369,40 +389,17 @@ public final class MercurialUtilities {
 	 *
 	 * Note: May query and update the file status of cs.
 	 *
-	 * @param cs The changeset to query for
+	 * @param cs The changeset in which the file was modified
 	 * @param file The file as of cs's revision
 	 * @return Storage for the parent revision
 	 * @throws HgException
 	 */
-	public static MercurialRevisionStorage getParentRevision(ChangeSet cs, IFile file) throws HgException {
+	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
 		String[] parents = cs.getParents();
 		if(cs.getRevision().getRevision() == 0){
-			return new NullRevision(file, cs);
+			return NullHgFile.make(cs.getHgRoot(), file);
 		} else if (parents.length == 0) {
-			// TODO for some reason, we do not always have right parent info in the changesets
-			// If we are on the different branch then the changeset? or if the changeset
-			// logs was created for a file, and not each version of a *file* has
-			// direct version predecessor. So such tree 20 -> 21 -> 22 works fine,
-			// but tree 20 -> 22 seems not to work per default
-			// So simply enforce the parents resolving
-			try {
-				parents = HgParentClient.getParentNodeIds(file, cs);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-			if (parents.length == 0) {
-				return new NullRevision(file, cs);
-			}
-		}
-
-		if (!cs.hasFileStatus()) {
-			ChangeSet newCs = HgLogClient.getChangeset(cs.getHgRoot(), cs.getChangeset(), true);
-
-			if (newCs != null) {
-				assert newCs.hasFileStatus();
-				cs.setChangedFiles(newCs.getChangedFiles());
-				assert cs.hasFileStatus();
-			}
+			throw new IllegalStateException();
 		}
 
 		FileStatus stat = cs.getStatus(file);
@@ -411,7 +408,17 @@ public final class MercurialUtilities {
 			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
 		}
 
-		return new MercurialRevisionStorage(file, parents[0]);
+		JHgChangeSet parentCs;
+
+		if (cs.getBundleFile() == null) {
+			parentCs = LocalChangesetCache.getInstance().get(cs.getHgRoot(), parents[0]);
+		} else {
+			// TODO: from cache?
+			parentCs = HgLogClient.getChangeSet(cs.getHgRoot(), parents[0], cs.getRepository(),
+					cs.getDirection(), cs.getBundleFile());
+		}
+
+		return HgFile.locate(parentCs, file);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {

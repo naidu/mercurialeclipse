@@ -212,7 +212,7 @@ public abstract class AbstractMercurialTestCase extends TestCase {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	protected String executeCommand(List<String> cmd) throws IOException,
+	protected static String executeCommand(List<String> cmd) throws IOException,
 			InterruptedException {
 		ProcessBuilder builder = new ProcessBuilder(cmd);
 		builder.redirectErrorStream(true);

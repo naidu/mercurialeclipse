@@ -64,6 +64,11 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 
 			showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
 
+			if (!PlatformUI.isWorkbenchRunning()) {
+				showOnMessage = false;
+				return;
+			}
+
 			// install font
 			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
 			// we must run this stupid code in the UI thread
@@ -169,7 +174,7 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		}
 	}
 
-	private IConsoleManager getConsoleManager() {
+	private static IConsoleManager getConsoleManager() {
 		return ConsolePlugin.getDefault().getConsoleManager();
 	}
 

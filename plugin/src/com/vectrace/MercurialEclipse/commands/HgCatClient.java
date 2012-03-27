@@ -12,83 +12,26 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.runtime.Assert;
-
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.flags.CatCommandFlags;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.IHgFile;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 
 public class HgCatClient extends AbstractClient {
 
-	public static byte[] getContent(IFile resource, String revision) throws HgException {
-		HgRoot hgRoot = getHgRoot(resource);
-		File file = ResourceUtils.getFileHandle(resource);
-		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
-
-		if (revision != null && revision.length() != 0) {
-			command.addOptions("-r", revision); //$NON-NLS-1$
-
-		}
-
-		command.addOptions("--decode"); //$NON-NLS-1$
-		command.addOptions(hgRoot.toRelative(file));
-
-		return command.executeToBytes();
-	}
-
-	public static byte[] getContent(IHgFile hgfile) throws HgException {
+	/**
+	 * Get the contents of a file at a revision
+	 */
+	public static InputStream getContent(HgFile hgfile) throws IOException {
 		HgRoot hgRoot = hgfile.getHgRoot();
-		AbstractShellCommand command = new HgCommand("cat", "Retrieving file contents", hgRoot, true);
+		ChangeSet cs = hgfile.getChangeSet();
+		Repository repo = CommandServerCache.getInstance().get(hgRoot, cs.getBundleFile());
 
-		String revision = hgfile.getChangeSet() == null? null : hgfile.getChangeSet().getChangeset();
-		if (revision != null && revision.length() != 0) {
-			command.addOptions("-r", revision); //$NON-NLS-1$
-		}
-
-		command.addOptions("--decode"); //$NON-NLS-1$
-		command.addOptions(hgfile.getHgRootRelativePath());
-
-		return command.executeToBytes();
+		return CatCommandFlags.on(repo).rev(cs.getNode()).decode().execute(hgfile.getIPath().toOSString());
 	}
-
-	public static byte[] getContentFromBundle(IFile resource, String revision, File overlayBundle)
-			throws HgException, IOException {
-		Assert.isNotNull(overlayBundle);
-		HgRoot hgRoot = getHgRoot(resource);
-		File file = ResourceUtils.getFileHandle(resource);
-		HgCommand hgCommand = new HgCommand("cat", "Retrieving file contents from bundle", hgRoot, true);
-
-		hgCommand.setBundleOverlay(overlayBundle);
-
-		if (revision != null && revision.length() != 0) {
-			hgCommand.addOptions("-r", revision);
-		}
-
-		hgCommand.addOptions("--decode", hgRoot.toRelative(file));
-
-		return hgCommand.executeToBytes();
-	}
-
-	public static byte[] getContentFromBundle(IHgFile hgfile, String revision, File overlayBundle)
-			throws HgException, IOException {
-		Assert.isNotNull(overlayBundle);
-		HgRoot hgRoot = hgfile.getHgRoot();
-		HgCommand hgCommand = new HgCommand("cat", "Retrieving file contents from bundle", hgRoot, true);
-
-		hgCommand.setBundleOverlay(overlayBundle);
-
-		if (revision != null && revision.length() != 0) {
-			hgCommand.addOptions("-r", revision);
-		}
-
-		hgCommand.addOptions("--decode", hgfile.getHgRootRelativePath());
-
-		return hgCommand.executeToBytes();
-	}
-
 }

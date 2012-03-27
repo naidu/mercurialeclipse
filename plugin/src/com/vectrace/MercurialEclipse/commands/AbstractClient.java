@@ -23,7 +23,6 @@ import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -146,13 +145,20 @@ public abstract class AbstractClient {
 		return returnValue;
 	}
 
-	public static String getHgResourceSearchPattern(IResource resource) throws HgException {
+	/**
+	 * Get a glob pattern to be passed to status or locate to locate the given resource and it's children in history
+	 *
+	 * @param root Hg root
+	 * @param relPath Root relative path
+	 * @param file True if the path is a file
+	 * @return A glob pattern
+	 * @throws HgException
+	 */
+	public static String getHgResourceSearchPattern(HgRoot root, IPath relPath, boolean file) throws HgException {
 
-		HgRoot hgRoot = getHgRoot(resource);
 		String pattern = null;
 
-		IPath relPath = ResourceUtils.getPath(resource).makeRelativeTo(hgRoot.getIPath());
-		if (resource instanceof IStorage) {
+		if (file) {
 			pattern = "glob:" + relPath.toOSString();
 		} else {
 			String pathString = relPath.toOSString();
@@ -164,6 +170,24 @@ public abstract class AbstractClient {
 		}
 
 		return pattern;
+	}
+
+	/**
+	 * Add the proxy-aware repository location to the command
+	 * @param repo not null
+	 * @param cmd  not null
+	 * @return The remote location to pass to hg
+	 */
+	protected static String setupForRemote(IHgRepositoryLocation repo, com.aragost.javahg.internals.AbstractCommand cmd) throws HgException {
+		URI uri = repo.getUri();
+		String location;
+		if (uri != null && uri.getHost() != null) {
+			location = uri.toASCIIString();
+			addProxyToHgCommand(uri, cmd);
+		} else {
+			location = repo.getLocation();
+		}
+		return location;
 	}
 
 	/**
@@ -184,6 +208,26 @@ public abstract class AbstractClient {
 		cmd.addOptions(location);
 	}
 
+	private static IProxyData getProxyData(URI repository) {
+		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
+		// Host can be null URI is a local path
+		final String host = repository.getHost();
+		if (proxyService == null || host == null) {
+			return null;
+		}
+
+		// check if there is an applicable proxy for the location
+		IProxyData[] proxyData = proxyService.select(repository);
+
+		for (int i = 0; i < proxyData.length; i++) {
+			if (proxyData[i].getHost() != null) {
+				return proxyData[i];
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * If a proxy server is necessary to access the pull or push location, this method will add the
 	 * respective command options.
@@ -194,18 +238,9 @@ public abstract class AbstractClient {
 	 *            not null
 	 */
 	protected static void addProxyToHgCommand(URI repository, AbstractShellCommand command) {
-		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
-		// Host can be null URI is a local path
-		final String host = repository.getHost();
-		if (proxyService == null || host == null) {
-			return;
-		}
-		// check if there is an applicable proxy for the location
+		IProxyData proxy = getProxyData(repository);
 
-		// TODO the method we calling is deprecated, but we have to use it
-		// to be compatible with Eclipse 3.4 API...
-		IProxyData proxy = proxyService.getProxyDataForHost(host, repository.getScheme());
-		if (proxy == null || proxy.getHost() == null) {
+		if (proxy == null) {
 			return;
 		}
 
@@ -223,6 +258,41 @@ public abstract class AbstractClient {
 			// set the password if available
 			if (proxy.getPassword() != null) {
 				command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
+						+ proxy.getPassword());
+			}
+		}
+	}
+
+	/**
+	 * If a proxy server is necessary to access the pull or push location, this method will add the
+	 * respective command options.
+	 *
+	 * @param repository
+	 *            The URI of the repository, never null
+	 * @param command
+	 *            not null
+	 */
+	protected static void addProxyToHgCommand(URI repository, com.aragost.javahg.internals.AbstractCommand command) {
+		IProxyData proxy = getProxyData(repository);
+
+		if (proxy == null) {
+			return;
+		}
+
+		// set the host incl. port
+		command.cmdAppend("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
+
+		// check if authentication is required
+		if (proxy.isRequiresAuthentication()) {
+
+			// set the user name if available
+			if (proxy.getUserId() != null) {
+				command.cmdAppend("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+
+			// set the password if available
+			if (proxy.getPassword() != null) {
+				command.cmdAppend("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
 						+ proxy.getPassword());
 			}
 		}
@@ -253,13 +323,16 @@ public abstract class AbstractClient {
 		}
 	}
 
-	protected static void addInsecurePreference(AbstractShellCommand command) {
-		if(HgFeatures.INSECURE.isEnabled()) {
-			boolean verify = Boolean.valueOf(
-					HgClients.getPreference(MercurialPreferenceConstants.PREF_VERIFY_SERVER_CERTIFICATE,
-							"true")).booleanValue(); //$NON-NLS-1$
+	protected static boolean isInsecure() {
+		return !Boolean.parseBoolean(HgClients.getPreference(
+				MercurialPreferenceConstants.PREF_VERIFY_SERVER_CERTIFICATE, "true"));
+	}
 
-			if (!verify) {
+	protected static void addInsecurePreference(AbstractShellCommand command) {
+		if (HgFeatures.INSECURE.isEnabled()) {
+			boolean insecure = isInsecure();
+
+			if (insecure) {
 				command.addOptions("--insecure"); //$NON-NLS-1$
 			}
 		}

@@ -139,7 +139,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 		}
 	}
 
-	private boolean containsOnlyProjects(Set<?> resources) {
+	private static boolean containsOnlyProjects(Set<?> resources) {
 		for (Object object : resources) {
 			if(!(object instanceof IProject)) {
 				return false;

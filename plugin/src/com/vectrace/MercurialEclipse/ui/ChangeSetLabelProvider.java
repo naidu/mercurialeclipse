@@ -31,9 +31,9 @@ public class ChangeSetLabelProvider
 		ChangeSet rev = (ChangeSet) element;
 		switch(columnIndex) {
 			case 0:
-				return Integer.toString(rev.getChangesetIndex());
+				return Integer.toString(rev.getIndex());
 			case 1:
-				return rev.getChangeset();
+				return rev.getNode();
 			case 2:
 				return rev.getDateString();
 			case 3:

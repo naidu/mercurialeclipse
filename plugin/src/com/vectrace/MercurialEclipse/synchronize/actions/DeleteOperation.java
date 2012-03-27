@@ -46,7 +46,7 @@ public class DeleteOperation extends SynchronizeModelOperation {
 		new SafeUiJob("Deleting selected resources...") {
 			@Override
 			protected IStatus runSafe(IProgressMonitor moni) {
-				DeleteResourceAction resourceAction = new DeleteResourceAction(getShell()) {
+				DeleteResourceAction resourceAction = new DeleteResourceAction(getPart().getSite()) {
 					@Override
 					protected List getSelectedResources() {
 						return Arrays.asList(resources);

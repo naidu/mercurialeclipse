@@ -44,7 +44,6 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -52,6 +51,7 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -402,11 +402,11 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		if (!STATUS_CACHE.isAdded(ResourceUtils.getPath(resource))) {
 			ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
 			if (fileCs != null) {
-				suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
+				suffix = " [" + fileCs.getIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
 					+ fileCs.getAgeDate() + " - " + fileCs.getAuthor() + "]";
 
 				if (cs != null) {
-					suffix += " < [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
+					suffix += " < [" + cs.getIndex() + ":" //$NON-NLS-1$
 						+ cs.getNodeShort() + " - " + cs.getAgeDate()
 						+ " - " + cs.getAuthor() + "]";
 				}
@@ -424,7 +424,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			if(root == null) {
 				return "";
 			}
-			changeSet = LOCAL_CACHE.getChangesetByRootId(container);
+			changeSet = LOCAL_CACHE.getChangesetByRoot(container);
 		}else{
 			root = AbstractClient.isHgRoot(container);
 			if(root == null) {
@@ -455,12 +455,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// rev info
-			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
+			suffix.append(changeSet.getIndex()).append(':').append(hex);
 
 			// branch
 			String branch = MercurialTeamProvider.getCurrentBranch(root);
 			if (branch.length() == 0) {
-				branch = Branch.DEFAULT;
+				branch = BranchUtils.DEFAULT;
 			}
 			suffix.append('@').append(branch);
 

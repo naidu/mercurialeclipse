@@ -43,12 +43,13 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
+import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
-import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
@@ -59,6 +60,7 @@ import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -73,7 +75,7 @@ public class RevisionChooserPanel extends Composite {
 		public boolean highlightDefaultBranch;
 		public String forceButtonText;
 		public String revision;
-		public ChangeSet changeSet;
+		public JHgChangeSet changeSet;
 	}
 
 	private DataLoader dataLoader;
@@ -104,7 +106,7 @@ public class RevisionChooserPanel extends Composite {
 		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		if(data.highlightDefaultBranch){
-			text.setText(Branch.DEFAULT);
+			text.setText(BranchUtils.DEFAULT);
 		}
 		text.addFocusListener(new FocusListener() {
 			String textStr;
@@ -152,13 +154,7 @@ public class RevisionChooserPanel extends Composite {
 
 	public void setDataLoader(DataLoader loader) {
 		dataLoader = loader;
-		int[] p = {};
-		try {
-			p = loader.getParents();
-		} catch (HgException e) {
-			logError(e);
-		}
-		parents = p;
+		parents = loader.getParents();
 	}
 
 	/**
@@ -181,7 +177,7 @@ public class RevisionChooserPanel extends Composite {
 
 				String changeSetId = proposal.getContent().split(" ", 2)[0]; //$NON-NLS-1$
 				try {
-					data.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(
+					data.changeSet = LocalChangesetCache.getInstance().get(
 							dataLoader.getHgRoot(), changeSetId);
 				} catch (HgException e) {
 					data.changeSet = null;
@@ -227,25 +223,12 @@ public class RevisionChooserPanel extends Composite {
 			HgRoot hgRoot = dataLoader.getHgRoot();
 			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
-				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getRevision()
-							+ ":" + tag.getGlobalId()); //$NON-NLS-1$
-				} catch (HgException ex) {
-					logError(
-							Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-									tag.getRevision(), tag.getGlobalId()), ex);
-				}
+				data.changeSet = localCache.get(hgRoot, tag.getChangeset());
 			} else if(branch != null) {
-				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getRevision()
-							+ ":" + branch.getGlobalId()); //$NON-NLS-1$
-				} catch (HgException ex) {
-					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-							branch.getRevision(), branch.getGlobalId()), ex);
-				}
+				data.changeSet = localCache.get(hgRoot, branch.getBranchTip());
 			} else if (bookmark != null) {
 				try {
-					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, bookmark.getRevision()
+					data.changeSet = localCache.get(hgRoot, bookmark.getRevision()
 							+ ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
@@ -254,7 +237,7 @@ public class RevisionChooserPanel extends Composite {
 			}
 		}
 		if (data.changeSet != null) {
-			int changesetIndex = data.changeSet.getChangesetIndex();
+			int changesetIndex = data.changeSet.getIndex();
 			if(changesetIndex >= 0){
 				data.revision = Integer.toString(changesetIndex);
 			} else {
@@ -307,8 +290,8 @@ public class RevisionChooserPanel extends Composite {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				ChangeSet selection = table.getSelection();
-				text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				JHgChangeSet selection = table.getSelection();
+				text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
 				data.changeSet = selection;
 			}
 			@Override
@@ -343,7 +326,7 @@ public class RevisionChooserPanel extends Composite {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-		final TagTable table = new TagTable(folder, dataLoader.getHgRoot());
+		final TagTable table = new TagTable(folder);
 		table.highlightParents(parents);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -369,9 +352,7 @@ public class RevisionChooserPanel extends Composite {
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						try {
-							Tag[] tags = dataLoader.getTags();
-							table.setHgRoot(dataLoader.getHgRoot());
-							table.setTags(tags);
+							table.setTags(dataLoader.getTags());
 							return Status.OK_STATUS;
 						} catch (HgException e) {
 							logError(e);
@@ -393,7 +374,7 @@ public class RevisionChooserPanel extends Composite {
 		final BranchTable table = new BranchTable(folder);
 		table.highlightParents(parents);
 		if(data.highlightDefaultBranch) {
-			table.highlightBranch(Branch.DEFAULT);
+			table.highlightBranch(BranchUtils.DEFAULT);
 		}
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -419,7 +400,7 @@ public class RevisionChooserPanel extends Composite {
 				try {
 					Branch[] branches = dataLoader.getBranches();
 					if (data.highlightDefaultBranch && branches.length == 0
-							&& Branch.DEFAULT.equals(text.getText())) {
+							&& BranchUtils.DEFAULT.equals(text.getText())) {
 						text.setText("");
 					}
 					table.setBranches(branches);
@@ -499,15 +480,11 @@ public class RevisionChooserPanel extends Composite {
 				new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
-						try {
-							table.highlightParents(parents);
-							table.setStrategy(new ChangesetTable.PrefetchedStrategy(dataLoader.getHeads()));
-							table.setEnabled(true);
-							return Status.OK_STATUS;
-						} catch (HgException e) {
-							logError(e);
-							return Status.CANCEL_STATUS;
-						}
+						table.highlightParents(parents);
+						table.setStrategy(new ChangesetTable.PrefetchedStrategy(HgLogClient
+								.getChangeSets(dataLoader.getHgRoot(), dataLoader.getHeads())));
+						table.setEnabled(true);
+						return Status.OK_STATUS;
 					}
 				}.schedule();
 			}
@@ -519,10 +496,10 @@ public class RevisionChooserPanel extends Composite {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				ChangeSet selection = table.getSelection();
+				JHgChangeSet selection = table.getSelection();
 				data.changeSet = selection;
-				if(selection.getChangesetIndex() >= 0) {
-					text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				if(selection.getIndex() >= 0) {
+					text.setText(selection.getIndex() + ":" + selection.getNode()); //$NON-NLS-1$
 				} else {
 					text.setText(""); //$NON-NLS-1$
 				}
@@ -541,7 +518,7 @@ public class RevisionChooserPanel extends Composite {
 		return item;
 	}
 
-	public ChangeSet getChangeSet() {
+	public JHgChangeSet getChangeSet() {
 		return data.changeSet;
 	}
 

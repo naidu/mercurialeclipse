@@ -24,8 +24,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.ResourceDataLoader;
 import com.vectrace.MercurialEclipse.storage.RootDataLoader;
@@ -125,7 +125,7 @@ public class RevisionChooserDialog extends Dialog {
 	}
 
 
-	public ChangeSet getChangeSet() {
+	public JHgChangeSet getChangeSet() {
 		return panel.getChangeSet();
 	}
 

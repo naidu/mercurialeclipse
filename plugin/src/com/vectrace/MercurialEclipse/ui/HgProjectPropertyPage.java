@@ -215,10 +215,8 @@ public class HgProjectPropertyPage extends PropertyPage {
 			mgr.setDefaultRepository(hgRoot, data);
 		}
 		String commitName = commitText.getText().trim();
-		String defaultCommitName = HgCommitMessageManager.getDefaultCommitName(hgRoot);
-		if(!defaultCommitName.equals(commitName)) {
-			HgCommitMessageManager.setDefaultCommitName(hgRoot, commitName);
-		}
+		HgCommitMessageManager.updateDefaultCommitName(hgRoot, commitName);
+
 		return super.performOk();
 	}
 

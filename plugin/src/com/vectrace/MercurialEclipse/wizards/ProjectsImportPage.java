@@ -197,6 +197,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				} catch (CoreException e) {
 					// no good, couldn't load
 					tmpDescription = workspace.newProjectDescription(fallbackProjectName);
+					tmpDescription.setLocation(path.removeLastSegments(1));
 				}
 			}
 			return tmpDescription;
@@ -704,6 +705,15 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				return true;
 			}
 		}
+		for (int i = 0; i < contents.length; i++) {
+			File file = contents[i];
+			if (file.isFile() && file.getName().equals("pom.xml")) {
+				files.add(file);
+				// don't search sub-directories since we can't have nested
+				// projects
+				return true;
+			}
+		}
 		// no project description found, so recurse into sub-directories
 		for (int i = 0; i < contents.length; i++) {
 			if (contents[i].isDirectory()) {
@@ -749,8 +759,12 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 						throw new OperationCanceledException();
 					}
 					for (int i = 0; i < selected.length; i++) {
-						createExistingProject((ProjectRecord) selected[i],
-								new SubProgressMonitor(monitor, 1));
+						try {
+							createExistingProject((ProjectRecord) selected[i],
+									new SubProgressMonitor(monitor, 1));
+						} catch (InvocationTargetException ite) {
+							MercurialEclipsePlugin.showError(ite.getCause());
+						}
 					}
 				} finally {
 					monitor.done();

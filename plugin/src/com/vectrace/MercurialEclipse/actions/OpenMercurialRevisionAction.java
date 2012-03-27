@@ -52,7 +52,7 @@ import org.eclipse.ui.part.Page;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
@@ -61,27 +61,22 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 			IWorkbenchAdapter, IStorageEditorInput {
 
 		private final IFileRevision fileRevision;
-		private final MercurialRevisionStorage storage;
+		private final IHgFile storage;
 		private final IEditorDescriptor descriptor;
 		private final String fileName;
 
 		public MercurialRevisionEditorInput(IFileRevision revision) {
 			this.fileRevision = revision;
-			MercurialRevisionStorage tmpStore = null;
+			IHgFile tmpStore = null;
 			try {
-				tmpStore = (MercurialRevisionStorage) revision.getStorage(new NullProgressMonitor());
+				tmpStore = (IHgFile) revision.getStorage(new NullProgressMonitor());
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 			} finally {
 				storage = tmpStore;
 			}
 			if(storage != null){
-				IFile file = storage.getResource();
-				if(file != null){
-					fileName = file.getName();
-				} else {
-					fileName = storage.getName();
-				}
+				fileName = storage.getName();
 			} else {
 				fileName = fileRevision.getName();
 			}
@@ -141,7 +136,6 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 			return getName();
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public Object getAdapter(Class adapter) {
 			if (adapter == IWorkbenchAdapter.class) {

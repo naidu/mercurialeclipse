@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
+import com.aragost.javahg.Changeset;
+
 public class HgRevision {
 	public static final HgRevision TIP = new HgRevision("tip"); //$NON-NLS-1$
 	private final String changeset;
@@ -19,12 +21,16 @@ public class HgRevision {
 		this(changeset, -1);
 	}
 
+	public HgRevision(Changeset cs) {
+		this(cs.getNode(), cs.getRevision());
+	}
+
 	public HgRevision(String changeset, int revision) {
 		this.changeset = changeset;
 		this.revision = revision;
 	}
 
-	public String getChangeset() {
+	public String getNode() {
 		return changeset;
 	}
 

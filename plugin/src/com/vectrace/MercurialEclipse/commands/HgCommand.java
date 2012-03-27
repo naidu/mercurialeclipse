@@ -89,34 +89,18 @@ public class HgCommand extends AbstractShellCommand {
 	public void addUserName(String user) throws IllegalArgumentException {
 
 		// avoid empty user
-		user = user != null ? user : MercurialUtilities.getDefaultUserName();
-		if(user != null) {
-			user = user.trim();
-			if (user.length() == 0) {
-				user = null;
-			} else {
-				user = quote(user);
-			}
-		}
+		user = MercurialUtilities.getDefaultUserName(user);
+
 		if(user != null) {
 			if (isConflictingWithUserArg()) {
 				throw new IllegalArgumentException("Command '" + command
 						+ "' uses '-u' argument NOT as user name!");
 			}
 			options.add("-u"); //$NON-NLS-1$
-			options.add(user);
+			options.add(quote(user));
 			this.lastUserName = user;
 		} else {
 			this.lastUserName = null;
-		}
-	}
-
-	public void addStyleFile(int style) throws HgException {
-		try {
-			addOptions("--style", //$NON-NLS-1$
-					AbstractParseChangesetClient.getStyleFile(style).getCanonicalPath());
-		} catch (IOException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
 		}
 	}
 
@@ -126,15 +110,7 @@ public class HgCommand extends AbstractShellCommand {
 	 * executed. If no hg root or no user name option was given, does nothing.
 	 */
 	public void rememberUserName(){
-		if (lastUserName == null){
-			return;
-		}
-
-		String commitName = HgCommitMessageManager.getDefaultCommitName(hgRoot);
-
-		if(!commitName.equals(lastUserName)) {
-			HgCommitMessageManager.setDefaultCommitName(hgRoot, lastUserName);
-		}
+		HgCommitMessageManager.updateDefaultCommitName(hgRoot, lastUserName);
 	}
 
 	private boolean isConflictingWithUserArg() {
@@ -158,7 +134,7 @@ public class HgCommand extends AbstractShellCommand {
 	 * @return non null string with escaped quotes (depending on the OS)
 	 */
 	private static String quote(String str) {
-		if (!MercurialUtilities.isWindows()) {
+		if (!MercurialUtilities.isWindows() || str == null) {
 			return str;
 		}
 		// escape quotes, otherwise commit will fail at least on windows

@@ -22,6 +22,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
@@ -53,7 +54,7 @@ public class OpenSelectedRevisionDelegate implements IObjectActionDelegate {
 				this.fileFromChangeSet = (FileFromChangeSet) sel.getFirstElement();
 				IFile file = fileFromChangeSet.getFile();
 				ChangeSet cs = fileFromChangeSet.getChangeset();
-				MercurialRevision rev = new MercurialRevision(cs, null, file, null, null);
+				MercurialRevision rev = new MercurialRevision((JHgChangeSet) cs, file, null, null);
 
 				int diffKind = fileFromChangeSet.getDiffKind();
 				if ((diffKind & Differencer.CHANGE_TYPE_MASK) != Differencer.DELETION) {
