@@ -240,7 +240,6 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 		return logicalName;
 	}
 
-	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if(adapter == IHgRepositoryLocation.class){
 			return this;

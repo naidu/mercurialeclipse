@@ -70,6 +70,7 @@ public abstract class TableSortListener implements Listener {
 	/**
 	 * @return False if the data is not fully loaded and so can't be sorted
 	 */
+	@SuppressWarnings("static-method")
 	protected boolean canSort() {
 		return true;
 	}

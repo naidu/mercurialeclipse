@@ -171,7 +171,7 @@ public class RejectsDialog extends TrayDialog {
 		});
 	}
 
-	private void showRejectedDiff(IFile file) {
+	private static void showRejectedDiff(IFile file) {
 		if (file != null) {
 			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 					.getActivePage();
@@ -186,7 +186,7 @@ public class RejectsDialog extends TrayDialog {
 		}
 	}
 
-	private Table createTable(Composite composite) {
+	private static Table createTable(Composite composite) {
 		int flags = SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;
 		flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
 

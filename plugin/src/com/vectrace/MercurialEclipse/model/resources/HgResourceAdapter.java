@@ -33,13 +33,13 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.MultiRule;
 
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.IResourceHolder;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public abstract class HgResourceAdapter extends DummyResourceAdapter implements IHgResource {
+public abstract class HgResourceAdapter extends DummyResourceAdapter implements IHgResource, IResourceHolder {
 
 	private final File file;
 	private final IPath path;
@@ -66,6 +66,16 @@ public abstract class HgResourceAdapter extends DummyResourceAdapter implements 
 
 	public File toFile() {
 		return file;
+	}
+
+	@Override
+	public void delete(boolean force, IProgressMonitor monitor) throws CoreException {
+		toFile().delete();
+	}
+
+	@Override
+	public void delete(int updateFlags, IProgressMonitor monitor) throws CoreException {
+		toFile().delete();
 	}
 
 	public IResourceProxy createProxy() {
@@ -250,36 +260,12 @@ public abstract class HgResourceAdapter extends DummyResourceAdapter implements 
 		return file.equals(other.file);
 	}
 
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getHgRootRelativePath()
-	 */
-	public String getHgRootRelativePath() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getChangeSet()
-	 */
-	public ChangeSet getChangeSet() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getIPath()
-	 */
 	public IPath getIPath() {
-		// TODO Auto-generated method stub
-		return null;
+		return getHgRoot().toRelative(getLocation());
 	}
 
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getResource()
-	 */
 	public IResource getResource() {
-		// TODO Auto-generated method stub
-		return null;
+		return this;
 	}
 
 }

@@ -30,7 +30,6 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -104,14 +103,14 @@ public class TagDialog extends Dialog {
 		return composite;
 	}
 
-	private GridData createGridData(int colspan) {
+	private static GridData createGridData(int colspan) {
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalSpan = colspan;
 		data.minimumWidth = SWT.DEFAULT;
 		return data;
 	}
 
-	private GridData createGridData(int colspan, int width) {
+	private static GridData createGridData(int colspan, int width) {
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalSpan = colspan;
 		data.minimumWidth = width;
@@ -157,7 +156,7 @@ public class TagDialog extends Dialog {
 		label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
 		label.setLayoutData(createGridData(1));
 
-		final TagTable table = new TagTable(composite, hgRoot);
+		final TagTable table = new TagTable(composite);
 		table.hideTip();
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = 150;
@@ -172,17 +171,13 @@ public class TagDialog extends Dialog {
 			}
 		});
 
-		try {
-			table.setTags(HgTagClient.getTags(hgRoot));
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		table.setTags(HgTagClient.getTags(hgRoot));
 
 		item.setControl(composite);
 		return item;
 	}
 
-	protected TabItem createOptionsTabItem(TabFolder folder) {
+	protected final TabItem createOptionsTabItem(TabFolder folder) {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.options")); //$NON-NLS-1$
 
@@ -217,26 +212,21 @@ public class TagDialog extends Dialog {
 		item.setText(Messages.getString("TagDialog.removeTag")); //$NON-NLS-1$
 		Composite composite = SWTWidgetHelper.createComposite(folder, 1);
 
-		final TagTable tt = new TagTable(composite, hgRoot);
+		final TagTable tt = new TagTable(composite);
 		tt.hideTip();
 
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = 150;
 		tt.setLayoutData(data);
 
-		try {
-			tt.setTags(HgTagClient.getTags(hgRoot));
-		} catch (HgException e2) {
-			MercurialEclipsePlugin.showError(e2);
-			MercurialEclipsePlugin.logError(e2);
-		}
+		tt.setTags(HgTagClient.getTags(hgRoot));
+
 		Button removeButton = SWTWidgetHelper.createPushButton(composite,
 				Messages.getString("TagDialog.removeSelectedTag"), 1); //$NON-NLS-1$
 		MouseListener listener = new MouseListener() {
 			public void mouseUp(MouseEvent e) {
 				try {
-					String result = HgTagClient.removeTag(hgRoot, tt.getSelection(), userTextField.getText());
-					HgClients.getConsole().printMessage(result, null);
+					HgTagClient.removeTag(hgRoot, tt.getSelection(), userTextField.getText());
 					tt.setTags(HgTagClient.getTags(hgRoot));
 					new RefreshRootJob(com.vectrace.MercurialEclipse.menu.Messages.getString(
 							"TagHandler.refreshing"), hgRoot, RefreshRootJob.ALL).schedule(); //$NON-NLS-1$
@@ -278,7 +268,7 @@ public class TagDialog extends Dialog {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				targetRevision = Integer.toString(table.getSelection()
-						.getChangesetIndex());
+						.getIndex());
 			}
 		});
 
@@ -297,7 +287,7 @@ public class TagDialog extends Dialog {
 					ChangeSet changeset = table.getSelection();
 					if (changeset != null) {
 					targetRevision = Integer.toString(changeset
-							.getChangesetIndex());
+							.getIndex());
 				}
 			}
 		});

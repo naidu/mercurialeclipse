@@ -89,7 +89,7 @@ public class RefreshRootJob extends Job {
 			}
 			trace("LOCAL");
 			monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-			LocalChangesetCache.getInstance().clear(hgRoot, true);
+			LocalChangesetCache.getInstance().clear(hgRoot);
 			monitor.worked(1);
 
 			monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
@@ -130,7 +130,7 @@ public class RefreshRootJob extends Job {
 	/**
 	 * Running in UI thread asynchronously
 	 */
-	private void updateHistoryView() {
+	private static void updateHistoryView() {
 		Display.getDefault().asyncExec(new Runnable() {
 
 			public void run() {

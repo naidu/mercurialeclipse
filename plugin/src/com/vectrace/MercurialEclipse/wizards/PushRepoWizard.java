@@ -19,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -143,8 +142,8 @@ public class PushRepoWizard extends HgWizard {
 					} else {
 						output = HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
 					}
-				} catch (CoreException e){
-					throw new InvocationTargetException(e, e.getMessage());
+				} catch (HgException e){
+					throw new InvocationTargetException(e, e.getConciseMessage());
 				} finally {
 					monitor.done();
 				}
@@ -183,11 +182,11 @@ public class PushRepoWizard extends HgWizard {
 		return true;
 	}
 
-	private boolean isForestEnabled(PushPullPage pushRepoPage) {
+	private static boolean isForestEnabled(PushPullPage pushRepoPage) {
 		return pushRepoPage.isShowForest() && pushRepoPage.isForestSelected();
 	}
 
-	private boolean isSvnEnabled(PushPullPage pushRepoPage) {
+	private static boolean isSvnEnabled(PushPullPage pushRepoPage) {
 		return pushRepoPage.isShowSvn() && pushRepoPage.isSvnSelected();
 	}
 

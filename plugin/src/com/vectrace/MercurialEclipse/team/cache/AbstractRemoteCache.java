@@ -29,9 +29,10 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -163,11 +164,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	@Override
 	protected void projectDeletedOrClosed(IProject project) {
-		synchronized (repoDatas) {
-			for (RemoteData data : fastRepoMap.values()) {
-				data.clear(project);
-			}
-		}
 	}
 
 	/**
@@ -177,7 +173,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> getChangeSets(IResource resource,
+	public SortedSet<JHgChangeSet> getChangeSets(IResource resource,
 			IHgRepositoryLocation repository, String branch) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		if (hgRoot == null){
@@ -210,7 +206,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> hasChangeSets(IResource resource, IHgRepositoryLocation repository,
+	public SortedSet<JHgChangeSet> hasChangeSets(IResource resource, IHgRepositoryLocation repository,
 			String branch) {
 		// also checks if mercurial is team provider and if we're working on an open project
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
@@ -235,7 +231,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot,
+	public SortedSet<JHgChangeSet> getChangeSets(HgRoot hgRoot,
 			IHgRepositoryLocation repository, String branch) throws HgException {
 		return getChangeSets(hgRoot, repository, branch, false);
 	}
@@ -247,7 +243,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param allowUnrelated True if unrelated repositories are acceptable
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot, IHgRepositoryLocation repository,
+	public SortedSet<JHgChangeSet> getChangeSets(HgRoot hgRoot, IHgRepositoryLocation repository,
 			String branch, boolean allowUnrelated) throws HgException {
 		RemoteKey key = new RemoteKey(hgRoot, repository, branch, allowUnrelated);
 		synchronized (repoDatas){
@@ -279,23 +275,23 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 *            name of branch (default or "" for unnamed) or null if branch unaware
 	 * @return never null
 	 */
-	public SortedSet<ChangeSet> getUnmappedChangeSets(HgRoot hgRoot,
+	public SortedSet<JHgChangeSet> getUnmappedChangeSets(HgRoot hgRoot,
 			IHgRepositoryLocation repository, String branch, Set<ChangeSet> canIgnore) throws HgException {
 
-		SortedSet<ChangeSet> all = getChangeSets(hgRoot, repository, branch);
+		SortedSet<JHgChangeSet> all = getChangeSets(hgRoot, repository, branch);
 		if(all.isEmpty()){
 			return all;
 		}
 		if(canIgnore != null && !canIgnore.isEmpty()) {
 			// 'all' was unmodifiable set, so create a copy here for filtering
-			all = new TreeSet<ChangeSet>(all);
+			all = new TreeSet<JHgChangeSet>(all);
 			all.removeAll(canIgnore);
 			if(all.isEmpty()){
 				return all;
 			}
 		}
-		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>();
-		for (ChangeSet cs : all) {
+		TreeSet<JHgChangeSet> sorted = new TreeSet<JHgChangeSet>();
+		for (JHgChangeSet cs : all) {
 			if(cs.isEmpty()){
 				sorted.add(cs);
 				continue;
@@ -316,7 +312,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public Set<IResource> getMembers(IResource resource,
 			IHgRepositoryLocation repository, String branch) throws HgException {
-		SortedSet<ChangeSet> changeSets;
+		SortedSet<JHgChangeSet> changeSets;
 		synchronized (repoDatas){
 			// make sure data is there: will refresh (in or out) changesets if needed
 			changeSets = getChangeSets(resource, repository, branch);
@@ -328,7 +324,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @return never null
 	 */
 	private static Set<IResource> getMembers(IResource resource,
-			SortedSet<ChangeSet> changeSets) {
+			SortedSet<JHgChangeSet> changeSets) {
 		Set<IResource> members = new HashSet<IResource>();
 		if (changeSets == null) {
 			return members;
@@ -378,7 +374,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
 			synchronized (repoDatas){
 				// make sure data is there: will refresh (in or out) changesets if needed
-				SortedSet<ChangeSet> changeSets = getChangeSets(resource, repository, branch);
+				SortedSet<JHgChangeSet> changeSets = getChangeSets(resource, repository, branch);
 
 				if (changeSets != null && changeSets.size() > 0) {
 					return changeSets.last();

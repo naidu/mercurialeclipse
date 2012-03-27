@@ -39,7 +39,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.quickdiff.IQuickDiffReferenceProvider;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -214,7 +214,7 @@ public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvi
 					stream = remoteFile.getContents();
 				} else {
 					// fetch the file version matching to the current hg root changeset
-					MercurialRevisionStorage revision = new MercurialRevisionStorage(remoteFile);
+					HgFile revision = HgFile.makeAtCurrentRev(remoteFile);
 					stream = revision.getContents();
 				}
 				if (stream == null || monitor.isCanceled() || !isReferenceInitialized) {

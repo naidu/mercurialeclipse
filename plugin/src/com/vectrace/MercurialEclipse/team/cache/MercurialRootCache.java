@@ -122,6 +122,10 @@ public class MercurialRootCache extends AbstractCache {
 			root = null;
 		}
 
+		return getCached(root);
+	}
+
+	public HgRoot getCached(HgRoot root) {
 		if (root != null) {
 			HgRoot prev = knownRoots.putIfAbsent(root, root);
 

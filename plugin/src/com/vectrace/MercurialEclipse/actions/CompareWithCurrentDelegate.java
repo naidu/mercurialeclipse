@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.actions;
 
 import org.eclipse.compare.structuremergeviewer.Differencer;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -19,7 +20,9 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -35,12 +38,14 @@ public class CompareWithCurrentDelegate implements IObjectActionDelegate {
 			return;
 		}
 		ChangeSet cs = fileFromChangeSet.getChangeset();
+		HgWorkspaceFile left = HgWorkspaceFile.make(fileFromChangeSet.getFile());
 
-		MercurialRevisionStorage left = new MercurialRevisionStorage(fileFromChangeSet.getFile());
-		// TODO handle cases when file was renamed/copied
-		// see com.vectrace.MercurialEclipse.history.CompareRevisionAction.getStorage()
-		MercurialRevisionStorage right = new MercurialRevisionStorage(fileFromChangeSet.getFile(), cs.getChangeset());
-		CompareUtils.openEditor(left, right, false);
+		Assert.isTrue(cs instanceof JHgChangeSet);
+
+		HgFile right = HgFile.make((JHgChangeSet) cs, fileFromChangeSet.getFile());
+
+		CompareUtils.openEditor(left, right, false, null);
+
 	}
 
 	/**

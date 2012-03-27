@@ -24,13 +24,13 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
@@ -38,6 +38,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends RootHandler {
@@ -51,7 +52,7 @@ public class MergeHandler extends RootHandler {
 			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
 		// can we do the equivalent of plain "hg merge"?
-		ChangeSet cs = getHeadForEasyMerge(hgRoot);
+		ChangeSet cs = HgLogClient.getChangeSet(hgRoot, getHeadForEasyMerge(hgRoot));
 		boolean forced = false;
 
 		String forceMessage = "Forced merge (this will discard all uncommitted changes!)";
@@ -64,8 +65,8 @@ public class MergeHandler extends RootHandler {
 						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
 				String branch = cs.getBranch();
-				if (Branch.isDefault(branch)) {
-					branch = Branch.DEFAULT;
+				if (BranchUtils.isDefault(branch)) {
+					branch = BranchUtils.DEFAULT;
 				}
 				String message = MessageFormat.format(Messages
 						.getString("MergeHandler.mergeWithOtherHead"), branch, csSummary);
@@ -116,7 +117,7 @@ public class MergeHandler extends RootHandler {
 		boolean conflict = false;
 		try {
 			try {
-				result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(), forced);
+				result = HgMergeClient.merge(hgRoot, cs.getRevision().getNode(), forced);
 			} catch (HgException e) {
 				if (HgMergeClient.isConflict(e)) {
 					conflict = true;
@@ -126,7 +127,7 @@ public class MergeHandler extends RootHandler {
 				}
 			}
 
-			String mergeChangesetId = cs.getChangeset();
+			String mergeChangesetId = cs.getNode();
 			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 
 			if (conflict) {
@@ -155,15 +156,15 @@ public class MergeHandler extends RootHandler {
 			output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
 					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 		} else {
-			output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
+			output += CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);
 
 		return output;
 	}
 
-	private static ChangeSet getHeadForEasyMerge(HgRoot hgRoot) throws HgException {
-		ArrayList<ChangeSet> otherHeads = getOtherHeadsInCurrentBranch(hgRoot);
+	private static Changeset getHeadForEasyMerge(HgRoot hgRoot) throws HgException {
+		ArrayList<Changeset> otherHeads = getOtherHeadsInCurrentBranch(hgRoot);
 
 		if (otherHeads != null && otherHeads.size() == 1) {
 			return otherHeads.get(0);
@@ -179,14 +180,14 @@ public class MergeHandler extends RootHandler {
 	 * @return
 	 * @throws HgException
 	 */
-	private static ArrayList<ChangeSet> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
-		ArrayList<ChangeSet> result = getHeadsInCurrentBranch(hgRoot);
+	private static ArrayList<Changeset> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ArrayList<Changeset> result = getHeadsInCurrentBranch(hgRoot);
 		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 
-		ChangeSet csToRemove = null;
-		for (ChangeSet cs : result) {
+		Changeset csToRemove = null;
+		for (Changeset cs : result) {
 			// can't be the current
-			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
+			if (cs.getNode().equals(currentRevision.getNode())) {
 				csToRemove = cs;
 				break;
 			}
@@ -205,9 +206,9 @@ public class MergeHandler extends RootHandler {
 	 * @return
 	 * @throws HgException
 	 */
-	public static ArrayList<ChangeSet> getHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
-		ArrayList<ChangeSet> otherHeads = new ArrayList<ChangeSet>();
-		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
+	public static ArrayList<Changeset> getHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ArrayList<Changeset> otherHeads = new ArrayList<Changeset>();
+		Changeset[] heads = HgLogClient.getHeads(hgRoot);
 
 		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 		if (currentRevision == null) {
@@ -215,9 +216,9 @@ public class MergeHandler extends RootHandler {
 		}
 		String branch = currentRevision.getBranch();
 
-		for (ChangeSet cs : heads) {
+		for (Changeset cs : heads) {
 			// must match branch
-			if (!Branch.same(branch, cs.getBranch())) {
+			if (!BranchUtils.same(branch, cs.getBranch())) {
 				continue;
 			}
 
