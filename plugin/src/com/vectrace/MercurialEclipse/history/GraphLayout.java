@@ -39,6 +39,9 @@ public class GraphLayout {
 
 			return new Changeset[] { p1, p2 };
 		}
+
+		public void prime(Changeset[] changesets) {
+		}
 	};
 
 	/**
@@ -64,12 +67,20 @@ public class GraphLayout {
 	 */
 	private int currentColor;
 
+	private final int numColors;
+
+	private final ParentProvider parentProvider;
+
+	// constructor
+
+	public GraphLayout(ParentProvider parentProvider, int numColors) {
+		this.parentProvider = parentProvider;
+		this.numColors = Math.min(numColors, 0xfff);
+	}
+
 	// operations
 
-	/**
-	 * TODO: parent provider should be final at constructor time
-	 */
-	public void add(Changeset[] changesets, Changeset lastCs, ParentProvider parentProvider) {
+	public void add(Changeset[] changesets, Changeset lastCs) {
 
 		int oldGraphLen = (graph == null) ? 0 : graph.length;
 		long[][] newGraph = new long[oldGraphLen + changesets.length][];
@@ -90,6 +101,10 @@ public class GraphLayout {
 		}
 
 		graph = newGraph;
+	}
+
+	public ParentProvider getParentProvider() {
+		return parentProvider;
 	}
 
 	private static Changeset[] getParents(ParentProvider parentProvider, Changeset cs) {
@@ -122,7 +137,7 @@ public class GraphLayout {
 
 	protected int nextColor() {
 		currentColor += 1;
-		currentColor %= 0xfff;
+		currentColor %= numColors;
 
 		return currentColor;
 	}
@@ -142,7 +157,19 @@ public class GraphLayout {
 	// inner types
 
 	public interface ParentProvider {
+
+		/**
+		 * Get the parents of the given changeset
+		 *
+		 * @param cs The changeset whose parents to get
+		 * @return The parents
+		 */
 		public Changeset[] getParents(Changeset cs);
+
+		/**
+		 * Future: should not be necessary
+		 */
+		public void prime(Changeset[] changesets);
 	}
 
 	/**
@@ -167,7 +194,7 @@ public class GraphLayout {
 		/**
 		 * Index in last of it's change set
 		 */
-		private int lastsIndex;
+		private final int lastsIndex;
 
 		/**
 		 * Index in current of it's change set
@@ -187,21 +214,13 @@ public class GraphLayout {
 			this.lastHandled = new boolean[last.numColumns()];
 			this.currentCs = currentCs;
 			this.lastsParents = lastsParents;
-
-			// Find the parent(s) of the last change set
-			lastsIndex = -1;
-
-			for (int i = 0; i < last.numColumns(); i++) {
-				if (last.isDot(i)) {
-					lastsIndex = i;
-					break;
-				}
-			}
+			this.lastsIndex = last.getDot();
 
 			// Find the children of the current change set in last
+			// Future: let column reordering chose currentsIndex
 			currentsChildren = new boolean[last.numColumns()];
-			int numForks = 0;
 			currentsIndex = -1;
+			int numForks = 0;
 
 			// Find the locations of the children of the current revision in last
 			for (int i = 0; i < last.numColumns(); i++) {
@@ -235,6 +254,7 @@ public class GraphLayout {
 				}
 			}
 
+			// Calculate the number of columns
 			int numCols = lastsParents.length;
 
 			if (last.numColumns() > 0) {
@@ -342,9 +362,21 @@ public class GraphLayout {
 			}
 
 			// New heads and 2nd merge parents
-			for (int ci = 0; ci < currentHandled.length; ci++) {
+			for (int ci = 0, n = currentHandled.length; ci < n; ci++) {
 				if (current.getColor(ci) == RowAccessor.NO_COLOR) {
-					current.setColor(ci, nextColor());
+					int color = nextColor();
+
+					if (n < numColors) {
+						// Ensure color is unique
+						for (int i = 0; i < n; i++) {
+							if (current.getColor(i) == color) {
+								color = nextColor();
+								i = -1; // restart
+							}
+						}
+					}
+
+					current.setColor(ci, color);
 				}
 			}
 		}
@@ -473,16 +505,6 @@ public class GraphLayout {
 			RowAccessor la = new RowAccessor(graph[index + 1]);
 
 			return la.getColor(getParentIndex(col, parentNum));
-		}
-
-		public int getDot() {
-			for (int i = 0; i < numColumns(); i++) {
-				if (isDot(i)) {
-					return i;
-				}
-			}
-
-			return -1;
 		}
 	}
 
@@ -627,6 +649,19 @@ public class GraphLayout {
 			}
 
 			row[toCol] = from;
+		}
+
+		/**
+		 * @return The index of the dot
+		 */
+		public int getDot() {
+			for (int i = 0; i < numColumns(); i++) {
+				if (isDot(i)) {
+					return i;
+				}
+			}
+
+			return -1;
 		}
 
 		/**
