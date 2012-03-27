@@ -35,9 +35,19 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class GraphLogTableViewer extends TableViewer {
+
+	/**
+	 * Number of colors. See {@link #colors}.
+	 */
+	public static final int NUM_COLORS = 11;
+
 	private static final int COL_WIDTH_PIXELS = 12;
+
 	private static int DOT_RADIUS_PIXELS = 3;
 
+	/**
+	 * @see #NUM_COLORS
+	 */
 	private final List<Color> colors = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
 	private final Color mergeBack;

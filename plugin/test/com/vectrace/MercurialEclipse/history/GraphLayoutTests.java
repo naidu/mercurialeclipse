@@ -110,6 +110,10 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		assertFalse(la.isDot(0));
 	}
 
+	private static GraphLayout makeGraphLayout() {
+		return new GraphLayout(GraphLayout.ROOT_PARENT_PROVIDER, 16);
+	}
+
 	private Repository makeTrivialRepo() throws IOException {
 		Repository repo = getTestRepository();
 		writeFile("x", "abc");
@@ -145,11 +149,11 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 	}
 
 	public void testTrivial() throws IOException {
-		GraphLayout graph = new GraphLayout();
+		GraphLayout graph = makeGraphLayout();
 
 		makeTrivialRepo();
 
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		graph.add(getLog(), null);
 
 		assertEquals(1, graph.numRows());
 
@@ -162,12 +166,12 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 	}
 
 	public void testTrivial2() throws IOException {
-		GraphLayout graph = new GraphLayout();
+		GraphLayout graph = makeGraphLayout();
 
 		makeTrivialRepo();
 		editAndCommit("123");
 
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		graph.add(getLog(), null);
 
 		assertEquals(2, graph.numRows());
 
@@ -188,14 +192,14 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 	}
 
 	public void testTwoHead() throws IOException {
-		GraphLayout graph = new GraphLayout();
+		GraphLayout graph = makeGraphLayout();
 
 		makeTrivialRepo();
 		editAndCommit("123");
 		update(0);
 		editAndCommit("456");
 
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		graph.add(getLog(), null);
 
 		assertEquals(3, graph.numRows());
 
@@ -227,7 +231,7 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 	}
 
 	public void testDiamond() throws IOException {
-		GraphLayout graph = new GraphLayout();
+		GraphLayout graph = makeGraphLayout();
 
 		makeTrivialRepo(); // 0
 		editAndCommit("123"); // 1
@@ -235,7 +239,7 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		editAndCommit("456"); // 2
 		merge(1); // 3
 
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		graph.add(getLog(), null);
 
 		assertEquals(4, graph.numRows());
 
@@ -295,7 +299,7 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 	 * </pre>
 	 */
 	public void testX() throws IOException {
-		GraphLayout graph = new GraphLayout();
+		GraphLayout graph = makeGraphLayout();
 
 		makeTrivialRepo(); // 0
 		editAndCommit("123"); // 1
@@ -306,14 +310,13 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		merge(2); //4
 		update(3);
 
-		//graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
-
-		//assertEquals(5, graph.numRows());
+		graph.add(getLog(), null);
+		assertEquals(5, graph.numRows());
 
 		merge(4); // 5
 
-		graph = new GraphLayout();
-		graph.add(getLog(), null, GraphLayout.ROOT_PARENT_PROVIDER);
+		graph = makeGraphLayout();
+		graph.add(getLog(), null);
 
 		assertEquals(6, graph.numRows());
 		assertEquals("[*5(1)>0&1]", graph.getRow(0).toString());

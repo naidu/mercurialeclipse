@@ -263,7 +263,13 @@ public class MercurialHistory extends FileHistory {
 			ParentProvider parentProvider;
 
 			if (layout == null) {
-				layout = new GraphLayout();
+				if (isRootHistory()) {
+					parentProvider = GraphLayout.ROOT_PARENT_PROVIDER;
+				} else {
+					parentProvider = new FileParentProvider();
+				}
+
+				layout = new GraphLayout(parentProvider, GraphLogTableViewer.NUM_COLORS);
 			}
 
 			Changeset[] changesets = new Changeset[changeSets.size()];
@@ -273,14 +279,10 @@ public class MercurialHistory extends FileHistory {
 				changesets[i] = it.next().getData();
 			}
 
-			if (isRootHistory()) {
-				parentProvider = GraphLayout.ROOT_PARENT_PROVIDER;
-			} else {
-				parentProvider = new FileParentProvider(changesets);
-			}
+			layout.getParentProvider().prime(changesets);
 
 			layout.add(changesets, revisions.isEmpty() ? null : revisions.get(revisions.size() - 1)
-					.getChangeSet().getData(), parentProvider);
+					.getChangeSet().getData());
 		}
 
 		if(!revisions.isEmpty()){
@@ -478,11 +480,6 @@ public class MercurialHistory extends FileHistory {
 
 		protected Set<IPath> knownPaths = new HashSet<IPath>();
 
-		public FileParentProvider(Changeset[] changesets) {
-			knownPaths.add(hgRoot.getRelativePath(resource));
-			prime(changesets);
-		}
-
 		// operations
 
 		/**
@@ -494,7 +491,9 @@ public class MercurialHistory extends FileHistory {
 		 * between: a06450a60e5f and 2e26551ca397
 		 * </pre>
 		 */
-		private void prime(Changeset[] changesets) {
+		public void prime(Changeset[] changesets) {
+			knownPaths.add(hgRoot.getRelativePath(resource));
+
 			for(Changeset cs: changesets) {
 				getParents(cs);
 			}
