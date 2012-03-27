@@ -249,7 +249,7 @@ public abstract class AbstractClient {
 						"false")).booleanValue(); //$NON-NLS-1$
 
 		if (!useExternalMergeTool) {
-			command.addOptions("--config", "ui.merge=internal:fail"); //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
