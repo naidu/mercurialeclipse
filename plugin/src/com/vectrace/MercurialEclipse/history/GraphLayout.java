@@ -10,6 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import com.aragost.javahg.Changeset;
 import com.google.common.base.Function;
 
@@ -17,6 +21,8 @@ import com.google.common.base.Function;
  * Graph layout algorithm
  */
 public class GraphLayout {
+
+	private static final Changeset[] NO_CHANGESETS = new Changeset[0];
 
 	public static ParentProvider ROOT_PARENT_PROVIDER = new ParentProvider() {
 		public Changeset[] getParents(Changeset cs) {
@@ -76,8 +82,7 @@ public class GraphLayout {
 
 		for (int batchIndex = 0; batchIndex < changesets.length; batchIndex++) {
 			Changeset curCs = changesets[batchIndex];
-			LayoutRowOperation s = new LayoutRowOperation(last, curCs,
-					lastCs == null ? new Changeset[0] : parentProvider.getParents(lastCs));
+			LayoutRowOperation s = new LayoutRowOperation(last, curCs, getParents(parentProvider, lastCs));
 
 			last = s.run();
 			newGraph[oldGraphLen + batchIndex] = last.row;
@@ -85,6 +90,34 @@ public class GraphLayout {
 		}
 
 		graph = newGraph;
+	}
+
+	private static Changeset[] getParents(ParentProvider parentProvider, Changeset cs) {
+		if (cs == null) {
+			return NO_CHANGESETS;
+		}
+
+		Changeset[] ar = parentProvider.getParents(cs);
+
+		if (ar == null) {
+			return NO_CHANGESETS;
+		}
+
+		List<Changeset> s = new ArrayList<Changeset>(Arrays.asList(ar));
+
+		for (int i = 0; i < s.size(); i++) {
+			Changeset a = s.get(i);
+			for (int j = i + 1; j < s.size(); j++) {
+				if (a.equals(s.get(j))) {
+					s.remove(j);
+					j--;
+				}
+			}
+		}
+
+		assert s.size() <= 2;
+
+		return s.toArray(new Changeset[s.size()]);
 	}
 
 	protected int nextColor() {
@@ -319,6 +352,8 @@ public class GraphLayout {
 		/**
 		 * Reorder cells corresponding to lastParents so they're as close as possible to lastIndex
 		 * and in the correct order.
+		 *
+		 * TODO: per batch reordering needs to be done. This is not sufficient.
 		 */
 		private void reorder() {
 			ReorderCandidate[] reorder = getReorderCandidates();

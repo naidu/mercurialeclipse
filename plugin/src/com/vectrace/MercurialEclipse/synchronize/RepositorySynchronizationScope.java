@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
+import com.vectrace.MercurialEclipse.utils.Pair;
 
 /**
  * @author Andrei
@@ -237,17 +238,6 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		}
 		builder.append("]");
 		return builder.toString();
-	}
-
-	private static class Pair<A, B> {
-		public final A a;
-		public final B b;
-
-		public Pair(A a, B b)
-		{
-			this.a = a;
-			this.b = b;
-		}
 	}
 
 	public static class RepositoryLocationMap  {

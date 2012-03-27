@@ -236,48 +236,59 @@ public class JHgChangeSet extends ChangeSet {
 	 */
 	@Override
 	public final List<FileStatus> getChangedFiles() {
-		if (changedFiles == null) {
-			List<FileStatus> l = new ArrayList<FileStatus>();
-			Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
+		return getChangedFiles(0);
+	}
 
-			StatusCommand command = StatusCommandFlags.on(repo);
-
-			if (getParentRevision(0) != null) {
-				command.rev(getParentRevision(0).getNode(), getRevision().getNode());
-			} else {
-				command.rev(getRevision().getNode());
-			}
-
-			StatusResult res = command.added().modified().deleted().removed().copies().execute();
-
-			for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
-			}
-
-			for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
-			}
-
-			for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
-				l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
-			}
-
-			for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
-				String s = it.next();
-				String source = res.getCopied().get(s);
-				l.add(new FileStatus(
-						res.getRemoved().contains(source) ? FileStatus.Action.MOVED
-								: FileStatus.Action.COPIED, s, source, hgRoot));
-			}
-
-			if (l.isEmpty()) {
-				changedFiles = EMPTY_STATUS;
-			} else {
-				changedFiles = Collections.unmodifiableList(l);
-			}
+	public final List<FileStatus> getChangedFiles(int index) {
+		if (index == 0 && changedFiles != null) {
+			return changedFiles;
 		}
 
-		return changedFiles;
+		List<FileStatus> l = new ArrayList<FileStatus>();
+		Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
+
+		StatusCommand command = StatusCommandFlags.on(repo);
+
+		if (getParentRevision(index) != null) {
+			command.rev(getParentRevision(index).getNode(), getRevision().getNode());
+		} else {
+			command.rev(getRevision().getNode());
+		}
+
+		StatusResult res = command.added().modified().deleted().removed().copies().execute();
+
+		for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
+			String s = it.next();
+			String source = res.getCopied().get(s);
+			l.add(new FileStatus(
+					res.getRemoved().contains(source) ? FileStatus.Action.MOVED
+							: FileStatus.Action.COPIED, s, source, hgRoot));
+		}
+
+		if (l.isEmpty()) {
+			l = EMPTY_STATUS;
+		} else {
+			l = Collections.unmodifiableList(l);
+		}
+
+		// Cache the first parent only
+		if (index == 0) {
+			changedFiles = l;
+		}
+
+		return l;
 	}
 
 	/**

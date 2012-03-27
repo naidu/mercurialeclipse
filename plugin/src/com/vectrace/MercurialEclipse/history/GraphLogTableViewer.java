@@ -36,7 +36,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class GraphLogTableViewer extends TableViewer {
 	private static final int COL_WIDTH_PIXELS = 12;
-	private static int DOT_RADIUS_PIXELS = 4;
+	private static int DOT_RADIUS_PIXELS = 3;
 
 	private final List<Color> colors = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
@@ -54,6 +54,7 @@ public class GraphLogTableViewer extends TableViewer {
 		});
 
 		Display display = parent.getDisplay();
+		colors.add(display.getSystemColor(SWT.COLOR_DARK_RED));
 		colors.add(display.getSystemColor(SWT.COLOR_GREEN));
 		colors.add(display.getSystemColor(SWT.COLOR_BLUE));
 		colors.add(display.getSystemColor(SWT.COLOR_RED));
@@ -64,7 +65,6 @@ public class GraphLogTableViewer extends TableViewer {
 		colors.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
 		colors.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
 		colors.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
-		colors.add(display.getSystemColor(SWT.COLOR_DARK_RED));
 
 		// TODO add pref store listener
 		mergeBack = MercurialUtilities
@@ -144,9 +144,6 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 	}
 
-	/**
-	 * @param graphRow
-	 */
 	private void paintRow(Event event, GraphRow curRow) {
 		if (curRow == null) {
 			return;
@@ -232,33 +229,6 @@ public class GraphLogTableViewer extends TableViewer {
 				DOT_RADIUS_PIXELS * 2); // height
 	}
 
-	/*
-	private void paint(Event event, EdgeList edges, int i) {
-		GC g = event.gc;
-		g.setLineAttributes(new LineAttributes(2));
-		g.setLineStyle(SWT.LINE_SOLID);
-		int div3 = event.height / 3;
-		int y = event.y + div3 * i;
-		int middle = event.y + (event.height / 2);
-		for (Edge e : edges.getEdges()) {
-			drawLine(event, g, div3, e.isFinish() ? middle : y, e, e.getTop(), e.getBottom());
-			if (e.isDot()) {
-				fillOval(event, e);
-			}
-		}
-		int[] jump = edges.getJump();
-		if (jump != null) {
-			g.setLineStyle(SWT.LINE_DOT);
-			g.setForeground(g.getDevice().getSystemColor(SWT.COLOR_BLACK));
-			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]), middle);
-		}
-	}
-
-	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top, int bottom) {
-		g.setForeground(getColor(event, e));
-		g.drawLine(getX(event, top), y, getX(event, bottom), y + div3);
-	}
-*/
 	/**
 	 * @return The x coordinate of the centre of the column
 	 */
