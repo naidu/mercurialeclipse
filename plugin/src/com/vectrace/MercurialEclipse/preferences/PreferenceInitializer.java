@@ -56,8 +56,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
-		store.setDefault(PREF_SYNC_ALL_PROJECTS_IN_REPO, true);
+		// This preference is currently not compatible with sym-linked projects
+		store.setDefault(PREF_SYNC_ALL_PROJECTS_IN_REPO, false);
+
 		store.setDefault(PREF_SYNC_ONLY_CURRENT_BRANCH, true);
+		store.setDefault(PREF_SYNC_SHOW_EMPTY_GROUPS, true);
 		store.setDefault(PREF_SYNC_PRESENTATION_MODE, PresentationMode.COMPRESSED_TREE.name());
 		store.setDefault(PREF_SYNC_ENABLE_LOCAL_CHANGESETS, false);
 
@@ -76,7 +79,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(LOG_BATCH_SIZE, 500);
 		store.setDefault(STATUS_BATCH_SIZE, 10);
 		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);
-		store.setDefault(ENABLE_FULL_GLOG, true);
 
 		// blue
 		store.setDefault(PREF_CONSOLE_COMMAND_COLOR, "0,0,255");

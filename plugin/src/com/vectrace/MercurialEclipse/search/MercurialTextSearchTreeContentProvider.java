@@ -27,7 +27,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
 import org.eclipse.search.ui.text.Match;
 
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 public class MercurialTextSearchTreeContentProvider implements ITreeContentProvider,
 		IMercurialTextSearchContentProvider {
@@ -37,7 +37,7 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 	private AbstractTextSearchResult fResult;
 	private final MercurialTextSearchResultPage fPage;
 	private final AbstractTreeViewer fTreeViewer;
-	private Map fChildrenMap;
+	private Map<Object, Set<Object>> fChildrenMap;
 
 	MercurialTextSearchTreeContentProvider(MercurialTextSearchResultPage page,
 			AbstractTreeViewer viewer) {
@@ -72,7 +72,7 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 
 	private synchronized void initialize(AbstractTextSearchResult result) {
 		fResult = result;
-		fChildrenMap = new HashMap();
+		fChildrenMap = new HashMap<Object, Set<Object>>();
 		addMatches(result);
 	}
 
@@ -90,13 +90,13 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 				Match[] matches = result.getMatches(elements[i]);
 				for (int j = 0; j < matches.length; j++) {
 					MercurialMatch m = (MercurialMatch) matches[j];
-					insert(m, false, m.getMercurialRevisionStorage());
+					insert(m, false, m);
 				}
 			}
 		}
 	}
 
-	private void insert(Object child, boolean refreshViewer, MercurialRevisionStorage mrs) {
+	private void insert(Object child, boolean refreshViewer, MercurialMatch mrs) {
 		Object parent = getParent(child, mrs);
 		while (parent != null) {
 			if (insertChild(parent, child)) {
@@ -129,60 +129,16 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 	 * @return <code>true</code> if this set did not already contain the specified element
 	 */
 	private boolean insertChild(Object parent, Object child) {
-		Set<Object> children = (Set<Object>) fChildrenMap.get(parent);
+		Set<Object> children = fChildrenMap.get(parent);
 		if (children == null) {
-			children = new HashSet();
+			children = new HashSet<Object>();
 			fChildrenMap.put(parent, children);
 		}
 		return children.add(child);
 	}
 
-	private boolean hasChild(Object parent, Object child) {
-		Set children = (Set) fChildrenMap.get(parent);
-		return children != null && children.contains(child);
-	}
-
-	private void remove(Object element, boolean refreshViewer) {
-		// precondition here: fResult.getMatchCount(child) <= 0
-
-		if (hasChildren(element)) {
-			if (refreshViewer) {
-				fTreeViewer.refresh(element);
-			}
-		} else {
-			if (!hasMatches(element)) {
-				fChildrenMap.remove(element);
-				Object parent = getParent(element);
-				if (parent != null) {
-					removeFromSiblings(element, parent);
-					remove(parent, refreshViewer);
-				} else {
-					removeFromSiblings(element, fResult);
-					if (refreshViewer) {
-						fTreeViewer.refresh();
-					}
-				}
-			} else {
-				if (refreshViewer) {
-					fTreeViewer.refresh(element);
-				}
-			}
-		}
-	}
-
-	private boolean hasMatches(Object element) {
-		return fResult.getMatchCount(element) > 0;
-	}
-
-	private void removeFromSiblings(Object element, Object parent) {
-		Set siblings = (Set) fChildrenMap.get(parent);
-		if (siblings != null) {
-			siblings.remove(element);
-		}
-	}
-
 	public Object[] getChildren(Object parentElement) {
-		Set children = (Set) fChildrenMap.get(parentElement);
+		Set<Object> children = fChildrenMap.get(parentElement);
 		if (children == null) {
 			return EMPTY_ARR;
 		}
@@ -193,20 +149,14 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 		return getChildren(element).length > 0;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @seeorg.eclipse.search.internal.ui.text.IFileSearchContentProvider#
-	 * elementsChanged(java.lang.Object[])
+	/**
+	 * @see com.vectrace.MercurialEclipse.search.IMercurialTextSearchContentProvider#elementsChanged(java.lang.Object[])
 	 */
 	public synchronized void elementsChanged(Object[] updatedElements) {
 		for (int i = 0; i < updatedElements.length; i++) {
-			if (!(updatedElements[i] instanceof MercurialRevisionStorage)) {
-				// do nothing
-			} else {
-				MercurialRevisionStorage mrs = (MercurialRevisionStorage) updatedElements[i];
-				insert(mrs.getResource(), true, mrs);
+			if (updatedElements[i] instanceof HgFile) {
 				addMatches(fResult);
+				fTreeViewer.refresh();
 			}
 		}
 	}
@@ -216,7 +166,7 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 		fTreeViewer.refresh();
 	}
 
-	public Object getParent(Object element, MercurialRevisionStorage mrs) {
+	public static Object getParent(Object element, MercurialMatch mrs) {
 		if (element instanceof IProject) {
 			return null;
 		}
@@ -224,13 +174,11 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 			IResource resource = (IResource) element;
 			return resource.getParent();
 		}
-
-		if (element instanceof MercurialRevisionStorage) {
-			return mrs.getResource();
+		if (element instanceof HgFile) {
+			return mrs.getFile();
 		}
-
 		if (element instanceof MercurialMatch) {
-			return mrs;
+			return mrs.getHgFile();
 		}
 		return null;
 	}

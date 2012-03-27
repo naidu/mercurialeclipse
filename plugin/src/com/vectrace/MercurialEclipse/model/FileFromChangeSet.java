@@ -177,4 +177,11 @@ public class FileFromChangeSet implements IAdaptable{
 	public ChangeSet getChangeset() {
 		return changeset;
 	}
+
+	public HgFile toHgFile() {
+		if (changeset instanceof JHgChangeSet) {
+			return new HgFile(changeset.getHgRoot(), (JHgChangeSet)changeset, getPath());
+		}
+		return null;
+	}
 }

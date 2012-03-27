@@ -266,6 +266,17 @@ public class HgCommitMessageManager {
 		store.setValue(getKey(hgRoot), name);
 	}
 
+	public static void updateDefaultCommitName(HgRoot hgRoot, String newName) {
+		if (hgRoot != null && newName != null) {
+			String oldName = getDefaultCommitName(hgRoot);
+
+			// TODO: is this logic correct?
+			if(!oldName.equals(newName)) {
+				setDefaultCommitName(hgRoot, newName);
+			}
+		}
+	}
+
 	private static String getKey(HgRoot root) {
 		return HgCommitMessageManager.KEY_PREFIX_COMMIT_NAME + root.getAbsolutePath();
 	}

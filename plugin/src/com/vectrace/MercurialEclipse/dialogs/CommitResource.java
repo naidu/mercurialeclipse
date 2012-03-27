@@ -30,7 +30,7 @@ public class CommitResource {
 		this.path = path;
 	}
 
-	private String convertStatus(int bits) {
+	private static String convertStatus(int bits) {
 		if ((bits & MercurialStatusCache.BIT_MODIFIED) != 0) {
 			return CommitDialog.FILE_MODIFIED;
 		} else if ((bits & MercurialStatusCache.BIT_ADDED) != 0) {

@@ -47,22 +47,23 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MercurialSynchronizeSubscriber extends Subscriber /*implements Observer*/ {
@@ -128,7 +129,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		String syncBranch = getSyncBranch(root);
 
-		IHgRepositoryLocation repo = getRepo();
+		IHgRepositoryLocation repo = getRepo(resource);
 		if(computeFullState) {
 			return getSyncInfo(file, root, syncBranch, repo);
 		}
@@ -136,8 +137,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
-		ChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
-		MercurialRevisionStorage outgoingIStorage;
+		JHgChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
+		HgFile outgoingIStorage;
 		IResourceVariant outgoing;
 		// determine outgoing revision
 		boolean hasOutgoingChanges = false;
@@ -145,11 +146,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		if (csOutgoing != null) {
-			outgoingIStorage = new MercurialRevisionStorage(file,
-					csOutgoing.getRevision().getRevision(),
-					csOutgoing.getChangeset(), csOutgoing);
+			outgoingIStorage = HgFile.make(csOutgoing, file);
 
-			outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
+			outgoing = new MercurialResourceVariant(new RevisionNode(outgoingIStorage));
 			hasOutgoingChanges = true;
 		} else {
 			boolean exists = file.exists();
@@ -164,20 +163,19 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					String nodeId = getCurrentChangesetId(root);
 
 					// try to get from cache (without loading)
-					csOutgoing =  getChangeset(file, nodeId, root);
+					csOutgoing = LOCAL_CACHE.get(root, nodeId);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return null;
 				}
 
-				if(csOutgoing == null || !Branch.same(csOutgoing.getBranch(), currentBranch)){
+				if(csOutgoing == null || !BranchUtils.same(csOutgoing.getBranch(), currentBranch)){
 					return null;
 				}
 				// construct base revision
-				outgoingIStorage = new MercurialRevisionStorage(file,
-						csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
+				outgoingIStorage = HgFile.make(csOutgoing, file);
 
-				outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(outgoingIStorage)));
+				outgoing = new MercurialResourceVariant(new RevisionNode(outgoingIStorage));
 			} else {
 				// new incoming file - no local available
 				outgoingIStorage = null;
@@ -186,8 +184,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		// determine incoming revision get newest incoming changeset
-		ChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
-		MercurialRevisionStorage incomingIStorage;
+		JHgChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
+		HgFile incomingIStorage;
 		int syncMode = -1;
 		if (csIncoming != null) {
 			hasIncomingChanges = true;
@@ -213,7 +211,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 			// TODO validate if code below fixes the issue 10486
 			try {
-				SortedSet<ChangeSet> sets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+				SortedSet<JHgChangeSet> sets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 				int size = sets.size();
 
 				// case where we have one outgoung changeset AND one not committed change
@@ -227,16 +225,16 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					if(parents.length > 0){
 						parentCs = parents[0];
 					} else {
-						ChangeSet tmpCs = getChangeset(file, first.getChangeset(), null);
+						ChangeSet tmpCs = LOCAL_CACHE.get(root, first.getNode());
 						if(tmpCs != null && tmpCs.getParents().length > 0){
 							parentCs = tmpCs.getParents()[0];
 						}
 					}
 					if(parentCs != null){
-						ChangeSet baseChangeset = getChangeset(file, parentCs, null);
+						JHgChangeSet baseChangeset = LOCAL_CACHE.get(root, parentCs);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
-						outgoing = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
+						outgoing = new MercurialResourceVariant(new RevisionNode(incomingIStorage));
 						syncMode = SyncInfo.OUTGOING | SyncInfo.CHANGE;
 					}
 				}
@@ -250,7 +248,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		IResourceVariant incoming;
 		if (incomingIStorage != null) {
-			incoming = new MercurialResourceVariant(new RevisionNode(ResourceUtils.convertToHgFile(incomingIStorage)));
+			incoming = new MercurialResourceVariant(new RevisionNode(incomingIStorage));
 		} else {
 			// neither base nor outgoing nor incoming revision
 			incoming = null;
@@ -269,20 +267,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
-	protected static ChangeSet getChangeset(IResource file, String nodeId, HgRoot root) throws HgException {
-		try {
-			return LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
-		} catch (HgException e) {
-			// workaround for the case where the root version is not up-to-date anymore
-			// simply clear the cache and restart
-			if(root != null && e.getMessage() != null && e.getMessage().contains("unknown revision")) {
-				CURRENT_CS_MAP.remove(root);
-				return getChangeset(file, nodeId, null);
-			}
-			throw e;
-		}
-	}
-
 	public static void executeLockedCacheTask(Runnable run) throws InterruptedException {
 		if(!CACHE_SEMA.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
@@ -298,11 +282,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
-	private static ChangeSet getNewestOutgoing(IFile file, String currentBranch,
+	private static JHgChangeSet getNewestOutgoing(IFile file, String currentBranch,
 			IHgRepositoryLocation repo) {
-		ChangeSet csOutgoing = null;
+		JHgChangeSet csOutgoing = null;
 
-		SortedSet<ChangeSet> changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+		SortedSet<JHgChangeSet> changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 		if (!changeSets.isEmpty()) {
 			csOutgoing = changeSets.last();
 		}
@@ -310,10 +294,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return csOutgoing;
 	}
 
-	private static ChangeSet getNewestIncoming(IFile file, String currentBranch,
+	private static JHgChangeSet getNewestIncoming(IFile file, String currentBranch,
 			IHgRepositoryLocation repo) {
-		ChangeSet csIncoming = null;
-		SortedSet<ChangeSet> changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
+		JHgChangeSet csIncoming = null;
+		SortedSet<JHgChangeSet> changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
 		if (!changeSets.isEmpty()) {
 			csIncoming = changeSets.last();
 		}
@@ -335,7 +319,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		boolean changedLocal = !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN);
-		SortedSet<ChangeSet> changeSets = null;
+		SortedSet<JHgChangeSet> changeSets = null;
 		if(!changedLocal){
 			changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 			changedLocal = hasChanges(file, changeSets);
@@ -370,7 +354,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return ((DelayedSyncInfo) info).getDiff();
 	}
 
-	private static boolean hasChanges(IFile file, SortedSet<ChangeSet> changeSets) {
+	private static boolean hasChanges(IFile file, SortedSet<JHgChangeSet> changeSets) {
 		if(changeSets == null || changeSets.isEmpty()){
 			return false;
 		}
@@ -385,7 +369,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	static String getCurrentChangesetId(HgRoot root) throws HgException {
 		String nodeId = CURRENT_CS_MAP.get(root);
 		if(nodeId == null){
-			nodeId = HgIdentClient.getCurrentChangesetId(root);
+			nodeId = HgLogClient.getCurrentChangesetId(root);
 			CURRENT_CS_MAP.put(root, nodeId);
 		}
 		return nodeId;
@@ -397,12 +381,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				&& (isSupervised(resource) || (!resource.exists()));
 	}
 
-	private static MercurialRevisionStorage getIncomingIStorage(IFile resource,
-			ChangeSet csRemote) {
-		MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
-				resource, csRemote.getRevision().getRevision(), csRemote
-				.getChangeset(), csRemote);
-		return incomingIStorage;
+	private static HgFile getIncomingIStorage(IFile resource, JHgChangeSet csRemote) {
+		return HgFile.make(csRemote, resource);
 	}
 
 	@Override
@@ -455,9 +435,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			resourcesToRefresh = null;
 		}
 
-		IHgRepositoryLocation repositoryLocation = getRepo();
-		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocationProjects(repositoryLocation);
 
 		Set<HgRoot> roots = byRoot.keySet();
 		try {
@@ -491,7 +468,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		for (IProject project : projects) {
-			if (!repoLocationProjects.contains(project)) {
+			IHgRepositoryLocation repositoryLocation = getScope().getRepositoryLocation(project);
+
+			if (repositoryLocation == null) {
 				continue;
 			}
 			// clear caches in any case, but refresh them only if project exists
@@ -532,7 +511,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} finally {
 				CACHE_SEMA.release();
 			}
-		}
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
@@ -549,6 +527,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
+		}
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -610,8 +589,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope;
 	}
 
-	protected IHgRepositoryLocation getRepo(){
-		return scope.getRepositoryLocation();
+	protected IHgRepositoryLocation getRepo(IResource root){
+		IHgRepositoryLocation ret = scope.getRepositoryLocation(root);
+
+		Assert.isNotNull(ret);
+
+		return ret;
 	}
 
 	public IProject[] getProjects() {

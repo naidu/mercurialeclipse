@@ -24,7 +24,6 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
@@ -101,12 +100,9 @@ public class ShelveOperation extends HgOperation {
 				options.add("--git");
 
 				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, options);
-				monitor.worked(1);
-				monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
-				String currRev = HgIdentClient.getCurrentChangesetId(hgRoot);
-				monitor.worked(1);
+				monitor.worked(2);
 				monitor.subTask(Messages.getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
-				HgUpdateClient.cleanUpdate(hgRoot, currRev);
+				HgUpdateClient.cleanUpdate(hgRoot, ".");
 			}
 		} catch (HgCoreException e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());

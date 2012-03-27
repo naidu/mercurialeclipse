@@ -16,8 +16,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
-import org.eclipse.core.runtime.CoreException;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
@@ -33,7 +31,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 public class HgFpushPullClient extends HgPushPullClient {
 
 	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
-			ChangeSet changeset, int timeout, File snapFile) throws CoreException {
+			ChangeSet changeset, int timeout, File snapFile) throws HgException {
 
 		AbstractShellCommand command = new RootlessHgCommand("fpush", "Invoking fpush", forestRoot);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);

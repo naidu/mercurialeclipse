@@ -45,14 +45,11 @@ public class ExportOptionsPage extends HgWizardPage implements Listener {
 				.getString("ImportPatchWizard.optionsPageTitle"), null); //$NON-NLS-1$
 	}
 
-	protected boolean validatePage() {
-		return true;
-	}
-
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 		chkGit = SWTWidgetHelper.createCheckBox(composite, Messages
 				.getString("ExportOptionsPage.git")); //$NON-NLS-1$
+		chkGit.setSelection(true);
 
 		chkText = SWTWidgetHelper.createCheckBox(composite, Messages
 				.getString("ExportOptionsPage.text")); //$NON-NLS-1$

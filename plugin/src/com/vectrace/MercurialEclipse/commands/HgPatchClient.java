@@ -136,14 +136,14 @@ public class HgPatchClient extends AbstractClient {
 	private static AbstractShellCommand makeExportPatchCommand(HgRoot root, ChangeSet cs,
 			List<String> options) {
 		AbstractShellCommand command = new HgCommand("export", "Exporting changeset "
-				+ cs.getChangeset(), root, true);
+				+ cs.getNode(), root, true);
 
 		if (options != null) {
 			command.addOptions(options.toArray(new String[options.size()]));
 		}
 
 		command.addOptions("--git");
-		command.addOptions("-r", cs.getChangeset());
+		command.addOptions("-r", cs.getNode());
 
 		return command;
 	}
@@ -163,10 +163,10 @@ public class HgPatchClient extends AbstractClient {
 		HgCommand diffCommand = new HgCommand("diff", //$NON-NLS-1$
 				"Calculating diff between revisions", hgRoot, true);
 		if( secondEntry == null ){
-			diffCommand.addOptions("-c", "" + entry.getChangeSet().getRevision().getChangeset());
+			diffCommand.addOptions("-c", "" + entry.getChangeSet().getRevision().getNode());
 		} else {
-			diffCommand.addOptions("-r", ""+entry.getChangeSet().getRevision().getChangeset());
-			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getChangeset());
+			diffCommand.addOptions("-r", ""+entry.getChangeSet().getRevision().getNode());
+			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getNode());
 		}
 		diffCommand.addOptions("--git");
 		return diffCommand.executeToString();

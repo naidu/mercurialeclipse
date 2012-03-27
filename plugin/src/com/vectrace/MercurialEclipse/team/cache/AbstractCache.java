@@ -36,7 +36,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -58,7 +58,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractCache extends Observable {
 
-	protected static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+	protected static final SortedSet<JHgChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<JHgChangeSet>());
 
 	protected final boolean debug;
 

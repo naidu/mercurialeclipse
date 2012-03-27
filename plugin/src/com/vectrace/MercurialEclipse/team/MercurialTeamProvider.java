@@ -48,7 +48,6 @@ import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
@@ -56,6 +55,7 @@ import com.vectrace.MercurialEclipse.team.cache.HgRootRule;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -404,13 +404,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Assert.isNotNull(hgRoot);
 		String branch = BRANCH_MAP.get(hgRoot);
 		if(branch == null){
-			try {
-				branch = HgBranchClient.getActiveBranch(hgRoot);
-				BRANCH_MAP.put(hgRoot, branch);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-				return Branch.DEFAULT;
-			}
+			branch = HgBranchClient.getActiveBranch(hgRoot);
+			BRANCH_MAP.put(hgRoot, branch);
 		}
 		return branch;
 	}
@@ -423,7 +418,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Assert.isNotNull(res);
 		HgRoot hgRoot = getHgRoot(res);
 		if(hgRoot == null){
-			return Branch.DEFAULT;
+			return BranchUtils.DEFAULT;
 		}
 		return getCurrentBranch(hgRoot);
 	}
@@ -441,7 +436,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		} else {
 			BRANCH_MAP.remove(hgRoot);
 		}
-		if(branch != null && !Branch.same(branch, oldBranch)){
+		if(branch != null && !BranchUtils.same(branch, oldBranch)){
 			Object[] listeners = BRANCH_LISTENERS.getListeners();
 			for (int i = 0; i < listeners.length; i++) {
 				IPropertyListener listener = (IPropertyListener) listeners[i];

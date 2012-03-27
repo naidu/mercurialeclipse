@@ -33,12 +33,10 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.SimpleLabelImageProvider;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -50,7 +48,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 
 	private Composite comp;
-	private final ChangeSet changeset;
+	private final JHgChangeSet changeset;
 	private ChangedFilesTable changedFileTable;
 
 	private static class ChangesetInfoPathLabelProvider extends DecoratingLabelProvider implements
@@ -76,7 +74,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		}
 	}
 
-	public ChangesetInfoTray(ChangeSet cs) {
+	public ChangesetInfoTray(JHgChangeSet cs) {
 		this.changeset = cs;
 	}
 
@@ -126,7 +124,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 
 		private TableViewer viewer;
 
-		public ChangedFilesTable(Composite parent, final ChangeSet changeset) {
+		public ChangedFilesTable(Composite parent, final JHgChangeSet changeset) {
 			super(parent, SWT.NONE);
 
 			GridLayout layout = new GridLayout();
@@ -169,24 +167,16 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 				public void doubleClick(DoubleClickEvent event) {
 					FileStatus clickedFileStatus = (FileStatus) ((IStructuredSelection) event
 							.getSelection()).getFirstElement();
-					ChangeSet cs = changeset;
+					JHgChangeSet cs = changeset;
 					IPath fileAbsPath = cs.getHgRoot().toAbsolute(
 							clickedFileStatus.getRootRelativePath());
 					IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 					if (file != null) {
 						try {
-							String[] parents = HgParentClient.getParentNodeIds(file, cs);
-							// our amend changeset was a merge changeset. diff is difficult...
-							if (parents == null || parents.length == 2) {
-								return;
-							}
-							MercurialRevisionStorage left = new MercurialRevisionStorage(file, cs
-									.getChangesetIndex());
-							MercurialRevisionStorage right = new MercurialRevisionStorage(file,
-									parents[0]);
-							CompareUtils.openEditor(left, right, true);
+							CompareUtils.openCompareWithParentEditor(cs, file, true, null);
 						} catch (HgException e) {
 							MercurialEclipsePlugin.logError(e);
+							MercurialEclipsePlugin.showError(e);
 						}
 					}
 				}
