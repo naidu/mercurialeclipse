@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -36,23 +38,28 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
+import com.vectrace.MercurialEclipse.utils.Pair;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -255,12 +262,6 @@ public class MercurialHistory extends FileHistory {
 		if (isRootHistory() || resource.getType() == IResource.FILE) {
 			ParentProvider parentProvider;
 
-			if (isRootHistory()) {
-				parentProvider = GraphLayout.ROOT_PARENT_PROVIDER;
-			} else {
-				throw new UnsupportedOperationException("TODO");
-			}
-
 			if (layout == null) {
 				layout = new GraphLayout();
 			}
@@ -270,6 +271,12 @@ public class MercurialHistory extends FileHistory {
 			int i = 0;
 			for (Iterator<JHgChangeSet> it = changeSets.iterator(); it.hasNext(); i++) {
 				changesets[i] = it.next().getData();
+			}
+
+			if (isRootHistory()) {
+				parentProvider = GraphLayout.ROOT_PARENT_PROVIDER;
+			} else {
+				parentProvider = new FileParentProvider(changesets);
 			}
 
 			layout.add(changesets, revisions.isEmpty() ? null : revisions.get(revisions.size() - 1)
@@ -458,5 +465,119 @@ public class MercurialHistory extends FileHistory {
 
 	public GraphRow getGraphRow(MercurialRevision rev) {
 		return layout == null ? null : layout.getRow(getIndex(rev));
+	}
+
+	// inner types
+
+	/**
+	 * Parent provider for a file following renames
+	 */
+	private class FileParentProvider implements ParentProvider {
+
+		protected Map<Pair<Changeset, IPath>, List<Changeset>> map = new HashMap<Pair<Changeset, IPath>, List<Changeset>>();
+
+		protected Set<IPath> knownPaths = new HashSet<IPath>();
+
+		public FileParentProvider(Changeset[] changesets) {
+			knownPaths.add(hgRoot.getRelativePath(resource));
+			prime(changesets);
+		}
+
+		// operations
+
+		/**
+		 * TODO: this is a hack to populate knownPaths - why can't we get the copy source for some
+		 * changesets. Status appears to not show copy source for some merges.
+		 *
+		 * <pre>
+		 * hg log -Gf plugin/src/com/vectrace/MercurialEclipse/model/GChangeSet.java
+		 * between: a06450a60e5f and 2e26551ca397
+		 * </pre>
+		 */
+		private void prime(Changeset[] changesets) {
+			for(Changeset cs: changesets) {
+				getParents(cs);
+			}
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider#getParents(com.aragost.javahg.Changeset)
+		 */
+		public Changeset[] getParents(Changeset cs) {
+			Pair<Changeset, IPath> key = new Pair<Changeset, IPath>(cs, null);
+			List<Changeset> parents = new ArrayList<Changeset>(4);
+			List<IPath> pathsToAdd = null;
+
+			for (IPath path : knownPaths) {
+				key.b = path;
+
+				List<Changeset> changesets = map.get(key);
+
+				if (changesets == null) {
+					List<IPath> newPaths = getPaths(cs, path);
+					changesets = new ArrayList<Changeset>(4);
+
+					for (IPath newPath : newPaths) {
+						try {
+							for (Changeset newChangeset : HgParentClient.getParents(hgRoot, cs,
+									newPath)) {
+								if (!changesets.contains(newChangeset)) {
+									changesets.add(newChangeset);
+								}
+							}
+						} catch (ExecutionException e) {
+						}
+					}
+					map.put(key.clone(), changesets);
+
+					if (!newPaths.isEmpty())
+					{
+						if (pathsToAdd == null) {
+							pathsToAdd = new ArrayList<IPath>();
+						}
+						pathsToAdd.addAll(newPaths);
+					}
+				}
+				parents.addAll(changesets);
+			}
+
+			if (pathsToAdd != null) {
+				knownPaths.addAll(pathsToAdd);
+			}
+
+			// What about a head after a rename, will hg show these?
+
+			return parents.toArray(new Changeset[parents.size()]);
+		}
+
+		private List<IPath> getPaths(Changeset cs, IPath path) {
+			JHgChangeSet jcs = LocalChangesetCache.getInstance().get(hgRoot, cs);
+
+			if (cs.getParent1() == null) {
+				return Collections.EMPTY_LIST;
+			} else if (cs.getParent2() == null) {
+				return Collections.singletonList(getPath(jcs, path, 0));
+			}
+
+			List<IPath> l = new ArrayList<IPath>(2);
+
+			l.add(getPath(jcs, path, 0));
+			l.add(getPath(jcs, path, 1));
+
+			return l;
+		}
+
+		private IPath getPath(JHgChangeSet jcs, IPath path, int parent) {
+			for (FileStatus status : jcs.getChangedFiles(parent)) {
+				if (path.equals(status.getRootRelativePath())) {
+					if (status.getRootRelativeCopySourcePath() != null) {
+						return status.getRootRelativeCopySourcePath();
+					}
+					break;
+				}
+			}
+
+			return path;
+		}
 	}
 }

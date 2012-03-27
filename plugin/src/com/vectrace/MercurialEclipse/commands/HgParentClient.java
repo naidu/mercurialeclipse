@@ -17,6 +17,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.flags.ParentsCommandFlags;
@@ -27,10 +28,12 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgParentClient extends AbstractClient {
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static final Pattern ANCESTOR_PATTERN = Pattern
 			.compile("^(-?[0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
-
-	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
 	public static int[] getParentIndexes(HgRoot hgRoot) {
 		Changeset[] parents = getParents(hgRoot);
@@ -56,36 +59,11 @@ public class HgParentClient extends AbstractClient {
 		return cs.toArray(new Changeset[cs.size()]);
 	}
 
-	public static Changeset[] getParents(HgRoot hgRoot, IResource resource, ChangeSet cs) {
-		List<Changeset> parents = ParentsCommandFlags.on(hgRoot.getRepository()).rev(cs.getNode()).execute(
-				ResourceUtils.getPath(resource).toOSString());
+	public static Changeset[] getParents(HgRoot hgRoot, Changeset cs, IPath path) {
+		List<Changeset> parents = ParentsCommandFlags.on(hgRoot.getRepository()).rev(cs.getNode())
+				.execute(path.toOSString());
 
 		return parents.toArray(new Changeset[parents.size()]);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	public static String[] getParentNodeIds(ChangeSet cs, String template) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				"Finding parent revisions", cs.getHgRoot(), false);
-		command.addOptions("--template", template + "\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getNode());
-		return parseParentsCommand(command);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	private static String[] parseParentsCommand(AbstractShellCommand parentsCommand) throws HgException {
-		String[] lines = getLines(parentsCommand.executeToString());
-		String[] parents = new String[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = lines[i].trim();
-		}
-		return parents;
 	}
 
 	/**
@@ -154,19 +132,5 @@ public class HgParentClient extends AbstractClient {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
-	}
-
-	/**
-	 * Splits an output of a command into lines. Lines are separated by a newline character (\n).
-	 *
-	 * @param output
-	 *            The output of a command.
-	 * @return The lines of the output.
-	 */
-	private static String[] getLines(String output) {
-		if (output == null || output.length() == 0) {
-			return new String[0];
-		}
-		return LINE_SEPERATOR_PATTERN.split(output);
 	}
 }
