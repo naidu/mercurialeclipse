@@ -35,6 +35,14 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 
 	private static final int ONES_12 = 0xfff;
 
+	public static void testAssertionsEnabled() {
+		boolean a = false;
+
+		assert (a = true) || false;
+
+		assertTrue("Please enable assertions by adding -ea flag to VM args", a);
+	}
+
 	public static void testBitTwiddling() {
 		RowAccessor la = new RowAccessor(new long[1]);
 
