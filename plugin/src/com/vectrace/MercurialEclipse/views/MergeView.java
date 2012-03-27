@@ -154,9 +154,11 @@ public class MergeView extends AbstractRootView implements Observer {
 			@Override
 			public void run() {
 				try {
-					IFile file = getSelection();
-					if (file != null) {
-						HgResolveClient.markResolved(file);
+					List<IFile> files = getSelections();
+					if (files != null) {
+						for (IFile file : files) {
+							HgResolveClient.markResolved(file);
+						}
 						populateView(true);
 					}
 				} catch (HgException e) {
@@ -169,9 +171,11 @@ public class MergeView extends AbstractRootView implements Observer {
 			@Override
 			public void run() {
 				try {
-					IFile file = getSelection();
-					if (file != null) {
-						HgResolveClient.markUnresolved(file);
+					List<IFile> files = getSelections();
+					if (files != null) {
+						for (IFile file : files) {
+							HgResolveClient.markUnresolved(file);
+						}
 						populateView(true);
 					}
 				} catch (HgException e) {
@@ -408,10 +412,28 @@ public class MergeView extends AbstractRootView implements Observer {
 	}
 
 	private IFile getSelection() {
-		FlaggedAdaptable selection = table.getSelection();
-		if (selection != null) {
-			IFile iFile = (IFile) selection.getAdapter(IFile.class);
-			return iFile;
+		return getFile(table.getSelection());
+	}
+
+	private List<IFile> getSelections() {
+		List<FlaggedAdaptable> selections = table.getSelections();
+		if (selections != null) {
+			List<IFile> result = new ArrayList<IFile>();
+			for (FlaggedAdaptable flaggedAdaptable : selections) {
+				IFile file = getFile(flaggedAdaptable);
+
+				if (file != null) {
+					result.add(file);
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	private static IFile getFile(FlaggedAdaptable adaptable) {
+		if (adaptable != null) {
+			return (IFile) adaptable.getAdapter(IFile.class);
 		}
 		return null;
 	}
@@ -434,7 +456,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		}
 	}
 
-	private void openMergeEditor(FlaggedAdaptable flagged) {
+	private static void openMergeEditor(FlaggedAdaptable flagged) {
 		IFile file = (IFile) flagged.getAdapter(IFile.class);
 		CompareAction compareAction = new CompareAction(file);
 		compareAction.setEnableMerge(true);
