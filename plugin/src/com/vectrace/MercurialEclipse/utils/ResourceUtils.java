@@ -46,7 +46,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IEditorPart;
-import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.editors.text.EditorsUI;
@@ -222,9 +221,7 @@ public final class ResourceUtils {
 		IEditorPart editorPart = MercurialEclipsePlugin.getActivePage().getActiveEditor();
 
 		if (editorPart != null) {
-			IFileEditorInput input = (IFileEditorInput) editorPart.getEditorInput();
-			IFile file = ResourceUtil.getFile(input);
-			return file;
+			return ResourceUtil.getFile(editorPart.getEditorInput());
 		}
 		return null;
 	}
