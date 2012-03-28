@@ -349,24 +349,7 @@ public final class CompareUtils {
 			return null;
 		}
 
-		String commonAncestor = null;
-
-		try {
-			commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lCS, rCS);
-		} catch (HgException e) {
-			// continue
-		}
-
-		String lId = lCS.getNode();
-		String rId = rCS.getNode();
-
-		if (commonAncestor == null || commonAncestor.length() == 0){
-			try {
-				commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lId, rId);
-			} catch (HgException e) {
-				// continue: no changeset in the local repo, se issue #10616
-			}
-		}
+		String commonAncestor = HgParentClient.findCommonAncestor(hgRoot, lCS, rCS);
 
 		if (commonAncestor == null || commonAncestor.equals(lCS.getNode()) ||
 				commonAncestor.equals(rCS.getNode())) {
@@ -422,9 +405,13 @@ public final class CompareUtils {
 				String ancestor = HgParentClient.findCommonAncestor(hgRoot, parents[0].getNode(), parents[1].getNode());
 				IPath path = root.getRelativePath(file);
 
+				if (ancestor == null) {
+					throw new HgException("Couldn't calculate common ancestor");
+				}
+
 				// TODO: renames
 				mergeNode = new HgFile(root, mergeNodeId, path);
-				ancestorNode = (ancestor == null) ? null : new HgFile(root, ancestor, path);
+				ancestorNode = new HgFile(root, ancestor, path);
 			}
 
 			final CompareEditorInput compareInput = getPrecomputedCompareInput(file,

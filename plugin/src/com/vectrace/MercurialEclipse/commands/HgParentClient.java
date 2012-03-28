@@ -11,29 +11,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
+import java.io.File;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.flags.LogCommandFlags;
 import com.aragost.javahg.commands.flags.ParentsCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgParentClient extends AbstractClient {
-
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	private static final Pattern ANCESTOR_PATTERN = Pattern
-			.compile("^(-?[0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
 	public static int[] getParentIndexes(HgRoot hgRoot) {
 		Changeset[] parents = getParents(hgRoot);
@@ -66,34 +60,29 @@ public class HgParentClient extends AbstractClient {
 		return parents.toArray(new Changeset[parents.size()]);
 	}
 
+	private static String findCommonAncestor(Repository repo, String node1, String node2) {
+		List<Changeset> list = LogCommandFlags.on(repo)
+				.rev("ancestor(" + node1 + ", " + node2 + ")").execute();
+
+		assert list.size() <= 1;
+
+		return list.isEmpty() ? null : list.get(0).getNode();
+	}
+
 	/**
-	 * TODO: use JavaHg
-	 *
 	 * @param hgRoot The root that these nodes are in
 	 * @param node1 The first changeset id
 	 * @param node2 The second changeset id
 	 * @return The common ancestor node id, or null.
 	 * @throws HgException
 	 */
-	public static String findCommonAncestor(HgRoot hgRoot, String node1, String node2)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
-				"Finding common ancestor", hgRoot, false);
-		command.addOptions(node1, node2);
-		String result = command.executeToString().trim();
-		Matcher m = ANCESTOR_PATTERN.matcher(result);
-		if (m.matches()) {
-			return m.group(2);
-		}
-		throw new HgException("Parse exception: '" + result + "'");
+	public static String findCommonAncestor(HgRoot hgRoot, String node1, String node2) {
+		return findCommonAncestor(hgRoot.getRepository(), node1, node2);
 	}
 
 	/**
-	 * TODO: use JavaHg
-	 *
-	 * This methods finds the common ancestor of two changesets, supporting
-	 * overlays for using incoming changesets. Only one changeset may be
-	 * incoming.
+	 * This methods finds the common ancestor of two changesets, supporting overlays for using
+	 * incoming changesets.
 	 *
 	 * @param hgRoot
 	 *            hg root
@@ -102,35 +91,19 @@ public class HgParentClient extends AbstractClient {
 	 * @param cs2
 	 *            second changeset
 	 * @return The common ancestor node id, or null.
-	 * @throws HgException
 	 */
-	public static String findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
-			throws HgException {
-		String result;
-		try {
-			HgCommand command = new HgCommand("debugancestor", "Finding common ancestor", hgRoot,
-					false);
+	public static String findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2) {
+		File bundleFile = null;
 
-			if (cs1.getBundleFile() != null || cs2.getBundleFile() != null) {
-				if (cs1.getBundleFile() != null) {
-					command.setBundleOverlay(cs1.getBundleFile());
-				} else {
-					command.setBundleOverlay(cs2.getBundleFile());
-				}
+		if (cs1.getBundleFile() != null || cs2.getBundleFile() != null) {
+			if (cs1.getBundleFile() != null) {
+				bundleFile = cs1.getBundleFile();
+			} else {
+				bundleFile = cs2.getBundleFile();
 			}
-
-			command.addOptions(cs1.getNode(), cs2.getNode());
-
-			result = command.executeToString().trim();
-			Matcher m = ANCESTOR_PATTERN.matcher(result);
-			if (m.matches()) {
-				return m.group(2);
-			}
-			throw new HgException("Parse exception: '" + result + "'");
-		} catch (NumberFormatException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
-		} catch (IOException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
 		}
+
+		return findCommonAncestor(CommandServerCache.getInstance().get(hgRoot, bundleFile),
+				cs1.getNode(), cs2.getNode());
 	}
 }
