@@ -27,7 +27,6 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -78,11 +77,9 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		}
 		List<IResource> resources = ResourceUtils.getResources(selection);
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
+
 		try {
 			HgRemoveClient.removeResourcesLater(byRoot);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
 		} finally {
 			for (Map.Entry<HgRoot, List<IResource>> mapEntry : byRoot.entrySet()) {
 				HgRoot hgRoot = mapEntry.getKey();
