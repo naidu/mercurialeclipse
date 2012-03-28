@@ -171,11 +171,17 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		try {
 			// Delete the file(s) from the Mercurial repository.
 			if(!resource.isLinked()) {
-				HgRemoveClient.removeResource(resource, monitor);
+				if (!HgRemoveClient.forceRemoveResource(resource, monitor)) {
+					return false;
+				}
 			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			return false;
+		} finally {
+			try {
+				MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				return false;
+			}
 		}
 
 		// We removed the file ourselves, need to tell.
@@ -218,9 +224,6 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 			allFiles.remove(project);
 			try {
 				HgRemoveClient.removeResources(new ArrayList<IResource>(allFiles));
-			} catch (HgException e1) {
-				MercurialEclipsePlugin.logWarning("Warnings encountered removing resources from repository", e1);
-				// Usually deleting untracked resource
 			} finally {
 				try {
 					MercurialStatusCache.getInstance().refreshStatus(project, monitor);
