@@ -58,7 +58,13 @@ public class HgLogClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String getCurrentChangesetId(HgRoot repository) throws HgException {
-		return LogCommandFlags.on(repository.getRepository()).rev(".").limit(1).single().getNode();
+		Changeset cs = LogCommandFlags.on(repository.getRepository()).rev(".").limit(1).single();
+
+		if (cs != null) {
+			return cs.getNode();
+		}
+
+		return VERSION_ZERO;
 	}
 
 	private static Changeset[] toArray(List<Changeset> list) {
