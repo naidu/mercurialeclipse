@@ -38,7 +38,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -515,6 +514,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * @param cmd The list of commands to add to
 	 * @return The encoding for HGENCODING env var, or null
 	 */
+	@SuppressWarnings("static-method")
 	protected String setupEncoding(List<String> cmd) {
 		return null;
 	}
@@ -793,10 +793,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		// TODO This can be done faster without any file system calls by saving uncanonicalized hg
 		// root locations (?).
 		// files.add(resource.getLocation().toOSString());
-		IPath location = ResourceUtils.getPath(resource);
-		if(!location.isEmpty()) {
-			addFile(location.toFile());
-		}
+		addFile(ResourceUtils.getFileHandle(resource));
 	}
 
 	public void setUsePreferenceTimeout(String cloneTimeout) {
