@@ -38,8 +38,6 @@ public class HgLogClient extends AbstractClient {
 
 	public static final String NOLIMIT = "999999999999";
 
-	public static final String VERSION_ZERO = "0000000000000000000000000000000000000000";
-
 	/**
 	 * Get the heads of the given repository
 	 * @param hgRoot The repository
@@ -64,7 +62,7 @@ public class HgLogClient extends AbstractClient {
 			return cs.getNode();
 		}
 
-		return VERSION_ZERO;
+		return Changeset.NULL_ID;
 	}
 
 	private static Changeset[] toArray(List<Changeset> list) {

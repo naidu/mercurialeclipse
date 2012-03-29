@@ -20,7 +20,6 @@ import java.util.Set;
 import org.eclipse.core.resources.IFile;
 
 import com.aragost.javahg.Changeset;
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -29,6 +28,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * Changeset backed by a JavaHg changeset
  */
 public class JHgChangeSet extends ChangeSet {
+
+	public final static String NULL_ID = Changeset.NULL_ID;
 
 	private final Changeset changeset;
 	private final HgRoot hgRoot;
@@ -112,14 +113,6 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getRevision()
-	 */
-	@Override
-	public HgRevision getRevision() {
-		return new HgRevision(changeset);
-	}
-
-	/**
 	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getDirection()
 	 */
 	@Override
@@ -159,18 +152,21 @@ public class JHgChangeSet extends ChangeSet {
 		return remote;
 	}
 
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParentRevision(int)
-	 */
-	@Override
-	public HgRevision getParentRevision(int i) {
-		switch (i) {
-		case 0:
-			return new HgRevision(changeset.getParent1());
-		case 1:
-			return new HgRevision(changeset.getParent2());
+	public String getParentNode(int i) {
+		Changeset cs;
+		if (i == 0) {
+			cs = changeset.getParent1();
+		} else if (i == 1) {
+			cs = changeset.getParent2();
+		} else {
+			return null;
 		}
-		return null;
+
+		if (cs == null) {
+			return null;
+		}
+
+		return cs.getNode();
 	}
 
 	/**

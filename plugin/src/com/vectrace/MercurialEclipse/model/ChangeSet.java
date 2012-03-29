@@ -31,7 +31,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
@@ -78,9 +77,20 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 		return 0;
 	}
 
+	/**
+	 * TODO: move to JHgChangeset?
+	 */
 	public abstract int getIndex();
 
+	/**
+	 * TODO: move to JHgChangeset?
+	 */
 	public abstract String getNode();
+
+	/**
+	 * TODO: move to JHgChangeset?
+	 */
+	public abstract String getNodeShort();
 
 	/**
 	 * Returns index:nodeId
@@ -287,10 +297,6 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 		return null;
 	}
 
-	public abstract String getNodeShort();
-
-	public abstract HgRevision getRevision();
-
 	/**
 	 * @return Whether the repository is currently on this revision
 	 */
@@ -339,13 +345,6 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 		return parents != null && 1 < parents.length && !StringUtils.isEmpty(parents[0])
 				&& !StringUtils.isEmpty(parents[1]);
 	}
-
-	/**
-	 * TODO: use Changeset
-	 * @deprecated
-	 */
-	@Deprecated
-	public abstract HgRevision getParentRevision(int i);
 
 	public abstract String getTagsStr();
 

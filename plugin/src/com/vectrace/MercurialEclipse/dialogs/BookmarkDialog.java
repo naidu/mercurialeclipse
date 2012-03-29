@@ -30,11 +30,11 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -219,7 +219,7 @@ public class BookmarkDialog extends TrayDialog {
 		try {
 			if (!modifyTab) {
 				// create new bookmark
-				String targetRev = HgRevision.TIP.getNode();
+				String targetRev = Tag.TIP;
 				if (csTable.getSelection() != null) {
 					targetRev = csTable.getSelection().getNode();
 				}

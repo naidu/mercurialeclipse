@@ -19,11 +19,11 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 
 public class SwitchToSynchronizeAction extends ExportPatchSynchronizeAction {
 
@@ -62,24 +62,24 @@ public class SwitchToSynchronizeAction extends ExportPatchSynchronizeAction {
 	 */
 	@Override
 	protected SynchronizeModelOperation getSubsciberOperation(
-			ISynchronizePageConfiguration configuration, IDiffElement[] elements, final ChangeSet cs) {
+			ISynchronizePageConfiguration configuration, IDiffElement[] elements, final JHgChangeSet cs) {
 		final boolean isParentMode = this.isParent;
 		return new SynchronizeModelOperation(configuration, elements) {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException,
 					InterruptedException {
 				if (cs != null && cs.getHgRoot() != null) {
 					UpdateHandler update = new UpdateHandler(false);
-					HgRevision rev;
+					String rev;
 
 					update.setCleanEnabled(true);
 					if (isParentMode) {
-						rev = cs.getParentRevision(0);
+						rev = cs.getParentNode(0);
 
-						if (rev == null && cs.getRevision().getRevision() == 0) {
+						if (rev == null && JHgChangeSet.NULL_ID.equals(cs.getNode())) {
 							return;
 						}
 					} else {
-						rev = cs.getRevision();
+						rev = cs.getNode();
 					}
 					if (rev == null) {
 						MercurialEclipsePlugin.logError(new IllegalStateException("Missing revision"));

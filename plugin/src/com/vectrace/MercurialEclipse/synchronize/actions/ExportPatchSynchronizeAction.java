@@ -22,8 +22,8 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.wizards.ExportPatchWizard;
 
 public class ExportPatchSynchronizeAction extends SynchronizeModelAction {
@@ -37,11 +37,11 @@ public class ExportPatchSynchronizeAction extends SynchronizeModelAction {
 
 	// operations
 
-	protected ChangeSet getChangeSet(IStructuredSelection selection) {
+	protected final static JHgChangeSet getChangeSet(IStructuredSelection selection) {
 		Object el;
-		if (selection.size() == 1 && (el = selection.getFirstElement()) instanceof ChangeSet
-				&& ((ChangeSet) el).getDirection() == Direction.OUTGOING) {
-			return (ChangeSet) el;
+		if (selection.size() == 1 && (el = selection.getFirstElement()) instanceof JHgChangeSet
+				&& ((JHgChangeSet) el).getDirection() == Direction.OUTGOING) {
+			return (JHgChangeSet) el;
 		}
 		return null;
 	}
@@ -67,7 +67,7 @@ public class ExportPatchSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	protected SynchronizeModelOperation getSubsciberOperation(
-			ISynchronizePageConfiguration configuration, IDiffElement[] elements, final ChangeSet cs) {
+			ISynchronizePageConfiguration configuration, IDiffElement[] elements, final JHgChangeSet cs) {
 
 		return new SynchronizeModelOperation(configuration, elements) {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException,

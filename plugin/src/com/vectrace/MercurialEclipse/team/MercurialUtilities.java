@@ -396,7 +396,7 @@ public final class MercurialUtilities {
 	 */
 	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
 		String[] parents = cs.getParents();
-		if(cs.getRevision().getRevision() == 0){
+		if(cs.getIndex() == 0){
 			return NullHgFile.make(cs.getHgRoot(), file);
 		} else if (parents.length == 0) {
 			throw new IllegalStateException();

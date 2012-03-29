@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 import com.aragost.javahg.commands.Branch;
-import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
 
 /**
@@ -100,7 +100,7 @@ public class BranchTable extends Composite {
 
 				if (branches != null && 0 <= index && index < branches.length) {
 					Branch branch = branches[index];
-					if (showTip || !HgRevision.TIP.getNode().equals(branch.getName())) {
+					if (showTip || !Tag.TIP.equals(branch.getName())) {
 						if ((parents != null && isParent(branch.getBranchTip().getRevision()))
 								|| BranchUtils.same(highlightBranch,
 										branch.getName())) {

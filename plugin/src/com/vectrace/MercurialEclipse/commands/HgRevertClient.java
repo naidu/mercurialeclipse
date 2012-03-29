@@ -19,16 +19,17 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.HgFeatures;
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.Messages;
 
 /**
+ * TODO: use JavaHg
+ *
  * @author Andrei
  */
 public class HgRevertClient extends AbstractClient {
@@ -43,7 +44,7 @@ public class HgRevertClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static Set<String> performRevert(IProgressMonitor monitor, HgRoot hgRoot,
-			List<IResource> resources, ChangeSet cs) throws HgException {
+			List<IResource> resources, JHgChangeSet cs) throws HgException {
 		Set<String> fileSet = new HashSet<String>();
 		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 		// if there are too many resources, do several calls
@@ -54,9 +55,10 @@ public class HgRevertClient extends AbstractClient {
 		}
 		IResource firstFile = resources.get(0);
 		if(size == 1 && cs != null && (cs.isMoved(firstFile) || cs.isRemoved(firstFile))) {
-				HgRevision parentRevision = cs.getParentRevision(0);
+			// TODO: move to HgRevert client and use JavaHg
+				String parentRevision = cs.getParentNode(0);
 				HgCommand command = createRevertCommand(hgRoot, "Reverting " + firstFile.getName());
-				command.addOptions("--rev", parentRevision.getNode());
+				command.addOptions("--rev", parentRevision);
 				command.addFiles(firstFile);
 				if(cs.isMoved(firstFile)) {
 					FileStatus status = cs.getStatus(firstFile);
