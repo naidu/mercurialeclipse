@@ -8,7 +8,6 @@ package com.vectrace.MercurialEclipse.compare;
 
 import java.util.Comparator;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 
@@ -18,7 +17,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
  */
 public class TagComparator implements Comparator<Tag> {
-	private static final String TIP = HgRevision.TIP.getNode();
+	private static final String TIP = Tag.TIP;
 
 	public int compare(Tag tag1, Tag tag2) {
 		/* "tip" must be always the first in the collection */

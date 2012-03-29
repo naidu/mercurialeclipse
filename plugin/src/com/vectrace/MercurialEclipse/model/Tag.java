@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.model;
 import org.eclipse.team.core.history.ITag;
 
 import com.aragost.javahg.Changeset;
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 
 /**
@@ -23,7 +22,7 @@ import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
  */
 public class Tag implements ITag, Comparable<Tag> {
 
-	private static final String TIP = HgRevision.TIP.getNode();
+	public static final String TIP = "tip";
 
 	private final com.aragost.javahg.commands.Tag tag;
 

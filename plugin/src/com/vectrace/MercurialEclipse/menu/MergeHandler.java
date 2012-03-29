@@ -60,7 +60,7 @@ public class MergeHandler extends RootHandler {
 		if (cs != null) {
 			if (!autoPickOtherHead) {
 
-				String csSummary = "    Changeset: " + cs.getRevision().toString().substring(0, 20)
+				String csSummary = "    Changeset: " + cs.getName()
 						+ "\n    User: " + cs.getAuthor() + "\n    Date: "
 						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
@@ -117,7 +117,7 @@ public class MergeHandler extends RootHandler {
 		boolean conflict = false;
 		try {
 			try {
-				result = HgMergeClient.merge(hgRoot, cs.getRevision().getNode(), forced);
+				result = HgMergeClient.merge(hgRoot, cs.getNode(), forced);
 			} catch (HgException e) {
 				if (HgMergeClient.isConflict(e)) {
 					conflict = true;

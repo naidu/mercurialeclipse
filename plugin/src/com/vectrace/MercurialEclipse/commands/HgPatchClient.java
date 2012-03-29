@@ -23,6 +23,9 @@ import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgPatchClient extends AbstractClient {
 
 	public static final String PATCH_EXTENSION = ".diff";
@@ -163,10 +166,10 @@ public class HgPatchClient extends AbstractClient {
 		HgCommand diffCommand = new HgCommand("diff", //$NON-NLS-1$
 				"Calculating diff between revisions", hgRoot, true);
 		if( secondEntry == null ){
-			diffCommand.addOptions("-c", "" + entry.getChangeSet().getRevision().getNode());
+			diffCommand.addOptions("-c", "" + entry.getChangeSet().getNode());
 		} else {
-			diffCommand.addOptions("-r", ""+entry.getChangeSet().getRevision().getNode());
-			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getRevision().getNode());
+			diffCommand.addOptions("-r", ""+entry.getChangeSet().getNode());
+			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getNode());
 		}
 		diffCommand.addOptions("--git");
 		return diffCommand.executeToString();

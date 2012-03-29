@@ -22,7 +22,6 @@ import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
@@ -35,7 +34,6 @@ public abstract class WorkingChangeSet extends ChangeSet {
 
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 
-	private final HgRevision revision;
 	private final String name;
 	private String comment;
 	Set<IFile> files;
@@ -43,7 +41,6 @@ public abstract class WorkingChangeSet extends ChangeSet {
 	public WorkingChangeSet(String name) {
 
 		this.name = name;
-		this.revision = new HgRevision(name, -1);
 
 		setComment("");
 		files = new LinkedHashSet<IFile>();
@@ -91,11 +88,6 @@ public abstract class WorkingChangeSet extends ChangeSet {
 		return comment;
 	}
 
-	@Override
-	public HgRevision getRevision() {
-		return revision;
-	}
-
 	protected String getIndexAndName() {
 		return -1 + ":" + name; //$NON-NLS-1$
 	}
@@ -124,15 +116,6 @@ public abstract class WorkingChangeSet extends ChangeSet {
 	@Override
 	@DoNotDisplayMe
 	public String[] getParents() {
-		return null;
-	}
-
-	/**
-	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getParentRevision(int)
-	 */
-	@Override
-	@DoNotDisplayMe
-	public HgRevision getParentRevision(int ordinal) {
 		return null;
 	}
 

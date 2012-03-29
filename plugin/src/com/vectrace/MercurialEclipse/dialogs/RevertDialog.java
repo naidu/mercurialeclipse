@@ -30,7 +30,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -43,7 +43,7 @@ public class RevertDialog extends TitleAreaDialog {
 	private List<IResource> selection;
 	private List<IResource> untrackedSelection;
 	private ChangesetTable csTable;
-	private ChangeSet changeset;
+	private JHgChangeSet changeset;
 
 	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
 	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
@@ -155,7 +155,7 @@ public class RevertDialog extends TitleAreaDialog {
 		return csTable;
 	}
 
-	public ChangeSet getChangeset() {
+	public JHgChangeSet getChangeset() {
 		return changeset;
 	}
 }

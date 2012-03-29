@@ -52,6 +52,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -60,7 +61,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
 	private IStructuredSelection selection;
-	private ChangeSet changesetToRevert;
+	private JHgChangeSet changesetToRevert;
 
 	public ActionRevert() {
 		super();
@@ -156,7 +157,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return ResourceUtils.getResource(selection.getFirstElement());
 	}
 
-	private static ChangeSet getParentChangeset(IResource resource) throws HgException {
+	private static JHgChangeSet getParentChangeset(IResource resource) throws HgException {
 		HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(resource);
 		Changeset[] parents = HgParentClient.getParents(hgRoot, resource);
 		ChangeSet cs = LocalChangesetCache.getInstance().get(hgRoot, parents[0]);
@@ -171,7 +172,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		Job job = new Job("Reverting to parent revision: " + ResourceUtils.getPath(resource)){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				ChangeSet cs;
+				JHgChangeSet cs;
 				try {
 					cs = getParentChangeset(resource);
 					revertToGivenVersion(resource, cs, monitor);
@@ -185,7 +186,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		job.schedule();
 	}
 
-	private static void revertToGivenVersion(IResource resource, ChangeSet cs, IProgressMonitor monitor) throws HgException {
+	private static void revertToGivenVersion(IResource resource, JHgChangeSet cs, IProgressMonitor monitor) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 		if(hgRoot == null) {
 			throw new HgException("Hg root not found for: " + resource);
@@ -222,7 +223,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			untracked = new ArrayList<IResource>();
 		}
 
-		final ChangeSet cs = chooser != null ? chooser.getChangeset() : null;
+		final JHgChangeSet cs = chooser != null ? chooser.getChangeset() : null;
 
 		new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
 			@Override
@@ -257,7 +258,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void doRevert(IProgressMonitor monitor, List<IResource> resources,
-			List<IResource> untracked, boolean cleanAfterMerge, ChangeSet cs) throws HgException {
+			List<IResource> untracked, boolean cleanAfterMerge, JHgChangeSet cs) throws HgException {
 
 		monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
 
@@ -445,7 +446,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	public void setChangesetToRevert(ChangeSet changesetToRevert) {
+	public void setChangesetToRevert(JHgChangeSet changesetToRevert) {
 		this.changesetToRevert = changesetToRevert;
 	}
 

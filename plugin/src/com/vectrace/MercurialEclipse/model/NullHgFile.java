@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
@@ -45,7 +44,7 @@ public class NullHgFile extends HgFile {
 
 	public static NullHgFile make(HgRoot root, IFile file) {
 		try {
-			return new NullHgFile(root, HgLogClient.VERSION_ZERO, root.getRelativePath(file));
+			return new NullHgFile(root, JHgChangeSet.NULL_ID, root.getRelativePath(file));
 		} catch (HgException e) {
 			// 00000..00 should always be a valid revision
 			throw new IllegalStateException();

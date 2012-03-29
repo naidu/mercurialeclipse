@@ -95,7 +95,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
 		@Override
 		public String getId() {
-			return block.getChangeSet().getRevision().toString();
+			return block.getChangeSet().getName();
 		}
 
 		@Override

@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan Chyssler
- *
+ * TODO use JavaHg
  */
 public final class HgBisectClient extends AbstractClient {
 
@@ -52,7 +52,7 @@ public final class HgBisectClient extends AbstractClient {
 
 	/**
 	 * Marks the specified changeset as a bad revision. If no changeset is specified
-	 * bisect will use teh "current" changeset.
+	 * bisect will use the "current" changeset.
 	 *
 	 * @param repository the repository to bisect
 	 * @param bad the changeset to mark as bad, or null for current
@@ -135,6 +135,6 @@ public final class HgBisectClient extends AbstractClient {
 	}
 
 	private static String getRevision(ChangeSet change) {
-		return Integer.toString(change.getRevision().getRevision());
+		return change.getNode();
 	}
 }

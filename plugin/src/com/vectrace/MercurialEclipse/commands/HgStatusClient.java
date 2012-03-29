@@ -151,10 +151,10 @@ public class HgStatusClient extends AbstractClient {
 
 		StatusCommand command = StatusCommandFlags.on(repo);
 
-		if (cs.getParentRevision(parentIndex) != null) {
-			command.rev(cs.getParentRevision(parentIndex).getNode(), cs.getRevision().getNode());
+		if (cs.getParentNode(parentIndex) != null) {
+			command.rev(cs.getParentNode(parentIndex), cs.getNode());
 		} else {
-			command.rev(cs.getRevision().getNode());
+			command.rev(cs.getNode());
 		}
 
 		StatusResult res = command.added().modified().deleted().removed().copies().execute();

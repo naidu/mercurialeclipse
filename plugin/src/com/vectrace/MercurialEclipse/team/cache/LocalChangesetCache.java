@@ -338,7 +338,7 @@ public final class LocalChangesetCache extends AbstractCache {
 				return changeSet;
 			}
 			String nodeId = HgLogClient.getCurrentChangesetId(root);
-			if (!HgLogClient.VERSION_ZERO.equals(nodeId)) {
+			if (!JHgChangeSet.NULL_ID.equals(nodeId)) {
 				JHgChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
 				if (lastSet != null) {
 					latestChangesets.put(root, lastSet);
@@ -362,7 +362,7 @@ public final class LocalChangesetCache extends AbstractCache {
 		if (nodeId == null || root == null) {
 			return;
 		}
-		if (!HgLogClient.VERSION_ZERO.equals(nodeId)) {
+		if (!JHgChangeSet.NULL_ID.equals(nodeId)) {
 			synchronized (latestChangesets) {
 				ChangeSet lastSet = latestChangesets.get(root);
 				if (lastSet != null && !nodeId.equals(lastSet.getNode())) {

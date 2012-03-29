@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -51,10 +50,6 @@ public class UpdateHandler extends RunnableHandler {
 	 */
 	public void setRevision(String revision) {
 		this.revision = revision;
-	}
-
-	public void setRevision(HgRevision rev) {
-		this.revision = rev.getNode();
 	}
 
 	/**
