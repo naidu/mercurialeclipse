@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -62,7 +63,7 @@ public class AddHandler extends MultipleResourcesHandler {
 		Map<HgRoot, Set<IPath>> untrackedFiles = new HashMap<HgRoot, Set<IPath>>();
 		Map<HgRoot, Set<IPath>> untrackedFolders = new HashMap<HgRoot, Set<IPath>>();
 		for (HgRoot hgRoot : byRoot.keySet()) {
-			String[] rawFiles = HgStatusClient.getUntrackedFiles(hgRoot);
+			SortedSet<String> rawFiles = HgStatusClient.getUntrackedFiles(hgRoot);
 			Set<IPath> files = new HashSet<IPath>();
 			Set<IPath> folders = new HashSet<IPath>();
 
@@ -119,7 +120,7 @@ public class AddHandler extends MultipleResourcesHandler {
 	/**
 	 * Only keep IFiles
 	 */
-	private List<IResource> keepFiles(Object[] objects) {
+	private static List<IResource> keepFiles(Object[] objects) {
 		List<IResource> files = new ArrayList<IResource>();
 		for (Object object : objects) {
 			if (object instanceof IFile) {

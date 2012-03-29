@@ -225,6 +225,7 @@ public class CommitFilesChooser extends Composite {
 				GridData.FILL_HORIZONTAL));
 	}
 
+	@SuppressWarnings("unused")
 	private void makeActions() {
 		getViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -343,20 +344,18 @@ public class CommitFilesChooser extends Composite {
 		List<IResource> resources = new ArrayList<IResource>();
 		// Future: get this from the status cache
 		// get the dirty files...
-		try {
-			Set<IPath> dirtyFilePaths = HgStatusClient
-					.getDirtyFilePaths(hgRoot);
-			for (IPath path : dirtyFilePaths) {
-				IFile fileHandle = ResourceUtils.getFileHandle(path);
-				// XXX this would NOT add files which are not under Eclipse
-				// control (outside of a project)
-				if (fileHandle != null) {
-					resources.add(fileHandle);
-				}
+
+		Set<IPath> dirtyFilePaths = HgStatusClient
+				.getDirtyFilePaths(hgRoot);
+		for (IPath path : dirtyFilePaths) {
+			IFile fileHandle = ResourceUtils.getFileHandle(path);
+			// XXX this would NOT add files which are not under Eclipse
+			// control (outside of a project)
+			if (fileHandle != null) {
+				resources.add(fileHandle);
 			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
 		}
+
 		setResources(resources);
 	}
 

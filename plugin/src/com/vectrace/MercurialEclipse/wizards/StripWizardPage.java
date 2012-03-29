@@ -106,15 +106,11 @@ public class StripWizardPage extends HgWizardPage {
 	@Override
 	public void setPageComplete(boolean complete) {
 		if(complete){
-			try {
-				setErrorMessage(null);
-				if(HgStatusClient.isDirty(hgRoot) && !forceCheckBox.getSelection()){
-					setErrorMessage("Outstanding uncommitted changes! Strip is not possible.");
-					super.setPageComplete(false);
-					return;
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+			setErrorMessage(null);
+			if(HgStatusClient.isDirty(hgRoot) && !forceCheckBox.getSelection()){
+				setErrorMessage("Outstanding uncommitted changes! Strip is not possible.");
+				super.setPageComplete(false);
+				return;
 			}
 		}
 		super.setPageComplete(complete);

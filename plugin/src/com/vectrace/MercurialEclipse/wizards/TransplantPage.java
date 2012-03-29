@@ -115,14 +115,10 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	@Override
 	public void setPageComplete(boolean complete) {
 		if(complete){
-			try {
-				if(HgStatusClient.isDirty(getHgRoot())){
-					setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
-					super.setPageComplete(false);
-					return;
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+			if(HgStatusClient.isDirty(getHgRoot())){
+				setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
+				super.setPageComplete(false);
+				return;
 			}
 		}
 		super.setPageComplete(complete);

@@ -96,7 +96,7 @@ public abstract class AbstractClient {
 		return null;
 	}
 
-	static List<File> toFiles(List<IResource> files) {
+	protected static List<File> toFiles(List<IResource> files) {
 		List<File> toFiles = new ArrayList<File>();
 		for (IResource r : files) {
 			IPath path = ResourceUtils.getPath(r);
@@ -105,6 +105,12 @@ public abstract class AbstractClient {
 			}
 		}
 		return toFiles;
+	}
+
+	protected static File[] toFileArray(List<IResource> files) {
+		List<File> list = toFiles(files);
+
+		return list.toArray(new File[list.size()]);
 	}
 
 	/**

@@ -150,19 +150,15 @@ public class BackoutWizardPage extends HgWizardPage {
 		mergeCheckBox.setEnabled(backoutRevision != null && !backoutRevision.isCurrent());
 		setErrorMessage(null);
 
-		try {
-			if (backoutRevision == null) {
-				// Do nothing
-			} else if (messageTextField.getText().length() == 0) {
-				setErrorMessage("Please enter a commit message");
-			} else if(HgStatusClient.isDirty(hgRoot)){
-				setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
-			} else {
-				// All ok
-				return true;
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+		if (backoutRevision == null) {
+			// Do nothing
+		} else if (messageTextField.getText().length() == 0) {
+			setErrorMessage("Please enter a commit message");
+		} else if(HgStatusClient.isDirty(hgRoot)){
+			setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
+		} else {
+			// All ok
+			return true;
 		}
 
 		return false;

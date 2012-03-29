@@ -29,7 +29,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -47,7 +46,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
@@ -56,14 +54,15 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
+import com.aragost.javahg.commands.StatusLine;
 import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgIdentifyClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -772,16 +771,15 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			// we have to iterate over repos instead of projects.getRoot(), because there may be a single project with lot of subrepos inside
 			for(HgRoot repo : repos){
 				// get status and branch for hg root
-				String output = HgStatusClient.getStatusWithoutIgnored(repo);
-				String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
+				List<StatusLine> output = HgStatusClient.getStatusWithoutIgnored(repo);
+				String[] mergeStatus = HgIdentifyClient.getIdMergeAndBranch(repo);
 				String currentChangeSetId = mergeStatus[0];
 				LocalChangesetCache.getInstance().checkLatestChangeset(repo, currentChangeSetId);
 				String mergeNode = mergeStatus[1];
 				String branch = mergeStatus[2];
 
 				// update status of all files in the root that are also contained in projects inside pathMap
-				String[] lines = NEWLINE.split(output);
-				changed.addAll(parseStatus(repo, pathMap, lines, false));
+				changed.addAll(parseStatus(repo, pathMap, output, false));
 
 				MercurialTeamProvider.setCurrentBranch(branch, repo);
 
@@ -867,17 +865,16 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			for (HgRoot repo : repos) {
 
 				// Call hg to get the status of the repository
-				String output = HgStatusClient.getStatusWithoutIgnored(repo, res);
+				List<StatusLine> output = HgStatusClient.getStatusWithoutIgnored(repo, res);
 				monitor.worked(1);
 				if(monitor.isCanceled()){
 					return;
 				}
 
 				// parse the hg result
-				String[] lines = NEWLINE.split(output);
 				Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 				pathMap.put(project, projectLocation);
-				changed.addAll(parseStatus(repo, pathMap, lines, !(res instanceof IProject)));
+				changed.addAll(parseStatus(repo, pathMap, output, !(res instanceof IProject)));
 				if( !(res instanceof IProject) && !changed.contains(res)){
 					// fix for issue 10155: No status update after reverting changes on .hgignore
 					changed.add(res);
@@ -890,7 +887,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refresh the status of the HgRoot we are processing
 				try {
 					if(res instanceof IProject || repo != root){
-						String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(repo);
+						String[] mergeStatus = HgIdentifyClient.getIdMergeAndBranch(repo);
 						String id = mergeStatus[0];
 						LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
 						String mergeNode = mergeStatus[1];
@@ -1016,8 +1013,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return changed;
 	}
 
-	private static final Pattern NEWLINE = Pattern.compile("\n");
-
 	/**
 	 * @param lines must contain file paths as paths relative to the hg root
 	 * @param pathMap multiple projects (from this hg root) as input
@@ -1027,7 +1022,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 *
 	 * @return set with resources to refresh
 	 */
-	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines,
+	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, List<StatusLine> lines,
 			boolean propagateAllStates) {
 		long start = 0;
 		if(debug){
@@ -1036,7 +1031,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		// we need the project for performance reasons - gotta hand it to
 		// addToProjectResources
 		Set<IResource> changed = new HashSet<IResource>();
-		List<String> strangeStates = new ArrayList<String>();
 
 		// Make values in the path map canonical
 		try {
@@ -1048,19 +1042,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			MercurialEclipsePlugin.logError("Unexpected error - paths should be canonicalizable", e);
 		}
 
-		for (String line : lines) {
-			if(line.length() <= 2){
-				strangeStates.add(line);
-				continue;
-			}
+		for (StatusLine line : lines) {
+			int bit = getBit(line.getType());
 
-			char space = line.charAt(1);
-			int bit = getBit(line.charAt(0));
-			if(bit == BIT_IMPOSSIBLE || space != ' '){
-				strangeStates.add(line);
-				continue;
-			}
-			String localName = line.substring(2);
+			String localName = line.getFileName();
 			IResource member = findMember(pathMap, root, localName, bit == BIT_REMOVED || bit == BIT_MISSING);
 
 			// doesn't belong to our project (can happen if root is above project level)
@@ -1081,56 +1066,10 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				changed.addAll(setStatusToAncestors(member, bitSet, propagateAllStates));
 			}
 		}
-		if(debug && strangeStates.size() > 0){
-			IStatus [] states = new IStatus[strangeStates.size()];
-			for (int i = 0; i < states.length; i++) {
-				states[i] = MercurialEclipsePlugin.createStatus(strangeStates.get(i), IStatus.OK, IStatus.INFO, null);
-			}
-			String message = "Strange status received from hg";
-			MultiStatus st = new MultiStatus(MercurialEclipsePlugin.ID, IStatus.OK, states,
-					message, new Exception(message));
-			MercurialEclipsePlugin.getDefault().getLog().log(st);
-		}
 		if(debug){
 			System.out.println("Parse status took: " + (System.currentTimeMillis() - start));
 		}
 		return changed;
-	}
-
-	/**
-	 * Parse status output. Future: merge with above method?
-	 *
-	 * @param status
-	 *            Status output
-	 * @param hgRoot
-	 *            The root to use for the {@link FileStatus}
-	 * @return A non-null list.
-	 */
-	public static List<FileStatus> parseStatus(String status, HgRoot hgRoot) {
-		List<FileStatus> list = new ArrayList<FileStatus>();
-
-		for (String line : NEWLINE.split(status)) {
-			if (line.length() <= 2 || line.charAt(1) != ' ') {
-				continue;
-			}
-
-			char c = line.charAt(0);
-			FileStatus.Action action;
-
-			if (c == CHAR_ADDED) {
-				action = FileStatus.Action.ADDED;
-			} else if (c == CHAR_REMOVED) {
-				action = FileStatus.Action.REMOVED;
-			} else if (c == CHAR_MODIFIED) {
-				action = FileStatus.Action.MODIFIED;
-			} else {
-				continue;
-			}
-
-			list.add(new FileStatus(action, line.substring(2), hgRoot));
-		}
-
-		return list;
 	}
 
 	/**
@@ -1265,23 +1204,25 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return true;
 	}
 
-	private static int getBit(char status) {
+	private static int getBit(StatusLine.Type status) {
 		switch (status) {
-		case CHAR_MISSING:
+		case MISSING:
 			return BIT_MISSING;
-		case CHAR_REMOVED:
+		case REMOVED:
 			return BIT_REMOVED;
-		case CHAR_IGNORED:
+		case IGNORED:
 			return BIT_IGNORE;
-		case CHAR_CLEAN:
+		case CLEAN:
 			return BIT_CLEAN;
-		case CHAR_UNKNOWN:
+		case UNKNOWN:
 			return BIT_UNKNOWN;
-		case CHAR_ADDED:
+		case ADDED:
 			return BIT_ADDED;
-		case CHAR_MODIFIED:
+		case MODIFIED:
 			return BIT_MODIFIED;
 		default:
+			assert false;
+			MercurialEclipsePlugin.logWarning("Unexpected status bit returned by JavaHg", null);
 			return BIT_IMPOSSIBLE;
 		}
 	}
@@ -1368,7 +1309,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private Set<IResource> updateStatusInRoot(IProject project, HgRoot root,
-			Set<IResource> resources) throws HgException {
+			Set<IResource> resources) {
 		int batchSize = getStatusBatchSize();
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
@@ -1398,7 +1339,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	}
 
 	private void updateStatusBatched(IProject project, HgRoot root, List<IResource> currentBatch,
-			Set<IResource> changed) throws HgException {
+			Set<IResource> changed) {
 
 		// fix for issue #19998 - call possibly blocking code outside the lock on statusUpdateLock
 		Assert.isNotNull(root.getResource());
@@ -1424,14 +1365,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 					setStatusToAncestors(curr, CLEAN, true);
 				}
 			}
-			String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-			String[] lines = NEWLINE.split(output);
+			List<StatusLine> output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
+
 			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 			IPath projectLocation = project.getLocation();
 			if(projectLocation != null) {
 				pathMap.put(project, projectLocation);
 			}
-			changed.addAll(parseStatus(root, pathMap, lines, true));
+			changed.addAll(parseStatus(root, pathMap, output, true));
 		}
 	}
 
