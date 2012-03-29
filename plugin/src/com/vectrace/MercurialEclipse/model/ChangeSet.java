@@ -20,7 +20,6 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -47,8 +46,6 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
 @SuppressWarnings("restriction")
 public abstract class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSet> {
 
-	protected static final List<FileStatus> EMPTY_STATUS = Collections
-			.unmodifiableList(new ArrayList<FileStatus>());
 	private final IFile[] EMPTY_FILES = new IFile[0];
 
 	private static final SimpleDateFormat DISPLAY_DATE_FORMAT = new SimpleDateFormat(

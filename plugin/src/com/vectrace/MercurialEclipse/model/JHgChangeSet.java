@@ -11,10 +11,8 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -22,13 +20,9 @@ import java.util.Set;
 import org.eclipse.core.resources.IFile;
 
 import com.aragost.javahg.Changeset;
-import com.aragost.javahg.Repository;
-import com.aragost.javahg.commands.StatusCommand;
-import com.aragost.javahg.commands.StatusResult;
-import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
-import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -244,51 +238,14 @@ public class JHgChangeSet extends ChangeSet {
 			return changedFiles;
 		}
 
-		List<FileStatus> l = new ArrayList<FileStatus>();
-		Repository repo = CommandServerCache.getInstance().get(getHgRoot(), getBundleFile());
-
-		StatusCommand command = StatusCommandFlags.on(repo);
-
-		if (getParentRevision(index) != null) {
-			command.rev(getParentRevision(index).getNode(), getRevision().getNode());
-		} else {
-			command.rev(getRevision().getNode());
-		}
-
-		StatusResult res = command.added().modified().deleted().removed().copies().execute();
-
-		for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
-			l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
-		}
-
-		for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
-			l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
-		}
-
-		for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
-			l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
-		}
-
-		for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
-			String s = it.next();
-			String source = res.getCopied().get(s);
-			l.add(new FileStatus(
-					res.getRemoved().contains(source) ? FileStatus.Action.MOVED
-							: FileStatus.Action.COPIED, s, source, hgRoot));
-		}
-
-		if (l.isEmpty()) {
-			l = EMPTY_STATUS;
-		} else {
-			l = Collections.unmodifiableList(l);
-		}
+		List<FileStatus> status = HgStatusClient.getStatus(this, index);
 
 		// Cache the first parent only
 		if (index == 0) {
-			changedFiles = l;
+			changedFiles = status;
 		}
 
-		return l;
+		return status;
 	}
 
 	/**

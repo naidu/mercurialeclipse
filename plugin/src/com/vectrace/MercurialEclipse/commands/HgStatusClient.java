@@ -14,7 +14,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -24,17 +27,27 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
+import com.aragost.javahg.Repository;
 import com.aragost.javahg.commands.StatusCommand;
 import com.aragost.javahg.commands.StatusLine;
+import com.aragost.javahg.commands.StatusResult;
 import com.aragost.javahg.commands.flags.StatusCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Get file status
  */
 public class HgStatusClient extends AbstractClient {
+
+	protected static final List<FileStatus> EMPTY_STATUS = Collections
+			.unmodifiableList(new ArrayList<FileStatus>());
+
+	// operations
 
 	public static List<StatusLine> getStatusWithoutIgnored(HgRoot root, IResource res) {
 		StatusCommand command = StatusCommandFlags.on(root.getRepository()).modified().added()
@@ -123,5 +136,55 @@ public class HgStatusClient extends AbstractClient {
 			resources.add(path);
 		}
 		return resources;
+	}
+
+	/**
+	 * Return status of a changeset relative to its parent using flags -mar including file copies
+	 *
+	 * @param cs The changeset
+	 * @param parentIndex The parent index to use
+	 */
+	public static List<FileStatus> getStatus(JHgChangeSet cs, int parentIndex) {
+		HgRoot hgRoot = cs.getHgRoot();
+		List<FileStatus> l = new ArrayList<FileStatus>();
+		Repository repo = CommandServerCache.getInstance().get(hgRoot, cs.getBundleFile());
+
+		StatusCommand command = StatusCommandFlags.on(repo);
+
+		if (cs.getParentRevision(parentIndex) != null) {
+			command.rev(cs.getParentRevision(parentIndex).getNode(), cs.getRevision().getNode());
+		} else {
+			command.rev(cs.getRevision().getNode());
+		}
+
+		StatusResult res = command.added().modified().deleted().removed().copies().execute();
+
+		for (Iterator<String> it = res.getModified().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.MODIFIED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getAdded().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.ADDED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getRemoved().iterator(); it.hasNext();) {
+			l.add(new FileStatus(FileStatus.Action.REMOVED, it.next(), hgRoot));
+		}
+
+		for (Iterator<String> it = res.getCopied().keySet().iterator(); it.hasNext();) {
+			String s = it.next();
+			String source = res.getCopied().get(s);
+			l.add(new FileStatus(
+					res.getRemoved().contains(source) ? FileStatus.Action.MOVED
+							: FileStatus.Action.COPIED, s, source, hgRoot));
+		}
+
+		if (l.isEmpty()) {
+			l = EMPTY_STATUS;
+		} else {
+			l = Collections.unmodifiableList(l);
+		}
+
+		return l;
 	}
 }
