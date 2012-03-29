@@ -22,9 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -67,14 +65,10 @@ public class TransplantOptionsPage extends HgWizardPage {
 	@Override
 	public void setPageComplete(boolean complete) {
 		if(complete){
-			try {
-				if(HgStatusClient.isDirty(hgRoot)){
-					setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
-					super.setPageComplete(false);
-					return;
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+			if(HgStatusClient.isDirty(hgRoot)){
+				setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
+				super.setPageComplete(false);
+				return;
 			}
 		}
 		super.setPageComplete(complete);

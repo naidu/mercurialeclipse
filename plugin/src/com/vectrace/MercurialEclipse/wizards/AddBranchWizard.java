@@ -62,8 +62,7 @@ public class AddBranchWizard extends HgWizard {
 			int workSize = commitEnabled ? 3 : 2;
 			monitor.beginTask(Messages.getString("AddBranchWizard.AddBranchOperation.taskName"), workSize); //$NON-NLS-1$
 			try {
-				String[] dirtyFiles = HgStatusClient.getDirtyFiles(hgRoot);
-				if(dirtyFiles.length > 0){
+				if (HgStatusClient.isDirty(hgRoot)){
 					String message = "There are uncommitted changes in the repository.\n";
 					message += "If you continue and commit, the changes will go into the new branch!\n";
 					message += "Continue with creating the branch?\n";

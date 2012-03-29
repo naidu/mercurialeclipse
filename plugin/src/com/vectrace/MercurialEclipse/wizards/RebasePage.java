@@ -77,14 +77,10 @@ public class RebasePage extends HgWizardPage {
 	@Override
 	public void setPageComplete(boolean complete) {
 		if(complete){
-			try {
-				if(HgStatusClient.isDirty(hgRoot) && !HgRebaseClient.isRebasing(hgRoot)){
-					setErrorMessage("Outstanding uncommitted changes! Rebase is not possible.");
-					super.setPageComplete(false);
-					return;
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+			if(HgStatusClient.isDirty(hgRoot) && !HgRebaseClient.isRebasing(hgRoot)){
+				setErrorMessage("Outstanding uncommitted changes! Rebase is not possible.");
+				super.setPageComplete(false);
+				return;
 			}
 		}
 		super.setPageComplete(complete);

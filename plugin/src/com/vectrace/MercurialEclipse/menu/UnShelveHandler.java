@@ -38,22 +38,18 @@ public class UnShelveHandler extends RootHandler {
 		final UnshelveJob job = new UnshelveJob(Messages.getString("UnShelveHandler.Unshelving"),
 				hgRoot);
 
-		try {
-			if (HgStatusClient.isDirty(hgRoot)) {
-				getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						if (MessageDialog.openQuestion(getShell(),
-								"Outstanding uncommitted changes!",
-								"There are outstanding uncommitted changes. Force unshelve?")) {
-							job.setForce(true);
-							job.schedule();
-						}
+		if (HgStatusClient.isDirty(hgRoot)) {
+			getShell().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					if (MessageDialog.openQuestion(getShell(),
+							"Outstanding uncommitted changes!",
+							"There are outstanding uncommitted changes. Force unshelve?")) {
+						job.setForce(true);
+						job.schedule();
 					}
-				});
-				return;
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+				}
+			});
+			return;
 		}
 
 		job.schedule();

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -33,14 +32,7 @@ public class HgAddClient extends AbstractClient {
 				monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + hgRoot.getName()); //$NON-NLS-1$
 			}
 
-			List<IResource> res = mapEntry.getValue();
-			File[] files = new File[res.size()];
-
-			for (int i = 0; i < files.length; i++) {
-				files[i] =ResourceUtils.getFileHandle(res.get(i));
-			}
-
-			AddCommandFlags.on(hgRoot.getRepository()).execute(files);
+			AddCommandFlags.on(hgRoot.getRepository()).execute(toFileArray(mapEntry.getValue()));
 		}
 	}
 }

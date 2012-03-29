@@ -168,21 +168,14 @@ public class PullPage extends PushPullPage {
 			public void widgetSelected(SelectionEvent e) {
 				commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
 				if (mergeCheckBox.getSelection()) {
-					try {
-						if (HgStatusClient.isDirty(getHgRoot())) {
-							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
-							setPageComplete(false);
-						} else {
-							setErrorMessage(null);
-							setPageComplete(true);
-							// you can only rebase OR merge, not both
-							rebaseCheckBox.setSelection(false);
-						}
-					} catch (HgException e1) {
-						setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
-						mergeCheckBox.setSelection(false);
-						mergeCheckBox.setEnabled(false);
+					if (HgStatusClient.isDirty(getHgRoot())) {
+						setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
+						setPageComplete(false);
+					} else {
+						setErrorMessage(null);
 						setPageComplete(true);
+						// you can only rebase OR merge, not both
+						rebaseCheckBox.setSelection(false);
 					}
 				} else {
 					setErrorMessage(null);

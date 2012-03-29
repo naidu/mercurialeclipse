@@ -11,7 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
-import java.util.TreeSet;
+import java.util.SortedSet;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
@@ -96,8 +96,8 @@ public final class CompareUtils {
 		if(resource instanceof IContainer) {
 			String inPattern = AbstractClient.getHgResourceSearchPattern(root,
 					root.getRelativePath(resource), false);
-			String[] status = HgStatusClient.getStatus(root, changesetId, null, "-mardu", inPattern, null);
-			TreeSet<String> filter = HgStatusClient.removeStatusIndicator(status);
+			SortedSet<String> filter = HgStatusClient.getFiles(HgStatusClient.getStatusMARDU(root,
+					changesetId, inPattern));
 
 			left = new HgWorkspaceFolder(root, (IContainer)resource, filter);
 			right = HgLocateClient.getHgResources(root, root.getRelativePath(resource), false, changeset, filter);
