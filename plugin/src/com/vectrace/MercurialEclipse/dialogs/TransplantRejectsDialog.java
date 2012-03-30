@@ -22,7 +22,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRevertClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -60,9 +59,8 @@ public class TransplantRejectsDialog extends RejectsDialog {
 
 				try {
 					HgRevertClient.performRevertAll(new NullProgressMonitor(), hgRoot);
+				} finally {
 					new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
 				}
 
 				display.syncExec(new Runnable() {

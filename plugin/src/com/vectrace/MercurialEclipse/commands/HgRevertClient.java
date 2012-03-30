@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -18,18 +20,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.vectrace.MercurialEclipse.HgFeatures;
+import com.aragost.javahg.commands.RevertCommand;
+import com.aragost.javahg.commands.flags.RevertCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.Messages;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * TODO: use JavaHg
- *
  * @author Andrei
  */
 public class HgRevertClient extends AbstractClient {
@@ -43,79 +44,50 @@ public class HgRevertClient extends AbstractClient {
 	 * but may return empty list. The elements of the set are absolute file paths.
 	 * @throws HgException
 	 */
-	public static Set<String> performRevert(IProgressMonitor monitor, HgRoot hgRoot,
+	public static Collection<IResource> performRevert(IProgressMonitor monitor, HgRoot hgRoot,
 			List<IResource> resources, JHgChangeSet cs) throws HgException {
-		Set<String> fileSet = new HashSet<String>();
+		Set<IResource> fileSet = new HashSet<IResource>();
 		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-		// if there are too many resources, do several calls
-		int size = resources.size();
+
 		MercurialUtilities.setOfferAutoCommitMerge(true);
-		if(size == 0) {
-			return fileSet;
+		if(resources.isEmpty()) {
+			return resources;
 		}
+
+		String node = cs == null ? "." : cs.getNode();
+		RevertCommand command = RevertCommandFlags.on(hgRoot.getRepository()).noBackup().rev(node);
 		IResource firstFile = resources.get(0);
-		if(size == 1 && cs != null && (cs.isMoved(firstFile) || cs.isRemoved(firstFile))) {
-			// TODO: move to HgRevert client and use JavaHg
-				String parentRevision = cs.getParentNode(0);
-				HgCommand command = createRevertCommand(hgRoot, "Reverting " + firstFile.getName());
-				command.addOptions("--rev", parentRevision);
-				command.addFiles(firstFile);
-				if(cs.isMoved(firstFile)) {
-					FileStatus status = cs.getStatus(firstFile);
-					if(status != null) {
-						IPath path = status.getAbsoluteCopySourcePath();
-						command.addFile(path.toFile());
-					}
+
+		// TODO: need to handle reverting to renamed revisions generally
+		if (resources.size() == 1 && cs != null && (cs.isMoved(firstFile) || cs.isRemoved(firstFile))) {
+			// String parentRevision = cs.getParentNode(0);
+
+			if (cs.isMoved(firstFile)) {
+				FileStatus status = cs.getStatus(firstFile);
+				if (status != null) {
+					IPath path = status.getAbsoluteCopySourcePath();
+					File base = path.toFile();
+
+					command.rev(node).execute(ResourceUtils.getFileHandle(firstFile), base);
+
+					fileSet.add(firstFile);
+					fileSet.add(ResourceUtils.convert(base));
+					monitor.worked(1);
+					return fileSet;
 				}
-				command.executeToString();
-				fileSet.addAll(command.getAffectedFiles());
-		} else {
-			// if there are too many resources, do several calls
-			// From 1.8 hg can do it in one call
-			if(!HgFeatures.LISTFILE.isEnabled()) {
-				@SuppressWarnings("deprecation")
-				int delta = AbstractShellCommand.MAX_PARAMS - 1;
-				for (int i = 0; i < size && !monitor.isCanceled(); i += delta) {
-					// the last argument will be replaced with a path
-					HgCommand command = createRevertCommand(hgRoot, "Reverting resource " + i + " of " + size);
-					if (cs != null) {
-						command.addOptions("--rev", cs.getNode());
-					}
-					command.addFiles(resources.subList(i, Math.min(i + delta, size)));
-					command.executeToString();
-					fileSet.addAll(command.getAffectedFiles());
-				}
-			} else {
-				// the last argument will be replaced with a path
-				HgCommand command = createRevertCommand(hgRoot, "Reverting " + size + " resources");
-				if (cs != null) {
-					command.addOptions("--rev", cs.getNode());
-				}
-				command.addFiles(resources);
-				command.executeToString();
-				fileSet.addAll(command.getAffectedFiles());
 			}
 		}
+
+		command.rev(node).execute(toFileArray(resources));
+		fileSet.addAll(resources);
 		monitor.worked(1);
 
 		return fileSet;
 	}
 
-	public static void performRevertAll(IProgressMonitor monitor, HgRoot hgRoot) throws HgException {
-		monitor.subTask(Messages.getString("ActionRevert.reverting") + " " + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-
-		HgCommand command = createRevertCommand(hgRoot, "Reverting all resources");
-		command.addOptions("--all");
-		command.executeToString();
+	public static void performRevertAll(IProgressMonitor monitor, HgRoot hgRoot) {
+		RevertCommandFlags.on(hgRoot.getRepository()).noBackup().all().execute();
 
 		MercurialUtilities.setOfferAutoCommitMerge(true);
-	}
-
-	private static HgCommand createRevertCommand(HgRoot hgRoot, String message) {
-		HgCommand command = new HgCommand("revert", message, hgRoot, true); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-		command.addOptions("--no-backup");
-		return command;
 	}
 }
