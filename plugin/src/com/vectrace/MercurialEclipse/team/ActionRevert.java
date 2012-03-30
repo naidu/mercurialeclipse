@@ -15,6 +15,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
@@ -193,12 +193,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}
 		List<IResource> list = new ArrayList<IResource>();
 		list.add(resource);
-		Set<String> reverted = HgRevertClient.performRevert(monitor, hgRoot, list, cs);
-		for (String path : reverted) {
-			IFile fileHandle = ResourceUtils.getFileHandle(new Path(path));
-			if(fileHandle != null) {
-				refreshResource(monitor, MercurialStatusCache.getInstance(), fileHandle);
-			}
+		Collection<IResource> reverted = HgRevertClient.performRevert(monitor, hgRoot, list, cs);
+		for (IResource res : reverted) {
+			refreshResource(monitor, MercurialStatusCache.getInstance(), res);
 		}
 	}
 

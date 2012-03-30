@@ -177,10 +177,6 @@ IWorkbenchPreferencePage {
 				PREF_PUSH_NEW_BRANCH,
 				Messages.getString("GeneralPreferencePage.pushNewBranches"), getFieldEditorParent());
 		addField(editor);
-		if(!HgFeatures.NEW_BRANCH.isEnabled()) {
-			editor.setEnabled(false, getFieldEditorParent());
-			editor.setLabelText(editor.getLabelText() + " " + Messages.getString("GeneralPreferencePage.optionDisabled"));
-		}
 
 		addField(new LabelDecoratorRadioGroupFieldEditor(
 				LABELDECORATOR_LOGIC,

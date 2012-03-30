@@ -189,22 +189,17 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 	 * @return false if user cancelled operation or an error occured
 	 */
 	private boolean clearAndContinue() {
-		try {
-			if (HgStatusClient.isDirty(hgRoot)) {
-				boolean clearAndContinue = cleanUpdateRequested
-						|| MessageDialog.openConfirm(getShell(), "Uncommited changes",
-						Messages.getString("RevertDialog.uncommitedChanges"));
-				if (clearAndContinue) {
-					HgRevertClient.performRevertAll(new NullProgressMonitor(), hgRoot);
-					return true;
-				}
-				return false;
+		if (HgStatusClient.isDirty(hgRoot)) {
+			boolean clearAndContinue = cleanUpdateRequested
+					|| MessageDialog.openConfirm(getShell(), "Uncommited changes",
+					Messages.getString("RevertDialog.uncommitedChanges"));
+			if (clearAndContinue) {
+				HgRevertClient.performRevertAll(new NullProgressMonitor(), hgRoot);
+				return true;
 			}
-			return true;	// no changes found
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
 			return false;
 		}
+		return true;	// no changes found
 	}
 
 	/**

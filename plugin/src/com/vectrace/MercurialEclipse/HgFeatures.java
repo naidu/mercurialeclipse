@@ -19,8 +19,6 @@ import java.util.Comparator;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.osgi.framework.Version;
 
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-
 /**
  * Features of the underlined mercurial executable. HgFeatures are version dependent and so will be
  * enabled/disabled based on the currently used mercurial binaries.
@@ -33,9 +31,13 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public enum HgFeatures {
 
-	BRANCH (new Version(1,5,0), "--branch", true),
-	NEW_BRANCH (new Version(1,6,0), "--new-branch", false, MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH),
+	/**
+	 * @deprecated
+	 */
 	LISTFILE (new Version(1,8,0), "listfile:", false),
+	/**
+	 * @deprecated
+	 */
 	INSECURE (new Version(1,7,5), "--insecure", false);
 
 	private final Version required;
