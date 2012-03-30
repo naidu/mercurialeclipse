@@ -345,6 +345,7 @@ public class ChangesetTable extends Composite {
 			return fetched;
 		}
 
+		@SuppressWarnings("static-method")
 		public boolean isFullyLoaded() {
 			return true;
 		}

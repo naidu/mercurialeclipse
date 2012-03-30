@@ -24,7 +24,7 @@ public class ImportPatchHandler extends RootHandler {
 		openWizard(hgRoot, getShell());
 	}
 
-	public void openWizard(final HgRoot hgRoot, Shell shell) {
+	private static void openWizard(final HgRoot hgRoot, Shell shell) {
 		ImportPatchWizard wizard = new ImportPatchWizard(hgRoot);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 

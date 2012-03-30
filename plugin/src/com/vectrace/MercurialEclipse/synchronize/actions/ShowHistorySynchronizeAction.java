@@ -93,7 +93,7 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 		return updateSelection;
 	}
 
-	private boolean isSupported(Object object) {
+	private static boolean isSupported(Object object) {
 		IResource resource = ResourceUtils.getResource(object);
 		if(resource != null){
 			return true;
@@ -102,7 +102,7 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 						.getDirection());
 	}
 
-	private boolean isMatching(Direction d){
+	private static boolean isMatching(Direction d){
 		return d == Direction.OUTGOING;
 	}
 }

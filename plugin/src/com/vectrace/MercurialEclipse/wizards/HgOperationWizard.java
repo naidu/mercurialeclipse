@@ -70,7 +70,7 @@ public abstract class HgOperationWizard extends HgWizard {
 	 *
 	 * @return Whether the wizard should close
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "static-method", "unused" })
 	protected boolean operationSucceeded(HgOperation operation) throws HgException {
 		return true;
 	}

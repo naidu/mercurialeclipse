@@ -16,7 +16,7 @@ import junit.framework.TestCase;
  * @author Zsolt Koppany <zsolt.koppany@intland.com>
  */
 public class StringUtilsTests extends TestCase {
-	public void testRemoveLineBreaks() {
+	public static void testRemoveLineBreaks() {
 		assertEquals("", StringUtils.removeLineBreaks("\r\n"));
 		assertEquals("", StringUtils.removeLineBreaks("  \r\n  "));
 		assertEquals("", StringUtils.removeLineBreaks("\r\n  "));

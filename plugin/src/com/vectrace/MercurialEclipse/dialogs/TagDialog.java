@@ -177,7 +177,7 @@ public class TagDialog extends Dialog {
 		return item;
 	}
 
-	protected final TabItem createOptionsTabItem(TabFolder folder) {
+	protected static final TabItem createOptionsTabItem(TabFolder folder) {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.options")); //$NON-NLS-1$
 

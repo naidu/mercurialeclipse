@@ -30,7 +30,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
-import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
@@ -210,10 +209,6 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.verifyServerCertificate"), //$NON-NLS-1$
 				getFieldEditorParent());
 		addField(cert_editor);
-		if(!HgFeatures.INSECURE.isEnabled()) {
-			cert_editor.setEnabled(false, getFieldEditorParent());
-			cert_editor.setLabelText(cert_editor.getLabelText() + " " + Messages.getString("GeneralPreferencePage.optionDisabled"));
-		}
 
 		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
 				COMMIT_MESSAGE_BATCH_SIZE,

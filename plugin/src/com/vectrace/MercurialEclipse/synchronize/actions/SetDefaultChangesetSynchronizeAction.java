@@ -30,8 +30,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider;
-import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider.IUncommitted;
+import com.vectrace.MercurialEclipse.synchronize.cs.UncommittedChangesetGroup;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -96,7 +96,7 @@ public class SetDefaultChangesetSynchronizeAction extends SynchronizeModelAction
 		return updateSelection;
 	}
 
-	private boolean isSupported(Object object) {
+	private static boolean isSupported(Object object) {
 		return object instanceof WorkingChangeSet;
 	}
 

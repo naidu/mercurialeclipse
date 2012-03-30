@@ -164,7 +164,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 	 *            the text for the new label
 	 * @return the new label
 	 */
-	private Label createLabel(Composite parent, String text) {
+	private static Label createLabel(Composite parent, String text) {
 		Label label = new Label(parent, SWT.LEFT);
 		label.setText(text);
 		GridData data = new GridData();

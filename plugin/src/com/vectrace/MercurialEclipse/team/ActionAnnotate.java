@@ -61,7 +61,7 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
-	public void run(IResource res)
+	public static void run(IResource res)
 	{
 		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
 

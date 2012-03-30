@@ -11,16 +11,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
 
-import com.vectrace.MercurialEclipse.exception.HgCoreException;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
@@ -39,20 +34,12 @@ public class TestConfiguration extends TestCase implements IConsole,
 		// just a dumy method for JUnit to avoid test failure because of missing test
 	}
 
-	public PrintStream getOutputStream() {
-		return System.out;
-	}
-
 	public void logError(Throwable e) {
 		fail(e.getMessage());
 	}
 
 	public void logWarning(String message, Throwable e) {
 		fail(e.getMessage());
-	}
-
-	public String getDefaultUserName() {
-		return "foo";
 	}
 
 	public String getExecutable() {
@@ -95,13 +82,5 @@ public class TestConfiguration extends TestCase implements IConsole,
 			return pref;
 		}
 		return defaultIfNotSet;
-	}
-
-	public HgRoot getHgRoot(File file) {
-		try {
-			return HgRootClient.getHgRoot(file);
-		} catch (HgException e) {
-			throw new HgCoreException(e);
-		}
 	}
 }

@@ -22,40 +22,28 @@ import org.eclipse.core.runtime.Status;
  */
 public class SafeWorkspaceJob extends WorkspaceJob {
 
-/**
-   * @param name
-   */
-public SafeWorkspaceJob(String name) {
-	super(name);
-}
-
-/*
-   * (non-Javadoc)
-   *
-   * @see org.eclipse.core.resources.WorkspaceJob#runInWorkspace(org.eclipse.core.runtime.IProgressMonitor)
-   */
-@Override
-public IStatus runInWorkspace(IProgressMonitor monitor)
-	  throws CoreException {
-	try {
-	  return runSafe(monitor);
-	} catch (RuntimeException ex) {
-	  handleException(ex);
-	  return Status.CANCEL_STATUS;
+	public SafeWorkspaceJob(String name) {
+		super(name);
 	}
-}
 
-/**
-   * @return
-   */
-protected IStatus runSafe(IProgressMonitor monitor) {
-	return Status.OK_STATUS;
-}
+	/**
+	 * @see org.eclipse.core.resources.WorkspaceJob#runInWorkspace(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {
+		try {
+			return runSafe(monitor);
+		} catch (RuntimeException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return Status.CANCEL_STATUS;
+		}
+	}
 
-protected void handleException(Throwable ex) {
-	MercurialEclipsePlugin.logError(ex);
-
-}
-
-
+	/**
+	 * @return
+	 */
+	@SuppressWarnings("static-method")
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		return Status.OK_STATUS;
+	}
 }

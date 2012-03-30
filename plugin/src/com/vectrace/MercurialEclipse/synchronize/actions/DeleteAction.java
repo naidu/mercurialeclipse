@@ -101,7 +101,7 @@ public class DeleteAction extends SynchronizeModelAction {
 		return updateSelection;
 	}
 
-	private boolean isSupported(Object object) {
+	private static boolean isSupported(Object object) {
 		IResource adapter = MercurialEclipsePlugin.getAdapter(object, IResource.class);
 		if (adapter != null) {
 			return true;

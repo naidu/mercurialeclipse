@@ -50,10 +50,6 @@ public class ImportOptionsPage extends HgWizardPage implements Listener {
 				.getString("ImportPatchWizard.optionsPageTitle"), null); //$NON-NLS-1$
 	}
 
-	protected boolean validatePage() {
-		return true;
-	}
-
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 		chkForce = SWTWidgetHelper.createCheckBox(composite, Messages

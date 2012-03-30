@@ -66,7 +66,7 @@ public class OpenMergeEditorAction extends SynchronizeModelAction {
 		return updateSelection;
 	}
 
-	private boolean isSupported(Object object) {
+	private static boolean isSupported(Object object) {
 		IFile adapter = MercurialEclipsePlugin.getAdapter(object, IFile.class);
 		if (adapter != null) {
 			return !MercurialStatusCache.getInstance().isClean(adapter)

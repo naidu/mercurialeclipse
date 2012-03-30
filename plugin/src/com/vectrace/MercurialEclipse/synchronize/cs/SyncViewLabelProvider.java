@@ -203,7 +203,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 	/**
 	 * TODO: The entire comment should be shown in a tool tip
 	 */
-	private String getShortComment(ChangeSet cset) {
+	private static String getShortComment(ChangeSet cset) {
 		String comment = cset.getComment();
 		if(comment.length() > 100){
 			comment = comment.substring(0, 100) + "...";

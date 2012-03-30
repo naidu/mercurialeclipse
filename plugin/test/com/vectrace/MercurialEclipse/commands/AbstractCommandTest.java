@@ -109,7 +109,7 @@ public class AbstractCommandTest extends TestCase {
 		assertTrue(!dir.exists() || dir.delete());
 	}
 
-	public void testCreateRepo() throws Exception {
+	public static void testCreateRepo() throws Exception {
 		assertTrue(getRepository().exists());
 	}
 

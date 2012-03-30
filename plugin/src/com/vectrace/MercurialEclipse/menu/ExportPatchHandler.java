@@ -28,7 +28,7 @@ public class ExportPatchHandler extends MultipleResourcesHandler {
 		openWizard(resources, getShell());
 	}
 
-	public void openWizard(List<IResource> resources, Shell shell)
+	private static void openWizard(List<IResource> resources, Shell shell)
 			throws Exception {
 		HgRoot root = ensureSameRoot(resources);
 		if(root == null) {
