@@ -9,5 +9,6 @@ This project uses maven. To work on or build the plugin:
      $ mvn eclipse:eclipse
      or, if you are building the plugin 
      $ mvn eclipse:eclipse -Declipse.useProjectReferences=false
-   If using m2eclipse you can invoke the two launches in the plugin/launch directory.
+   If using m2eclipse you can invoke the MercurialEclipse-MavenInit launch in the .settings 
+   directory (it should show up automatically in the run configurations list).
 
