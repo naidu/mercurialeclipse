@@ -47,9 +47,7 @@ public abstract class AbstractResourceSynchronizeAction extends PathAwareAction 
 		}
 	}
 
-	protected ImageDescriptor createImageDescriptor() {
-		return null;
-	}
+	protected abstract ImageDescriptor createImageDescriptor();
 
 	@Override
 	final protected SynchronizeModelOperation getSubscriberOperation(

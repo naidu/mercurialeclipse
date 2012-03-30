@@ -26,7 +26,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -335,12 +334,10 @@ public abstract class AbstractClient {
 	}
 
 	protected static void addInsecurePreference(AbstractShellCommand command) {
-		if (HgFeatures.INSECURE.isEnabled()) {
-			boolean insecure = isInsecure();
+		boolean insecure = isInsecure();
 
-			if (insecure) {
-				command.addOptions("--insecure"); //$NON-NLS-1$
-			}
+		if (insecure) {
+			command.addOptions("--insecure"); //$NON-NLS-1$
 		}
 	}
 }

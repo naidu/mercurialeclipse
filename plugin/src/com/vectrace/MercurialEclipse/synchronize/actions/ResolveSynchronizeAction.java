@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
@@ -45,5 +46,13 @@ public class ResolveSynchronizeAction extends AbstractResourceSynchronizeAction 
 	protected boolean isResourceSupported(IResource resource) {
 		return super.isResourceSupported(resource) && resource instanceof IFile
 				&& MercurialStatusCache.getInstance().isConflict(resource);
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.synchronize.actions.AbstractResourceSynchronizeAction#createImageDescriptor()
+	 */
+	@Override
+	protected ImageDescriptor createImageDescriptor() {
+		return null;
 	}
 }

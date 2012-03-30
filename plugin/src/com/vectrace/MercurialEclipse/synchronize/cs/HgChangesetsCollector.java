@@ -187,7 +187,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		job.schedule(100);
 	}
 
-	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
+	private static Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
 		// TODO let only changesets with conflicting changes
 		return newSets;
 	}

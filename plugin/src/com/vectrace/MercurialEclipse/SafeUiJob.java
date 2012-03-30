@@ -18,17 +18,10 @@ import org.eclipse.ui.progress.UIJob;
 
 public class SafeUiJob extends UIJob {
 
-	/**
-	 * @param name
-	 */
 	public SafeUiJob(String name) {
 		super(name);
 	}
 
-	/**
-	 * @param jobDisplay
-	 * @param name
-	 */
 	public SafeUiJob(Display jobDisplay, String name) {
 		super(jobDisplay, name);
 	}
@@ -43,10 +36,7 @@ public class SafeUiJob extends UIJob {
 		}
 	}
 
-	/**
-	 * @param monitor
-	 * @return
-	 */
+	@SuppressWarnings("static-method")
 	protected IStatus runSafe(IProgressMonitor monitor) {
 		return Status.OK_STATUS;
 	}

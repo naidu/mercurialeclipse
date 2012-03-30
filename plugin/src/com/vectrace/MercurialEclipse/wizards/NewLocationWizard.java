@@ -16,6 +16,7 @@ import java.util.Properties;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -95,7 +96,7 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 		return true;
 	}
 
-	private RepositoriesView getRepoView() throws PartInitException {
+	private static RepositoriesView getRepoView() throws PartInitException {
 		IWorkbenchPage activePage = MercurialEclipsePlugin.getActivePage();
 		return (RepositoriesView) activePage.showView(RepositoriesView.VIEW_ID);
 	}

@@ -60,7 +60,7 @@ public class ResolveSynchronizeOperation extends SynchronizeModelOperation {
 		monitor.done();
 	}
 
-	protected IStatus getStatus(Throwable t) {
+	protected final static IStatus getStatus(Throwable t) {
 		if (t instanceof TeamException) {
 			return ((TeamException) t).getStatus();
 		}

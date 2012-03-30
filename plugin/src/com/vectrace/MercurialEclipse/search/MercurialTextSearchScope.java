@@ -21,7 +21,6 @@ import org.eclipse.core.resources.IResourceProxy;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.search.core.text.TextSearchScope;
 import org.eclipse.search.internal.core.text.PatternConstructor;
 import org.eclipse.search.internal.ui.Messages;
@@ -283,16 +282,6 @@ public final class MercurialTextSearchScope extends TextSearchScope {
 	 */
 	public IWorkingSet[] getWorkingSets() {
 		return fWorkingSets;
-	}
-
-	/**
-	 * Returns the content types configured for this scope or <code>null</code> to match all content
-	 * types.
-	 *
-	 * @return the file name pattern starings
-	 */
-	public IContentType[] getContentTypes() {
-		return null; // to be implemented in the future
 	}
 
 	/**

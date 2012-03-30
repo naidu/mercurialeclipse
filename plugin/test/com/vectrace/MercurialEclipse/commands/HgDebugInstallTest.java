@@ -44,7 +44,7 @@ public class HgDebugInstallTest extends AbstractMercurialTestCase {
 	 * {@link com.vectrace.MercurialEclipse.commands.HgDebugInstallClient#debugInstall()}.
 	 * @throws HgException
 	 */
-	public void testDebugInstall() throws HgException {
+	public static void testDebugInstall() throws HgException {
 		String result;
 		result = HgDebugInstallClient.debugInstall();
 		assertTrue(result != null);

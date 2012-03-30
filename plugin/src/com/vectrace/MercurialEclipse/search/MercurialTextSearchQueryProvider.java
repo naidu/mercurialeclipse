@@ -74,7 +74,7 @@ public class MercurialTextSearchQueryProvider {
 		return new MercurialTextSearchQuery(selectedText, scope);
 	}
 
-	private String[] getPreviousFileNamePatterns() {
+	private static String[] getPreviousFileNamePatterns() {
 		return new String[] { "*" }; //$NON-NLS-1$
 	}
 }

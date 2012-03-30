@@ -22,7 +22,7 @@ public class ShowAnnotationsHandler extends SingleResourceHandler {
 	@Override
 	protected void run(IResource resource) throws Exception {
 		if (resource != null) {
-			new ActionAnnotate().run(resource);
+			ActionAnnotate.run(resource);
 		}
 	}
 }

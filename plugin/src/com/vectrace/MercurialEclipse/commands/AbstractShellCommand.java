@@ -468,7 +468,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	/**
 	 * @param cmd hg commands to run
 	 * @return temporary file path used to write {@link HgFeatures#LISTFILE} arguments
+	 * @deprecated
 	 */
+	@Deprecated
 	private static File setupTmpFile(List<String> cmd) {
 		for (String line : cmd) {
 			if (line.startsWith(HgFeatures.LISTFILE.getHgCmd())) {
@@ -670,6 +672,10 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return commands = result;
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static String createListFilesFile(List<String> paths) {
 		BufferedWriter bw = null;
 		try {

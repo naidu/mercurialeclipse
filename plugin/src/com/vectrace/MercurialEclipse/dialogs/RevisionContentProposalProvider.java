@@ -275,6 +275,7 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 			return builder.toString();
 		}
 
+		@SuppressWarnings("static-method")
 		protected int getMaxLineLength() {
 			return 50;
 		}

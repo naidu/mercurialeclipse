@@ -31,17 +31,17 @@ public class HgCommitClientTest extends AbstractCommandTest {
 	/* (non-Javadoc)
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractCommandTest#testCreateRepo()
 	 */
-	public void testCommitSimpleMessage() throws Exception {
+	public static void testCommitSimpleMessage() throws Exception {
 		doCommit("Simple", "the message");
 	}
 	/* (non-Javadoc)
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractCommandTest#testCreateRepo()
 	 */
-	public void testCommitMessageWithQuote() throws Exception {
+	public static void testCommitMessageWithQuote() throws Exception {
 		doCommit("Trasan 'O Banarne", "is this message \" really escaped?");
 	}
 
-	public void testCommitMessageWithSpecialChars1() throws Exception {
+	public static void testCommitMessageWithSpecialChars1() throws Exception {
 		String special1 = "árvíztűrő tükörfúrógép";
 		String special2 = "Qualit"+AE+"ts Ger"+AE+"te Pl"+AE+"ne Liebesgr"+UE+""+SS+"e Grundgeb"+UE+"hr Kocht"+OE+"pfe";
 		doCommit("Simple", special1);

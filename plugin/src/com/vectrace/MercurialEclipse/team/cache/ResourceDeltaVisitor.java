@@ -162,7 +162,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		resourcesCount++;
 	}
 
-	private boolean hasChangedBits(IResourceDelta delta){
+	private static boolean hasChangedBits(IResourceDelta delta){
 		return (delta.getFlags() & MercurialStatusCache.MASK_CHANGED) != 0;
 	}
 

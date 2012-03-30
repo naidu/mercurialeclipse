@@ -40,7 +40,7 @@ public abstract class SingleFileAction implements IActionDelegate {
 		}
 	}
 
-	protected Shell getShell() {
+	protected final static Shell getShell() {
 		return MercurialEclipsePlugin.getActiveShell();
 	}
 

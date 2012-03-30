@@ -34,11 +34,18 @@ public enum HgFeatures {
 	/**
 	 * @deprecated
 	 */
+	@Deprecated
 	LISTFILE (new Version(1,8,0), "listfile:", false),
+
 	/**
-	 * @deprecated
+	 * TODO: find exact version
 	 */
-	INSECURE (new Version(1,7,5), "--insecure", false);
+	COMMAND_SERVER (new Version(2,0,0), "command server", true),
+
+	/**
+	 * TODO: find exact version
+	 */
+	COMMAND_SERVER_RECOMMENDED (new Version(2,1,0), "tested version of command server", false);
 
 	private final Version required;
 	private final String[] optionalPreferenceKeys;

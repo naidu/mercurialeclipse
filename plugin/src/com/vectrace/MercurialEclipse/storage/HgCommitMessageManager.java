@@ -94,7 +94,7 @@ public class HgCommitMessageManager {
 	/**
 	 * Make sure we don't have more commit messages than are allowed in the plugin prefs.
 	 */
-	private void restrictSavedCommitMessages() {
+	private static void restrictSavedCommitMessages() {
 		final int prefsCommitMessageSizeMax = Integer.parseInt(MercurialUtilities.getPreference(
 				MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, "10")); //$NON-NLS-1$
 
@@ -106,7 +106,7 @@ public class HgCommitMessageManager {
 	/**
 	 * Save message in in-memory database new data last (used when loading from file)
 	 */
-	private void addCommitMessage(String message) {
+	private static void addCommitMessage(String message) {
 		commitMessages.add(message);
 		restrictSavedCommitMessages();
 	}
@@ -123,7 +123,7 @@ public class HgCommitMessageManager {
 	 * Return a <code>File</code> object representing the location file. The file may or may not
 	 * exist and must be checked before use.
 	 */
-	private File getLocationFile() {
+	private static File getLocationFile() {
 		return MercurialEclipsePlugin.getDefault().getStateLocation().append(COMMIT_MESSAGE_FILE)
 				.toFile();
 	}
@@ -313,7 +313,7 @@ public class HgCommitMessageManager {
 		public void endElement(String uri, String localName, String qname) {
 			/* If it was a commit message save the char string in the database */
 			if (qname.equalsIgnoreCase(XML_TAG_COMMIT_MESSAGE)) {
-				mgr.addCommitMessage(tmpMessage);
+				HgCommitMessageManager.addCommitMessage(tmpMessage);
 			}
 		}
 

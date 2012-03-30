@@ -142,6 +142,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		return null;
 	}
 
+	@SuppressWarnings("static-method")
 	public String getPullRepo(String referenceString) {
 		String[] split = referenceString.split("\\" + SEPARATOR);
 		if(split.length > 2){
@@ -150,6 +151,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		return null;
 	}
 
+	@SuppressWarnings("static-method")
 	public String getRootRelativePath(String referenceString) {
 		String[] split = referenceString.split("\\" + SEPARATOR);
 		if(split.length > 3){

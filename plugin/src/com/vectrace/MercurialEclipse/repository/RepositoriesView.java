@@ -468,7 +468,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	/**
 	 * When selection is changed we update the status line
 	 */
-	private String getStatusLineMessage(ISelection selection) {
+	private static String getStatusLineMessage(ISelection selection) {
 		if (!(selection instanceof IStructuredSelection) || selection.isEmpty()) {
 			return ""; //$NON-NLS-1$
 		}

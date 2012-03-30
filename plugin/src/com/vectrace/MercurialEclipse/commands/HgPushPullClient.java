@@ -25,6 +25,9 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgPushPullClient extends AbstractClient {
 
 	/**
