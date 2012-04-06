@@ -32,19 +32,10 @@ import org.osgi.framework.Version;
 public enum HgFeatures {
 
 	/**
-	 * @deprecated
-	 */
-	@Deprecated
-	LISTFILE (new Version(1,8,0), "listfile:", false),
-
-	/**
 	 * TODO: find exact version
 	 */
 	COMMAND_SERVER (new Version(2,0,0), "command server", true),
 
-	/**
-	 * TODO: find exact version
-	 */
 	COMMAND_SERVER_RECOMMENDED (new Version(2,1,0), "tested version of command server", false);
 
 	private final Version required;
