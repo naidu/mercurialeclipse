@@ -13,8 +13,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
 import java.util.regex.Pattern;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.commands.PushCommand;
+import com.aragost.javahg.commands.flags.PushCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
@@ -35,22 +39,22 @@ public class HgPushPullClient extends AbstractClient {
 	 */
 	private static final Pattern HEADS_PATTERN = Pattern.compile("\\(\\+\\d+\\sheads\\)");
 
-	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
+	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout) throws HgException {
-		return push(hgRoot, repo, force, changeset, timeout, null);
+		push(hgRoot, repo, force, changeset, timeout, null);
 	}
 
-	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
+	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout, String branch) throws HgException {
-		AbstractShellCommand command = new HgCommand("push", //$NON-NLS-1$
-				makeDescription("Pushing", changeset, branch), hgRoot, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
-		addInsecurePreference(command);
+		PushCommand command = PushCommandFlags.on(hgRoot.getRepository());
+
+		if (isInsecure()) {
+			command.insecure();
+		}
 
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
 
 		applyChangeset(command, changeset);
@@ -59,15 +63,22 @@ public class HgPushPullClient extends AbstractClient {
 				.getBoolean(MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH);
 
 		if (newBranch) {
-			command.addOptions("--new-branch");
+			command.newBranch();
 		}
 
 		if (branch != null) {
-			command.addOptions("--branch", branch);
+			command.branch(branch);
 		}
 
-		addRepoToHgCommand(repo, command);
-		return new String(command.executeToBytes(timeout));
+		String remote = setupForRemote(repo, command);
+
+		try {
+			command.execute(remote);
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		} catch (ExecutionException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
 	}
 
 	public static String pull(HgRoot hgRoot, ChangeSet changeset,
@@ -173,6 +184,16 @@ public class HgPushPullClient extends AbstractClient {
 
 			if (cs != null && (cs = cs.trim()).length() > 0) {
 				command.addOptions("-r", cs); //$NON-NLS-1$
+			}
+		}
+	}
+
+	protected static void applyChangeset(PushCommand command, ChangeSet changeset) {
+		if (changeset != null) {
+			String cs = changeset.getNode();
+
+			if (cs != null && (cs = cs.trim()).length() > 0) {
+				command.rev(cs);
 			}
 		}
 	}

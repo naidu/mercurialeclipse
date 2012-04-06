@@ -59,6 +59,7 @@ import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
 
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
+import com.vectrace.MercurialEclipse.commands.CommandJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
@@ -217,7 +218,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			MercurialEclipsePlugin.showError(e);
 			hgVersion = Version.emptyVersion;
 		} finally {
-			AbstractShellCommand.hgInitDone();
+			CommandJob.hgInitDone();
 			if(isDebugging()) {
 				System.out.println(HgFeatures.printSummary());
 			}
@@ -240,11 +241,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	private Version checkHgVersion() throws HgException {
-		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version") {
-			{
-				isInitialCommand = startSignal.getCount() > 0;
-			}
-		};
+		AbstractShellCommand command = new RootlessHgCommand("version", "Checking for required version");
+
+		command.setInitialCommand(true);
+
 		Version preferredVersion = HgFeatures.getPreferredVersion();
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 		String[] split = version.split("\\n"); //$NON-NLS-1$
