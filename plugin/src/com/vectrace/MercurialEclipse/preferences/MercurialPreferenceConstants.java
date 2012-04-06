@@ -66,7 +66,6 @@ public final class MercurialPreferenceConstants {
 
 	// batch sizes
 	public static final String LOG_BATCH_SIZE = "hg.batchsize.log"; //$NON-NLS-1$
-	public static final String STATUS_BATCH_SIZE = "hg.batchsize.status"; //$NON-NLS-1$
 	public static final String COMMIT_MESSAGE_BATCH_SIZE = "hg.batchsize.commitmessage"; //$NON-NLS-1$
 
 	// remote performance: for incoming/outgoing, compute add/remove/modified status on changeset files

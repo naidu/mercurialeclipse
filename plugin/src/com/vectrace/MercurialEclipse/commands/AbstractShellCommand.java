@@ -43,7 +43,6 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -375,14 +374,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	/**
 	 * @param cmd hg commands to run
-	 * @return temporary file path used to write {@link HgFeatures#LISTFILE} arguments
-	 * @deprecated
+	 * @return temporary file path used to write "listfile:" arguments
 	 */
-	@Deprecated
 	private static File setupTmpFile(List<String> cmd) {
 		for (String line : cmd) {
-			if (line.startsWith(HgFeatures.LISTFILE.getHgCmd())) {
-				return new File(line.substring(HgFeatures.LISTFILE.getHgCmd().length()));
+			if (line.startsWith("listfile:")) {
+				return new File(line.substring("listfile:".length()));
 			}
 		}
 		return null;
@@ -506,7 +503,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		result.addAll(options);
 
 		String listFilesFile = null;
-		if (HgFeatures.LISTFILE.isEnabled() && getCommandLineLength(files) > 8000) {
+		if (getCommandLineLength(files) > 8000) {
 			listFilesFile = createListFilesFile(files);
 		}
 		if(listFilesFile != null){
@@ -522,10 +519,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return commands = result;
 	}
 
-	/**
-	 * @deprecated
-	 */
-	@Deprecated
 	private static String createListFilesFile(List<String> paths) {
 		BufferedWriter bw = null;
 		try {
@@ -536,7 +529,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				bw.newLine();
 			}
 			bw.flush();
-			return HgFeatures.LISTFILE.getHgCmd() + listFile.getAbsolutePath();
+			return "listfile:" + listFile.getAbsolutePath();
 		} catch (IOException ioe) {
 			MercurialEclipsePlugin.logError(ioe);
 			return null;

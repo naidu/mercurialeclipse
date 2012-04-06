@@ -62,13 +62,6 @@ implements IWorkbenchPreferencePage {
 		addField(batchLogRevisionEditor);
 		batchLogRevisionEditor.setValidRange(1, Integer.MAX_VALUE);
 
-		IntegerFieldEditor batchStatusSeditor = new IntegerFieldEditor(
-				STATUS_BATCH_SIZE,
-				Messages.getString("PerformancePreferencePage.field.statusBatchSize"), //$NON-NLS-1$
-				getFieldEditorParent());
-		addField(batchStatusSeditor);
-		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
-
 		addField(new BooleanFieldEditor(
 				PREF_ENABLE_SUBREPO_SUPPORT,
 				Messages.getString("PerformancePreferencePage.field.enableSubrepo"), //$NON-NLS-1$

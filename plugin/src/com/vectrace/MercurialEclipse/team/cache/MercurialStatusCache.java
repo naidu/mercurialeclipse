@@ -55,7 +55,6 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
 import com.aragost.javahg.commands.StatusLine;
-import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentifyClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -78,8 +77,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public final class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
 
-	private static final int STATUS_BATCH_SIZE = 10;
-	static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
+	protected static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
 
 	/**
 	 * @author Andrei
@@ -285,7 +283,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	private final ConcurrentHashMap<IPath, String> mergeChangesetIds = new ConcurrentHashMap<IPath, String>(
 			100, 0.75f, 4);
 
-	private int statusBatchSize;
 	private boolean enableSubrepos;
 
 	static class BitMap {
@@ -1310,11 +1307,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private Set<IResource> updateStatusInRoot(IProject project, HgRoot root,
 			Set<IResource> resources) {
-		int batchSize = getStatusBatchSize();
 		List<IResource> currentBatch = new ArrayList<IResource>();
 		Set<IResource> changed = new HashSet<IResource>();
 
-		boolean listFileEnabled = HgFeatures.LISTFILE.isEnabled();
 		for (Iterator<IResource> iterator = resources.iterator(); iterator.hasNext();) {
 			IResource resource = iterator.next();
 
@@ -1322,18 +1317,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			if (!resource.isTeamPrivateMember()) {
 				currentBatch.add(resource);
 			}
-			if(!listFileEnabled) {
-				if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
-					// call hg with batch
-					updateStatusBatched(project, root, currentBatch, changed);
-					currentBatch.clear();
-				}
-			}
 		}
 
-		if(listFileEnabled) {
-			updateStatusBatched(project, root, currentBatch, changed);
-		}
+		updateStatusBatched(project, root, currentBatch, changed);
 
 		return changed;
 	}
@@ -1399,10 +1385,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				statusMap.remove(parentPath);
 			}
 		}
-	}
-
-	private int getStatusBatchSize() {
-		return statusBatchSize;
 	}
 
 	/**
@@ -1527,13 +1509,6 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	protected void configureFromPreferences(IPreferenceStore store){
 		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 		// TODO: group batches by repo root
-
-		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE); // STATUS_BATCH_SIZE;
-		if (statusBatchSize <= 0) {
-			store.setValue(MercurialPreferenceConstants.STATUS_BATCH_SIZE, STATUS_BATCH_SIZE);
-			statusBatchSize = STATUS_BATCH_SIZE;
-			MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
-		}
 	}
 
 	private void clearMergeStatus(IPath path) {
