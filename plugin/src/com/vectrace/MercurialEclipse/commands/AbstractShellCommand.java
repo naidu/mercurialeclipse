@@ -16,7 +16,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.*;
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -34,16 +33,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
@@ -65,39 +61,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * File encoding to use. If not specified falls back to {@link HgRoot}'s encoding.
 	 */
 	private String encoding;
-
-	/**
-	 * Should not be used by any command except commands needed for the initialization of hg
-	 * (debuginstall and version)
-	 *
-	 * @see MercurialEclipsePlugin#checkHgInstallation()
-	 */
-	protected boolean isInitialCommand;
-
-	/**
-	 * should not be used by any code except initialization of hg
-	 * @see MercurialEclipsePlugin#checkHgInstallation()
-	 */
-	protected static final CountDownLatch startSignal = new CountDownLatch(1);
-
-	/**
-	 * See http://msdn.microsoft.com/en-us/library/ms682425(VS.85).aspx The maximum command line
-	 * length for the CreateProcess function is 32767 characters. This limitation comes from the
-	 * UNICODE_STRING structure.
-	 * <p>
-	 * See also http://support.microsoft.com/kb/830473: On computers running Microsoft Windows XP or
-	 * later, the maximum length of the string that you can use at the command prompt is 8191
-	 * characters. On computers running Microsoft Windows 2000 or Windows NT 4.0, the maximum length
-	 * of the string that you can use at the command prompt is 2047 characters.
-	 * <p>
-	 * So here we simply allow maximal 100 file paths to be used in one command. Why 100? Why not?
-	 * TODO The right way would be to construct the command and then check if the full command line
-	 * size is >= 32767.
-	 *
-	 * @deprecated for the new features please check {@link HgFeatures#LISTFILE} enablement
-	 */
-	@Deprecated
-	public static final int MAX_PARAMS = 100;
 
 	static {
 		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
@@ -154,39 +117,33 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	// should not extend threads directly, should use thread pools or jobs.
 	// In case many threads created at same time, VM can crash or at least get OOM
-	class ProzessWrapper extends Job {
+	class ProzessWrapper extends CommandJob {
 
 		private final OutputStream output;
 		private final ProcessBuilder builder;
 		private final DefaultExecutionRule execRule;
-		volatile IProgressMonitor monitor2;
-		volatile boolean started;
 		private Process process;
-		long startTime;
-		int exitCode = -1;
-		Throwable error;
 
-		public ProzessWrapper(String name, ProcessBuilder builder, OutputStream output) {
-			super(name);
+		private final String debugName;
+		private final boolean expectZeroReturnValue;
+
+		public ProzessWrapper(String name, String debugName, ProcessBuilder builder, OutputStream output, boolean expectZeroReturnValue) {
+			super(name, isInitialCommand);
+
+			this.debugName = debugName;
 			execRule = getExecutionRule();
 			setRule(execRule);
 			this.builder = builder;
 			this.output = output;
+			this.expectZeroReturnValue = expectZeroReturnValue;
 		}
 
+		/**
+		 * @throws InterruptedException
+		 * @see com.vectrace.MercurialEclipse.commands.CommandJob#doRun(org.eclipse.core.runtime.IProgressMonitor)
+		 */
 		@Override
-		protected IStatus run(IProgressMonitor monitor) {
-			if (monitor.isCanceled()) {
-				return Status.CANCEL_STATUS;
-			}
-			if(debugExecTime) {
-				startTime = System.currentTimeMillis();
-			} else {
-				startTime = 0;
-			}
-			started = true;
-			monitor2 = monitor;
-			waitForHgInitDone();
+		protected IStatus doRun(IProgressMonitor monitor) throws Exception {
 			InputStream stream = null;
 			try {
 				process = builder.start();
@@ -200,16 +157,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 					}
 				}
 				exitCode = process.waitFor();
-			} catch (IOException e) {
-				if (!monitor.isCanceled()) {
-					error = e;
-				}
-				return Status.CANCEL_STATUS;
-			} catch (InterruptedException e) {
-				if (!monitor.isCanceled()) {
-					error = e;
-				}
-				return Status.CANCEL_STATUS;
 			} finally {
 				if(stream != null) {
 					try {
@@ -223,31 +170,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				} catch (IOException e) {
 					HgClients.logError(e);
 				}
-				monitor.done();
-				monitor2 = null;
+
 				if(process != null) {
 					process.destroy();
 				}
 			}
 			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
-		}
-
-		/**
-		 * Waits until the gate is open (hg installation is checked etc)
-		 */
-		private void waitForHgInitDone() {
-			if(!isInitialCommand) {
-				try {
-					startSignal.await();
-				} catch (InterruptedException e1) {
-					MercurialEclipsePlugin.logError(e1);
-				}
-			}
-		}
-
-		private boolean isAlive() {
-			// job is either not started yet (is scheduled and waiting), or it is not finished or cancelled yet
-			return (!started && getResult() == null) || (monitor2 != null);
 		}
 
 		@Override
@@ -264,7 +192,50 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// remove exclusive lock on the hg root
 			execRule.hgRoot = null;
 		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.commands.CommandJob#getDebugName()
+		 */
+		@Override
+		protected String getDebugName() {
+			return debugName;
+		}
+
+		@Override
+		protected String getMessage() {
+			String msg = null;
+			if (output instanceof FileOutputStream) {
+				return null;
+			} else if (output instanceof ByteArrayOutputStream) {
+				ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
+				try {
+					msg = baos.toString(getEncoding());
+				} catch (UnsupportedEncodingException e) {
+					logError(e);
+					msg = baos.toString();
+				}
+				if(msg != null){
+					msg = msg.trim();
+				}
+			}
+			return msg;
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.commands.CommandJob#checkError()
+		 */
+		@Override
+		protected void checkError() throws HgException {
+			if (exitCode != 0 && expectZeroReturnValue) {
+				IStatus result = getResult();
+				Throwable rootCause = result != null ? result.getException() : null;
+
+				throw new HgException(exitCode, getMessage(), getDebugName(), rootCause);
+			}
+		}
 	}
+
+	private boolean isInitialCommand;
 
 	protected String command;
 
@@ -289,10 +260,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	protected final List<String> files;
 	private String timeoutConstant;
 	private ProzessWrapper processWrapper;
-	private boolean showOnConsole;
-	private final boolean debugMode;
-	private final boolean isDebugging;
-	private final boolean debugExecTime;
 
 	/**
 	 * Though this command might not invoke hg, it might get encoding information from it. May be
@@ -322,10 +289,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		this.uiName = uiName;
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
-		showOnConsole = true;
-		isDebugging = Boolean.valueOf(Platform.getDebugOption(MercurialEclipsePlugin.ID + "/debug/commands")).booleanValue();
-		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
-		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
+
 		timeoutConstant = MercurialPreferenceConstants.DEFAULT_TIMEOUT;
 
 		Assert.isNotNull(uiName);
@@ -335,15 +299,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		this(uiName, hgRoot, workingDir, escapeFiles);
 
 		this.commands = commands;
-	}
-
-	/**
-	 * Should not be called by any code except for hg initialization job
-	 * Opens the command execution gate after hg installation is checked etc
-	 * @see MercurialEclipsePlugin#checkHgInstallation()
-	 */
-	public static void hgInitDone() {
-		startSignal.countDown();
 	}
 
 	/**
@@ -381,77 +336,29 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * @param timeout
 	 *            -1 if no timeout, else the timeout in ms.
 	 */
-	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
+	public byte[] executeToBytes(int timeout, boolean expectZeroReturnValue) throws HgException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(BUFFER_SIZE);
-		if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
+		if (executeToStream(bos, timeout, expectZeroReturnValue)) {
 			return bos.toByteArray();
 		}
 		return null;
 	}
 
-	protected final boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+	protected final boolean executeToStream(OutputStream output, int timeout, boolean expectZeroReturnValue)
 			throws HgException {
 
 		List<String> cmd = getCommands();
-
 		String jobName = obfuscateLoginData(getCommandInvoked(cmd));
-
 		File tmpFile = setupTmpFile(cmd);
-
 		ProcessBuilder builder = setupProcess(cmd);
 
 		try {
 
 			// I see sometimes that hg has errors if it runs in parallel
 			// using a job with exclusive rule here serializes all hg access from plugin.
-			processWrapper = createProcessWrapper(output, uiName, builder);
+			processWrapper = createProcessWrapper(output, uiName, jobName, builder, expectZeroReturnValue);
 
-			logConsoleCommandInvoked(jobName);
-
-			// will start hg command as soon as job manager allows us to do it
-			processWrapper.schedule();
-
-			try {
-				waitForConsumer(timeout);
-			} catch (InterruptedException e) {
-				processWrapper.cancel();
-				throw new HgException("Process cancelled: " + jobName, e);
-			}
-
-			if (processWrapper.isAlive()) {
-				// command timeout
-				processWrapper.cancel();
-				throw new HgException("Process timeout: " + jobName);
-			}
-
-			IStatus result = processWrapper.getResult();
-			if (processWrapper.process == null) {
-				// process is either not started or we failed to create it
-				if(result == null){
-					// was not started at all => timeout?
-					throw new HgException("Process timeout: " + jobName);
-				}
-				if(processWrapper.error == null && result == Status.CANCEL_STATUS) {
-					throw new HgException(HgException.OPERATION_CANCELLED,
-							"Process cancelled: " + jobName, null);
-				}
-				throw new HgException("Process start failed: " + jobName, processWrapper.error);
-			}
-
-			final String msg = getMessage(output);
-			final int exitCode = processWrapper.exitCode;
-			long timeInMillis = debugExecTime? System.currentTimeMillis() - processWrapper.startTime : 0;
-			// everything fine
-			if (exitCode != 0 && expectPositiveReturnValue) {
-				Throwable rootCause = result != null ? result.getException() : null;
-				final HgException hgex = new HgException(exitCode,
-						msg, jobName, rootCause);
-				logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
-				throw hgex;
-			}
-			if (debugExecTime || debugMode) {
-				logConsoleCompleted(timeInMillis, msg, exitCode, null);
-			}
+			CommandJob.execute(processWrapper, timeout);
 
 			return true;
 		} finally {
@@ -461,8 +368,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	protected ProzessWrapper createProcessWrapper(OutputStream output, String jobName, ProcessBuilder builder) {
-		return new ProzessWrapper(jobName, builder, output);
+	protected ProzessWrapper createProcessWrapper(OutputStream output, String jobName,
+			String debugName, ProcessBuilder builder, boolean expectZeroReturnValue) {
+		return new ProzessWrapper(jobName, debugName, builder, output, expectZeroReturnValue);
 	}
 
 	/**
@@ -521,64 +429,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return null;
 	}
 
-	private void waitForConsumer(int timeout) throws InterruptedException {
-		if (timeout <= 0) {
-			timeout = 1;
-		}
-		long start = System.currentTimeMillis();
-		long now = 0;
-		while (processWrapper.isAlive()) {
-			long delay = timeout - now;
-			if (delay <= 0) {
-				break;
-			}
-			synchronized (this){
-				wait(10);
-			}
-			now = System.currentTimeMillis() - start;
-		}
-	}
-
-	protected void logConsoleCommandInvoked(final String commandInvoked) {
-		if(isDebugging){
-			System.out.println(commandInvoked);
-		}
-		if (showOnConsole) {
-			getConsole().commandInvoked(commandInvoked);
-		}
-	}
-
-	private void logConsoleCompleted(final long timeInMillis, final String msg, final int exitCode, final HgException hgex) {
-		if(isDebugging){
-			System.out.println(msg);
-			if(hgex != null){
-				hgex.printStackTrace();
-			}
-		}
-		if (showOnConsole) {
-			getConsole().commandCompleted(exitCode, timeInMillis, msg, hgex);
-		}
-	}
-
-	private String getMessage(OutputStream output) {
-		String msg = null;
-		if (output instanceof FileOutputStream) {
-			return null;
-		} else if (output instanceof ByteArrayOutputStream) {
-			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
-			try {
-				msg = baos.toString(getEncoding());
-			} catch (UnsupportedEncodingException e) {
-				logError(e);
-				msg = baos.toString();
-			}
-			if(msg != null){
-				msg = msg.trim();
-			}
-		}
-		return msg;
-	}
-
 	/**
 	 * Sets the command output charset if the charset is available in the VM.
 	 */
@@ -603,8 +453,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return executeToString(true);
 	}
 
-	public String executeToString(boolean expectPositiveReturnValue) throws HgException {
-		byte[] bytes = executeToBytes(getTimeOut(), expectPositiveReturnValue);
+	public String executeToString(boolean expectZeroReturnValue) throws HgException {
+		byte[] bytes = executeToBytes(getTimeOut(), expectZeroReturnValue);
 		if (bytes != null && bytes.length > 0) {
 			try {
 				return new String(bytes, getEncoding());
@@ -620,19 +470,19 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 *
 	 * @param file
 	 *            The file to which the output is written.
-	 * @param expectPositiveReturnValue
+	 * @param expectZeroReturnValue
 	 *            If set to {@code true}, an {@code HgException} will be thrown if the command's
 	 *            exit code is not zero.
 	 * @return Returns {@code true} iff the command was executed successfully.
 	 * @throws HgException
 	 *             Thrown when the command could not be executed successfully.
 	 */
-	public boolean executeToFile(File file, boolean expectPositiveReturnValue) throws HgException {
+	public boolean executeToFile(File file, boolean expectZeroReturnValue) throws HgException {
 		int timeout = HgClients.getTimeOut(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 		FileOutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file, false);
-			return executeToStream(fos, timeout, expectPositiveReturnValue);
+			return executeToStream(fos, timeout, expectZeroReturnValue);
 		} catch (FileNotFoundException e) {
 			throw new HgException(e.getMessage(), e);
 		} finally {
@@ -812,14 +662,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	private static IConsole getConsole() {
-		return HgClients.getConsole();
-	}
-
-	public void setShowOnConsole(boolean b) {
-		showOnConsole = b;
-	}
-
 	private String getCommandInvoked(List<String> cmd) {
 		if(cmd.isEmpty()){
 			// paranoia
@@ -886,9 +728,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			builder.append(processWrapper);
 			builder.append(", ");
 		}
-		builder.append("showOnConsole=");
-		builder.append(showOnConsole);
-		builder.append(", ");
 		if (timeoutConstant != null) {
 			builder.append("timeoutConstant=");
 			builder.append(timeoutConstant);
@@ -904,5 +743,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 		timeout = HgClients.getTimeOut(timeoutConstant);
 		return timeout;
+	}
+
+	public void setInitialCommand(boolean initialCommand) {
+		this.isInitialCommand = initialCommand;
 	}
 }

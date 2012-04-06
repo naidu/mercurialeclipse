@@ -200,6 +200,7 @@ public abstract class AbstractClient {
 	 * @param repo not null
 	 * @param cmd  not null
 	 * @throws HgException
+	 * @see {@link #setupForRemote(IHgRepositoryLocation, com.aragost.javahg.internals.AbstractCommand)}
 	 */
 	protected static void addRepoToHgCommand(IHgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
 		URI uri = repo.getUri();

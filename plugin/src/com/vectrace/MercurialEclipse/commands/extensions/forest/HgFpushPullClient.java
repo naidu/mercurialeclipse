@@ -28,6 +28,10 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
+/**
+ * @deprecated
+ */
+@Deprecated
 public class HgFpushPullClient extends HgPushPullClient {
 
 	public static String fpush(File forestRoot, IHgRepositoryLocation repo,

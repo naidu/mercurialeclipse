@@ -25,6 +25,7 @@ import com.google.common.cache.RemovalNotification;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.Pair;
 
 /**
  * Cache for JavaHg Repositories
@@ -41,10 +42,30 @@ public class CommandServerCache {
 
 	// operations
 
+	/**
+	 * Get a repository, possibly creating one if there's not one currently running.
+	 *
+	 * Note: caller is responsible for ensuring the hg executable is usable
+	 *
+	 * @param hgRoot
+	 *            The root
+	 * @return A new or cached repository object
+	 */
 	public Repository get(HgRoot hgRoot) {
 		return get(hgRoot, null);
 	}
 
+	/**
+	 * Get a repository, possibly creating one if there's not one currently running.
+	 *
+	 * Note: caller is responsible for ensuring the hg executable is usable
+	 *
+	 * @param hgRoot
+	 *            The root
+	 * @param bundleFile
+	 *            The bundle file. May be null
+	 * @return A new or cached repository object
+	 */
 	public Repository get(HgRoot hgRoot, File bundleFile) {
 		try {
 			return cache.get(new Key(hgRoot, bundleFile)).get();
@@ -56,11 +77,11 @@ public class CommandServerCache {
 	}
 
 	protected Value create(Key key) {
-		if (key.file == null) {
-			return new RepoValue(Repository.open(HgClients.getRepoConfig(), key.root));
+		if (key.getFile() == null) {
+			return new RepoValue(Repository.open(HgClients.getRepoConfig(), key.getRoot()));
 		}
 
-		return new BundleValue(new Bundle((BaseRepository) get(key.root, null), key.file));
+		return new BundleValue(new Bundle((BaseRepository) get(key.getRoot(), null), key.getFile()));
 	}
 
 	public static CommandServerCache getInstance() {
@@ -82,57 +103,18 @@ public class CommandServerCache {
 		}
 	}
 
-	private static class Key {
-		public HgRoot root;
-		public File file;
+	private static class Key extends Pair<HgRoot, File> {
 
 		public Key(HgRoot root, File file) {
-			this.root = root;
-			this.file = file;
+			super(root, file);
 		}
 
-		/**
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((file == null) ? 0 : file.hashCode());
-			result = prime * result + ((root == null) ? 0 : root.hashCode());
-			return result;
+		public HgRoot getRoot() {
+			return a;
 		}
 
-		/**
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			Key other = (Key) obj;
-			if (file == null) {
-				if (other.file != null) {
-					return false;
-				}
-			} else if (!file.equals(other.file)) {
-				return false;
-			}
-			if (root == null) {
-				if (other.root != null) {
-					return false;
-				}
-			} else if (!root.equals(other.root)) {
-				return false;
-			}
-			return true;
+		public File getFile() {
+			return b;
 		}
 	}
 

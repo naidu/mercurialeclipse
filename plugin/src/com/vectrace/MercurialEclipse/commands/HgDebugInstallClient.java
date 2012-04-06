@@ -31,11 +31,11 @@ public class HgDebugInstallClient extends AbstractClient {
 	}
 
 	private static AbstractShellCommand getDebugInstallCommand() {
-		return new RootlessHgCommand("debuginstall", "Checking Mercurial installation") {
-			{
-				isInitialCommand = startSignal.getCount() > 0;
-			}
-		};
+		RootlessHgCommand command = new RootlessHgCommand("debuginstall", "Checking Mercurial installation");
+
+		command.setInitialCommand(true);
+
+		return command;
 	}
 
 	/**
