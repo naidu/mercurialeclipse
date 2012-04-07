@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
- *
+ * A job that runs a command, mercurial or otherwise.
  */
 public abstract class CommandJob extends Job {
 
@@ -65,8 +65,8 @@ public abstract class CommandJob extends Job {
 
 	// constructors
 
-	public CommandJob(String name, boolean isInitialCommand) {
-		super(name);
+	public CommandJob(String uiName, boolean isInitialCommand) {
+		super(uiName);
 
 		this.isInitialCommand = isInitialCommand && startSignal.getCount() > 0;
 		this.debugExecTime = Boolean.valueOf(
@@ -171,12 +171,12 @@ public abstract class CommandJob extends Job {
 		return HgClients.getConsole();
 	}
 
-	public static void execute(CommandJob job, int timeout) throws HgException {
+	public void execute(int timeout) throws HgException {
 
-		job.logConsoleCommandInvoked(job.getDebugName());
+		logConsoleCommandInvoked(getDebugName());
 
 		// will start hg command as soon as job manager allows us to do it
-		job.schedule();
+		schedule();
 
 		if (timeout <= 0) {
 			timeout = 1;
@@ -188,41 +188,41 @@ public abstract class CommandJob extends Job {
 
 		try {
 			try {
-				while (job.isAlive()) {
+				while (isAlive()) {
 					if (elapsed >= timeout) {
-						job.cancel();
-						throw new HgException("Command timeout: " + job.getDebugName());
+						cancel();
+						throw new HgException("Command timeout: " + getDebugName());
 					}
-					synchronized (job) { // TODO: sync should be outside the loop
-						job.wait(100);
+					synchronized (this) { // TODO: sync should be outside the loop
+						wait(100);
 					}
 					elapsed = System.currentTimeMillis() - start;
 				}
 			} catch (InterruptedException e) {
-				job.cancel();
-				throw new HgException("Command cancelled: " + job.getDebugName(), e);
+				cancel();
+				throw new HgException("Command cancelled: " + getDebugName(), e);
 			}
 
-			IStatus result = job.getResult();
+			IStatus result = getResult();
 
-			if (job.state == State.PENDING) {
+			if (state == State.PENDING) {
 				// process is either not started or we failed to create it
 				if (result == null) {
 					// was not started at all => timeout?
 					assert false;
-					throw new HgException("Command timeout: " + job.getDebugName());
+					throw new HgException("Command timeout: " + getDebugName());
 				}
-				if (job.error == null && result == Status.CANCEL_STATUS) {
+				if (error == null && result == Status.CANCEL_STATUS) {
 					throw new HgException(HgException.OPERATION_CANCELLED, "Command cancelled: "
-							+ job.getDebugName(), null);
+							+ getDebugName(), null);
 				}
-				throw new HgException("Command start failed: " + job.getDebugName(), job.error);
+				throw new HgException("Command start failed: " + getDebugName(), error);
 			}
 
-			job.checkError();
+			checkError();
 
-			if (job.error != null) {
-				throw job.error;
+			if (error != null) {
+				throw error;
 			}
 
 		} catch (Throwable e) {
@@ -234,9 +234,9 @@ public abstract class CommandJob extends Job {
 
 			throw ((HgException)e);
 		} finally {
-			long timeInMillis = job.debugExecTime ? System.currentTimeMillis() - job.startTime : 0;
+			long timeInMillis = debugExecTime ? System.currentTimeMillis() - startTime : 0;
 
-			job.logConsoleCompleted(timeInMillis, exception);
+			logConsoleCompleted(timeInMillis, exception);
 		}
 
 	}
