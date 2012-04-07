@@ -81,15 +81,6 @@ public class PullRepoWizard extends HgWizard {
 		boolean rebase = pullPage.isRebaseSelected();
 		boolean showCommitDialog = pullPage.isShowCommitDialogSelected();
 		boolean svn = pullPage.isSvnSelected();
-		boolean forest = false;
-		File snapFile = null;
-		if (pullPage.isShowForest()) {
-			forest = pullPage.isForestSelected();
-			String snapFileText = pullPage.getSnapFileText();
-			if (snapFileText.length() > 0) {
-				snapFile = new File(snapFileText);
-			}
-		}
 
 		File bundleFile = null;
 		SortedSet<JHgChangeSet> changesets = incomingPage.getChangesets();
@@ -97,11 +88,10 @@ public class PullRepoWizard extends HgWizard {
 			bundleFile = changesets.first().getBundleFile();
 		}
 
-
 		try {
 			PullOperation pullOperation = new PullOperation(getContainer(),
 					doUpdate, doCleanUpdate, hgRoot, force, repo, cs, timeout, merge,
-					showCommitDialog, bundleFile, forest, snapFile, rebase, svn);
+					showCommitDialog, bundleFile, rebase, svn);
 
 			getContainer().run(true, false, pullOperation);
 

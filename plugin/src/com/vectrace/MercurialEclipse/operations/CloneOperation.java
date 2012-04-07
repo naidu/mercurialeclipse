@@ -23,7 +23,6 @@ import org.eclipse.swt.widgets.Display;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
-import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFcloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -38,7 +37,6 @@ public class CloneOperation extends HgOperation {
 	private final boolean timeout;
 	private final String rev;
 	private final String cloneName;
-	private final boolean forest;
 	private final boolean svn;
 
 	/**
@@ -58,7 +56,7 @@ public class CloneOperation extends HgOperation {
 	public CloneOperation(IRunnableContext context, File parentDirectory,
 			IHgRepositoryLocation repo, boolean noUpdate, boolean pull,
 			boolean uncompressed, boolean timeout, String rev,
-			String cloneName, boolean forest, boolean svn) {
+			String cloneName, boolean svn) {
 		super(context);
 		this.parentDirectory = parentDirectory;
 		this.repo = repo;
@@ -68,7 +66,6 @@ public class CloneOperation extends HgOperation {
 		this.timeout = timeout;
 		this.rev = rev;
 		this.cloneName = cloneName;
-		this.forest = forest;
 		this.svn = svn;
 	}
 
@@ -98,11 +95,8 @@ public class CloneOperation extends HgOperation {
 		try {
 			if (svn) {
 				HgSvnClient.clone(parentDirectory, repo, timeout, cloneName);
-			} else if (!forest) {
-				HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
-						uncompressed, timeout, rev, cloneName);
 			} else {
-				HgFcloneClient.fclone(parentDirectory, repo, noUpdate, pull,
+				HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
 						uncompressed, timeout, rev, cloneName);
 			}
 			m.worked(1);

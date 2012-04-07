@@ -76,13 +76,6 @@ public final class ResourceProperties {
 
 	/**
 	 * Qualified name for a workspace session property that signifies whether
-	 * the forest extension is available.
-	 */
-	public static final QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
-			MercurialEclipsePlugin.ID, "hgforest"); //$NON-NLS-1$
-
-	/**
-	 * Qualified name for a workspace session property that signifies whether
 	 * the HgSubversion extension is available.
 	 */
 	public static final QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(

@@ -27,7 +27,6 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
-import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -48,8 +47,6 @@ class PullOperation extends HgOperation {
 	private String output = ""; //$NON-NLS-1$
 	private final boolean showCommitDialog;
 	private final File bundleFile;
-	private final boolean forest;
-	private final File snapFile;
 	private final boolean rebase;
 	private final boolean svn;
 	private final boolean doCleanUpdate;
@@ -57,8 +54,7 @@ class PullOperation extends HgOperation {
 	public PullOperation(IRunnableContext context, boolean doUpdate,
 			boolean doCleanUpdate, HgRoot hgRoot, boolean force, IHgRepositoryLocation repo,
 			ChangeSet pullRevision, boolean timeout, boolean merge,
-			boolean showCommitDialog, File bundleFile, boolean forest,
-			File snapFile, boolean rebase, boolean svn) {
+			boolean showCommitDialog, File bundleFile, boolean rebase, boolean svn) {
 		super(context);
 		this.doUpdate = doUpdate;
 		this.doCleanUpdate = doCleanUpdate;
@@ -70,8 +66,6 @@ class PullOperation extends HgOperation {
 		this.merge = merge;
 		this.showCommitDialog = showCommitDialog;
 		this.bundleFile = bundleFile;
-		this.forest = forest;
-		this.snapFile = snapFile;
 		this.rebase = rebase;
 		this.svn = svn;
 	}
@@ -124,17 +118,11 @@ class PullOperation extends HgOperation {
 				r += HgSvnClient.rebase(hgRoot);
 			}
 		} else if (bundleFile == null) {
-			if (forest) {
-				File forestRoot = hgRoot.getParentFile();
-				r += HgFpushPullClient.fpull(forestRoot, repo,
-						doUpdate, timeout, pullRevision, true, snapFile, false);
-			} else {
-				if (doUpdate) {
-					updateSeparately = true;
-				}
-				HgPushPullClient.pull(hgRoot, pullRevision, repo, false, rebase, force, timeout, merge);
-				r += "Pulling"; // TODO
+			if (doUpdate) {
+				updateSeparately = true;
 			}
+			HgPushPullClient.pull(hgRoot, pullRevision, repo, false, rebase, force, timeout, merge);
+			r += "Pulling"; // TODO
 		} else {
 			if (doUpdate) {
 				updateSeparately = true;
