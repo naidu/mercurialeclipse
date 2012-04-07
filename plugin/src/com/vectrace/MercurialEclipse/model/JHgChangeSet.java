@@ -18,10 +18,14 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.Assert;
 
 import com.aragost.javahg.Changeset;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -31,10 +35,29 @@ public class JHgChangeSet extends ChangeSet {
 
 	public final static String NULL_ID = Changeset.NULL_ID;
 
+	/**
+	 * Not null
+	 */
 	private final Changeset changeset;
+
+	/**
+	 * Not null
+	 */
 	private final HgRoot hgRoot;
-	private final IHgRepositoryLocation remote;
+
+	/**
+	 * Not null
+	 */
 	private final Direction direction;
+
+	/**
+	 * May be null
+	 */
+	private final IHgRepositoryLocation remote;
+
+	/**
+	 * May be null
+	 */
 	private final File bundle;
 
 	// .. cached data
@@ -56,6 +79,8 @@ public class JHgChangeSet extends ChangeSet {
 		this.bundle = bundle;
 
 		setName(getIndex() + ":" + getNodeShort());
+
+		Assert.isLegal(hgRoot != null && changeset != null && direction != null);
 	}
 
 	public JHgChangeSet(HgRoot hgRoot, Changeset changeset) {
@@ -274,6 +299,21 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#isCurrent()
+	 */
+	@Override
+	public boolean isCurrent() {
+		try {
+			return getData().equals(
+					LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot).getData());
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		return false;
+	}
+
+	/**
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -336,5 +376,4 @@ public class JHgChangeSet extends ChangeSet {
 		}
 		return true;
 	}
-
 }

@@ -173,6 +173,7 @@ public abstract class WorkingChangeSet extends ChangeSet {
 	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#getChangedFiles()
 	 */
 	@Override
+	@DoNotDisplayMe
 	public List<FileStatus> getChangedFiles() {
 		assert false;
 		return Collections.EMPTY_LIST;
@@ -181,6 +182,15 @@ public abstract class WorkingChangeSet extends ChangeSet {
 	@Override
 	public void remove(IResource file){
 		// simply not supported, as it may be called not only from our code
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.ChangeSet#isCurrent()
+	 */
+	@Override
+	@DoNotDisplayMe
+	public boolean isCurrent() {
+		return false;
 	}
 
 	@Override
