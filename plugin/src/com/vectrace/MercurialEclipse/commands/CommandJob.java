@@ -171,7 +171,15 @@ public abstract class CommandJob extends Job {
 		return HgClients.getConsole();
 	}
 
-	public void execute(int timeout) throws HgException {
+	/**
+	 * Executes the job, blocking the calling thread while its running.
+	 *
+	 * @param timeout
+	 *            The maximum time in milliseconds to wait for the the job to complete.
+	 * @throws HgException
+	 *             The exception thrown by the job or if timeout occurs.
+	 */
+	public CommandJob execute(int timeout) throws HgException {
 
 		logConsoleCommandInvoked(getDebugName());
 
@@ -179,7 +187,7 @@ public abstract class CommandJob extends Job {
 		schedule();
 
 		if (timeout <= 0) {
-			timeout = 1;
+			timeout = 1; // ??
 		}
 
 		Throwable exception = null;
@@ -238,6 +246,6 @@ public abstract class CommandJob extends Job {
 
 			logConsoleCompleted(timeInMillis, exception);
 		}
-
+		return this;
 	}
 }

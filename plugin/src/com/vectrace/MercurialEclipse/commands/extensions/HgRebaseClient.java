@@ -26,11 +26,19 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
  * @author bastian
- *
+ * TODO: use JavaHg
  */
 public class HgRebaseClient extends AbstractClient {
 
 	private static final Pattern REBASING_CONFLICT = Pattern.compile("^abort:.*unresolved conflicts", Pattern.MULTILINE);
+
+	/**
+	 * Helper method to call
+	 * {@link #rebase(HgRoot, int, int, int, boolean, boolean, boolean, boolean, boolean, String)}
+	 */
+	public static void rebaseCurrentOnTip(HgRoot hgRoot) throws HgException {
+		HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, null);
+	}
 
 	/**
 	 * Calls hg rebase.
@@ -52,7 +60,6 @@ public class HgRebaseClient extends AbstractClient {
 	 * @param abort
 	 *            true, if --abort is to be used
 	 * @param keepBranches
-	 * @param useExternalMergeTool
 	 * @param user
 	 *            The user to use for collapse and continued collapse. May be null
 	 * @return the output of the command
@@ -60,11 +67,11 @@ public class HgRebaseClient extends AbstractClient {
 	 */
 	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev, int destRev,
 			boolean collapse, boolean cont, boolean abort, boolean keepBranches, boolean keep,
-			boolean useExternalMergeTool, String user) throws HgException {
+			String user) throws HgException {
 		AbstractShellCommand c = new HgCommand("rebase", "Rebasing", hgRoot, false);//$NON-NLS-1$
 		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-		if (!useExternalMergeTool) {
+		if (!isUseExternalMergeTool()) {
 			// we use (non-existent) simplemerge, so no tool is started. We
 			// need this option, though, as we still want the Mercurial merge to
 			// take place.
@@ -130,7 +137,7 @@ public class HgRebaseClient extends AbstractClient {
 	 */
 	public static String abortRebase(HgRoot hgRoot) throws HgException {
 		try {
-			return rebase(hgRoot, -1, -1, -1, false, false, true, false, false, false, null);
+			return rebase(hgRoot, -1, -1, -1, false, false, true, false, false, null);
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		}

@@ -13,11 +13,17 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.util.regex.Pattern;
+import java.util.List;
 
+import org.eclipse.core.runtime.jobs.Job;
+
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.PullCommand;
 import com.aragost.javahg.commands.PushCommand;
+import com.aragost.javahg.commands.flags.PullCommandFlags;
 import com.aragost.javahg.commands.flags.PushCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -26,24 +32,20 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
  * TODO: use JavaHg
  */
 public class HgPushPullClient extends AbstractClient {
 
-	/**
-	 * matches ("number" "heads") message
-	 */
-	private static final Pattern HEADS_PATTERN = Pattern.compile("\\(\\+\\d+\\sheads\\)");
-
-	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo,
-			boolean force, ChangeSet changeset, int timeout) throws HgException {
+	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo, boolean force,
+			ChangeSet changeset, int timeout) throws HgException {
 		push(hgRoot, repo, force, changeset, timeout, null);
 	}
 
-	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo,
-			boolean force, ChangeSet changeset, int timeout, String branch) throws HgException {
+	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo, boolean force,
+			ChangeSet changeset, int timeout, String branch) throws HgException {
 
 		final PushCommand command = PushCommandFlags.on(hgRoot.getRepository());
 
@@ -55,7 +57,9 @@ public class HgPushPullClient extends AbstractClient {
 			command.force();
 		}
 
-		applyChangeset(command, changeset);
+		if (changeset != null) {
+			command.rev(changeset.getNode());
+		}
 
 		boolean newBranch = MercurialEclipsePlugin.getDefault().getPreferenceStore()
 				.getBoolean(MercurialPreferenceConstants.PREF_PUSH_NEW_BRANCH);
@@ -70,102 +74,110 @@ public class HgPushPullClient extends AbstractClient {
 
 		final String remote = setupForRemote(repo, command);
 
-		new JavaHgCommandJob(command, makeDescription("Pushing", changeset, branch)) {
-
+		new JavaHgCommandJob<List<Changeset>>(command,
+				makeDescription("Pushing", changeset, branch)) {
 			@Override
-			protected void run() throws Exception {
-				command.execute(remote);
+			protected List<Changeset> run() throws Exception {
+				return command.execute(remote);
 			}
 		}.execute(timeout);
 	}
 
-	public static String pull(HgRoot hgRoot, ChangeSet changeset,
-			IHgRepositoryLocation repo, boolean update, boolean rebase,
-			boolean force, boolean timeout, boolean merge) throws HgException {
-		return pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null);
+	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,
+			boolean update, boolean rebase, boolean force, boolean timeout, boolean merge)
+			throws HgException {
+		pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null);
 	}
 
-	public static String pull(HgRoot hgRoot, ChangeSet changeset,
-			IHgRepositoryLocation repo, boolean update, boolean rebase,
-			boolean force, boolean timeout, boolean merge, String branch) throws HgException {
+	/**
+	 * Does a pull, then if any of update, rebase, or merge are true does subsequent calls.
+	 */
+	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,
+			boolean update, boolean rebase, boolean force, boolean useTimeout, boolean merge,
+			String branch) throws HgException {
+		final PullCommand command = PullCommandFlags.on(hgRoot.getRepository());
 
-		boolean separateUpdate = false;
-		HgCommand command = new HgCommand("pull", //$NON-NLS-1$
-				makeDescription("Pulling", changeset, branch), hgRoot, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-
-		addInsecurePreference(command);
-
-		// --update and --branch together will switch to latest of the branch rather than usual
-		// branch crossing logic. See http://www.javaforge.com/issue/19520
-		// TODO: pull from bundle so --branch isn't necessary
-		if (update && branch != null && changeset == null) {
-			update = false;
-			separateUpdate = true;
-		}
-
-		if (update) {
-			command.addOptions("--update"); //$NON-NLS-1$
-			addMergeToolPreference(command);
-		} else if (rebase) {
-			command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
-			command.addOptions("--rebase"); //$NON-NLS-1$
-			addMergeToolPreference(command);
+		if (isInsecure()) {
+			command.insecure();
 		}
 
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
 
-		applyChangeset(command, changeset);
+		if (changeset != null) {
+			command.rev(changeset.getNode());
+		}
 
 		if (branch != null) {
-			command.addOptions("--branch", branch);
+			command.branch(branch);
 		}
 
-		addRepoToHgCommand(repo, command);
+		// Do the pull
+		{
+			final String remote = setupForRemote(repo, command);
 
-		String result = null;
-		try {
-			if (timeout) {
-				command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-				result = new String(command.executeToBytes());
-			} else {
-				result = new String(command.executeToBytes(Integer.MAX_VALUE));
-			}
+			int timeout = useTimeout ? HgClients
+					.getTimeOut(MercurialPreferenceConstants.PULL_TIMEOUT) : Integer.MAX_VALUE;
+			String description = makeDescription("Pulling", changeset, branch);
 
-			if (separateUpdate) {
-				try {
-					result += HgUpdateClient.updateWithoutRefresh(hgRoot, null, false);
-				} catch (HgException e) {
-					if (HgUpdateClient.isCrossesBranchError(e) || HgUpdateClient.isWorkspaceUpdateConflict(e)) {
-						result += e.getMessage();
-					} else {
-						// ??
-						throw e;
-					}
+			List<Changeset> pulled = new JavaHgCommandJob<List<Changeset>>(command, description) {
+				@Override
+				protected List<Changeset> run() throws Exception {
+					return command.execute(remote);
 				}
+			}.execute(timeout).getValue();
+
+			if (pulled.isEmpty()) {
+				// Nothing to do
+				return;
 			}
-		} finally {
-			// TODO: detect workspace conflicts on update and notify user
+		}
 
-			if ((update || separateUpdate) && result != null && !merge && !rebase) {
-				// different messages from hg depending on if branch was set or not
-				// TODO: clean up this detection
-				if (result.contains("not updating, since new heads added")
-						|| result.contains("not updating: crosses branches")
-						|| (branch != null && HEADS_PATTERN.matcher(result).find())) {
+		// Perform the follow up operations and refresh
 
-					// inform user about new heads and ask if he wants to merge or rebase
+		// The reason to use "all" instead of only "local + incoming", is that we can pull
+		// from another repo as the sync clients for given project may use
+		// in this case, we also need to update "outgoing" changesets
+		Job refreshJob;
+
+		if (update || rebase || merge) {
+			refreshJob = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
+		} else {
+			refreshJob = new RefreshRootJob(hgRoot, RefreshRootJob.ALL);
+		}
+
+		if (update) {
+			try {
+				HgUpdateClient.updateWithoutRefresh(hgRoot, null, false);
+			} catch (HgException e) {
+				if (HgUpdateClient.isCrossesBranchError(e)) {
 					UpdateJob.handleMultipleHeads(hgRoot, false);
+				} else {
+					HgUpdateClient.handleConflicts(e);
 				}
 			}
-
-			// doesn't matter how far we were: we have to trigger update of caches in case
-			// the pull was *partly* successful (e.g. pull was ok, but update not)
-			refreshProjects((update || separateUpdate), hgRoot);
+		} else if (rebase) {
+			try {
+				HgRebaseClient.rebaseCurrentOnTip(hgRoot);
+			} catch (HgException e) {
+				if (HgRebaseClient.isRebaseConflict(e)) {
+					refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
+							null, false));
+				}
+			}
+		} else if (merge) {
+			try {
+				HgMergeClient.merge(hgRoot, "tip", false);
+			} catch (HgException e) {
+				if (HgMergeClient.isConflict(e)) {
+					refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
+							null, true));
+				}
+			}
 		}
-		return result;
+
+		refreshJob.schedule();
 	}
 
 	private static String makeDescription(String op, ChangeSet changeset, String branch) {
@@ -183,28 +195,6 @@ public class HgPushPullClient extends AbstractClient {
 			if (cs != null && (cs = cs.trim()).length() > 0) {
 				command.addOptions("-r", cs); //$NON-NLS-1$
 			}
-		}
-	}
-
-	protected static void applyChangeset(PushCommand command, ChangeSet changeset) {
-		if (changeset != null) {
-			String cs = changeset.getNode();
-
-			if (cs != null && (cs = cs.trim()).length() > 0) {
-				command.rev(cs);
-			}
-		}
-	}
-
-	private static void refreshProjects(boolean update, final HgRoot hgRoot) {
-		// The reason to use "all" instead of only "local + incoming", is that we can pull
-		// from another repo as the sync clients for given project may use
-		// in this case, we also need to update "outgoing" changesets
-		final int flags = RefreshRootJob.ALL;
-		if(update) {
-			new RefreshWorkspaceStatusJob(hgRoot, flags).schedule();
-		} else {
-			new RefreshRootJob(hgRoot, flags).schedule();
 		}
 	}
 }

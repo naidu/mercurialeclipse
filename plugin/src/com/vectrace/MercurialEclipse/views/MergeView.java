@@ -21,6 +21,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.IJobChangeListener;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -489,6 +492,40 @@ public class MergeView extends AbstractRootView implements Observer {
 						MessageDialog.INFORMATION,
 						MercurialPreferenceConstants.PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG,
 						shell);
+	}
+
+	/**
+	 * Make a job change listener so that when the job is done the merge view will be opened an a
+	 * message shown saying a merge or rebase conflict occurred.
+	 *
+	 * @param hgRoot The root
+	 * @param shell The shell, may be null
+	 * @param merge True if this is a merge, false if it's a rebase.
+	 * @return A new job change listener
+	 */
+	public static IJobChangeListener makeConflictJobChangeListener(final HgRoot hgRoot, final Shell shell,
+			final boolean merge) {
+		return new JobChangeAdapter() {
+			@Override
+			public void done(IJobChangeEvent event) {
+				Display.getDefault().asyncExec(new Runnable() {
+					public void run() {
+						try {
+							Shell sh = (shell == null) ? MercurialEclipsePlugin.getActiveShell()
+									: shell;
+
+							if (merge) {
+								showMergeConflict(hgRoot, sh);
+							} else {
+								showRebaseConflict(hgRoot, sh);
+							}
+						} catch (PartInitException e1) {
+							MercurialEclipsePlugin.logError(e1);
+						}
+					}
+				});
+			}
+		};
 	}
 
 	private static class MergeTable extends AbstractHighlightableTable<FlaggedAdaptable> {

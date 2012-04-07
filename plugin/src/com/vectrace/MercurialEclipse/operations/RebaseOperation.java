@@ -15,15 +15,11 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PartInitException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -85,11 +81,9 @@ public class RebaseOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
-			boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
-				.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
-			result = HgRebaseClient.rebase(hgRoot,
-					sourceRev,
-					baseRev, destRev, collapse, cont, abort, keepBranches, keep, useExternalMergeTool, user);
+
+			result = HgRebaseClient.rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont,
+					abort, keepBranches, keep, user);
 			monitor.worked(1);
 
 		} catch (HgException e) {
@@ -103,29 +97,14 @@ public class RebaseOperation extends HgOperation {
 		} finally {
 			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot,
 					RefreshRootJob.ALL);
-			job.schedule();
-			job.join();
-			monitor.done();
-			if(rebaseConflict) {
-				showMergeView();
-			}
-		}
-	}
 
-	/**
-	 * show Merge view, as it offers to abort a merge and revise the automatically merged files
-	 */
-	private void showMergeView() {
-		Runnable runnable = new Runnable() {
-			public void run() {
-				try {
-					MergeView.showRebaseConflict(hgRoot, MercurialEclipsePlugin.getActiveShell());
-				} catch (PartInitException e1) {
-					MercurialEclipsePlugin.logError(e1);
-				}
+			if(rebaseConflict) {
+				job.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot, getShell(), false));
 			}
-		};
-		Display.getDefault().asyncExec(runnable);
+
+			job.schedule();
+			monitor.done();
+		}
 	}
 
 	@Override
