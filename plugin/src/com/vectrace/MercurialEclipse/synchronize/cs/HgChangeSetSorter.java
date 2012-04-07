@@ -98,8 +98,6 @@ public class HgChangeSetSorter extends ViewerSorter {
 		return compareByName(viewer, e1, e2);
 	}
 
-
-	@SuppressWarnings("unchecked")
 	private int compareByName(Viewer viewer, Object e1, Object e2) {
 		String name1;
 		String name2;

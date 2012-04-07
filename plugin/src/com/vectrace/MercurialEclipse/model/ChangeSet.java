@@ -31,11 +31,8 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.synchronize.SyncInfoTree;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -300,6 +297,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	/**
 	 * @return Whether the repository is currently on this revision
 	 */
+	@DoNotDisplayMe
 	public final boolean isCurrentOutgoing() {
 		return getDirection() == Direction.OUTGOING && isCurrent();
 	}
@@ -351,19 +349,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	/**
 	 * @return Whether the repository is currently on this revision
 	 */
-	public final boolean isCurrent() {
-		HgRoot hgRoot = getHgRoot();
-
-		if (hgRoot != null) {
-			try {
-				return equals(LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot));
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
-
-		return false;
-	}
+	public abstract boolean isCurrent();
 
 	public String getUser() {
 		return getAuthor();

@@ -44,11 +44,11 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * unneeded client-server communication.
  * <p>
  * There is no guarantee that the data in the cache is up-to-date with the server. To get the
- * latest data, clients have explicitely refresh or clean the cache before using it.
+ * latest data, clients have explicitly refresh or clean the cache before using it.
  * <p>
  * The cache has empty ("invalid" state) before the first client request and automatically
- * retrieves the data on first client request. So it becames "valid" state and does not refresh the
- * data until some operation "clears" or explicitely requests a "refresh" of the cache. After the
+ * retrieves the data on first client request. So it becomes "valid" state and does not refresh the
+ * data until some operation "clears" or explicitly requests a "refresh" of the cache. After the
  * "clear" operation the cache is going to the initial "invalid" state again. After "clear" and
  * "refresh", a notification is sent to the observing clients.
  * <p>
