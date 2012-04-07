@@ -13,10 +13,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
-import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.PushCommand;
 import com.aragost.javahg.commands.flags.PushCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -47,7 +45,7 @@ public class HgPushPullClient extends AbstractClient {
 	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, ChangeSet changeset, int timeout, String branch) throws HgException {
 
-		PushCommand command = PushCommandFlags.on(hgRoot.getRepository());
+		final PushCommand command = PushCommandFlags.on(hgRoot.getRepository());
 
 		if (isInsecure()) {
 			command.insecure();
@@ -70,15 +68,15 @@ public class HgPushPullClient extends AbstractClient {
 			command.branch(branch);
 		}
 
-		String remote = setupForRemote(repo, command);
+		final String remote = setupForRemote(repo, command);
 
-		try {
-			command.execute(remote);
-		} catch (IOException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
-		} catch (ExecutionException e) {
-			throw new HgException(e.getLocalizedMessage(), e);
-		}
+		new JavaHgCommandJob(command, makeDescription("Pushing", changeset, branch)) {
+
+			@Override
+			protected void run() throws Exception {
+				command.execute(remote);
+			}
+		}.execute(timeout);
 	}
 
 	public static String pull(HgRoot hgRoot, ChangeSet changeset,

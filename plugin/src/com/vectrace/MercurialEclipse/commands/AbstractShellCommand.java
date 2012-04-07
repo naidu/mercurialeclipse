@@ -357,7 +357,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// using a job with exclusive rule here serializes all hg access from plugin.
 			processWrapper = createProcessWrapper(output, uiName, jobName, builder, expectZeroReturnValue);
 
-			CommandJob.execute(processWrapper, timeout);
+			processWrapper.execute(timeout);
 
 			return true;
 		} finally {
