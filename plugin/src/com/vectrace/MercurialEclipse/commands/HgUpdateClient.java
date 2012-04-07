@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
- * TODO: use JavaHg
+ * TODO: check conflict handling
  */
 public class HgUpdateClient extends AbstractClient {
 
