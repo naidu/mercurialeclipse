@@ -17,9 +17,10 @@ import org.eclipse.core.runtime.Status;
 import com.aragost.javahg.internals.AbstractCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public abstract class JavaHgCommandJob extends CommandJob {
+public abstract class JavaHgCommandJob<T> extends CommandJob {
 
 	private final AbstractCommand command;
+	private T value;
 
 	public JavaHgCommandJob(com.aragost.javahg.internals.AbstractCommand command, String sUIName) {
 		this(command, sUIName, false);
@@ -39,11 +40,11 @@ public abstract class JavaHgCommandJob extends CommandJob {
 	 */
 	@Override
 	protected final IStatus doRun(IProgressMonitor monitor) throws Exception {
-		run();
-		return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+		value = run();
+		return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
 	}
 
-	protected abstract void run() throws Exception;
+	protected abstract T run() throws Exception;
 
 	/**
 	 * @see com.vectrace.MercurialEclipse.commands.CommandJob#getDebugName()
@@ -67,5 +68,21 @@ public abstract class JavaHgCommandJob extends CommandJob {
 	 */
 	@Override
 	protected void checkError() throws HgException {
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.commands.CommandJob#execute(int)
+	 */
+	@Override
+	public JavaHgCommandJob<T> execute(int timeout) throws HgException {
+		super.execute(timeout);
+		return this;
+	}
+
+	/**
+	 * @return The value returned by {@link #run()}
+	 */
+	public T getValue() {
+		return value;
 	}
 }

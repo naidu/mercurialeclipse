@@ -16,8 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IconAndMessageDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -29,7 +27,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.IProgressService;
 
@@ -41,7 +38,6 @@ import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -139,18 +135,17 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			iProgressService.run(true, false, new IRunnableWithProgress() {
 
 				public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-					boolean useExternalMergeTool = MercurialEclipsePlugin.getDefault().getPreferenceStore()
-						.getBoolean(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE);
 
 					boolean rebaseConflict = false;
 					try {
 						monitor.beginTask("Rebasing on tip", 2);
 						// rebase on Tip revision
-						HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, useExternalMergeTool, null);
+						HgRebaseClient.rebaseCurrentOnTip(hgRoot);
 
 						monitor.worked(1);
 						monitor.setTaskName("Updating");
 						// if rebase succeeded try again updating to tip
+						// TODO: are we not already on tip after rebase?
 						HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
 
 						monitor.done();
@@ -168,12 +163,7 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 						RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
 						if (rebaseConflict) {
 							// do not join to avoid any potential deadlocks. listener is enough
-							job.addJobChangeListener(new JobChangeAdapter() {
-								@Override
-								public void done(IJobChangeEvent event) {
-									showMergeView();
-								}
-							});
+							job.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot, getShell(), false));
 						}
 						job.schedule();
 					}
@@ -200,22 +190,6 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 			return false;
 		}
 		return true;	// no changes found
-	}
-
-	/**
-	 * show Merge view, as it offers to abort a merge and revise the automatically merged files
-	 */
-	private void showMergeView() {
-		Runnable runnable = new Runnable() {
-			public void run() {
-				try {
-					MergeView.showRebaseConflict(hgRoot, getShell());
-				} catch (PartInitException e1) {
-					MercurialEclipsePlugin.logError(e1);
-				}
-			}
-		};
-		Display.getDefault().asyncExec(runnable);
 	}
 
 	private void mergePressed() {

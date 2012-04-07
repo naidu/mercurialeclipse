@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
+import com.aragost.javahg.internals.AbstractCommand;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -319,13 +320,21 @@ public abstract class AbstractClient {
 		return host.toString();
 	}
 
-	protected static void addMergeToolPreference(AbstractShellCommand command) {
-		boolean useExternalMergeTool = Boolean.valueOf(
+	protected static boolean isUseExternalMergeTool() {
+		return Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 						"false")).booleanValue(); //$NON-NLS-1$
+	}
 
-		if (!useExternalMergeTool) {
+	protected static void addMergeToolPreference(AbstractShellCommand command) {
+		if (!isUseExternalMergeTool()) {
 			command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
+		}
+	}
+
+	protected static void addMergeToolPreference(AbstractCommand command) {
+		if (!isUseExternalMergeTool()) {
+			command.cmdAppend("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 
