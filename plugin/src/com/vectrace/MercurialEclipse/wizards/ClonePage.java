@@ -75,7 +75,6 @@ public class ClonePage extends PushPullPage {
 		setShowBundleButton(false);
 		setShowCredentials(true);
 		setShowForce(false);
-		setShowSnapFile(false);
 	}
 
 	@Override
@@ -401,10 +400,7 @@ public class ClonePage extends PushPullPage {
 		if(!ok){
 			return false;
 		}
-		boolean forest = false;
-		if (isShowForest()) {
-			forest = isForestSelected();
-		}
+
 		boolean svn = false;
 		if (isShowSvn()) {
 			svn = isSvnSelected();
@@ -435,14 +431,14 @@ public class ClonePage extends PushPullPage {
 			String rev = revisionTextField.getText();
 
 			boolean noUpdate = true;
-			if(svn || forest){
+			if(svn){
 				// TODO allow branch /revision selection for the svn/forest clones
 				noUpdate = false;
 			}
 
 			CloneOperation cloneOperation = new CloneOperation(getContainer(), destDirectory
 					.getParentFile(), lastRepo, noUpdate, pull, uncompressed, timeout2, rev,
-					destDirectory.getName(), forest, svn);
+					destDirectory.getName(), svn);
 
 			getContainer().run(true, true, cloneOperation);
 		} catch (InvocationTargetException e) {

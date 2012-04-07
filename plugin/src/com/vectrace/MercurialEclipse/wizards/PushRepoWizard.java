@@ -14,7 +14,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.Properties;
@@ -28,7 +27,6 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
-import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -113,8 +111,6 @@ public class PushRepoWizard extends HgWizard {
 		}
 		String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
 		final boolean svnEnabled = isSvnEnabled(pushRepoPage);
-		final boolean isForest = !svnEnabled && isForestEnabled(pushRepoPage);
-		final String snapFileText = pushRepoPage.getSnapFileText();
 
 		class PushOperation extends HgOperation {
 			private String output;
@@ -131,14 +127,6 @@ public class PushRepoWizard extends HgWizard {
 				try {
 					if (svnEnabled) {
 						output = HgSvnClient.push(hgRoot);
-					} else if (isForest) {
-						File forestRoot = hgRoot.getParentFile();
-
-						File snapFile = null;
-						if (snapFileText.length() > 0) {
-							snapFile = new File(snapFileText);
-						}
-						output = HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
 					} else {
 						HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
 						output = "success"; // TODO
@@ -173,7 +161,7 @@ public class PushRepoWizard extends HgWizard {
 		}
 
 		try {
-			updateAfterPush(result, hgRoot, repo, isForest);
+			updateAfterPush(result, hgRoot, repo);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			MessageDialog.openError(getContainer().getShell(),
@@ -183,28 +171,20 @@ public class PushRepoWizard extends HgWizard {
 		return true;
 	}
 
-	private static boolean isForestEnabled(PushPullPage pushRepoPage) {
-		return pushRepoPage.isShowForest() && pushRepoPage.isForestSelected();
-	}
-
 	private static boolean isSvnEnabled(PushPullPage pushRepoPage) {
 		return pushRepoPage.isShowSvn() && pushRepoPage.isSvnSelected();
 	}
 
-	private static void updateAfterPush(String result, HgRoot hgRoot, IHgRepositoryLocation repo, boolean isForest) throws HgException {
+	private static void updateAfterPush(String result, HgRoot hgRoot, IHgRepositoryLocation repo) throws HgException {
 		if (result.length() != 0) {
 			HgClients.getConsole().printMessage(result, null);
 		}
 
 		// It appears good. Stash the repo location.
 		MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, repo);
-		if(isForest){
-			IncomingChangesetCache.getInstance().clear(repo);
-			OutgoingChangesetCache.getInstance().clear(repo);
-		} else {
-			IncomingChangesetCache.getInstance().clear(hgRoot, true);
-			OutgoingChangesetCache.getInstance().clear(hgRoot, true);
-		}
+
+		IncomingChangesetCache.getInstance().clear(hgRoot, true);
+		OutgoingChangesetCache.getInstance().clear(hgRoot, true);
 	}
 
 	public void setInitialMessage(String message) {
