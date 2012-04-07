@@ -128,7 +128,7 @@ public abstract class CommandJob extends Job {
 	protected boolean isAlive() {
 		// job is either not started yet (is scheduled and waiting), or it is not finished nor
 		// cancelled yet
-		return (state != State.PENDING && getResult() == null) || (state == State.RUN);
+		return (state == State.PENDING && getResult() == null) || (state == State.RUN);
 	}
 
 	protected abstract String getDebugName();

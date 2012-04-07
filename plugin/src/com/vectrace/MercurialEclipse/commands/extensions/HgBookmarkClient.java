@@ -23,6 +23,8 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
+ *
+ * TODO: this is no longer an extension
  */
 public class HgBookmarkClient extends AbstractClient {
 
