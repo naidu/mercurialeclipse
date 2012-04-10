@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.PlatformUI;
 
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.UpdateCommand;
 import com.aragost.javahg.commands.UpdateResult;
 import com.aragost.javahg.commands.flags.UpdateCommandFlags;
@@ -90,7 +91,15 @@ public class HgUpdateClient extends AbstractClient {
 		new JavaHgCommandJob<UpdateResult>(command, makeDescription(revision, clean)) {
 			@Override
 			protected UpdateResult run() throws Exception {
-				return command.execute();
+				try {
+					return command.execute();
+				} catch (ExecutionException e) {
+					if (command.crossedBranch()) {
+						throw new UpdateCrossesBranchesException(e);
+					}
+					// TODO: conflicts
+					throw e;
+				}
 			}
 		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.UPDATE_TIMEOUT));
 	}
@@ -110,6 +119,17 @@ public class HgUpdateClient extends AbstractClient {
 	}
 
 	public static boolean isCrossesBranchError(HgException e) {
-		return e.getMessage().contains("abort: crosses branches") && e.getStatus().getCode() == -1;
+		return e instanceof UpdateCrossesBranchesException;
+	}
+
+	// inner types
+
+	private static class UpdateCrossesBranchesException extends HgException {
+
+		public UpdateCrossesBranchesException(Throwable e) {
+			super("Update crosses branches", e);
+		}
+
+
 	}
 }
