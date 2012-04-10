@@ -15,12 +15,14 @@ package com.vectrace.MercurialEclipse.history;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistoryProvider;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -37,7 +39,13 @@ public class MercurialHistoryProvider extends FileHistoryProvider {
 		RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource)
 				.getProject());
 		if (provider instanceof MercurialTeamProvider) {
-			return new MercurialHistory(resource);
+			MercurialHistory history = new MercurialHistory(resource);
+			try {
+				history.refresh(monitor, Integer.MAX_VALUE);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			return history;
 		}
 		return null;
 	}
