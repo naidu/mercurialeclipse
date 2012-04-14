@@ -43,11 +43,11 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
+import com.aragost.javahg.Bookmark;
 import com.aragost.javahg.commands.Branch;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
@@ -228,11 +228,11 @@ public class RevisionChooserPanel extends Composite {
 				data.changeSet = localCache.get(hgRoot, branch.getBranchTip());
 			} else if (bookmark != null) {
 				try {
-					data.changeSet = localCache.get(hgRoot, bookmark.getRevision()
-							+ ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+					data.changeSet = localCache.get(hgRoot, bookmark.getChangeset().getRevision()
+							+ ":" + bookmark.getChangeset().getNode().substring(0, 12)); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
-							bookmark.getRevision(), bookmark.getShortNodeId()), ex);
+							bookmark.getChangeset().getRevision(), bookmark.getChangeset().getNode()), ex);
 				}
 			}
 		}

@@ -11,11 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Bookmark;
+import com.aragost.javahg.Bookmark;
+import com.aragost.javahg.commands.flags.BookmarksCommandFlags;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -26,46 +25,20 @@ public class HgBookmarkClient extends AbstractClient {
 	/**
 	 * @return a List of bookmarks
 	 */
-	public static List<Bookmark> getBookmarks(HgRoot hgRoot) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", "Listing bookmarks", hgRoot, true);
-		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
-		String result = cmd.executeToString();
-		return convert(result);
+	public static List<Bookmark> getBookmarks(HgRoot hgRoot) {
+		return BookmarksCommandFlags.on(hgRoot.getRepository()).list();
 	}
 
-	private static ArrayList<Bookmark> convert(String result) {
-		ArrayList<Bookmark> bookmarks = new ArrayList<Bookmark>();
-		if (!result.startsWith("no bookmarks set")) { //$NON-NLS-1$
-			String[] split = result.split("\n"); //$NON-NLS-1$
-			for (String string : split) {
-				bookmarks.add(new Bookmark(string));
-			}
-		}
-		return bookmarks;
+	public static void create(HgRoot hgRoot, String name, String targetChangeset) {
+		BookmarksCommandFlags.on(hgRoot.getRepository()).rev(targetChangeset).create(name);
 	}
 
-	public static String create(HgRoot hgRoot, String name, String targetChangeset)
-			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", "Adding bookmark", hgRoot, true);
-		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
-		cmd.addOptions("--rev", targetChangeset, name); //$NON-NLS-1$
-		return cmd.executeToString();
+	public static void rename(HgRoot hgRoot, String name, String newName) {
+		BookmarksCommandFlags.on(hgRoot.getRepository()).rename(name, newName);
 	}
 
-	public static String rename(HgRoot hgRoot, String name, String newName)
-			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", "Renaming bookmark", hgRoot, true);
-		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
-		cmd.addOptions("--rename", name, newName); //$NON-NLS-1$
-		return cmd.executeToString();
-	}
-
-	public static String delete(HgRoot hgRoot, String name)
-			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bookmarks", "Deleting bookmark", hgRoot, true);
-		cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
-		cmd.addOptions("--delete", name); //$NON-NLS-1$
-		return cmd.executeToString();
+	public static void delete(HgRoot hgRoot, String name) {
+		BookmarksCommandFlags.on(hgRoot.getRepository()).delete(name);
 	}
 
 }

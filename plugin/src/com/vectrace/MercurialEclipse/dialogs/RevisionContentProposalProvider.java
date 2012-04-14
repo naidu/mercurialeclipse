@@ -30,8 +30,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 
+import com.aragost.javahg.Bookmark;
 import com.vectrace.MercurialEclipse.commands.HgBookmarkClient;
-import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
@@ -291,7 +291,8 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		}
 
 		public String getContent() {
-			return bookmark.getRevision() + ":" + bookmark.getShortNodeId(); //$NON-NLS-1$
+			return bookmark.getChangeset().getRevision()
+					+ ":" + bookmark.getChangeset().getNode().substring(0, 12); //$NON-NLS-1$
 		}
 
 		public int getCursorPosition() {
@@ -299,11 +300,12 @@ public class RevisionContentProposalProvider implements IContentProposalProvider
 		}
 
 		public String getDescription() {
-			return bookmark.getRevision() + ":" + bookmark.getShortNodeId() + "\n\n" + bookmark.getName(); //$NON-NLS-1$ //$NON-NLS-2$
+			return bookmark.getChangeset().getRevision()
+					+ ":" + bookmark.getChangeset().getNode().substring(0, 12) + "\n\n" + bookmark.getName(); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		public String getLabel() {
-			return bookmark.getRevision() + ": " + bookmark.getName(); //$NON-NLS-1$
+			return bookmark.getChangeset().getRevision() + ": " + bookmark.getName(); //$NON-NLS-1$
 		}
 	}
 }
