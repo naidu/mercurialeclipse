@@ -174,11 +174,11 @@ public class RebasePage extends HgWizardPage {
 	}
 
 	/**
-	 * @return may return -1 if nothing is selected
+	 * @return may return null if nothing is selected
 	 */
-	public int getSelectedSrcIndex() {
+	public String getSelectedSrcNode() {
 		ChangeSet selection = srcTable.getSelection();
-		return selection == null? -1 : selection.getIndex();
+		return selection == null ? null : selection.getNode();
 	}
 
 	public boolean isSourceRevSelected() {
@@ -208,9 +208,9 @@ public class RebasePage extends HgWizardPage {
 	/**
 	 * @return may return -1 if nothing is selected
 	 */
-	public int getSelectedDestIndex() {
+	public String getSelectedDestNode() {
 		ChangeSet selection = destTable.getSelection();
-		return selection == null? -1 : selection.getIndex();
+		return selection == null ? null : selection.getNode();
 	}
 
 }

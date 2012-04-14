@@ -15,6 +15,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgMergeClient extends AbstractClient {
 
 	public static String merge(HgRoot hgRoot, String revision, boolean forced)

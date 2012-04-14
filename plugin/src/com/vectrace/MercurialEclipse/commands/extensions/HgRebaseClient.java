@@ -14,9 +14,11 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 import java.io.File;
 import java.util.regex.Pattern;
 
+import com.aragost.javahg.ext.rebase.RebaseCommand;
+import com.aragost.javahg.ext.rebase.flags.RebaseCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.JavaHgCommandJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -37,7 +39,7 @@ public class HgRebaseClient extends AbstractClient {
 	 * {@link #rebase(HgRoot, int, int, int, boolean, boolean, boolean, boolean, boolean, String)}
 	 */
 	public static void rebaseCurrentOnTip(HgRoot hgRoot) throws HgException {
-		HgRebaseClient.rebase(hgRoot, -1, -1, -1, false, false, false, false, false, null);
+		HgRebaseClient.rebase(hgRoot, null, null, null, false, false, false, false, false, null);
 	}
 
 	/**
@@ -47,11 +49,11 @@ public class HgRebaseClient extends AbstractClient {
 	 *
 	 * @param hgRoot
 	 *            a hg root that is to be rebased.
-	 * @param sourceRev
+	 * @param sourceNode
 	 *            --source option, -1 if not set
-	 * @param baseRev
+	 * @param baseNode
 	 *            --base option, -1 if not set
-	 * @param destRev
+	 * @param destNode
 	 *            --dest option, -1 if not set
 	 * @param collapse
 	 *            true, if --collapse is to be used
@@ -65,65 +67,65 @@ public class HgRebaseClient extends AbstractClient {
 	 * @return the output of the command
 	 * @throws HgException
 	 */
-	public static String rebase(HgRoot hgRoot, int sourceRev, int baseRev, int destRev,
-			boolean collapse, boolean cont, boolean abort, boolean keepBranches, boolean keep,
-			String user) throws HgException {
-		AbstractShellCommand c = new HgCommand("rebase", "Rebasing", hgRoot, false);//$NON-NLS-1$
-		c.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-		if (!isUseExternalMergeTool()) {
-			// we use (non-existent) simplemerge, so no tool is started. We
-			// need this option, though, as we still want the Mercurial merge to
-			// take place.
-			c.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
+	public static void rebase(HgRoot hgRoot, String sourceNode, String baseNode, String destNode,
+			boolean collapse, final boolean cont, final boolean abort, boolean keepBranches,
+			boolean keep, String user) throws HgException {
 
+		final RebaseCommand c = RebaseCommandFlags.on(hgRoot.getRepository());
+
+		addMergeToolPreference(c);
+
+		if (!isUseExternalMergeTool()) {
 			// Do not invoke external editor for commit message
 			// Future: Allow user to specify this
-			c.addOptions("--config", "ui.editor=echo"); //$NON-NLS-1$ //$NON-NLS-2$
-			// Future: Delete this block and use  addMergeToolPreference(command);
+			c.cmdAppend("--config", "ui.editor=echo"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		c.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		// User is only applicable for collapse and continued collapse invocations
 		if (user != null) {
-			c.addOptions("--config", "ui.username=" + user); //$NON-NLS-1$ //$NON-NLS-2$
+			c.cmdAppend("--config", "ui.username=" + user); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
 		if (!cont && !abort) {
-			if (sourceRev >= 0 && baseRev <= 0) {
-				c.addOptions("--source", "" + sourceRev); //$NON-NLS-1$ //$NON-NLS-2$
+			// Source or base or neither is set
+			if (sourceNode != null && baseNode == null) {
+				c.source(sourceNode);
+			}
+			else if (baseNode != null && sourceNode == null) {
+				c.base(baseNode);
 			}
 
-			if (sourceRev < 0 && baseRev >= 0) {
-				c.addOptions("--base", "" + baseRev); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-
-			if (destRev >= 0) {
-				c.addOptions("--dest", "" + destRev); //$NON-NLS-1$ //$NON-NLS-2$
+			if (destNode != null) {
+				c.dest(destNode);
 			}
 
 			if (collapse) {
-				c.addOptions("--collapse"); //$NON-NLS-1$
+				c.collapse();
 			}
 		}
 
-		if (cont && !abort) {
-			c.addOptions("--continue"); //$NON-NLS-1$
-		}
-		if (abort && !cont) {
-			c.addOptions("--abort"); //$NON-NLS-1$
-		}
-
 		if (keepBranches) {
-			c.addOptions("--keepbranches"); //$NON-NLS-1$
+			c.keepbranches();
 		}
 		if (keep) {
-			c.addOptions("--keep"); //$NON-NLS-1$
+			c.keep();
 		}
 
 		MercurialUtilities.setOfferAutoCommitMerge(true);
 
-		return c.executeToString();
+		new JavaHgCommandJob<Object>(c, "Rebasing") {
+			@Override
+			protected Object run() throws Exception {
+				if (cont && !abort) {
+					c.executeContinue();
+				} else if (abort && !cont) {
+					c.executeAbort();
+				} else {
+					c.execute();
+				}
+				return null;
+			}
+		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.PULL_TIMEOUT)).getValue();
 	}
 
 	/**
@@ -131,13 +133,12 @@ public class HgRebaseClient extends AbstractClient {
 	 *
 	 * @param hgRoot
 	 *            The hg root to use
-	 * @return The result message
 	 * @throws HgException
 	 *             On error
 	 */
-	public static String abortRebase(HgRoot hgRoot) throws HgException {
+	public static void abortRebase(HgRoot hgRoot) throws HgException {
 		try {
-			return rebase(hgRoot, -1, -1, -1, false, false, true, false, false, null);
+			rebase(hgRoot, null, null, null, false, false, true, false, false, null);
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		}

@@ -101,6 +101,11 @@
 			<artifactId>guava</artifactId>
 			<version>11.0.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.aragost.javahg</groupId>
+			<artifactId>javahg-ext-rebase</artifactId>
+			<version>0.3-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>

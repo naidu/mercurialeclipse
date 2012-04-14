@@ -34,17 +34,17 @@ public class RebaseWizard extends HgOperationWizard {
 
 	@Override
 	protected HgOperation initOperation() {
-		int srcRev = -1;
-		int baseRev = -1;
-		int destRev = -1;
+		String srcRev = null;
+		String baseRev = null;
+		String destRev = null;
 		if (rebasePage.isSourceRevSelected()) {
-			srcRev = rebasePage.getSelectedSrcIndex();
+			srcRev = rebasePage.getSelectedSrcNode();
 		}
 		if (rebasePage.isBaseRevSelected()) {
-			baseRev = rebasePage.getSelectedSrcIndex();
+			baseRev = rebasePage.getSelectedSrcNode();
 		}
 		if (rebasePage.isDestRevSelected()) {
-			destRev = rebasePage.getSelectedDestIndex();
+			destRev = rebasePage.getSelectedDestNode();
 		}
 		boolean collapse = rebasePage.isCollapseRevSelected();
 
