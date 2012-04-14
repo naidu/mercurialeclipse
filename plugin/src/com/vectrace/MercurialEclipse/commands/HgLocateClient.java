@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.model.NullHgFile;
 
 /**
  * @author Ge Zhong
- *
+ * TODO: use JavaHg
  */
 public class HgLocateClient extends AbstractClient {
 

@@ -35,6 +35,9 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgCommitClient extends AbstractClient {
 
 	/**

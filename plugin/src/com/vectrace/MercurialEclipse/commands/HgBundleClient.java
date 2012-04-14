@@ -14,6 +14,9 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgBundleClient extends AbstractClient {
 	public static String bundle(HgRoot root, ChangeSet rev, String targetRepo,
 			String file, boolean all, String base) throws HgException {

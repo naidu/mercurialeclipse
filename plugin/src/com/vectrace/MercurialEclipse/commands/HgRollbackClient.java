@@ -17,6 +17,9 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgRollbackClient  extends AbstractClient {
 
 	public static String rollback(final HgRoot hgRoot) throws CoreException {
