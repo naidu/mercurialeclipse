@@ -25,7 +25,7 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author Bastian
- *
+ * TODO: use JavaHg
  */
 public class HgGrepClient extends AbstractClient {
 

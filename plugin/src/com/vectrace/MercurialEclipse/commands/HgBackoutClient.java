@@ -19,6 +19,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 /**
  * @author bastian
  *
+ * TODO: use JavaHg
  */
 public class HgBackoutClient extends AbstractClient {
 

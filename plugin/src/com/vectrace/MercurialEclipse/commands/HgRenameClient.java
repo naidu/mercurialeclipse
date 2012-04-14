@@ -18,6 +18,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgRenameClient extends AbstractClient {
 
 	public static void renameResource(IPath source, IPath dest, HgRoot hgRoot,

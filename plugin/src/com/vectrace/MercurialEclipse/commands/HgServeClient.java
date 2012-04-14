@@ -25,7 +25,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
- *
  */
 public class HgServeClient extends AbstractClient {
 

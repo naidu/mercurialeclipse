@@ -34,6 +34,9 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
+/**
+ * TODO: use JavaHg
+ */
 public class HgResolveClient extends AbstractClient {
 
 	/**
