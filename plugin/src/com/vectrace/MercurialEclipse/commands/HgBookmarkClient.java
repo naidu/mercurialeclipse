@@ -9,22 +9,17 @@
  * 		bastian	implementation
  * 		Andrei Loskutov - bug fixes
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.extensions;
+package com.vectrace.MercurialEclipse.commands;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
- *
- * TODO: this is no longer an extension
  */
 public class HgBookmarkClient extends AbstractClient {
 

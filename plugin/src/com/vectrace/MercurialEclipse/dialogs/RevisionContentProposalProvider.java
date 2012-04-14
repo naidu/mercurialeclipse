@@ -30,7 +30,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 
-import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
+import com.vectrace.MercurialEclipse.commands.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
