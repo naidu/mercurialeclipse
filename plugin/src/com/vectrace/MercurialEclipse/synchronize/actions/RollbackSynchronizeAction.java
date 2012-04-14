@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.synchronize.actions;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -55,17 +54,13 @@ public class RollbackSynchronizeAction extends SynchronizeModelAction {
 		public void run(IProgressMonitor monitor) throws InvocationTargetException,
 				InterruptedException {
 
-			try {
-				final String result = HgRollbackClient.rollback(hgRoot);
-				getShell().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						MessageDialog.openInformation(getShell(),
-								Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
-					}
-				});
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			final String result = HgRollbackClient.rollback(hgRoot);
+			getShell().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					MessageDialog.openInformation(getShell(),
+							Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
+				}
+			});
 		}
 	}
 

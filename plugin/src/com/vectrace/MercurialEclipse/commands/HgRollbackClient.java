@@ -11,23 +11,25 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.runtime.CoreException;
-
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.commands.flags.RollbackCommandFlags;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
-/**
- * TODO: use JavaHg
- */
 public class HgRollbackClient  extends AbstractClient {
 
-	public static String rollback(final HgRoot hgRoot) throws CoreException {
-		HgCommand command = new HgCommand("rollback", "Rolling back last transaction", hgRoot, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		String result = command.executeToString();
-		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
-		return result;
-	}
+	public static String rollback(final HgRoot hgRoot) {
+		try {
+			try {
+				RollbackCommandFlags.on(hgRoot.getRepository()).execute();
 
+				return "Rollback successful";
+			} catch (ExecutionException e) {
+				return e.getMessage();
+			}
+		} finally {
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
+		}
+	}
 }
