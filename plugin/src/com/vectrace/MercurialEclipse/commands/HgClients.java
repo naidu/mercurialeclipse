@@ -11,7 +11,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.ArrayList;
+
+import com.aragost.javahg.MercurialExtension;
 import com.aragost.javahg.RepositoryConfiguration;
+import com.aragost.javahg.ext.rebase.RebaseExtension;
+import com.google.common.collect.Lists;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
@@ -45,6 +50,13 @@ public final class HgClients {
 	public static RepositoryConfiguration getRepoConfig() {
 		RepositoryConfiguration cfg = new RepositoryConfiguration();
 		cfg.setHgBin(HgClients.getExecutable());
+
+		// Extensions
+		// TODO: mq
+		ArrayList<Class<? extends MercurialExtension>> extList = Lists.newArrayList();
+		extList.add(RebaseExtension.class);
+		cfg.setExtensionClasses(extList);
+
 		return cfg;
 	}
 

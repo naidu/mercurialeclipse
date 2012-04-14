@@ -32,9 +32,9 @@ import com.vectrace.MercurialEclipse.views.MergeView;
 public class RebaseOperation extends HgOperation {
 
 	private final HgRoot hgRoot;
-	private int sourceRev = -1;
-	private int destRev = -1;
-	private int baseRev = -1;
+	private final String sourceRev;
+	private final String destRev;
+	private final String baseRev;
 	private final boolean collapse;
 	private final boolean abort;
 	private final boolean cont;
@@ -43,13 +43,13 @@ public class RebaseOperation extends HgOperation {
 	private final String user;
 
 	public RebaseOperation(IRunnableContext context, HgRoot hgRoot,
-			int sourceRev, int destRev, int baseRev, boolean collapse,
+			String sourceRev, String destRev, String baseRev, boolean collapse,
 			boolean abort, boolean cont) {
 		this(context, hgRoot, sourceRev, destRev, baseRev, collapse, abort, cont, false, null);
 	}
 
 	protected RebaseOperation(IRunnableContext context, HgRoot hgRoot,
-			int sourceRev, int destRev, int baseRev, boolean collapse,
+			String sourceRev, String destRev, String baseRev, boolean collapse,
 			boolean abort, boolean cont, boolean keepBranches, String user) {
 		super(context);
 		this.hgRoot = hgRoot;
@@ -82,7 +82,7 @@ public class RebaseOperation extends HgOperation {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
 
-			result = HgRebaseClient.rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont,
+			HgRebaseClient.rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont,
 					abort, keepBranches, keep, user);
 			monitor.worked(1);
 
@@ -117,7 +117,7 @@ public class RebaseOperation extends HgOperation {
 	 */
 	public static RebaseOperation createContinue(IRunnableContext context, HgRoot root, String user)
 	{
-		return new RebaseOperation(context, root, -1, -1, -1, false, false, true, false, user);
+		return new RebaseOperation(context, root, null, null, null, false, false, true, false, user);
 	}
 
 	/**
@@ -125,6 +125,6 @@ public class RebaseOperation extends HgOperation {
 	 */
 	public static RebaseOperation createAbort(IRunnableContext context, HgRoot root)
 	{
-		return new RebaseOperation(context, root, -1, -1, -1, false, true, false);
+		return new RebaseOperation(context, root, null, null, null, false, true, false);
 	}
 }
