@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 
+import com.aragost.javahg.commands.BisectResult;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
@@ -60,19 +61,13 @@ public abstract class BisectAbstractAction extends Action {
 				cs.getNode());
 	}
 
-	abstract String callBisect(final HgRoot root, final ChangeSet cs) throws HgException;
+	protected abstract BisectResult callBisect(final HgRoot root, final ChangeSet cs) throws HgException;
 
 	@Override
 	public void run() {
-		final HgRoot root;
-		try {
-			root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
-			if(root == null || checkDirty(root)){
-				return;
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
+		final HgRoot root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
+
+		if(root == null || checkDirty(root)){
 			return;
 		}
 
@@ -82,9 +77,9 @@ public abstract class BisectAbstractAction extends Action {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					final String result = callBisect(root, cs);
+					final BisectResult result = callBisect(root, cs);
 
-					if (result.startsWith(Messages.BisectAbstractAction_successString)) {
+					if (result.isComplete()) {
 						HgBisectClient.reset(root);
 					}
 
@@ -93,10 +88,10 @@ public abstract class BisectAbstractAction extends Action {
 					new SafeUiJob(Messages.BisectAbstractAction_showBisectionResult) {
 						@Override
 						protected IStatus runSafe(IProgressMonitor m) {
-							if (result.length() > 0) {
-								MercurialEclipsePlugin.logInfo(result, null);
+							if (result.getMessage().length() > 0) {
+								MercurialEclipsePlugin.logInfo(result.getMessage(), null);
 								MessageDialog.openInformation(getDisplay().getActiveShell(),
-										Messages.BisectAbstractAction_BisectionResult, result);
+										Messages.BisectAbstractAction_BisectionResult, result.getMessage());
 							}
 							updateHistory(rev, root);
 							return super.runSafe(m);
@@ -111,8 +106,7 @@ public abstract class BisectAbstractAction extends Action {
 		}.schedule();
 	}
 
-
-	protected boolean checkDirty(final HgRoot root) throws HgException {
+	protected boolean checkDirty(final HgRoot root) {
 		if (HgStatusClient.isDirty(root)) {
 			MessageDialog.openWarning(mercurialHistoryPage.getControl().getShell(),
 					"Uncommitted Changes", //$NON-NLS-1$

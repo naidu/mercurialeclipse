@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.aragost.javahg.commands.BisectCommand;
+import com.aragost.javahg.commands.BisectResult;
+import com.aragost.javahg.commands.flags.BisectCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -40,14 +43,9 @@ public final class HgBisectClient extends AbstractClient {
 	 * @return a message from the command
 	 * @throws HgException
 	 */
-	public static String markGood(HgRoot repository, ChangeSet good)
+	public static BisectResult markGood(HgRoot repository, ChangeSet good)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", "Bisect: marking revision as good", repository, true); //$NON-NLS-1$
-		cmd.addOptions("-g"); //$NON-NLS-1$
-		if(good != null) {
-			cmd.addOptions(getRevision(good));
-		}
-		return cmd.executeToString();
+		return mark(BisectCommandFlags.on(repository.getRepository()).good(), good);
 	}
 
 	/**
@@ -59,29 +57,27 @@ public final class HgBisectClient extends AbstractClient {
 	 * @return a message from the command
 	 * @throws HgException
 	 */
-	public static String markBad(HgRoot repository, ChangeSet bad)
+	public static BisectResult markBad(HgRoot repository, ChangeSet bad)
 			throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", //$NON-NLS-1$
-				"Bisect: marking revision as bad", repository, true);
-		cmd.addOptions("-b"); //$NON-NLS-1$
-		if(bad != null) {
-			cmd.addOptions(getRevision(bad));
+		return mark(BisectCommandFlags.on(repository.getRepository()).bad(), bad);
+	}
+
+	private static BisectResult mark(BisectCommand command, ChangeSet cs) {
+		if (cs != null) {
+			return command.execute(cs.getNode());
 		}
-		return cmd.executeToString();
+
+		return command.execute();
 	}
 
 	/**
 	 * Resets the bisect status for this repository. This command will not update the repository
 	 * to the head.
 	 * @param repository the repository to reset bisect status for
-	 * @return
 	 * @throws HgException
 	 */
-	public static String reset(HgRoot repository) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("bisect", //$NON-NLS-1$
-				"Reseting bisect", repository, true);
-		cmd.addOptions("-r"); //$NON-NLS-1$
-		return cmd.executeToString();
+	public static BisectResult reset(HgRoot repository) throws HgException {
+		return BisectCommandFlags.on(repository.getRepository()).reset().execute();
 	}
 
 	/**
@@ -132,9 +128,5 @@ public final class HgBisectClient extends AbstractClient {
 
 	private static File getStatusFile(HgRoot hgRoot) {
 		return new File(hgRoot, ".hg" + File.separator + "bisect.state");  //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	private static String getRevision(ChangeSet change) {
-		return change.getNode();
 	}
 }

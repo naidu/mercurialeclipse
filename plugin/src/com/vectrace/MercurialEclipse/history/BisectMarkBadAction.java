@@ -12,6 +12,7 @@
 package com.vectrace.MercurialEclipse.history;
 
 
+import com.aragost.javahg.commands.BisectResult;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -36,7 +37,7 @@ final class BisectMarkBadAction extends BisectAbstractAction {
 	}
 
 	@Override
-	String callBisect(final HgRoot root, final ChangeSet changeSet) throws HgException {
+	protected BisectResult callBisect(final HgRoot root, final ChangeSet changeSet) throws HgException {
 		setBisectStarted(true);
 		return HgBisectClient.markBad(root, changeSet);
 	}
