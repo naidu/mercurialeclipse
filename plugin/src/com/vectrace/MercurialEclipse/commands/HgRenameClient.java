@@ -14,12 +14,13 @@ package com.vectrace.MercurialEclipse.commands;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.aragost.javahg.commands.flags.RenameCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * TODO: use JavaHg
+ *
  */
 public class HgRenameClient extends AbstractClient {
 
@@ -39,12 +40,8 @@ public class HgRenameClient extends AbstractClient {
 					+ Messages.getString("HgRenameClient.moving.2") //$NON-NLS-1$
 					+ dest.lastSegment());
 		}
-		HgCommand command = new HgCommand("rename", "Renaming resource", hgRoot, true); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.addOptions("--force"); //$NON-NLS-1$
-		command.addFile(source.toFile());
-		command.addFile(dest.toFile());
-		command.executeToBytes();
+
+		RenameCommandFlags.on(hgRoot.getRepository()).force().execute(source.toFile(), dest.toFile());
 
 		// see issue 14135: not versioned (new or derived) files may left after move
 		// => move them manually (also allows "undo" in Eclipse to work properly)

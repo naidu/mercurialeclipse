@@ -28,7 +28,6 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
  * @author bastian
- * TODO: use JavaHg
  */
 public class HgRebaseClient extends AbstractClient {
 
