@@ -26,10 +26,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.aragost.javahg.Bookmark;
 import com.vectrace.MercurialEclipse.commands.HgBookmarkClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
@@ -67,20 +65,16 @@ public class BookmarkTable extends Composite {
 	}
 
 	public void updateTable(HgRoot hgRoot) {
-		try {
-			List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(hgRoot);
-			setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(hgRoot);
+		setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
 	}
 
 	public void setBookmarks(Bookmark[] bookmarks) {
 		table.removeAll();
 		for (Bookmark bm : bookmarks) {
 			TableItem row = new TableItem(table, SWT.NONE);
-			row.setText(0, Integer.toString(bm.getRevision()));
-			row.setText(1, bm.getShortNodeId());
+			row.setText(0, Integer.toString(bm.getChangeset().getRevision()));
+			row.setText(1, bm.getChangeset().getNode());
 			row.setText(2, bm.getName());
 			row.setText(3, bm.isActive() ? Messages.getString("BookmarkTable.stateActive") : Messages.getString("BookmarkTable.stateInactive")); //$NON-NLS-1$ //$NON-NLS-2$
 			row.setData(bm);

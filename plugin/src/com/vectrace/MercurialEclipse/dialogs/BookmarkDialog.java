@@ -30,9 +30,9 @@ import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
+import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBookmarkClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.ui.BookmarkTable;
@@ -231,7 +231,7 @@ public class BookmarkDialog extends TrayDialog {
 					HgBookmarkClient.delete(hgRoot, bookmarkTable.getSelection().getName());
 				}
 			}
-		} catch (HgException e) {
+		} catch (ExecutionException e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 		}
