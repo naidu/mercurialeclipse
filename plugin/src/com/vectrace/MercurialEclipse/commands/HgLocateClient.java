@@ -10,16 +10,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 
+import com.aragost.javahg.Repository;
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.commands.LocateCommand;
+import com.aragost.javahg.commands.flags.LocateCommandFlags;
+import com.google.common.collect.Lists;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgFolder;
 import com.vectrace.MercurialEclipse.model.HgRevisionResource;
@@ -28,10 +35,10 @@ import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.NullHgFile;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 
 /**
  * @author Ge Zhong
- * TODO: use JavaHg
  */
 public class HgLocateClient extends AbstractClient {
 
@@ -42,86 +49,98 @@ public class HgLocateClient extends AbstractClient {
 	/**
 	 * Get the {@link HgRevisionResource} for the given resource at the given changeset
 	 *
-	 * @param resource The resource to use
-	 * @param cs The changeset to use
-	 * @param filter Optional filter
+	 * @param resource
+	 *            The resource to use
+	 * @param cs
+	 *            The changeset to use
+	 * @param filter
+	 *            Optional filter
 	 * @return The revision resource or a NullHgFile if it couldn't be located
 	 * @throws HgException
 	 */
-	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file, JHgChangeSet cs, SortedSet<String> filter) throws HgException {
+	public static HgRevisionResource getHgResources(HgRoot hgRoot, IPath relpath, boolean file,
+			JHgChangeSet cs, SortedSet<String> filter) throws HgException {
+		Repository repo = CommandServerCache.getInstance().get(hgRoot, cs.getBundleFile());
+		LocateCommand command = LocateCommandFlags.on(repo).rev(cs.getNode());
 
-		String revision = cs.getNode();
-		HgCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
-
-		if (cs.getDirection() == Direction.INCOMING && cs.getBundleFile() != null) {
-			try {
-				command.setBundleOverlay(cs.getBundleFile());
-			} catch (IOException e) {
-				throw new HgException("Unable to determine canonical path for " + cs.getBundleFile(), e);
-			}
-		}
-
-		if (revision != null && revision.length() != 0) {
-			command.addOptions("-r", revision); //$NON-NLS-1$
-		}
-
-		command.addOptions(getHgResourceSearchPattern(hgRoot, relpath, file));
-
-		String[] lines = null;
 		try {
-			lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		} catch (HgException e) {
-			// it is normal that the resource does not exist.
-		}
+			List<IPath> paths = toPaths(hgRoot,
+					command.execute(getHgResourceSearchPattern(hgRoot, relpath, file)));
 
-		if (file) {
-			if (lines == null || lines.length == 0) {
-				return new NullHgFile(hgRoot, cs, relpath);
+			if (file) {
+				if (paths.isEmpty()) {
+					return new NullHgFile(hgRoot, cs, relpath);
+				}
+				for (IPath line : paths) {
+					return new HgFile(hgRoot, cs, line);
+				}
 			}
-			for (String line : lines) {
-				return new HgFile(hgRoot, cs, new Path(line));
-			}
-		}
 
-		return new HgFolder(hgRoot, cs, relpath, lines, filter);
+			return new HgFolder(hgRoot, cs, relpath, paths, filter);
+		} catch (ExecutionException e) {
+			return new NullHgFile(hgRoot, cs, relpath);
+		}
 	}
 
-	public static IHgResource getHgResources(IHgResource hgResource, String revision, SortedSet<String> filter) throws HgException {
-		HgRoot hgRoot = hgResource.getHgRoot();
-		AbstractShellCommand command = new HgCommand("locate", "Retrieving repository contents", hgRoot, true);
+	/**
+	 * @param hgResource
+	 *            Resource to query
+	 * @param revision
+	 *            Revision at which to query. Not null
+	 * @param filter
+	 *            Optional filter
+	 * @return New IHgResource for the given revision
+	 * @throws HgException
+	 */
+	public static HgRevisionResource getHgResources(IHgResource hgResource, String revision,
+			SortedSet<String> filter) throws HgException {
+		Assert.isNotNull(revision);
 
-		if (revision != null && revision.length() != 0) {
-			command.addOptions("-r", revision); //$NON-NLS-1$
-		}
+		HgRoot hgRoot = hgResource.getHgRoot();
+		LocateCommand command = LocateCommandFlags.on(hgRoot.getRepository()).rev(revision);
+		List<IPath> paths;
+		String pattern;
 
 		if (hgResource instanceof IHgFile) {
-			command.addOptions("glob:" + hgResource.getIPath().toOSString());
+			pattern = "glob:" + hgResource.getIPath().toOSString();
 		} else {
-			command.addOptions("glob:" + hgResource.getIPath().toOSString() + System.getProperty("file.separator") + "**");
+			pattern = "glob:" + hgResource.getIPath().toOSString()
+					+ System.getProperty("file.separator") + "**";
 		}
 
-		String[] lines = null;
 		try {
-			lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		} catch (HgException e) {
+			paths = toPaths(hgRoot, command.execute(pattern));
+		} catch (ExecutionException e) {
 			// it is normal that the resource does not exist.
 			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
+			paths = Collections.emptyList();
 		}
 
 		if (hgResource instanceof IStorage) {
-			if (lines == null || lines.length == 0) {
+			if (paths.isEmpty()) {
 				return new NullHgFile(hgRoot, revision, hgResource.getIPath());
 			}
-			for (String line : lines) {
-				return new HgFile(hgRoot, revision, new Path(line));
+			for (IPath line : paths) {
+				return new HgFile(hgRoot, revision, line);
 			}
 		}
 
 		try {
-			return new HgFolder(hgRoot, revision, hgResource.getIPath(), lines, filter);
+			return new HgFolder(hgRoot, revision, hgResource.getIPath(), paths, filter);
 		} catch (HgException e) {
+			// ??
 			MercurialEclipsePlugin.logError(e);
 			return null;
 		}
+	}
+
+	private static List<IPath> toPaths(HgRoot hgRoot, List<File> files) {
+		List<IPath> paths= Lists.newArrayList();
+
+		for (File f : files) {
+			paths.add(hgRoot.toRelative(new Path(f.getAbsolutePath())));
+		}
+
+		return paths;
 	}
 }

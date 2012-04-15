@@ -11,14 +11,16 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 
 import org.eclipse.core.runtime.IPath;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
@@ -27,8 +29,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class HgFolder extends HgRevisionResource implements IHgFolder {
 
-	private final ArrayList<IHgResource> members = new ArrayList<IHgResource>();
-	private static final String separator = System.getProperty("file.separator");
+	private final List<IHgResource> members = new ArrayList<IHgResource>();
 
 	// constructors
 
@@ -38,16 +39,16 @@ public class HgFolder extends HgRevisionResource implements IHgFolder {
 	 * @param root The root to use
 	 * @param changeset The changeset id
 	 * @param path relative path from root
-	 * @param listing List of files in the folder
-	 * @param filter white list of files that can be included
+	 * @param listing List of root relative paths in the folder
+	 * @param filter List of files that can be included, or null for all
 	 */
-	public HgFolder(HgRoot root, String changeset, IPath path, String[] listing,
+	public HgFolder(HgRoot root, String changeset, IPath path, List<IPath> listing,
 			SortedSet<String> filter) throws HgException {
 		super(root, changeset, path);
 		parseListing(listing, filter);
 	}
 
-	public HgFolder(HgRoot root, JHgChangeSet changeset, IPath path, String[] listing,
+	public HgFolder(HgRoot root, JHgChangeSet changeset, IPath path, List<IPath> listing,
 			SortedSet<String> filter) {
 		super(root, changeset, path);
 		parseListing(listing, filter);
@@ -58,40 +59,33 @@ public class HgFolder extends HgRevisionResource implements IHgFolder {
 	/**
 	 * Parse the list of files and then apply the filer
 	 */
-	private void parseListing(String[] listing, SortedSet<String> filter) {
-		Map<String, ArrayList<String>> sublisting = new HashMap<String, ArrayList<String>>();
+	private void parseListing(List<IPath> listing, SortedSet<String> filter) {
+		Multimap<String, IPath> sublisting = HashMultimap.create();
 
-		String dir = path.addTrailingSeparator().toOSString();
-		for (String line : listing) {
-			String result = dir.length() > 1 ? line.substring(dir.length()) : line;
-			int index = result.indexOf(separator);
-			if (index == -1) {
-				IPath filePath = path.append(result);
-				if (filter == null || filter.contains(filePath.toOSString())) {
-					IHgResource file = new HgFile(root, changeset, filePath);
+		for (IPath line : listing) {
+			assert line.isPrefixOf(path);
+
+			String segment = line.segment(path.segmentCount());
+
+			if (line.segmentCount() == path.segmentCount() + 1) {
+				if (filter == null || filter.contains(line.toOSString())) {
+					IHgResource file = new HgFile(root, changeset, line);
 					this.members.add(file);
 				}
 			} else {
-				String folderName = result.substring(0, index);
-				ArrayList<String> subfolder = sublisting.get(folderName);
-				if (subfolder == null) {
-					subfolder = new ArrayList<String>();
-					subfolder.add(line);
-					sublisting.put(folderName, subfolder);
-				} else {
-					subfolder.add(line);
-				}
+				sublisting.put(segment, line);
 			}
 		}
 
 		if (sublisting.size() != 0) {
 			Set<String> folderNames = sublisting.keySet();
-			Iterator<String> it = folderNames.iterator();
-			while (it.hasNext()) {
+			for (Iterator<String> it = folderNames.iterator(); it.hasNext();) {
 				String folderName = it.next();
-				ArrayList<String> folder = sublisting.get(folderName);
+				Collection<IPath> folder = sublisting.get(folderName);
+
 				HgFolder hgFolder = new HgFolder(root, changeset, path.append(folderName),
-						folder.toArray(new String[folder.size()]), filter);
+						new ArrayList<IPath>(folder), filter);
+
 				if (hgFolder.members().length != 0) {
 					this.members.add(hgFolder);
 				}
