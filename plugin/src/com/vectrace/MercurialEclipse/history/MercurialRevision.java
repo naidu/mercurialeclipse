@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.history.IFileRevision;
+import org.eclipse.team.core.history.ITag;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
@@ -159,10 +160,25 @@ public class MercurialRevision extends FileRevision {
 		return changeSet.getComment();
 	}
 
+	public ITag[] getBranches()
+	{
+		final String name = changeSet.getBranch();
+
+		ITag branch = new ITag() {
+			public String getName() {
+				return name;
+			}
+		};
+
+		ITag[] branches = {branch};
+
+		return branches;
+	}
+
 	@Override
 	@DoNotDisplayMe
 	public long getTimestamp() {
-		return resource.exists()? resource.getLocalTimeStamp() : super.getTimestamp();
+		return changeSet.getDate().getTime();
 	}
 
 	@Override
