@@ -28,7 +28,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan Chyssler
- * TODO use JavaHg
  */
 public final class HgBisectClient extends AbstractClient {
 

@@ -35,7 +35,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
- * TODO: use JavaHg
+ *
  */
 public class HgPushPullClient extends AbstractClient {
 
