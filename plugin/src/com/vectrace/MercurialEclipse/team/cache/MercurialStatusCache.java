@@ -54,9 +54,11 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.Team;
 
+import com.aragost.javahg.Changeset;
+import com.aragost.javahg.WorkingCopy;
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.StatusLine;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIdentifyClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
@@ -708,7 +710,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 	 * Refreshes the local repository status for all projects under the given hg root
 	 *  and notifies the listeners about changes. No refresh of changesets.
 	 */
-	public void refreshStatus(HgRoot root, IProgressMonitor monitor) throws HgException {
+	public void refreshStatus(HgRoot root, IProgressMonitor monitor) {
 		Assert.isNotNull(root);
 		monitor = checkMonitor(monitor);
 		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, root.getName()));
@@ -769,11 +771,12 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			for(HgRoot repo : repos){
 				// get status and branch for hg root
 				List<StatusLine> output = HgStatusClient.getStatusWithoutIgnored(repo);
-				String[] mergeStatus = HgIdentifyClient.getIdMergeAndBranch(repo);
-				String currentChangeSetId = mergeStatus[0];
+				WorkingCopy workingCopy = repo.getRepository().workingCopy();
+
+				String currentChangeSetId = nodeOrNull(workingCopy.getParent1());
 				LocalChangesetCache.getInstance().checkLatestChangeset(repo, currentChangeSetId);
-				String mergeNode = mergeStatus[1];
-				String branch = mergeStatus[2];
+				String mergeNode = nodeOrNull(workingCopy.getParent2());
+				String branch = workingCopy.getBranchName();
 
 				// update status of all files in the root that are also contained in projects inside pathMap
 				changed.addAll(parseStatus(repo, pathMap, output, false));
@@ -884,11 +887,11 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				// refresh the status of the HgRoot we are processing
 				try {
 					if(res instanceof IProject || repo != root){
-						String[] mergeStatus = HgIdentifyClient.getIdMergeAndBranch(repo);
-						String id = mergeStatus[0];
+						WorkingCopy workingCopy = repo.getRepository().workingCopy();
+						String id = nodeOrNull(workingCopy.getParent1());
 						LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
-						String mergeNode = mergeStatus[1];
-						String branch = mergeStatus[2];
+						String mergeNode = nodeOrNull(workingCopy.getParent2());
+						String branch = workingCopy.getBranchName();
 						setMergeStatus(repo, mergeNode);
 						MercurialTeamProvider.setCurrentBranch(branch, repo);
 						if(repo == root){
@@ -896,7 +899,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 							setMergeStatus((IProject)res, mergeNode);
 						}
 					}
-				} catch (HgException e) {
+				} catch (ExecutionException e) {
 					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 				}
 			}
@@ -984,7 +987,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		return changed;
 	}
 
-	private Set<IResource> checkForConflict(final HgRoot hgRoot) throws HgException {
+	private Set<IResource> checkForConflict(final HgRoot hgRoot) {
 
 		List<ResolveStatus> status = HgResolveClient.list(hgRoot);
 		Set<IResource> changed = new HashSet<IResource>();
@@ -1614,5 +1617,14 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Helper method to get the node of a changeset that may be null.
+	 * @param cs The changeset whose node to get
+	 * @return Null if cs is null.
+	 */
+	private static String nodeOrNull(Changeset cs) {
+		return cs == null ? null : cs.getNode();
 	}
 }

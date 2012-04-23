@@ -14,13 +14,13 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
+import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
@@ -77,10 +77,10 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
 					MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 
-				} catch (CoreException e) {
+				} catch (ExecutionException e) {
 					MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
 							e);
-					return e.getStatus();
+					return Status.CANCEL_STATUS;
 				}
 
 				// fix for issue #10152:
