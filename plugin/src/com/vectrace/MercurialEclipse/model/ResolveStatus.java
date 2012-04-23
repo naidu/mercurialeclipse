@@ -12,34 +12,40 @@ package com.vectrace.MercurialEclipse.model;
 
 import org.eclipse.core.runtime.IAdaptable;
 
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.aragost.javahg.commands.ResolveStatusLine;
 
-public class FlaggedAdaptable implements IAdaptable {
+public class ResolveStatus implements IAdaptable {
 
 	private final IAdaptable adaptable;
-	private final char flag;
+	private final ResolveStatusLine.Type flag;
 
-
-	public FlaggedAdaptable(IAdaptable adaptable, char flag) {
+	public ResolveStatus(IAdaptable adaptable, ResolveStatusLine.Type flag) {
 		this.adaptable = adaptable;
 		this.flag = flag;
 	}
 
-	@SuppressWarnings("unchecked")
 	public Object getAdapter(Class adapter) {
-		if(adaptable == null){
+		if (adaptable == null) {
 			return null;
 		}
 		return adaptable.getAdapter(adapter);
 	}
 
-	public char getFlag() {
+	public ResolveStatusLine.Type getFlag() {
 		return this.flag;
 	}
 
 	public String getStatus() {
-		return flag == MercurialStatusCache.CHAR_UNRESOLVED
-				? Messages.getString("FlaggedAdaptable.unresolvedStatus")
-				: Messages.getString("FlaggedAdaptable.resolvedStatus");
+		return flag == ResolveStatusLine.Type.UNRESOLVED ? Messages
+				.getString("FlaggedAdaptable.unresolvedStatus") : Messages
+				.getString("FlaggedAdaptable.resolvedStatus");
+	}
+
+	public boolean isUnresolved() {
+		return flag == ResolveStatusLine.Type.UNRESOLVED;
+	}
+
+	public boolean isResolved() {
+		return flag == ResolveStatusLine.Type.RESOLVED;
 	}
 }

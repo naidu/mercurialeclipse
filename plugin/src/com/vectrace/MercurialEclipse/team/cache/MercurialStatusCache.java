@@ -62,8 +62,8 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgSubreposClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.ResolveStatus;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.Bits;
@@ -964,7 +964,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private Set<IResource> checkForConflict(final IProject project) throws HgException {
 
-		List<FlaggedAdaptable> status = HgResolveClient.list(project);
+		List<ResolveStatus> status = HgResolveClient.list(project);
 		Set<IResource> changed = new HashSet<IResource>();
 		Set<IResource> members = getLocalMembers(project);
 		for (IResource res : members) {
@@ -975,9 +975,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 		if(removeConflict(project.getLocation())){
 			changed.add(project);
 		}
-		for (FlaggedAdaptable flaggedAdaptable : status) {
+		for (ResolveStatus flaggedAdaptable : status) {
 			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
-			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED && file != null) {
+			if (flaggedAdaptable.isUnresolved() && file != null) {
 				changed.addAll(addConflict(file));
 			}
 		}
@@ -986,7 +986,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 
 	private Set<IResource> checkForConflict(final HgRoot hgRoot) throws HgException {
 
-		List<FlaggedAdaptable> status = HgResolveClient.list(hgRoot);
+		List<ResolveStatus> status = HgResolveClient.list(hgRoot);
 		Set<IResource> changed = new HashSet<IResource>();
 		IPath parentPath = new Path(hgRoot.getAbsolutePath());
 		List<IPath> members = getPaths(BIT_CONFLICT, parentPath);
@@ -1001,9 +1001,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				}
 			}
 		}
-		for (FlaggedAdaptable flaggedAdaptable : status) {
+		for (ResolveStatus flaggedAdaptable : status) {
 			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
-			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED && file != null) {
+			if (flaggedAdaptable.isUnresolved() && file != null) {
 				changed.addAll(addConflict(file));
 			}
 		}

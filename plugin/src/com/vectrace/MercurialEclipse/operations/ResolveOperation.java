@@ -15,12 +15,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class ResolveOperation extends HgOperation {
@@ -64,7 +66,9 @@ public class ResolveOperation extends HgOperation {
 
 			for (Object resource : filtered) {
 				if (resource instanceof IFile) {
-					HgResolveClient.markResolved((IFile) resource);
+					HgResolveClient.markResolved(
+							MercurialRootCache.getInstance().getHgRoot((IResource) resource),
+							(IFile) resource);
 				}
 			}
 		} catch (HgException e) {
