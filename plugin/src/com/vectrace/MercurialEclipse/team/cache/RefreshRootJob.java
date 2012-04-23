@@ -24,8 +24,8 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
+import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -98,7 +98,7 @@ public class RefreshRootJob extends Job {
 			try {
 				statusCache.refreshStatus(hgRoot, monitor);
 				monitor.worked(1);
-			} catch (HgException e) {
+			} catch (ExecutionException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 			updateHistoryView();
