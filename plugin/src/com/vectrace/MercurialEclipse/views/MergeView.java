@@ -62,8 +62,8 @@ import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.ContinueRebaseHandler;
 import com.vectrace.MercurialEclipse.menu.RunnableHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
-import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.ResolveStatus;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -104,7 +104,7 @@ public class MergeView extends AbstractRootView implements Observer {
 
 		table.getTableViewer().addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
-				openMergeEditor((FlaggedAdaptable) ((IStructuredSelection) event.getSelection()).getFirstElement());
+				openMergeEditor((ResolveStatus) ((IStructuredSelection) event.getSelection()).getFirstElement());
 			}
 		});
 	}
@@ -160,7 +160,7 @@ public class MergeView extends AbstractRootView implements Observer {
 					List<IFile> files = getSelections();
 					if (files != null) {
 						for (IFile file : files) {
-							HgResolveClient.markResolved(file);
+							HgResolveClient.markResolved(hgRoot, file);
 						}
 						populateView(true);
 					}
@@ -177,7 +177,7 @@ public class MergeView extends AbstractRootView implements Observer {
 					List<IFile> files = getSelections();
 					if (files != null) {
 						for (IFile file : files) {
-							HgResolveClient.markUnresolved(file);
+							HgResolveClient.markUnresolved(hgRoot, file);
 						}
 						populateView(true);
 					}
@@ -206,7 +206,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		final Action openMergeEditorAction = new Action("Open in Merge Editor") {
 			@Override
 			public void run() {
-				FlaggedAdaptable selection = table.getSelection();
+				ResolveStatus selection = table.getSelection();
 				if (selection != null) {
 					openMergeEditor(selection);
 				}
@@ -260,11 +260,11 @@ public class MergeView extends AbstractRootView implements Observer {
 
 	private void populateView(boolean attemptToCommit) throws HgException {
 		boolean bAllResolved = true;
-		List<FlaggedAdaptable> status = null;
+		List<ResolveStatus> status = null;
 		status = HgResolveClient.list(hgRoot);
 		table.setItems(status);
-		for (FlaggedAdaptable flagged : status) {
-			if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
+		for (ResolveStatus flagged : status) {
+			if (flagged.isUnresolved()) {
 				bAllResolved = false;
 			}
 		}
@@ -384,8 +384,8 @@ public class MergeView extends AbstractRootView implements Observer {
 
 	private boolean areAllResolved() {
 		boolean allResolved = true;
-		for (FlaggedAdaptable fa : table.getItems()) {
-			allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
+		for (ResolveStatus fa : table.getItems()) {
+			allResolved &= fa.isResolved();
 		}
 		return allResolved;
 	}
@@ -419,10 +419,10 @@ public class MergeView extends AbstractRootView implements Observer {
 	}
 
 	private List<IFile> getSelections() {
-		List<FlaggedAdaptable> selections = table.getSelections();
+		List<ResolveStatus> selections = table.getSelections();
 		if (selections != null) {
 			List<IFile> result = new ArrayList<IFile>();
-			for (FlaggedAdaptable flaggedAdaptable : selections) {
+			for (ResolveStatus flaggedAdaptable : selections) {
 				IFile file = getFile(flaggedAdaptable);
 
 				if (file != null) {
@@ -434,7 +434,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		return null;
 	}
 
-	private static IFile getFile(FlaggedAdaptable adaptable) {
+	private static IFile getFile(ResolveStatus adaptable) {
 		if (adaptable != null) {
 			return (IFile) adaptable.getAdapter(IFile.class);
 		}
@@ -459,7 +459,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		}
 	}
 
-	private static void openMergeEditor(FlaggedAdaptable flagged) {
+	private static void openMergeEditor(ResolveStatus flagged) {
 		IFile file = (IFile) flagged.getAdapter(IFile.class);
 		CompareAction compareAction = new CompareAction(file);
 		compareAction.setEnableMerge(true);
@@ -528,7 +528,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		};
 	}
 
-	private static class MergeTable extends AbstractHighlightableTable<FlaggedAdaptable> {
+	private static class MergeTable extends AbstractHighlightableTable<ResolveStatus> {
 
 		public MergeTable(Composite parent) {
 			super(parent, new MergeTableLabelProvider());
@@ -558,14 +558,14 @@ public class MergeView extends AbstractRootView implements Observer {
 
 	}
 
-	private static class MergeTableLabelProvider extends HighlightingLabelProvider<FlaggedAdaptable> {
+	private static class MergeTableLabelProvider extends HighlightingLabelProvider<ResolveStatus> {
 
 		/**
 		 * @see com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable.HighlightingLabelProvider#isHighlighted(java.lang.Object)
 		 */
 		@Override
-		public boolean isHighlighted(FlaggedAdaptable flagged) {
-			return flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED;
+		public boolean isHighlighted(ResolveStatus flagged) {
+			return flagged.isUnresolved();
 		}
 
 		/**
@@ -579,7 +579,7 @@ public class MergeView extends AbstractRootView implements Observer {
 		 * @see org.eclipse.jface.viewers.ITableLabelProvider#getColumnText(java.lang.Object, int)
 		 */
 		public String getColumnText(Object element, int columnIndex) {
-			FlaggedAdaptable flagged = (FlaggedAdaptable) element;
+			ResolveStatus flagged = (ResolveStatus) element;
 
 			switch (columnIndex) {
 			case 0:
