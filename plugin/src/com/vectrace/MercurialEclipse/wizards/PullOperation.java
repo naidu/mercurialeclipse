@@ -84,8 +84,8 @@ class PullOperation extends HgOperation {
 				@Override
 				protected IStatus runSafe(IProgressMonitor m) {
 					try {
-						String res = MergeHandler.determineMergeHeadAndMerge(hgRoot, getShell(), m, true, showCommitDialog);
-						return new Status(IStatus.OK, MercurialEclipsePlugin.ID, res);
+						MergeHandler.determineMergeHeadAndMerge(hgRoot, getShell(), m, true, showCommitDialog);
+						return new Status(IStatus.OK, MercurialEclipsePlugin.ID, "");
 					} catch (CoreException e) {
 						MercurialEclipsePlugin.logError(e);
 						return e.getStatus();

@@ -11,35 +11,48 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
+
+import com.aragost.javahg.commands.MergeCommand;
+import com.aragost.javahg.commands.flags.MergeCommandFlags;
+import com.aragost.javahg.merge.MergeContext;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
-/**
- * TODO: use JavaHg
- */
 public class HgMergeClient extends AbstractClient {
 
-	public static String merge(HgRoot hgRoot, String revision, boolean forced)
+	public static void merge(HgRoot hgRoot, String revision, boolean forced)
 			throws HgException {
-		HgCommand command = new HgCommand("merge", "Merging", hgRoot, false);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+		MergeCommand command = MergeCommandFlags.on(hgRoot.getRepository());
 		addMergeToolPreference(command);
-
 		if (revision != null) {
-			command.addOptions("-r", revision); //$NON-NLS-1$
-		}
-		if (forced) {
-			command.addOptions("-f"); //$NON-NLS-1$
+			command.rev(revision);
 		}
 
-		return command.executeToString();
+		if (forced) {
+			command.force();
+		}
+
+		try {
+			MergeContext context = command.execute();
+			if (!context.getMergeConflicts().isEmpty() || !context.getFlagConflicts().isEmpty()) {
+				throw new MergeException(context);
+			}
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
 	}
 
 	public static boolean isConflict(HgException e) {
-		// if conflicts aren't resolved and no merge tool is started, hg
-		// exits with 1
-		return e.getStatus().getCode() == 1;
+		return e instanceof MergeException;
+	}
+
+	private static class MergeException extends HgException {
+
+		public MergeException(MergeContext context) {
+			super("A merge conflict occurred");
+
+			// TODO: make use of context
+		}
 	}
 }

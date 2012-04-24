@@ -48,7 +48,7 @@ public class MergeHandler extends RootHandler {
 		determineMergeHeadAndMerge(hgRoot, getShell(), new NullProgressMonitor(), false, true);
 	}
 
-	public static String determineMergeHeadAndMerge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+	public static void determineMergeHeadAndMerge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
 		// can we do the equivalent of plain "hg merge"?
@@ -99,29 +99,28 @@ public class MergeHandler extends RootHandler {
 			dialog.setForceChecked(forced);
 			dialog.setForceButtonText(forceMessage);
 			if (dialog.open() != IDialogConstants.OK_ID) {
-				return "";
+				return;
 			}
 
 			cs = dialog.getChangeSet();
 			forced = dialog.isForceChecked();
 		}
 
-		return mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
+		mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
 	}
 
-	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+	public static void mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
 			CoreException {
 		MercurialUtilities.setOfferAutoCommitMerge(true);
-		String result;
+
 		boolean conflict = false;
 		try {
 			try {
-				result = HgMergeClient.merge(hgRoot, cs.getNode(), forced);
+				HgMergeClient.merge(hgRoot, cs.getNode(), forced);
 			} catch (HgException e) {
 				if (HgMergeClient.isConflict(e)) {
 					conflict = true;
-					result = e.getMessage();
 				} else {
 					throw e;
 				}
@@ -134,7 +133,7 @@ public class MergeHandler extends RootHandler {
 				MergeView.showMergeConflict(hgRoot, shell);
 			} else {
 				try {
-					result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
+					commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
 					MercurialEclipsePlugin.showError(e);
@@ -143,7 +142,6 @@ public class MergeHandler extends RootHandler {
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot).schedule();
 		}
-		return result;
 	}
 
 	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
