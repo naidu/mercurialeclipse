@@ -144,21 +144,17 @@ public class MergeHandler extends RootHandler {
 		}
 	}
 
-	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
+	private static void commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
 			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) throws CoreException {
-		String output = "";
 
 		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
-		output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header");
 		if (!showCommitDialog) {
-			output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
+			CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
 					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 		} else {
-			output += CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
+			CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);
-
-		return output;
 	}
 
 	private static Changeset getHeadForEasyMerge(HgRoot hgRoot) throws HgException {

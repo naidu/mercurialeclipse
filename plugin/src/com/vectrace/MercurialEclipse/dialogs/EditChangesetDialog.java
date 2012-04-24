@@ -127,8 +127,6 @@ public class EditChangesetDialog extends CommitDialog {
 	}
 
 	@Override
-	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs) throws CoreException {
-		return "";
+	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs) throws CoreException {
 	}
-
 }
