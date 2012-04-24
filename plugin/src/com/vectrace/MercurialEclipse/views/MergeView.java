@@ -73,6 +73,9 @@ import com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable;
 import com.vectrace.MercurialEclipse.ui.AbstractHighlightableTable.HighlightingLabelProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
+/**
+ * TODO: Make use of JavaHg MergeContext
+ */
 public class MergeView extends AbstractRootView implements Observer {
 
 	public static final String ID = MergeView.class.getName();
