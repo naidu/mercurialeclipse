@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.Assert;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
@@ -67,7 +66,7 @@ public class HgQFoldClient extends AbstractClient {
 			command.addOptions("--keep"); //$NON-NLS-1$
 		}
 		if (message != null && message.length() > 0) {
-			messageFile = HgCommitClient.addMessage(command, message);
+			messageFile = HgQRefreshClient.addMessage(command, message);
 		}
 
 		for (String patch : patches) {
@@ -77,7 +76,7 @@ public class HgQFoldClient extends AbstractClient {
 		try {
 			return command.executeToString();
 		} finally {
-			HgCommitClient.deleteMessage(messageFile);
+			HgQRefreshClient.deleteMessage(messageFile);
 		}
 	}
 

@@ -127,7 +127,6 @@ public class CommitDialog extends TitleAreaDialog {
 	private String user;
 	private Button revertCheckBox;
 	protected final HgRoot root;
-	private String commitResult;
 	private Button closeBranchCheckBox;
 	private Button amendCheckbox;
 	private JHgChangeSet currentChangeset;
@@ -544,9 +543,9 @@ public class CommitDialog extends TitleAreaDialog {
 			// perform commit
 			pm.subTask("Committing resources to repository.");
 			if (amend) {
-				commitResult = performAmend(commitMessage, currentChangeset);
+				performAmend(commitMessage, currentChangeset);
 			} else {
-				commitResult = performCommit(commitMessage, closeBranchSelected, currentChangeset);
+				performCommit(commitMessage, closeBranchSelected, currentChangeset);
 			}
 			pm.worked(1);
 
@@ -611,14 +610,6 @@ public class CommitDialog extends TitleAreaDialog {
 				);
 		dialog.setBlockOnOpen(true); // if false then may show in background
 		return  dialog.open() == 0; // 0 means yes
-	}
-
-	/**
-	 * @return the result of the commit operation (hg output), if any. If there was no commit or
-	 *         commit output was null, return empty string
-	 */
-	public String getCommitResult() {
-		return commitResult != null ? commitResult : "";
 	}
 
 	private static String makePatchName(String id) {
@@ -731,13 +722,13 @@ public class CommitDialog extends TitleAreaDialog {
 		return result;
 	}
 
-	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
 		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch)) {
 			// enforce commit anyway
-			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, monitor);
+			HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, monitor);
 		}
-		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, monitor,
+		HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, monitor,
 				closeBranch);
 	}
 

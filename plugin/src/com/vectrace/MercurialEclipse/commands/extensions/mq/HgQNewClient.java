@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -48,7 +47,7 @@ public class HgQNewClient extends AbstractClient {
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			messageFile = HgCommitClient.addMessage(command, commitMessage);
+			messageFile = HgQRefreshClient.addMessage(command, commitMessage);
 		}
 
 		command.addOptions("--git"); //$NON-NLS-1$
@@ -78,7 +77,7 @@ public class HgQNewClient extends AbstractClient {
 		try {
 			return command.executeToString();
 		} finally {
-			HgCommitClient.deleteMessage(messageFile);
+			HgQRefreshClient.deleteMessage(messageFile);
 		}
 	}
 }

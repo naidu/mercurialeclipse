@@ -39,7 +39,7 @@ public class CommitMergeHandler extends RunnableHandler {
 	 * @return the hg command output
 	 * @throws HgException
 	 */
-	public final static String commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
+	public final static void commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
 		Assert.isNotNull(hgRoot);
 		String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
 		String mergeChangesetId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
@@ -54,7 +54,6 @@ public class CommitMergeHandler extends RunnableHandler {
 
 		// open dialog and wait for ok
 		commitDialog.open();
-		return commitDialog.getCommitResult();
 	}
 
 	/**
@@ -64,15 +63,14 @@ public class CommitMergeHandler extends RunnableHandler {
 	 * @throws HgException
 	 * @throws CoreException
 	 */
-	public static String commitMerge(HgRoot hgRoot, String commitName, String message)
+	public static void commitMerge(HgRoot hgRoot, String commitName, String message)
 			throws HgException, CoreException {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(message);
 
 		// do hg call
 		MercurialUtilities.setOfferAutoCommitMerge(true);
-		String result = HgCommitClient.commit(hgRoot, commitName, message);
-		return result;
+		HgCommitClient.commit(hgRoot, commitName, message);
 	}
 
 }

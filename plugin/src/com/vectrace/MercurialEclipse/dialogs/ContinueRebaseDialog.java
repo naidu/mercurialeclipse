@@ -59,12 +59,12 @@ public class ContinueRebaseDialog extends CommitDialog {
 	}
 
 	@Override
-	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
-		return continueRebase(messageToCommit);
+		continueRebase(messageToCommit);
 	}
 
-	private String continueRebase(String messageToCommit) throws CoreException {
+	private void continueRebase(String messageToCommit) throws CoreException {
 		RebaseOperation op = RebaseOperation.createContinue(MercurialEclipsePlugin.getActiveWindow(), root, getUser());
 
 		try {
@@ -74,7 +74,5 @@ public class ContinueRebaseDialog extends CommitDialog {
 		} catch (InterruptedException e) {
 			MercurialEclipsePlugin.rethrow(e);
 		}
-
-		return op.getResult();
 	}
 }

@@ -53,7 +53,8 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
-	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs) throws CoreException {
-		return CommitMergeHandler.commitMerge(root, getUser(), messageToCommit);
+	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+			throws CoreException {
+		CommitMergeHandler.commitMerge(root, getUser(), messageToCommit);
 	}
 }
