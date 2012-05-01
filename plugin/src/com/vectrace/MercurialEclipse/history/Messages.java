@@ -21,7 +21,6 @@ public final class Messages extends NLS {
 	public static String BisectAbstractAction_bisecting;
 	public static String BisectAbstractAction_BisectionResult;
 	public static String BisectAbstractAction_showBisectionResult;
-	public static String BisectAbstractAction_successString;
 	public static String BisectMarkBadAction_description1;
 	public static String BisectMarkBadAction_description2;
 	public static String BisectMarkBadAction_name;
