@@ -435,6 +435,7 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	}
 
 	@Override
+	@DoNotDisplayMe
 	public boolean isEmpty() {
 		return getChangedFiles().isEmpty();
 	}
