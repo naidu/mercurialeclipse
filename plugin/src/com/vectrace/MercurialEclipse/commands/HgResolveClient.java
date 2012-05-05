@@ -183,7 +183,18 @@ public class HgResolveClient extends AbstractClient {
 	 * @return True if all conflicts are resolved
 	 */
 	public static boolean autoResolve(ConflictResolvingContext ctx) {
+		// 		addMergeToolPreference(command);
+
 		// TODO Implement
 		throw new UnsupportedOperationException();
+	}
+
+	/**
+	 * @param hgRoot
+	 * @return
+	 */
+	public static boolean autoResolve(HgRoot hgRoot) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

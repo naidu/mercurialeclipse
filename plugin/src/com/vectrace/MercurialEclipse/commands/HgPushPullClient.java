@@ -22,6 +22,7 @@ import com.aragost.javahg.commands.PullCommand;
 import com.aragost.javahg.commands.PushCommand;
 import com.aragost.javahg.commands.flags.PullCommandFlags;
 import com.aragost.javahg.commands.flags.PushCommandFlags;
+import com.aragost.javahg.merge.MergeContext;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -150,16 +151,20 @@ public class HgPushPullClient extends AbstractClient {
 		if (update) {
 			try {
 				HgUpdateClient.updateWithoutRefresh(hgRoot, null, false);
+
+				if (HgResolveClient.autoResolve(hgRoot)) {
+					HgUpdateClient.showConflictMessage();
+				}
 			} catch (HgException e) {
 				if (HgUpdateClient.isCrossesBranchError(e)) {
 					UpdateJob.handleMultipleHeads(hgRoot, false);
-				} else {
-					HgUpdateClient.handleConflicts(e);
 				}
 			}
 		} else if (rebase) {
 			try {
 				HgRebaseClient.rebaseCurrentOnTip(hgRoot);
+
+				// TODO: autoresolve
 			} catch (HgException e) {
 				if (HgRebaseClient.isRebaseConflict(e)) {
 					refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
@@ -167,13 +172,11 @@ public class HgPushPullClient extends AbstractClient {
 				}
 			}
 		} else if (merge) {
-			try {
-				HgMergeClient.merge(hgRoot, "tip", false);
-			} catch (HgException e) {
-				if (HgMergeClient.isConflict(e)) {
-					refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
-							null, true));
-				}
+			MergeContext ctx = HgMergeClient.merge(hgRoot, "tip", false);
+
+			if (HgResolveClient.autoResolve(ctx)) {
+				refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
+						null, true));
 			}
 		}
 

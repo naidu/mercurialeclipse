@@ -52,16 +52,23 @@ public class HgUpdateClient extends AbstractClient {
 	 */
 	public static void handleConflicts(HgException e) throws HgException {
 		if (isWorkspaceUpdateConflict(e)) {
-			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-				public void run() {
-					MessageDialog
-							.openInformation(null, "Unresolved conflicts",
-									"There are unresolved conflicts after update. Use Synchronize View to edit conflicts");
-				}
-			});
+			showConflictMessage();
 		} else {
 			throw e;
 		}
+	}
+
+	/**
+	 *
+	 */
+	public static void showConflictMessage() {
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			public void run() {
+				MessageDialog
+						.openInformation(null, "Unresolved conflicts",
+								"There are unresolved conflicts after update. Use Synchronize View to edit conflicts");
+			}
+		});
 	}
 
 	/**
@@ -75,7 +82,7 @@ public class HgUpdateClient extends AbstractClient {
 	 *            Whether a clean update should be done
 	 * @return The result of the invocation
 	 */
-	public static void updateWithoutRefresh(HgRoot hgRoot, String revision, boolean clean) throws HgException {
+	public static UpdateResult updateWithoutRefresh(HgRoot hgRoot, String revision, boolean clean) throws HgException {
 		final UpdateCommand command = UpdateCommandFlags.on(hgRoot.getRepository());
 
 		if (revision != null && revision.trim().length() > 0) {
@@ -86,9 +93,7 @@ public class HgUpdateClient extends AbstractClient {
 			command.clean();
 		}
 
-		addMergeToolPreference(command);
-
-		new JavaHgCommandJob<UpdateResult>(command, makeDescription(revision, clean)) {
+		return new JavaHgCommandJob<UpdateResult>(command, makeDescription(revision, clean)) {
 			@Override
 			protected UpdateResult run() throws Exception {
 				try {
@@ -101,7 +106,7 @@ public class HgUpdateClient extends AbstractClient {
 					throw e;
 				}
 			}
-		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.UPDATE_TIMEOUT));
+		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.UPDATE_TIMEOUT)).getValue();
 	}
 
 	private static String makeDescription(String revision, boolean clean) {
