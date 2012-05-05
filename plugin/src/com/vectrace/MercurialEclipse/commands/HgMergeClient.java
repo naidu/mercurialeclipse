@@ -21,10 +21,10 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class HgMergeClient extends AbstractClient {
 
-	public static void merge(HgRoot hgRoot, String revision, boolean forced)
+	public static MergeContext merge(HgRoot hgRoot, String revision, boolean forced)
 			throws HgException {
 		MergeCommand command = MergeCommandFlags.on(hgRoot.getRepository());
-		addMergeToolPreference(command);
+
 		if (revision != null) {
 			command.rev(revision);
 		}
@@ -34,25 +34,9 @@ public class HgMergeClient extends AbstractClient {
 		}
 
 		try {
-			MergeContext context = command.execute();
-			if (!context.getMergeConflicts().isEmpty() || !context.getFlagConflicts().isEmpty()) {
-				throw new MergeException(context);
-			}
+			return command.execute();
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
-		}
-	}
-
-	public static boolean isConflict(HgException e) {
-		return e instanceof MergeException;
-	}
-
-	private static class MergeException extends HgException {
-
-		public MergeException(MergeContext context) {
-			super("A merge conflict occurred");
-
-			// TODO: make use of context
 		}
 	}
 }

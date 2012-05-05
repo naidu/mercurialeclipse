@@ -25,9 +25,10 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import com.aragost.javahg.Changeset;
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.aragost.javahg.merge.MergeContext;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -114,30 +115,15 @@ public class MergeHandler extends RootHandler {
 			CoreException {
 		MercurialUtilities.setOfferAutoCommitMerge(true);
 
-		boolean conflict = false;
 		try {
-			try {
-				HgMergeClient.merge(hgRoot, cs.getNode(), forced);
-			} catch (HgException e) {
-				if (HgMergeClient.isConflict(e)) {
-					conflict = true;
-				} else {
-					throw e;
-				}
-			}
-
+			MergeContext ctx = HgMergeClient.merge(hgRoot, cs.getNode(), forced);
 			String mergeChangesetId = cs.getNode();
 			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 
-			if (conflict) {
-				MergeView.showMergeConflict(hgRoot, shell);
+			if (HgResolveClient.autoResolve(ctx)) {
+				commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
 			} else {
-				try {
-					commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-					MercurialEclipsePlugin.showError(e);
-				}
+				MergeView.showMergeConflict(hgRoot, shell);
 			}
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot).schedule();
@@ -152,6 +138,7 @@ public class MergeHandler extends RootHandler {
 			CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
 					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 		} else {
+			MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
 			CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);
