@@ -24,10 +24,11 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PartInitException;
 
+import com.aragost.javahg.merge.BackoutConflictResolvingContext;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
@@ -178,15 +179,17 @@ public class BackoutWizardPage extends HgWizardPage {
 		boolean merge = mergeCheckBox.getSelection() && !backoutRevision.isCurrent();
 
 		try {
-			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
+			BackoutConflictResolvingContext ctx = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
-			HgClients.getConsole().printMessage(result, null);
-			if (merge) {
-				MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
-				new CommitMergeHandler().run(hgRoot);
-			}
-		} catch (HgException e) {
-			if (HgBackoutClient.isMergeError(e)) {
+
+			if (HgResolveClient.autoResolve(ctx)) {
+				// Commit the merge / update
+				if (HgStatusClient.isDirty(hgRoot)) {
+					MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
+					new CommitMergeHandler().run(hgRoot);
+				}
+				// Else no conflict and Mercurial auto-committed
+			} else {
 				if (merge) {
 					try {
 						MergeView.showMergeConflict(hgRoot, getShell());
@@ -198,10 +201,8 @@ public class BackoutWizardPage extends HgWizardPage {
 							.openInformation(null, "Unresolved conflicts",
 									"You have unresolved conflicts. Use Synchronize View to edit conflicts");
 				}
-
-				return true;
 			}
-
+		} catch (HgException e) {
 			MessageDialog.openError(getShell(), Messages
 					.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
 					.getMessage());
