@@ -332,6 +332,9 @@ public abstract class AbstractClient {
 		}
 	}
 
+	/**
+	 * @deprecated Explicitly resolve conflicts after.
+	 */
 	protected static void addMergeToolPreference(AbstractCommand command) {
 		if (!isUseExternalMergeTool()) {
 			command.cmdAppend("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$

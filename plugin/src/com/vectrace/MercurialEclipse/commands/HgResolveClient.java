@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.aragost.javahg.commands.ResolveStatusLine;
 import com.aragost.javahg.commands.flags.ResolveCommandFlags;
+import com.aragost.javahg.merge.ConflictResolvingContext;
 import com.google.common.collect.Lists;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -173,5 +174,16 @@ public class HgResolveClient extends AbstractClient {
 		}
 
 		return results;
+	}
+
+	/**
+	 * Resolve all conflicts using pre-merge, or external merge tool if configured
+	 *
+	 * @param hgRoot The root to resolve for
+	 * @return True if all conflicts are resolved
+	 */
+	public static boolean autoResolve(ConflictResolvingContext ctx) {
+		// TODO Implement
+		throw new UnsupportedOperationException();
 	}
 }

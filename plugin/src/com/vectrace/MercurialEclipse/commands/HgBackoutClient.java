@@ -12,14 +12,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.aragost.javahg.commands.BackoutCommand;
+import com.aragost.javahg.commands.flags.BackoutCommandFlags;
+import com.aragost.javahg.merge.BackoutConflictResolvingContext;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
- *
- * TODO: use JavaHg
  */
 public class HgBackoutClient extends AbstractClient {
 
@@ -35,34 +37,21 @@ public class HgBackoutClient extends AbstractClient {
 	 * @param msg
 	 *            commit message
 	 */
-	public static String backout(final HgRoot hgRoot, ChangeSet backoutRevision,
-			boolean merge, String msg, String user) throws HgException {
+	public static BackoutConflictResolvingContext backout(final HgRoot hgRoot, ChangeSet backoutRevision,
+			boolean merge, String msg, String user) {
 
-		HgCommand command = new HgCommand("backout", //$NON-NLS-1$
-				"Backing out changeset " + backoutRevision.getNode(), hgRoot, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
+		user = MercurialUtilities.getDefaultUserName(user);
 
-		addMergeToolPreference(command);
+		BackoutCommand command = BackoutCommandFlags.on(hgRoot.getRepository()).rev(backoutRevision.getNode()).message(msg).user(user);
 
-		command.addOptions("-r", backoutRevision.getNode(), "-m", msg); //$NON-NLS-1$ //$NON-NLS-2$
-		command.addUserName(user);
 		if (merge) {
-			command.addOptions("--merge"); //$NON-NLS-1$
+			command.merge();
 		}
 
-		String result = command.executeToString();
-		command.rememberUserName();
-		return result;
-	}
+		BackoutConflictResolvingContext ctx = command.execute();
 
-	public static boolean isMergeError(HgException e) {
-		// eg: (without --merge)
-		// reverting src/file1.text
-		// adding src/file2.txt
-		// removing src/file22.txt
-		// 0 files updated, 0 files merged, 0 files removed, 1 files unresolved
-		// use 'hg resolve' to retry unresolved file merges.
-		return HgUpdateClient.isWorkspaceUpdateConflict(e);
-	}
+		HgCommitMessageManager.updateDefaultCommitName(hgRoot, user);
 
+		return ctx;
+	}
 }
