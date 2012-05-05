@@ -40,28 +40,16 @@ public class HgUpdateClient extends AbstractClient {
 			throws HgException {
 		try {
 			updateWithoutRefresh(hgRoot, revision, clean);
-		} catch (HgException e) {
-			handleConflicts(e);
+
+			if (HgResolveClient.autoResolve(hgRoot)) {
+				showConflictMessage();
+			}
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
 		}
 	}
 
-	/**
-	 * If the exception is an update conflict informs the user, otherwise rethrows the exception.
-	 */
-	public static void handleConflicts(HgException e) throws HgException {
-		if (isWorkspaceUpdateConflict(e)) {
-			showConflictMessage();
-		} else {
-			throw e;
-		}
-	}
-
-	/**
-	 *
-	 */
-	public static void showConflictMessage() {
+	protected static void showConflictMessage() {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				MessageDialog

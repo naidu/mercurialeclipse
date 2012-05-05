@@ -190,8 +190,8 @@ public class HgResolveClient extends AbstractClient {
 	}
 
 	/**
-	 * @param hgRoot
-	 * @return
+	 * @param hgRoot The root to resolve for
+	 * @return True if all conflicts are resolved
 	 */
 	public static boolean autoResolve(HgRoot hgRoot) {
 		// TODO Auto-generated method stub
