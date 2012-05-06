@@ -27,6 +27,8 @@ import org.eclipse.core.runtime.Path;
 import com.aragost.javahg.commands.ResolveStatusLine;
 import com.aragost.javahg.commands.flags.ResolveCommandFlags;
 import com.aragost.javahg.merge.ConflictResolvingContext;
+import com.aragost.javahg.merge.FlagConflict;
+import com.aragost.javahg.merge.KeepDeleteConflict;
 import com.google.common.collect.Lists;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -178,23 +180,52 @@ public class HgResolveClient extends AbstractClient {
 
 	/**
 	 * Resolve all conflicts using pre-merge, or external merge tool if configured
+	 * @param hgRoot TODO
+	 * @param hgRoot The root to resolve for
+	 *
+	 * @return True if all conflicts are resolved
+	 */
+	public static boolean autoResolve(HgRoot hgRoot, ConflictResolvingContext ctx) {
+		// TODO: handle keep-delete and flag conflicts
+		// TODO: should this instead be done in the merge view asyncronously?
+		for (KeepDeleteConflict conflict : ctx.getKeepDeleteConflicts()) {
+
+		}
+
+		for (FlagConflict conflict : ctx.getFlagConflicts()) {
+
+		}
+
+		return autoResolve(hgRoot);
+	}
+
+	/**
+	 * Attempt to externally resolve all conflicts: If external merge tool preference is set invokes
+	 * simple resolve. Otherwise resolve is invoked with an invalid merge tool so Mercurial's
+	 * premerge algorithm is invoked and the file is left unresolved if pre-merge fails.
 	 *
 	 * @param hgRoot The root to resolve for
 	 * @return True if all conflicts are resolved
 	 */
-	public static boolean autoResolve(ConflictResolvingContext ctx) {
-		// 		addMergeToolPreference(command);
-
-		// TODO Implement
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * @param hgRoot The root to resolve for
-	 * @return True if all conflicts are resolved
-	 */
 	public static boolean autoResolve(HgRoot hgRoot) {
-		// TODO Auto-generated method stub
-		return false;
+
+		if (isUseExternalMergeTool()) {
+			ResolveCommandFlags.on(hgRoot.getRepository()).execute();
+		} else {
+			// Do resolve one by one because we're using an invalid merge tool so only pre-merge is done.
+			for(ResolveStatusLine line : ResolveCommandFlags.on(hgRoot.getRepository()).list()) {
+				if (line.getType() == ResolveStatusLine.Type.UNRESOLVED) {
+					ResolveCommandFlags.on(hgRoot.getRepository()).tool("simplemerge").execute(line.getFileName());
+				}
+			}
+		}
+
+		for(ResolveStatusLine line : ResolveCommandFlags.on(hgRoot.getRepository()).list()) {
+			if (line.getType() == ResolveStatusLine.Type.UNRESOLVED) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

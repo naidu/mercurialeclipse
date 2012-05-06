@@ -120,7 +120,7 @@ public class MergeHandler extends RootHandler {
 			String mergeChangesetId = cs.getNode();
 			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
 
-			if (HgResolveClient.autoResolve(ctx)) {
+			if (HgResolveClient.autoResolve(hgRoot, ctx)) {
 				commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
 			} else {
 				MergeView.showMergeConflict(hgRoot, shell);

@@ -174,7 +174,7 @@ public class HgPushPullClient extends AbstractClient {
 		} else if (merge) {
 			MergeContext ctx = HgMergeClient.merge(hgRoot, "tip", false);
 
-			if (HgResolveClient.autoResolve(ctx)) {
+			if (HgResolveClient.autoResolve(hgRoot, ctx)) {
 				refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
 						null, true));
 			}
