@@ -24,10 +24,14 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
- * TODO: check conflict handling
+ *
  */
 public class HgUpdateClient extends AbstractClient {
 
+	/**
+	 * Perform a clean update and refresh the workspace. Handles unresolved conflicts and shows the
+	 * user a message.
+	 */
 	public static void cleanUpdate(final HgRoot hgRoot, String revision) throws HgException
 	{
 		update(hgRoot, revision, true);
@@ -39,17 +43,13 @@ public class HgUpdateClient extends AbstractClient {
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
 		try {
-			updateWithoutRefresh(hgRoot, revision, clean);
-
-			if (HgResolveClient.autoResolve(hgRoot)) {
-				showConflictMessage();
-			}
+			updateWithoutRefreshAndAutoResolve(hgRoot, revision, clean);
 		} finally {
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
 		}
 	}
 
-	protected static void showConflictMessage() {
+	private static void showConflictMessage() {
 		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				MessageDialog
@@ -57,6 +57,17 @@ public class HgUpdateClient extends AbstractClient {
 								"There are unresolved conflicts after update. Use Synchronize View to edit conflicts");
 			}
 		});
+	}
+
+	/**
+	 * Perform an update. Handles unresolved conflicts and shows the user a message.
+	 */
+	public static void updateWithoutRefreshAndAutoResolve(HgRoot hgRoot, String revision, boolean clean) throws HgException {
+		updateWithoutRefresh(hgRoot, revision, clean);
+
+		if (!HgResolveClient.autoResolve(hgRoot)) {
+			showConflictMessage();
+		}
 	}
 
 	/**
@@ -70,7 +81,7 @@ public class HgUpdateClient extends AbstractClient {
 	 *            Whether a clean update should be done
 	 * @return The result of the invocation
 	 */
-	public static UpdateResult updateWithoutRefresh(HgRoot hgRoot, String revision, boolean clean) throws HgException {
+	private static UpdateResult updateWithoutRefresh(HgRoot hgRoot, String revision, boolean clean) throws HgException {
 		final UpdateCommand command = UpdateCommandFlags.on(hgRoot.getRepository());
 
 		if (revision != null && revision.trim().length() > 0) {
@@ -93,7 +104,6 @@ public class HgUpdateClient extends AbstractClient {
 					if (command.crossedBranch()) {
 						throw new UpdateCrossesBranchesException(e);
 					}
-					// TODO: conflicts
 					throw e;
 				}
 			}
@@ -108,10 +118,6 @@ public class HgUpdateClient extends AbstractClient {
 		}
 
 		return (clean) ? "Clean update" : "Updating working directory";
-	}
-
-	public static boolean isWorkspaceUpdateConflict(HgException e) {
-		return e.getMessage().contains("use 'hg resolve' to retry unresolved file merges");
 	}
 
 	public static boolean isCrossesBranchError(HgException e) {
