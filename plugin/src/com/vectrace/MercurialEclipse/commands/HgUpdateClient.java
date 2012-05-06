@@ -60,7 +60,7 @@ public class HgUpdateClient extends AbstractClient {
 	}
 
 	/**
-	 * Perform an update.
+	 * Perform an update. Caller must call {@link HgResolveClient#autoResolve(HgRoot)}
 	 *
 	 * @param hgRoot
 	 *            The root to use
@@ -80,6 +80,9 @@ public class HgUpdateClient extends AbstractClient {
 		if (clean) {
 			command.clean();
 		}
+
+		// Caller must call HgResolveClient#autoResolve(HgRoot)
+		command.cmdAppend("--config", "ui.merge=internal:fail");
 
 		return new JavaHgCommandJob<UpdateResult>(command, makeDescription(revision, clean)) {
 			@Override
