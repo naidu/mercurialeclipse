@@ -61,7 +61,7 @@ public class RebaseWizard extends HgOperationWizard {
 	 */
 	@Override
 	protected boolean operationSucceeded(HgOperation op) throws HgException {
-		if (op.getResult().length() != 0) {
+		if (op.getResult() != null && op.getResult().length() != 0) {
 			HgClients.getConsole().printMessage(op.getResult(), null);
 		}
 		return super.operationSucceeded(op);

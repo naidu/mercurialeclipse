@@ -69,13 +69,7 @@ public class HgRebaseClient extends AbstractClient {
 		final RebaseCommand c = RebaseCommandFlags.on(hgRoot.getRepository());
 
 		if (!isUseExternalMergeTool()) {
-			// TODO: autoresolve!!!
-			c.cmdAppend("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-
-		if (!isUseExternalMergeTool()) {
 			// Do not invoke external editor for commit message
-			// Future: Allow user to specify this
 			c.cmdAppend("--config", "ui.editor=echo"); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 
