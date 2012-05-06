@@ -182,7 +182,7 @@ public class BackoutWizardPage extends HgWizardPage {
 			BackoutConflictResolvingContext ctx = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
 
-			if (HgResolveClient.autoResolve(ctx)) {
+			if (HgResolveClient.autoResolve(hgRoot, ctx)) {
 				// Commit the merge / update
 				if (HgStatusClient.isDirty(hgRoot)) {
 					MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);

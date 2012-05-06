@@ -10,18 +10,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 
 import com.aragost.javahg.commands.ResolveStatusLine;
 
 public class ResolveStatus implements IAdaptable {
 
-	private final IAdaptable adaptable;
+	private final IResource adaptable;
 	private final ResolveStatusLine.Type flag;
 
-	public ResolveStatus(IAdaptable adaptable, ResolveStatusLine.Type flag) {
+	public ResolveStatus(IResource adaptable, ResolveStatusLine.Type flag) {
 		this.adaptable = adaptable;
 		this.flag = flag;
+	}
+
+	public IResource getResource() {
+		return this.adaptable;
 	}
 
 	public Object getAdapter(Class adapter) {
