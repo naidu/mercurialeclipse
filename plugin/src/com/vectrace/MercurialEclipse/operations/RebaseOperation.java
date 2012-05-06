@@ -16,7 +16,9 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
+import com.aragost.javahg.ext.rebase.merge.RebaseConflictResolvingContext;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -82,13 +84,19 @@ public class RebaseOperation extends HgOperation {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
 
-			HgRebaseClient.rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont,
-					abort, keepBranches, keep, user);
+			if (abort) {
+				HgRebaseClient.abortRebase(hgRoot);
+			} else {
+				RebaseConflictResolvingContext ctx = HgRebaseClient.rebase(hgRoot, sourceRev, baseRev, destRev, collapse, cont,
+						keepBranches, keep, user);
+				if (HgRebaseClient.isRebasing(hgRoot)) {
+					HgResolveClient.autoResolve(hgRoot, ctx);
+					rebaseConflict = true;
+				}
+			}
 			monitor.worked(1);
 
 		} catch (HgException e) {
-			rebaseConflict = HgRebaseClient.isRebaseConflict(e);
-
 			if(rebaseConflict) {
 				result = e.getMessage();
 			} else {

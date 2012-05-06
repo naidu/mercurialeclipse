@@ -108,7 +108,7 @@ public class HgCommitClient extends AbstractClient {
 	 *
 	 * Note: refreshes local and outgoing status
 	 */
-	public static void commit(HgRoot hgRoot, String user, String message) throws HgException {
+	public static void commit(HgRoot hgRoot, String user, String message) {
 		CommitCommand command = CommitCommandFlags.on(hgRoot.getRepository());
 		user = MercurialUtilities.getDefaultUserName(user);
 		command.user(user);

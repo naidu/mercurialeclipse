@@ -30,10 +30,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.IProgressService;
 
+import com.aragost.javahg.ext.rebase.merge.RebaseConflictResolvingContext;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgRevertClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
@@ -139,26 +140,23 @@ public class NewHeadsDialog extends IconAndMessageDialog  {
 					boolean rebaseConflict = false;
 					try {
 						monitor.beginTask("Rebasing on tip", 2);
-						// rebase on Tip revision
-						HgRebaseClient.rebaseCurrentOnTip(hgRoot);
 
-						monitor.worked(1);
-						monitor.setTaskName("Updating");
-						// if rebase succeeded try again updating to tip
-						// TODO: are we not already on tip after rebase?
-						HgUpdateClient.update(hgRoot, null, cleanUpdateRequested);
+						RebaseConflictResolvingContext ctx = HgRebaseClient.rebaseCurrentOnTip(hgRoot);
+
+						if (HgRebaseClient.isRebasing(hgRoot)) {
+							monitor.worked(1);
+							HgResolveClient.autoResolve(hgRoot, ctx);
+							rebaseConflict = true;
+						}
 
 						monitor.done();
 					} catch (final HgException e) {
-						rebaseConflict = HgRebaseClient.isRebaseConflict(e);
-						if (!rebaseConflict) {
-							MercurialEclipsePlugin.logError(e);
-							Display.getDefault().asyncExec(new Runnable() {
-								public void run() {
-									MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
-								}
-							});
-						}
+						MercurialEclipsePlugin.logError(e);
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								MessageDialog.openError(getShell(), "Rebase error", e.getMessage());
+							}
+						});
 					} finally {
 						RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL);
 						if (rebaseConflict) {

@@ -110,18 +110,22 @@ public class MergeHandler extends RootHandler {
 		mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
 	}
 
+	/**
+	 * Call from UI thread
+	 *
+	 * TODO: Run only necessary parts in the UI thread
+	 */
 	public static void mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
 			CoreException {
 		MercurialUtilities.setOfferAutoCommitMerge(true);
 
 		try {
-			MergeContext ctx = HgMergeClient.merge(hgRoot, cs.getNode(), forced);
-			String mergeChangesetId = cs.getNode();
-			MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeChangesetId);
-
-			if (HgResolveClient.autoResolve(hgRoot, ctx)) {
-				commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
+			if (mergeAndAutoResolve(hgRoot, cs.getNode(), forced)) {
+				if (showCommitDialog) {
+					MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
+				}
+				commitMerge(monitor, hgRoot, cs.getNode(), shell, showCommitDialog);
 			} else {
 				MergeView.showMergeConflict(hgRoot, shell);
 			}
@@ -130,15 +134,26 @@ public class MergeHandler extends RootHandler {
 		}
 	}
 
-	private static void commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
-			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) throws CoreException {
+	/**
+	 * @return True if the merge can be immediately committed, false if the merge view should be shown
+	 */
+	public static boolean mergeAndAutoResolve(HgRoot hgRoot, String mergeNode, boolean forced) throws HgException {
+		MergeContext ctx = HgMergeClient.merge(hgRoot, mergeNode, forced);
+
+		// Is this necessary? Refresh should be done anyway later
+		MercurialStatusCache.getInstance().setMergeStatus(hgRoot, mergeNode);
+
+		return HgResolveClient.autoResolve(hgRoot, ctx);
+	}
+
+	public static void commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
+			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) {
 
 		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
 		if (!showCommitDialog) {
 			CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
 					.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 		} else {
-			MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
 			CommitMergeHandler.commitMergeWithCommitDialog(hgRoot, shell);
 		}
 		monitor.worked(1);

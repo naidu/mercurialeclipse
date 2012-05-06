@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
@@ -60,6 +61,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.AbortRebaseHandler;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.ContinueRebaseHandler;
+import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.RunnableHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -506,27 +508,49 @@ public class MergeView extends AbstractRootView implements Observer {
 	 * @param merge True if this is a merge, false if it's a rebase.
 	 * @return A new job change listener
 	 */
-	public static IJobChangeListener makeConflictJobChangeListener(final HgRoot hgRoot, final Shell shell,
-			final boolean merge) {
+	public static IJobChangeListener makeConflictJobChangeListener(final HgRoot hgRoot,
+			final Shell shell, final boolean merge) {
+		return makeUIJobChangeAdapter(new Runnable() {
+			public void run() {
+				try {
+					Shell sh = (shell == null) ? MercurialEclipsePlugin.getActiveShell() : shell;
+
+					if (merge) {
+						showMergeConflict(hgRoot, sh);
+					} else {
+						showRebaseConflict(hgRoot, sh);
+					}
+				} catch (PartInitException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+			}
+		});
+	}
+
+	/**
+	 * Make a job change listener so that when the job is done the current merge will auto-committed
+	 *
+	 * @param hgRoot
+	 *            The root to use
+	 * @param shell
+	 *            The shell to use. May be null.
+	 * @return Newly created job change listener
+	 */
+	public static IJobChangeListener makeCommitMergeJobChangeListener(final HgRoot hgRoot,
+			final Shell shell, final String mergeNode) {
+		return makeUIJobChangeAdapter(new Runnable() {
+
+			public void run() {
+				MergeHandler.commitMerge(new NullProgressMonitor(), hgRoot, mergeNode, shell, true);
+			}
+		});
+	}
+
+	private static IJobChangeListener makeUIJobChangeAdapter(final Runnable run) {
 		return new JobChangeAdapter() {
 			@Override
 			public void done(IJobChangeEvent event) {
-				Display.getDefault().asyncExec(new Runnable() {
-					public void run() {
-						try {
-							Shell sh = (shell == null) ? MercurialEclipsePlugin.getActiveShell()
-									: shell;
-
-							if (merge) {
-								showMergeConflict(hgRoot, sh);
-							} else {
-								showRebaseConflict(hgRoot, sh);
-							}
-						} catch (PartInitException e1) {
-							MercurialEclipsePlugin.logError(e1);
-						}
-					}
-				});
+				Display.getDefault().asyncExec(run);
 			}
 		};
 	}

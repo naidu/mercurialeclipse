@@ -22,10 +22,11 @@ import com.aragost.javahg.commands.PullCommand;
 import com.aragost.javahg.commands.PushCommand;
 import com.aragost.javahg.commands.flags.PullCommandFlags;
 import com.aragost.javahg.commands.flags.PushCommandFlags;
-import com.aragost.javahg.merge.MergeContext;
+import com.aragost.javahg.ext.rebase.merge.RebaseConflictResolvingContext;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -161,20 +162,19 @@ public class HgPushPullClient extends AbstractClient {
 				}
 			}
 		} else if (rebase) {
-			try {
-				HgRebaseClient.rebaseCurrentOnTip(hgRoot);
+			RebaseConflictResolvingContext ctx = HgRebaseClient.rebaseCurrentOnTip(hgRoot);
 
-				// TODO: autoresolve
-			} catch (HgException e) {
-				if (HgRebaseClient.isRebaseConflict(e)) {
-					refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
-							null, false));
-				}
+			if (HgRebaseClient.isRebasing(hgRoot)) {
+				HgResolveClient.autoResolve(hgRoot, ctx);
+				refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
+						null, false));
 			}
 		} else if (merge) {
-			MergeContext ctx = HgMergeClient.merge(hgRoot, "tip", false);
-
-			if (HgResolveClient.autoResolve(hgRoot, ctx)) {
+			if (MergeHandler.mergeAndAutoResolve(hgRoot, "tip", false)) {
+				// Unlike rebase it's not committed immediately if there are no conflicts
+				refreshJob.addJobChangeListener(MergeView.makeCommitMergeJobChangeListener(hgRoot,
+						null, "tip"));
+			} else {
 				refreshJob.addJobChangeListener(MergeView.makeConflictJobChangeListener(hgRoot,
 						null, true));
 			}
