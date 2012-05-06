@@ -39,7 +39,7 @@ public class CommitMergeHandler extends RunnableHandler {
 	 * @return the hg command output
 	 * @throws HgException
 	 */
-	public final static void commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
+	public final static void commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) {
 		Assert.isNotNull(hgRoot);
 		String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
 		String mergeChangesetId = MercurialStatusCache.getInstance().getMergeChangesetId(hgRoot);
@@ -63,8 +63,7 @@ public class CommitMergeHandler extends RunnableHandler {
 	 * @throws HgException
 	 * @throws CoreException
 	 */
-	public static void commitMerge(HgRoot hgRoot, String commitName, String message)
-			throws HgException, CoreException {
+	public static void commitMerge(HgRoot hgRoot, String commitName, String message)  {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(message);
 
