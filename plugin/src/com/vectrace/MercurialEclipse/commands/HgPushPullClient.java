@@ -151,11 +151,7 @@ public class HgPushPullClient extends AbstractClient {
 
 		if (update) {
 			try {
-				HgUpdateClient.updateWithoutRefresh(hgRoot, null, false);
-
-				if (HgResolveClient.autoResolve(hgRoot)) {
-					HgUpdateClient.showConflictMessage();
-				}
+				HgUpdateClient.updateWithoutRefreshAndAutoResolve(hgRoot, null, false);
 			} catch (HgException e) {
 				if (HgUpdateClient.isCrossesBranchError(e)) {
 					UpdateJob.handleMultipleHeads(hgRoot, false);
