@@ -50,6 +50,8 @@ public final class HgClients {
 	public static RepositoryConfiguration getRepoConfig() {
 		RepositoryConfiguration cfg = new RepositoryConfiguration();
 		cfg.setHgBin(HgClients.getExecutable());
+		cfg.setConcurrency(3);
+		cfg.setCommandWaitTimeout(Integer.MAX_VALUE);
 
 		// Extensions
 		// TODO: mq
