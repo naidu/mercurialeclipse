@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
@@ -271,7 +272,7 @@ public class CommitDialog extends TitleAreaDialog {
 		return StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message);
 	}
 
-	private void validateControls() {
+	protected void validateControls() {
 		if (isDefaultCommitMessage()) {
 			setErrorMessage(Messages.getString("CommitDialog.commitMessageRequired")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
@@ -282,9 +283,16 @@ public class CommitDialog extends TitleAreaDialog {
 			setErrorMessage(Messages.getString("CommitDialog.noResourcesSelected")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
-			setErrorMessage(null); // ";
-			setMessage(Messages.getString("CommitDialog.readyToCommit")); // ";
+			setErrorMessage(null);
 			getButton(IDialogConstants.OK_ID).setEnabled(true);
+
+			if (isAmend() && HgFeatures.PHASES.isEnabled()
+					&& currentChangeset.getPhase() == Phase.PUBLIC) {
+				setMessage(Messages.getString("CommitDialog.amendPublicWarning"),
+						IMessageProvider.WARNING);
+			} else {
+				setMessage(Messages.getString("CommitDialog.readyToCommit"));
+			}
 		}
 	}
 
@@ -492,7 +500,7 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 
 		boolean closeBranchSelected = isCloseBranchSelected();
-		boolean amend = amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null;
+		boolean amend = isAmend() && currentChangeset != null;
 
 		try {
 			// amend changeset
@@ -586,6 +594,10 @@ public class CommitDialog extends TitleAreaDialog {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
+	}
+
+	private boolean isAmend() {
+		return amendCheckbox != null && amendCheckbox.getSelection();
 	}
 
 	private boolean isRevertSelected() {
