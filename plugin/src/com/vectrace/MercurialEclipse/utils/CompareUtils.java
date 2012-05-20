@@ -112,7 +112,7 @@ public final class CompareUtils {
 	public static void openCompareWithParentEditor(JHgChangeSet cs, IFile resource, boolean dialog,
 			ISynchronizePageConfiguration configuration) throws HgException {
 		CompareUtils.openEditor(HgFile.locate(cs, resource),
-				MercurialUtilities.getParentRevision(cs, resource), false, configuration);
+				MercurialUtilities.getParentRevision(cs, resource), dialog, configuration);
 	}
 
 	public static void openEditor(HgResource left, HgResource right, boolean dialog,
