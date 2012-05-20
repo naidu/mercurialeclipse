@@ -67,6 +67,7 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
+import com.aragost.javahg.Phase;
 import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
@@ -596,6 +597,22 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private boolean confirmHistoryRewrite() {
+		if (HgFeatures.PHASES.isEnabled()) {
+			// For secret or draft silently allow amend
+			if (Phase.PUBLIC == currentChangeset.getPhase()) {
+				if (!MessageDialog.openConfirm(getShell(),
+						Messages.getString("CommitDialog.amendPublic.title"),
+						Messages.getString("CommitDialog.amendPublic.message"))) {
+					return false;
+				}
+
+				currentChangeset.setDraft();
+			}
+
+			return true;
+		}
+
+		// Always prompt if phases are not supported
 		MessageDialog dialog = new MessageDialog(
 				getShell(),
 				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
@@ -611,6 +628,7 @@ public class CommitDialog extends TitleAreaDialog {
 				);
 		dialog.setBlockOnOpen(true); // if false then may show in background
 		return  dialog.open() == 0; // 0 means yes
+
 	}
 
 	private static String makePatchName(String id) {

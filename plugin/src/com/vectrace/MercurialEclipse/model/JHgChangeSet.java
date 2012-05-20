@@ -21,6 +21,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Assert;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.Phase;
+import com.aragost.javahg.commands.flags.PhaseCommandFlags;
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -311,6 +314,19 @@ public class JHgChangeSet extends ChangeSet {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Note callers must check {@link HgFeatures#PHASES} enablement.
+	 *
+	 * @return The current phase
+	 */
+	public Phase getPhase() {
+		return getData().phase();
+	}
+
+	public void setDraft() {
+		PhaseCommandFlags.on(hgRoot.getRepository()).draft().rev(getNode()).force().execute();
 	}
 
 	/**
