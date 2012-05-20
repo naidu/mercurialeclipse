@@ -69,6 +69,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
@@ -218,6 +219,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			MercurialEclipsePlugin.showError(e);
 			hgVersion = Version.emptyVersion;
 		} finally {
+			CommandServerCache.getInstance().invalidateAll();
 			CommandJob.hgInitDone();
 			if(isDebugging()) {
 				System.out.println(HgFeatures.printSummary());

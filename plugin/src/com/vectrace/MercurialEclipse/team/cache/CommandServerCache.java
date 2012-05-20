@@ -84,6 +84,13 @@ public class CommandServerCache {
 		return new BundleValue(new Bundle((BaseRepository) get(key.getRoot(), null), key.getFile()));
 	}
 
+	/**
+	 * Stop all command servers
+	 */
+	public void invalidateAll() {
+		cache.invalidateAll();
+	}
+
 	public static CommandServerCache getInstance() {
 		return instance;
 	}
