@@ -67,6 +67,7 @@ import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
@@ -542,10 +543,10 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// perform commit
 			pm.subTask("Committing resources to repository.");
-			if (amend) {
-				performAmend(commitMessage, currentChangeset);
+			if (amend && !HgFeatures.COMMIT_AMEND.isEnabled()) {
+				performAmendMQ(commitMessage, currentChangeset);
 			} else {
-				performCommit(commitMessage, closeBranchSelected, currentChangeset);
+				performCommit(commitMessage, closeBranchSelected, amend, currentChangeset);
 			}
 			pm.worked(1);
 
@@ -626,7 +627,7 @@ public class CommitDialog extends TitleAreaDialog {
 	 *
 	 * TODO: allow amending commit user as well.
 	 */
-	protected String performAmend(String message, ChangeSet cs) throws HgException {
+	protected String performAmendMQ(String message, ChangeSet cs) throws HgException {
 		final IProgressMonitor pm = monitor;
 		final String origPatchName = makePatchName("amend-orig");
 		String result = "";
@@ -722,14 +723,14 @@ public class CommitDialog extends TitleAreaDialog {
 		return result;
 	}
 
-	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs)
 			throws CoreException {
-		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch)) {
+		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch || amend)) {
 			// enforce commit anyway
-			HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, monitor);
+			HgCommitClient.commitResources(root, closeBranch, amend, user, messageToCommit, monitor);
 		}
 		HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, monitor,
-				closeBranch);
+				closeBranch, amend);
 	}
 
 	private void revertResources() {

@@ -36,7 +36,12 @@ public enum HgFeatures {
 	 */
 	COMMAND_SERVER (new Version(2,0,0), "command server", true),
 
-	COMMAND_SERVER_RECOMMENDED (new Version(2,1,0), "tested version of command server", false);
+	COMMAND_SERVER_RECOMMENDED (new Version(2,1,0), "tested version of command server", false),
+
+	/**
+	 * Whether commmit --amend is supported
+	 */
+	COMMIT_AMEND (new Version(2,2,0), "commit --amend", false);
 
 	private final Version required;
 	private final String[] optionalPreferenceKeys;
