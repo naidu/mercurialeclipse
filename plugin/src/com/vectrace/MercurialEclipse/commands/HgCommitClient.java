@@ -43,7 +43,7 @@ public class HgCommitClient extends AbstractClient {
 	 * Note: refreshes local and outgoing status
 	 */
 	public static void commitResources(List<IResource> resources, String user, String message,
-			IProgressMonitor monitor, boolean closeBranch, boolean amend) throws HgException {
+			boolean closeBranch, boolean amend, IProgressMonitor monitor) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
@@ -69,8 +69,8 @@ public class HgCommitClient extends AbstractClient {
 	 *
 	 * Note: refreshes local and outgoing status
 	 */
-	public static void commitResources(HgRoot root, boolean closeBranch, boolean amend, String user,
-			String message, IProgressMonitor monitor) throws HgException {
+	public static void commitResources(HgRoot root, String user, String message, boolean closeBranch,
+			boolean amend, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
 		try {

@@ -727,10 +727,10 @@ public class CommitDialog extends TitleAreaDialog {
 			throws CoreException {
 		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch || amend)) {
 			// enforce commit anyway
-			HgCommitClient.commitResources(root, closeBranch, amend, user, message, monitor);
+			HgCommitClient.commitResources(root, user, message, closeBranch, amend, monitor);
 		}
-		HgCommitClient.commitResources(resourcesToCommit, user, message, monitor,
-				closeBranch, amend);
+		HgCommitClient.commitResources(resourcesToCommit, user, message, closeBranch,
+				amend, monitor);
 	}
 
 	private void revertResources() {
