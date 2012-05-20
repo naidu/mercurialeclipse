@@ -19,7 +19,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.RebaseOperation;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -59,13 +58,13 @@ public class ContinueRebaseDialog extends CommitDialog {
 	}
 
 	@Override
-	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs)
+	protected void performCommit(String message, boolean closeBranch, boolean amend)
 			throws CoreException {
 		if (amend) {
 			throw new IllegalStateException();
 		}
 
-		continueRebase(messageToCommit);
+		continueRebase(message);
 	}
 
 	private void continueRebase(String messageToCommit) throws CoreException {

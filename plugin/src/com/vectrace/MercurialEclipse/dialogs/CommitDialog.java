@@ -546,7 +546,7 @@ public class CommitDialog extends TitleAreaDialog {
 			if (amend && !HgFeatures.COMMIT_AMEND.isEnabled()) {
 				performAmendMQ(commitMessage, currentChangeset);
 			} else {
-				performCommit(commitMessage, closeBranchSelected, amend, currentChangeset);
+				performCommit(commitMessage, closeBranchSelected, amend);
 			}
 			pm.worked(1);
 
@@ -723,13 +723,13 @@ public class CommitDialog extends TitleAreaDialog {
 		return result;
 	}
 
-	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs)
+	protected void performCommit(String message, boolean closeBranch, boolean amend)
 			throws CoreException {
 		if (resourcesToCommit.isEmpty() && (!options.filesSelectable || closeBranch || amend)) {
 			// enforce commit anyway
-			HgCommitClient.commitResources(root, closeBranch, amend, user, messageToCommit, monitor);
+			HgCommitClient.commitResources(root, closeBranch, amend, user, message, monitor);
 		}
-		HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, monitor,
+		HgCommitClient.commitResources(resourcesToCommit, user, message, monitor,
 				closeBranch, amend);
 	}
 
