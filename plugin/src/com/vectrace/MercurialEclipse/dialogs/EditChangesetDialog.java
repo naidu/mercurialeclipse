@@ -22,7 +22,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GroupedUncommittedChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -127,6 +126,6 @@ public class EditChangesetDialog extends CommitDialog {
 	}
 
 	@Override
-	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs) throws CoreException {
+	protected void performCommit(String message, boolean closeBranch, boolean amend) throws CoreException {
 	}
 }

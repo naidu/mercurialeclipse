@@ -16,7 +16,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -53,12 +52,12 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
-	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs)
+	protected void performCommit(String message, boolean closeBranch, boolean amend)
 			throws CoreException {
 		if (amend) {
 			throw new IllegalStateException();
 		}
 
-		CommitMergeHandler.commitMerge(root, getUser(), messageToCommit);
+		CommitMergeHandler.commitMerge(root, getUser(), message);
 	}
 }
