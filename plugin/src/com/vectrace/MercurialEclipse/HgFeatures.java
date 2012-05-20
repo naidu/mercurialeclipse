@@ -41,7 +41,9 @@ public enum HgFeatures {
 	/**
 	 * Whether commmit --amend is supported
 	 */
-	COMMIT_AMEND (new Version(2,2,0), "commit --amend", false);
+	COMMIT_AMEND (new Version(2,2,0), "commit --amend", false),
+
+	PHASES (new Version(2,1,0), "phase", false);
 
 	private final Version required;
 	private final String[] optionalPreferenceKeys;
