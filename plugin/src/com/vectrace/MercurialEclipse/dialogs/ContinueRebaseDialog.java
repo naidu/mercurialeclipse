@@ -59,8 +59,12 @@ public class ContinueRebaseDialog extends CommitDialog {
 	}
 
 	@Override
-	protected void performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+	protected void performCommit(String messageToCommit, boolean closeBranch, boolean amend, ChangeSet cs)
 			throws CoreException {
+		if (amend) {
+			throw new IllegalStateException();
+		}
+
 		continueRebase(messageToCommit);
 	}
 

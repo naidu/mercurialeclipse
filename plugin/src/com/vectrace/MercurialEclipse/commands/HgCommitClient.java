@@ -43,7 +43,7 @@ public class HgCommitClient extends AbstractClient {
 	 * Note: refreshes local and outgoing status
 	 */
 	public static void commitResources(List<IResource> resources, String user, String message,
-			IProgressMonitor monitor, boolean closeBranch) throws HgException {
+			IProgressMonitor monitor, boolean closeBranch, boolean amend) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
@@ -56,7 +56,7 @@ public class HgCommitClient extends AbstractClient {
 			}
 			List<IResource> files = mapEntry.getValue();
 
-			commit(root, AbstractClient.toFiles(files), user, message, closeBranch);
+			commit(root, AbstractClient.toFiles(files), user, message, closeBranch, amend);
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
 			new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
@@ -69,12 +69,12 @@ public class HgCommitClient extends AbstractClient {
 	 *
 	 * Note: refreshes local and outgoing status
 	 */
-	public static void commitResources(HgRoot root, boolean closeBranch, String user,
+	public static void commitResources(HgRoot root, boolean closeBranch, boolean amend, String user,
 			String message, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
 		try {
-			commit(root, emptyList, user, message, closeBranch);
+			commit(root, emptyList, user, message, closeBranch, amend);
 		} finally {
 			new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		}
@@ -86,7 +86,7 @@ public class HgCommitClient extends AbstractClient {
 	 * <b>Note</b> clients should not use this method directly, it is NOT private for tests only
 	 */
 	protected static void commit(HgRoot hgRoot, List<File> files, String user, String message,
-			boolean closeBranch) throws HgException {
+			boolean closeBranch, boolean amend) throws HgException {
 		CommitCommand command = CommitCommandFlags.on(hgRoot.getRepository());
 
 		user = MercurialUtilities.getDefaultUserName(user);
@@ -94,6 +94,10 @@ public class HgCommitClient extends AbstractClient {
 
 		if (closeBranch) {
 			command.closeBranch();
+		}
+
+		if (amend) {
+			command.amend();
 		}
 
 		command.message(message);
