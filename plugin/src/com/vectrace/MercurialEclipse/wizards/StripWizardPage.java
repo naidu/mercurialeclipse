@@ -22,12 +22,12 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 
+import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -124,7 +124,7 @@ public class StripWizardPage extends HgWizardPage {
 			String result = HgStripClient.strip(hgRoot, keepCheckBox.getSelection(), backupCheckBox
 					.getSelection(), forceCheckBox.getSelection(), stripRevision);
 			HgClients.getConsole().printMessage(result, null);
-		} catch (HgException e) {
+		} catch (ExecutionException e) {
 			MessageDialog.openError(getShell(), Messages.getString("StripWizardPage.errorCallingStrip"), e //$NON-NLS-1$
 					.getMessage());
 			MercurialEclipsePlugin.logError(e);
