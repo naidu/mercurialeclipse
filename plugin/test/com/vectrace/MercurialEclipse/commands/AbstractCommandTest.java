@@ -77,7 +77,7 @@ public class AbstractCommandTest extends TestCase {
 
 	public final static HgRoot getRepository() throws IOException {
 		String testRepoRoot = System.getProperty("java.io.tmpdir") + File.separator + "test/repo";
-		HgRoot where = new HgRoot(testRepoRoot);
+		HgRoot where = HgRoot.get(testRepoRoot);
 		return where;
 	}
 

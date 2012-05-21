@@ -232,7 +232,7 @@ public class ClonePage extends PushPullPage {
 		String root = getRootName();
 		File dest = new File(root, getCloneName());
 		try {
-			return new HgRoot(dest);
+			return HgRoot.get(dest);
 		} catch (IOException e) {
 			MercurialEclipsePlugin.logError(e);
 			return dest;

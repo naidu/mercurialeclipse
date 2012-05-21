@@ -56,7 +56,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	static {
 		HgRoot root = null;
 		try {
-			root = new HgRoot("");
+			root = new HgRoot(new File(""));
 		} catch (IOException e) {
 			MercurialEclipsePlugin.logError(e);
 		} finally {
@@ -88,11 +88,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	// constructors
 
-	public HgRoot(String pathname) throws IOException {
-		this(new File(pathname));
-	}
-
-	public HgRoot(File file) throws IOException {
+	private HgRoot(File file) throws IOException {
 		super(file);
 		Object adapter = super.getAdapter(IProject.class);
 		if (adapter instanceof IProject) {
@@ -112,6 +108,16 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	 */
 	public static HgRoot get(File file) throws IOException {
 		return MercurialRootCache.getInstance().getCached(new HgRoot(file));
+	}
+
+	/**
+	 * Helper method to invoke the root cache to get the hgroot that the given path identifies
+	 *
+	 * @param path
+	 *            The path
+	 */
+	public static HgRoot get(String path) throws IOException {
+		return get(new File(path));
 	}
 
 	public Repository getRepository() {
