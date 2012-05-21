@@ -35,6 +35,8 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 
 	private static final int ONES_12 = 0xfff;
 
+	private static final int ONES_10 = 0x3ff;
+
 	public static void testAssertionsEnabled() {
 		boolean a = false;
 
@@ -103,11 +105,11 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		assertEquals(0, la.getColor(0));
 		assertFalse(la.isDot(0));
 
-		la.setColor(0, ONES_12);
+		la.setColor(0, ONES_10);
 		assertEquals(12, la.getRevision(0));
 		assertEquals(19, la.getParentIndex(0, 0));
 		assertEquals(ONES_12, la.getParentIndex(0, 1));
-		assertEquals(ONES_12, la.getColor(0));
+		assertEquals(ONES_10, la.getColor(0));
 		assertFalse(la.isDot(0));
 
 		la.setColor(0, 69);

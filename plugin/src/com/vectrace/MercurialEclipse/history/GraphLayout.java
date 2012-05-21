@@ -15,7 +15,9 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.Phase;
 import com.google.common.base.Function;
+import com.vectrace.MercurialEclipse.HgFeatures;
 
 /**
  * Graph layout algorithm
@@ -50,12 +52,13 @@ public class GraphLayout {
 	 * cellBits is in the following format
 	 *
 	 * <pre>
-	 * +DIIIIIIIIIIIIIIIIIIIIIIIIIISSSSSSSSSSSSssssssssssssCCCCCCCCCCCC
-	 * + is unused
-	 * D is the dot bit I is the node index (revision number) - 26 bits
+	 * DPPPIIIIIIIIIIIIIIIIIIIIIIIIIICCCCCCCCCCSSSSSSSSSSSSssssssssssss
+	 * D is the dot bit
+	 * P is the phase - 3 bits
+	 * I is the node index (revision number) - 26 bits
+	 * C is the color - 10 bits
 	 * S is the first successor index in the row below (parent 1) - 12 bits
 	 * s is the second successor index in the row below (parent 2) - 12 bits
-	 * C is the color - 12 bits
 	 * </pre>
 	 *
 	 * See the {@link RowAccessor}.
@@ -346,6 +349,7 @@ public class GraphLayout {
 
 			reorder();
 			setColors();
+			setPhases();
 
 			return current;
 		}
@@ -378,6 +382,24 @@ public class GraphLayout {
 
 					current.setColor(ci, color);
 				}
+			}
+		}
+
+		/**
+		 * Copy phase information from the last row applying the rule that ancestors must have the
+		 * same or lesser phase. Also if necessary fetch the phase of the current changeset.
+		 */
+		private void setPhases() {
+			for (int li = 0; li < lastHandled.length; li++) {
+				for (int lpi = 0, n = last.numParents(li); lpi < n; lpi++) {
+					int ci = last.getParentIndex(li, lpi);
+
+					current.setPhase(ci, Math.min(current.getPhaseInt(ci), last.getPhaseInt(li)));
+				}
+			}
+
+			if (current.getPhaseInt(currentsIndex) != RowAccessor.PHASE_PUBLIC) {
+				current.setPhase(currentsIndex, currentCs.phase());
 			}
 		}
 
@@ -506,6 +528,19 @@ public class GraphLayout {
 
 			return la.getColor(getParentIndex(col, parentNum));
 		}
+
+		public Phase getPhase(int col) {
+			switch(getPhaseInt(col))
+			{
+			case PHASE_PUBLIC:
+				return Phase.PUBLIC;
+			case PHASE_DRAFT:
+				return Phase.DRAFT;
+			case PHASE_SECRET:
+				return Phase.SECRET;
+			}
+			throw new IllegalStateException("Unexpected phase");
+		}
 	}
 
 	/**
@@ -514,7 +549,12 @@ public class GraphLayout {
 	protected static class RowAccessor {
 
 		protected static final int NO_PARENT = 0xfff;
-		protected static final int NO_COLOR = 0xfff;
+		protected static final int NO_COLOR = 0x3FF;
+
+		protected static final int NO_PHASE = 0x7;
+		protected static final int PHASE_PUBLIC = 0;
+		protected static final int PHASE_DRAFT = 1;
+		protected static final int PHASE_SECRET = 2;
 
 		private final long[] row;
 
@@ -526,9 +566,12 @@ public class GraphLayout {
 		 * Constructor for new row - some fields are initialized
 		 */
 		public RowAccessor(int len) {
+			boolean phasesEnabled = HgFeatures.PHASES.isEnabled();
+
 			this.row = new long[len];
 
 			for (int i = 0; i < len; i++) {
+				setPhase(i, phasesEnabled ? NO_PHASE : PHASE_PUBLIC);
 				setColor(i, NO_COLOR);
 				setParentIndex(i, 0, NO_PARENT);
 				setParentIndex(i, 1, NO_PARENT);
@@ -538,7 +581,7 @@ public class GraphLayout {
 		// operations
 
 		protected int getRevision(int col) {
-			return (int) ((row[col] << 2) >>> (36 + 2));
+			return (int) ((row[col] << 4) >>> (34 + 4));
 		}
 
 		protected void setRevision(int col, int index) {
@@ -548,22 +591,55 @@ public class GraphLayout {
 
 			long val = row[col];
 
-			val &= 0xC000000FFFFFFFFFl;
-			val |= (index & 0x3FFFFFFl) << 36;
+			val &= 0xF0000003FFFFFFFFl;
+			val |= (index & 0x3FFFFFFl) << 34;
 
 			row[col] = val;
 		}
 
 		protected boolean isDot(int col) {
-			return (row[col] & (1l << 62)) != 0;
+			return (row[col] & 0x8000000000000000l) != 0;
 		}
 
 		protected void setDot(int col, boolean set) {
 			if (set) {
-				row[col] |= 0x4000000000000000l;
+				row[col] |= 0x8000000000000000l;
 			} else {
-				row[col] &= 0xbfffffffffffffffl;
+				row[col] &= 0x7fffffffffffffffl;
 			}
+		}
+
+		protected int getPhaseInt(int col) {
+			return (int)((row[col] & 0x7000000000000000l) >>> 60);
+		}
+
+		protected void setPhase(int col, int phase) {
+			long val = row[col];
+
+			val &= 0x8FFFFFFFFFFFFFFFl;
+			val |= (phase & 0x7l) << 60;
+
+			row[col] = val;
+		}
+
+		protected void setPhase(int col, Phase phase) {
+			int nPhase;
+
+			switch (phase) {
+			case SECRET:
+				nPhase = RowAccessor.PHASE_SECRET;
+				break;
+			case DRAFT:
+				nPhase = RowAccessor.PHASE_DRAFT;
+				break;
+			case PUBLIC:
+				nPhase = RowAccessor.PHASE_PUBLIC;
+				break;
+			default:
+				throw new IllegalStateException();
+			}
+
+			setPhase(col, nPhase);
 		}
 
 		/**
@@ -600,16 +676,16 @@ public class GraphLayout {
 		}
 
 		protected void setColor(int col, int color) {
-			row[col] &= 0xFFFFFFF000FFFFFFl;
-			row[col] |= mask12(color) << 24;
+			row[col] &= 0xFFFFFFFC00FFFFFFl;
+			row[col] |= (color & 0x3FFl) << 24;
 		}
 
 		protected int getColor(int col) {
-			return (int) ((row[col] & 0x0000000FFF000000l) >>> 24);
+			return (int) ((row[col] & 0x00000003FF000000l) >>> 24);
 		}
 
 		private static long mask12(long val) {
-			return val & 0x0000000000000FFFl;
+			return val & 0xFFFl;
 		}
 
 		public int numColumns() {
