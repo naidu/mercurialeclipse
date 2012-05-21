@@ -43,11 +43,18 @@ public class CommandServerCache {
 
 	private static final CommandServerCache instance = new CommandServerCache();
 
+	/**
+	 * Note: weak references to HgRoot.
+	 */
 	private final LoadingCache<HgRoot, BaseRepository> baseCache = CacheBuilder.newBuilder()
-			.weakKeys().removalListener(new Listener()).build(new BaseCacheLoader());
+			.weakKeys().removalListener(new BaseCacheListener()).build(new BaseCacheLoader());
 
+	/**
+	 * Note: weak references to the OverlayRepository. See {@link OverlayCacheListener} for how it's
+	 * closed.
+	 */
 	private final LoadingCache<Pair<HgRoot, File>, Repository> overlayCache = CacheBuilder
-			.newBuilder().weakValues().removalListener(new Listener())
+			.newBuilder().weakValues().removalListener(new OverlayCacheListener())
 			.build(new OverlayCacheLoader());
 
 	private CommandServerCache() {
@@ -124,9 +131,24 @@ public class CommandServerCache {
 		}
 	}
 
-	private final class Listener implements RemovalListener<Object, Repository> {
+	private final class BaseCacheListener implements RemovalListener<Object, Repository> {
 		public void onRemoval(RemovalNotification<Object, Repository> notification) {
 			notification.getValue().close();
+		}
+	}
+
+	private final class OverlayCacheListener implements
+			RemovalListener<Pair<HgRoot, File>, Repository> {
+		public void onRemoval(RemovalNotification<Pair<HgRoot, File>, Repository> notification) {
+			try {
+				// NOTE: The repository has been GC'd so we can't close it.
+				// See com.aragost.javahg.Repository.close()
+				// Assumes there is no finalize() on OverlayRepository.
+				baseCache.get(notification.getKey().a).getServerPool().decrementRefCount();
+			} catch (ExecutionException e) {
+				MercurialEclipsePlugin.logError(e);
+				assert false;
+			}
 		}
 	}
 }
