@@ -23,6 +23,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,7 +60,6 @@ import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
 
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.CommandJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.commands.RootlessHgCommand;
@@ -117,6 +117,13 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	/** Observed hg version */
 	public /*final*/ Version hgVersion = Version.emptyVersion;
+
+	/**
+	 * should not be used by any code except initialization of hg
+	 *
+	 * @see MercurialEclipsePlugin#checkHgInstallation()
+	 */
+	public static final CountDownLatch startSignal = new CountDownLatch(1);
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
@@ -220,7 +227,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			hgVersion = Version.emptyVersion;
 		} finally {
 			CommandServerCache.getInstance().invalidateAll();
-			CommandJob.hgInitDone();
+			startSignal.countDown();
 			if(isDebugging()) {
 				System.out.println(HgFeatures.printSummary());
 			}
@@ -661,5 +668,16 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		}
 
 		throw new HgException(e.getLocalizedMessage(), e);
+	}
+
+	/**
+	 * Block the current thread until initial configuration of the hg executable is done.
+	 */
+	public static void waitForHgInitDone() {
+		try {
+			MercurialEclipsePlugin.startSignal.await();
+		} catch (InterruptedException e1) {
+			MercurialEclipsePlugin.logError(e1);
+		}
 	}
 }
