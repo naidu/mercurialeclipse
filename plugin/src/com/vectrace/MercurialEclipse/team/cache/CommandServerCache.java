@@ -12,7 +12,6 @@ package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import com.aragost.javahg.BaseRepository;
 import com.aragost.javahg.Bundle;
@@ -28,14 +27,28 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.Pair;
 
 /**
- * Cache for JavaHg Repositories
+ * Cache for JavaHg Repositories.
+ *
+ * The simplest approach would be to keep soft references to the the Repository but
+ * {@link LocalChangesetCache} may retain JHgChangeSets indefinitely. Instead:
+ * <ul>
+ * <li><b>For BaseRepositories:</b> Use weak references to the HgRoot. The BaseRepositories will
+ * effectively be indefinitely retained.
+ * <li><b>For Overlay repositories:</b> Use weak references to the Repository. The changesets for
+ * overlay repositories are cached by {@link AbstractRemoteCache} but they seem to be cleaned up
+ * quite eagerly.
+ * </ul>
  */
 public class CommandServerCache {
+
 	private static final CommandServerCache instance = new CommandServerCache();
 
-	private final LoadingCache<Key, Value> cache = CacheBuilder.newBuilder()
-			.expireAfterAccess(5, TimeUnit.MINUTES).removalListener(new Listener())
-			.build(new Loader());
+	private final LoadingCache<HgRoot, BaseRepository> baseCache = CacheBuilder.newBuilder()
+			.weakKeys().removalListener(new Listener()).build(new BaseCacheLoader());
+
+	private final LoadingCache<Pair<HgRoot, File>, Repository> overlayCache = CacheBuilder
+			.newBuilder().weakValues().removalListener(new Listener())
+			.build(new OverlayCacheLoader());
 
 	private CommandServerCache() {
 	}
@@ -52,7 +65,12 @@ public class CommandServerCache {
 	 * @return A new or cached repository object
 	 */
 	public Repository get(HgRoot hgRoot) {
-		return get(hgRoot, null);
+		try {
+			return baseCache.get(hgRoot);
+		} catch (ExecutionException e) {
+			MercurialEclipsePlugin.logError(e.getCause());
+			return null;
+		}
 	}
 
 	/**
@@ -67,8 +85,12 @@ public class CommandServerCache {
 	 * @return A new or cached repository object
 	 */
 	public Repository get(HgRoot hgRoot, File bundleFile) {
+		if (bundleFile == null) {
+			return get(hgRoot);
+		}
+
 		try {
-			return cache.get(new Key(hgRoot, bundleFile)).get();
+			return overlayCache.get(new Pair<HgRoot, File>(hgRoot, bundleFile));
 		} catch (ExecutionException e) {
 			MercurialEclipsePlugin.logError(e.getCause());
 
@@ -76,19 +98,12 @@ public class CommandServerCache {
 		}
 	}
 
-	protected Value create(Key key) {
-		if (key.getFile() == null) {
-			return new RepoValue(Repository.open(HgClients.getRepoConfig(), key.getRoot()));
-		}
-
-		return new BundleValue(new Bundle((BaseRepository) get(key.getRoot(), null), key.getFile()));
-	}
-
 	/**
 	 * Stop all command servers
 	 */
 	public void invalidateAll() {
-		cache.invalidateAll();
+		overlayCache.invalidateAll();
+		baseCache.invalidateAll();
 	}
 
 	public static CommandServerCache getInstance() {
@@ -97,83 +112,23 @@ public class CommandServerCache {
 
 	// inner types
 
-	private final class Loader extends CacheLoader<Key, Value> {
+	private final class OverlayCacheLoader extends CacheLoader<Pair<HgRoot, File>, Repository> {
 		@Override
-		public Value load(Key key) {
-			return create(key);
+		public Repository load(Pair<HgRoot, File> key) throws Exception {
+			return new Bundle((BaseRepository) get(key.a), key.b).getOverlayRepository();
 		}
 	}
 
-	private static class Listener implements RemovalListener<Key, Value> {
-		public void onRemoval(RemovalNotification<Key, Value> notification) {
-			notification.getValue().dispose();
+	private final class BaseCacheLoader extends CacheLoader<HgRoot, BaseRepository> {
+		@Override
+		public BaseRepository load(HgRoot root) throws Exception {
+			return Repository.open(HgClients.getRepoConfig(), root);
 		}
 	}
 
-	private static class Key extends Pair<HgRoot, File> {
-
-		public Key(HgRoot root, File file) {
-			super(root, file);
-		}
-
-		public HgRoot getRoot() {
-			return a;
-		}
-
-		public File getFile() {
-			return b;
-		}
-	}
-
-	private interface Value {
-		public Repository get();
-
-		public void dispose();
-	}
-
-	private static class RepoValue implements Value {
-
-		private final Repository repo;
-
-		public RepoValue(Repository repo) {
-			this.repo = repo;
-		}
-
-		/**
-		 * @see com.vectrace.MercurialEclipse.team.cache.CommandServerCache.Value#get()
-		 */
-		public Repository get() {
-			return repo;
-		}
-
-		/**
-		 * @see com.vectrace.MercurialEclipse.team.cache.CommandServerCache.Value#dispose()
-		 */
-		public void dispose() {
-			repo.close();
-		}
-	}
-
-	private static class BundleValue implements Value {
-
-		private final Bundle bundle;
-
-		public BundleValue(Bundle bundle) {
-			this.bundle = bundle;
-		}
-
-		/**
-		 * @see com.vectrace.MercurialEclipse.team.cache.CommandServerCache.Value#get()
-		 */
-		public Repository get() {
-			return bundle.getOverlayRepository();
-		}
-
-		/**
-		 * @see com.vectrace.MercurialEclipse.team.cache.CommandServerCache.Value#dispose()
-		 */
-		public void dispose() {
-			bundle.close();
+	private final class Listener implements RemovalListener<Object, Repository> {
+		public void onRemoval(RemovalNotification<Object, Repository> notification) {
+			notification.getValue().close();
 		}
 	}
 }
