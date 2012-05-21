@@ -224,7 +224,7 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 	public HgRoot toHgRoot() {
 		if(isLocal()){
 			try {
-				return new HgRoot(getLocation());
+				return HgRoot.get(getLocation());
 			} catch (IOException e) {
 				MercurialEclipsePlugin.logError(e);
 			}

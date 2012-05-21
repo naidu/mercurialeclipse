@@ -71,7 +71,7 @@ public class HgSubreposClient extends AbstractClient {
 			if(subRepoHg.isDirectory()){
 				// we are reasonably sure that an HgRoot really exists in subReposRootDir
 				try{
-					result.add(new HgRoot(subReposRootDir));
+					result.add(HgRoot.get(subReposRootDir));
 				} catch(IOException ioe){
 					MercurialEclipsePlugin.logError(ioe);
 				}

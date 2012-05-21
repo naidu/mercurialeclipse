@@ -61,7 +61,7 @@ public class HgCommitClientTest extends AbstractCommandTest {
 
 		addToRepository(newFile);
 
-		HgRoot hgroot = new HgRoot(root.getAbsolutePath());
+		HgRoot hgroot = HgRoot.get(root.getAbsolutePath());
 		List<File> files = new ArrayList<File>();
 		files.add(newFile);
 		HgCommitClient.commit(hgroot, files, user, message, false, false);

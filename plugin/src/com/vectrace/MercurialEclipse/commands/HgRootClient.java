@@ -16,6 +16,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -36,25 +37,24 @@ public class HgRootClient extends AbstractClient {
 
 		// get the canonical path of the first existing directory
 		File dir = ResourceUtils.getFirstExistingDirectory(file);
-		HgRoot hgRoot;
+		HgPath hgPath;
 		try {
-			hgRoot = new HgRoot(dir);
+			hgPath = new HgPath(dir);
 		} catch(IOException e) {
 			throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
 		}
 
 		// search up the parents recursive if we see .hg directory there
-		File root = findHgDir(hgRoot);
+		File root = findHgDir(hgPath);
 		if (root == null) {
 			throw new HgException(file.getName() + Messages.getString("HgRootClient.error.noRoot")); //$NON-NLS-1$
 		}
 		// .hg parent dir found
 		try {
-			hgRoot = new HgRoot(root);
+			return HgRoot.get(root);
 		} catch (IOException e) {
 			throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
 		}
-		return hgRoot;
 	}
 
 	/**

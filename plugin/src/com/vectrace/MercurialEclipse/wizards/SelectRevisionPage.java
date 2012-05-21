@@ -120,7 +120,7 @@ public class SelectRevisionPage extends WizardPage {
 			return;
 		}
 		try {
-			hgRoot = new HgRoot(destinationDirectory);
+			hgRoot = HgRoot.get(destinationDirectory);
 			panel.update(getDataLoader());
 			setErrorMessage(null);
 		} catch (IOException e) {
