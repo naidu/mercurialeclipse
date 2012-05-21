@@ -424,13 +424,13 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			if(root == null) {
 				return "";
 			}
-			changeSet = LOCAL_CACHE.getChangesetByRoot(container);
+			changeSet = LOCAL_CACHE.getCurrentChangeSet(container);
 		}else{
 			root = AbstractClient.isHgRoot(container);
 			if(root == null) {
 				return "";
 			}
-			changeSet = LOCAL_CACHE.getChangesetForRoot(root);
+			changeSet = LOCAL_CACHE.getCurrentChangeSet(root);
 		}
 
 		StringBuilder suffix = new StringBuilder();

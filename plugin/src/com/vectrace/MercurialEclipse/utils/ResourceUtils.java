@@ -796,7 +796,7 @@ public final class ResourceUtils {
 		}
 		JHgChangeSet cs = null;
 		try {
-			cs = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+			cs = LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}

@@ -308,7 +308,7 @@ public class JHgChangeSet extends ChangeSet {
 	public boolean isCurrent() {
 		try {
 			return getData().equals(
-					LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot).getData());
+					LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot).getData());
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}

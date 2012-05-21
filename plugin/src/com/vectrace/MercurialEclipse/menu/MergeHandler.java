@@ -178,7 +178,7 @@ public class MergeHandler extends RootHandler {
 	 */
 	private static ArrayList<Changeset> getOtherHeadsInCurrentBranch(HgRoot hgRoot) throws HgException {
 		ArrayList<Changeset> result = getHeadsInCurrentBranch(hgRoot);
-		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+		ChangeSet currentRevision = LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot);
 
 		Changeset csToRemove = null;
 		for (Changeset cs : result) {
@@ -206,7 +206,7 @@ public class MergeHandler extends RootHandler {
 		ArrayList<Changeset> otherHeads = new ArrayList<Changeset>();
 		Changeset[] heads = HgLogClient.getHeads(hgRoot);
 
-		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+		ChangeSet currentRevision = LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot);
 		if (currentRevision == null) {
 			return otherHeads;
 		}

@@ -124,7 +124,7 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 */
 	public static HgFile makeAtCurrentRev(IFile remoteFile) throws HgException {
 		HgRoot root = MercurialRootCache.getInstance().getHgRoot(remoteFile);
-		JHgChangeSet cs = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+		JHgChangeSet cs = LocalChangesetCache.getInstance().getCurrentChangeSet(root);
 
 		return new HgFile(cs.getHgRoot(), cs, root.getRelativePath(remoteFile));
 	}
