@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import com.aragost.javahg.MercurialExtension;
 import com.aragost.javahg.RepositoryConfiguration;
+import com.aragost.javahg.ext.mq.MQExtension;
 import com.aragost.javahg.ext.rebase.RebaseExtension;
 import com.google.common.collect.Lists;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -55,9 +56,9 @@ public final class HgClients {
 		cfg.setServerIdleTime(120);
 
 		// Extensions
-		// TODO: mq
 		ArrayList<Class<? extends MercurialExtension>> extList = Lists.newArrayList();
 		extList.add(RebaseExtension.class);
+		extList.add(MQExtension.class);
 		cfg.setExtensionClasses(extList);
 
 		return cfg;
