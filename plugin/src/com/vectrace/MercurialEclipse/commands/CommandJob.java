@@ -12,8 +12,6 @@ package com.vectrace.MercurialEclipse.commands;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.util.concurrent.CountDownLatch;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -31,13 +29,6 @@ public abstract class CommandJob extends Job {
 	private enum State {
 		PENDING, RUN, END
 	}
-
-	/**
-	 * should not be used by any code except initialization of hg
-	 *
-	 * @see MercurialEclipsePlugin#checkHgInstallation()
-	 */
-	private static final CountDownLatch startSignal = new CountDownLatch(1);
 
 	// attributes
 
@@ -68,7 +59,7 @@ public abstract class CommandJob extends Job {
 	public CommandJob(String uiName, boolean isInitialCommand) {
 		super(uiName);
 
-		this.isInitialCommand = isInitialCommand && startSignal.getCount() > 0;
+		this.isInitialCommand = isInitialCommand && MercurialEclipsePlugin.startSignal.getCount() > 0;
 		this.debugExecTime = Boolean.valueOf(
 				HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 
@@ -117,11 +108,7 @@ public abstract class CommandJob extends Job {
 	 */
 	private void waitForHgInitDone() {
 		if (!isInitialCommand) {
-			try {
-				startSignal.await();
-			} catch (InterruptedException e1) {
-				MercurialEclipsePlugin.logError(e1);
-			}
+			MercurialEclipsePlugin.waitForHgInitDone();
 		}
 	}
 
@@ -132,16 +119,6 @@ public abstract class CommandJob extends Job {
 	}
 
 	protected abstract String getDebugName();
-
-	/**
-	 * Should not be called by any code except for hg initialization job Opens the command execution
-	 * gate after hg installation is checked etc
-	 *
-	 * @see MercurialEclipsePlugin#checkHgInstallation()
-	 */
-	public static void hgInitDone() {
-		startSignal.countDown();
-	}
 
 	private void logConsoleCommandInvoked(final String commandInvoked) {
 		if (isDebugging) {
