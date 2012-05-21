@@ -65,12 +65,7 @@ public class CommandServerCache {
 	 * @return A new or cached repository object
 	 */
 	public Repository get(HgRoot hgRoot) {
-		try {
-			return baseCache.get(hgRoot);
-		} catch (ExecutionException e) {
-			MercurialEclipsePlugin.logError(e.getCause());
-			return null;
-		}
+		return get(hgRoot, null);
 	}
 
 	/**
@@ -85,11 +80,14 @@ public class CommandServerCache {
 	 * @return A new or cached repository object
 	 */
 	public Repository get(HgRoot hgRoot, File bundleFile) {
-		if (bundleFile == null) {
-			return get(hgRoot);
-		}
+
+		MercurialEclipsePlugin.waitForHgInitDone();
 
 		try {
+			if (bundleFile == null) {
+				return baseCache.get(hgRoot);
+			}
+
 			return overlayCache.get(new Pair<HgRoot, File>(hgRoot, bundleFile));
 		} catch (ExecutionException e) {
 			MercurialEclipsePlugin.logError(e.getCause());
