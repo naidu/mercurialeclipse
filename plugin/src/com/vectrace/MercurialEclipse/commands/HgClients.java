@@ -52,6 +52,7 @@ public final class HgClients {
 		cfg.setHgBin(HgClients.getExecutable());
 		cfg.setConcurrency(3);
 		cfg.setCommandWaitTimeout(Integer.MAX_VALUE);
+		cfg.setServerIdleTime(120);
 
 		// Extensions
 		// TODO: mq
