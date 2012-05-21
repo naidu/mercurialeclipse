@@ -106,6 +106,11 @@
 			<artifactId>javahg-ext-rebase</artifactId>
 			<version>0.4-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.aragost.javahg</groupId>
+			<artifactId>javahg-ext-mq</artifactId>
+			<version>0.4-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>
