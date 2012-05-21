@@ -292,9 +292,9 @@ public class MercurialHistoryPage extends HistoryPage {
 			try {
 				mercurialHistory.refresh(monitor, from);
 				if(resource != null) {
-					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRoot(resource);
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentChangeSet(resource);
 				} else {
-					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot);
 				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);

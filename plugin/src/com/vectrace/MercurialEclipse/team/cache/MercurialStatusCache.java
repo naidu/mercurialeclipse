@@ -773,8 +773,7 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				List<StatusLine> output = HgStatusClient.getStatusWithoutIgnored(repo);
 				WorkingCopy workingCopy = repo.getRepository().workingCopy();
 
-				String currentChangeSetId = nodeOrNull(workingCopy.getParent1());
-				LocalChangesetCache.getInstance().checkLatestChangeset(repo, currentChangeSetId);
+				LocalChangesetCache.getInstance().checkWorkingDirectoryParent(repo, nodeOrNull(workingCopy.getParent1()));
 				String mergeNode = nodeOrNull(workingCopy.getParent2());
 				String branch = workingCopy.getBranchName();
 
@@ -888,8 +887,9 @@ public final class MercurialStatusCache extends AbstractCache implements IResour
 				try {
 					if(res instanceof IProject || repo != root){
 						WorkingCopy workingCopy = repo.getRepository().workingCopy();
-						String id = nodeOrNull(workingCopy.getParent1());
-						LocalChangesetCache.getInstance().checkLatestChangeset(repo, id);
+
+						LocalChangesetCache.getInstance().checkWorkingDirectoryParent(repo,
+								nodeOrNull(workingCopy.getParent1()));
 						String mergeNode = nodeOrNull(workingCopy.getParent2());
 						String branch = workingCopy.getBranchName();
 						setMergeStatus(repo, mergeNode);

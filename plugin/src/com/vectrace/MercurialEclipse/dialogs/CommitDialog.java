@@ -330,7 +330,7 @@ public class CommitDialog extends TitleAreaDialog {
 			return;
 		}
 		try {
-			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+			currentChangeset = LocalChangesetCache.getInstance().getCurrentChangeSet(root);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			setErrorMessage(e.getLocalizedMessage());

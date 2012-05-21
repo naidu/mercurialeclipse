@@ -86,7 +86,7 @@ public class QRefreshWizard extends HgOperationWizard {
 			super(pageName, title, titleImage, description, root, showPatchName);
 
 			try {
-				currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+				currentChangeset = LocalChangesetCache.getInstance().getCurrentChangeSet(root);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 				setErrorMessage("Couldn't fetch current changeset");
