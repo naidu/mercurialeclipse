@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.aragost.javahg.Phase;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.model.Signature;
@@ -181,7 +182,9 @@ public class GraphLogTableViewer extends TableViewer {
 			}
 		}
 
-		paintDot(event, curRow.getDot());
+		int dot = curRow.getDot();
+
+		paintDot(event, dot, curRow.getPhase(dot));
 	}
 
 	private Color getColor(int color) {
@@ -230,13 +233,46 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 	}
 
-	private static void paintDot(Event event, int dot) {
-		event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_BLACK));
+	private static void paintDot(Event event, int dot, Phase phase) {
+		event.gc.setLineWidth(2);
 
-		event.gc.fillOval(getX(event, dot) - DOT_RADIUS_PIXELS, // x
-				event.y + (event.height / 2) - DOT_RADIUS_PIXELS, // y
-				DOT_RADIUS_PIXELS * 2, // width
-				DOT_RADIUS_PIXELS * 2); // height
+		int x = getX(event, dot);
+
+		switch (phase) {
+		case PUBLIC:
+			event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_BLACK));
+			event.gc.fillOval(x - DOT_RADIUS_PIXELS, // x
+					event.y + (event.height / 2) - DOT_RADIUS_PIXELS, // y
+					DOT_RADIUS_PIXELS * 2, // width
+					DOT_RADIUS_PIXELS * 2); // height
+			break;
+		case DRAFT:
+			event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_WHITE));
+			event.gc.setForeground(event.display.getSystemColor(SWT.COLOR_BLACK));
+			event.gc.fillRectangle(x - DOT_RADIUS_PIXELS, // x
+					event.y + (event.height / 2) - DOT_RADIUS_PIXELS, // y
+					DOT_RADIUS_PIXELS * 2, // width
+					DOT_RADIUS_PIXELS * 2); // height
+			event.gc.drawRectangle(x - DOT_RADIUS_PIXELS, // x
+					event.y + (event.height / 2) - DOT_RADIUS_PIXELS, // y
+					DOT_RADIUS_PIXELS * 2, // width
+					DOT_RADIUS_PIXELS * 2); // height
+			break;
+		case SECRET:
+			event.gc.setBackground(event.display.getSystemColor(SWT.COLOR_WHITE));
+			event.gc.setForeground(event.display.getSystemColor(SWT.COLOR_BLACK));
+			event.gc.fillPolygon(new int[] { //
+					x, event.y + (event.height / 2) - DOT_RADIUS_PIXELS, //
+					x + DOT_RADIUS_PIXELS, event.y + (event.height / 2) + DOT_RADIUS_PIXELS, //
+					x - DOT_RADIUS_PIXELS, event.y + (event.height / 2) + DOT_RADIUS_PIXELS,//
+			});
+			event.gc.drawPolygon(new int[] { //
+					x, event.y + (event.height / 2) - DOT_RADIUS_PIXELS, //
+					x + DOT_RADIUS_PIXELS, event.y + (event.height / 2) + DOT_RADIUS_PIXELS, //
+					x - DOT_RADIUS_PIXELS, event.y + (event.height / 2) + DOT_RADIUS_PIXELS,//
+			});
+			break;
+		}
 	}
 
 	/**
