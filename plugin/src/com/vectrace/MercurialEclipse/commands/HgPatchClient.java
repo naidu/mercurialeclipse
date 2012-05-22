@@ -18,6 +18,8 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.commands.DiffCommand;
+import com.aragost.javahg.commands.flags.DiffCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -162,16 +164,17 @@ public class HgPatchClient extends AbstractClient {
 	 * @return Diff as a string in extended diff format (--git).
 	 * @throws HgException
 	 */
-	public static String getDiff(HgRoot hgRoot, MercurialRevision entry, MercurialRevision secondEntry) throws HgException {
-		HgCommand diffCommand = new HgCommand("diff", //$NON-NLS-1$
-				"Calculating diff between revisions", hgRoot, true);
+	public static String getDiff(HgRoot hgRoot, MercurialRevision entry,
+			MercurialRevision secondEntry) throws HgException {
+
+		DiffCommand command = DiffCommandFlags.on(hgRoot.getRepository());
+
 		if( secondEntry == null ){
-			diffCommand.addOptions("-c", "" + entry.getChangeSet().getNode());
+			command.change(entry.getChangeSet().getNode());
 		} else {
-			diffCommand.addOptions("-r", ""+entry.getChangeSet().getNode());
-			diffCommand.addOptions("-r", ""+secondEntry.getChangeSet().getNode());
+			command.rev(entry.getChangeSet().getNode(), secondEntry.getChangeSet().getNode());
 		}
-		diffCommand.addOptions("--git");
-		return diffCommand.executeToString();
+
+		return command.execute();
 	}
 }
