@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -250,7 +249,7 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// We need these to be in order for the GChangeSets to display properly
-		NavigableSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
+		TreeSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
 		changeSets.addAll(list);
 
 		if (revisions.size() < changeSets.size()
