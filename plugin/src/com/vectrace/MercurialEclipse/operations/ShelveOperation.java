@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.operations;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -95,11 +94,8 @@ public class ShelveOperation extends HgOperation {
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
 				List<IResource> resources = Collections.emptyList(); // getDirtyFiles(hgRoot);
-				List<String> options = new ArrayList<String>(1);
 
-				options.add("--git");
-
-				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, options);
+				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, null);
 				monitor.worked(2);
 				monitor.subTask(Messages.getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
 				HgUpdateClient.cleanUpdate(hgRoot, ".");

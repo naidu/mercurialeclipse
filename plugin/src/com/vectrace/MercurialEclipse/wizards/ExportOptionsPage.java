@@ -11,8 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.ArrayList;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Button;
@@ -21,6 +19,9 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
+import com.aragost.javahg.commands.DiffCommand;
+import com.aragost.javahg.commands.flags.DiffCommandFlags;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -28,9 +29,7 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class ExportOptionsPage extends HgWizardPage implements Listener {
 
-	private Button chkGit;
 	private Button chkBase;
-	private Button chkText;
 	private Button chkFunction;
 	private Text txtUnified;
 	private Button chkUnified;
@@ -47,12 +46,6 @@ public class ExportOptionsPage extends HgWizardPage implements Listener {
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
-		chkGit = SWTWidgetHelper.createCheckBox(composite, Messages
-				.getString("ExportOptionsPage.git")); //$NON-NLS-1$
-		chkGit.setSelection(true);
-
-		chkText = SWTWidgetHelper.createCheckBox(composite, Messages
-				.getString("ExportOptionsPage.text")); //$NON-NLS-1$
 
 		chkBase = createLabelCheckBox(composite, Messages
 				.getString("ExportOptionsPage.rev")); //$NON-NLS-1$
@@ -105,36 +98,32 @@ public class ExportOptionsPage extends HgWizardPage implements Listener {
 		return super.finish(monitor);
 	}
 
-	ArrayList<String> getOptions() {
-		ArrayList<String> list = new ArrayList<String>();
+	DiffCommand getOptions(HgRoot root) {
+		DiffCommand command = DiffCommandFlags.on(root.getRepository());
+
 		if (chkBase.getSelection()) {
-			list.add("-r " + txtBase.getText()); //$NON-NLS-1$
-		}
-		if (chkText.getSelection()) {
-			list.add("-a"); //$NON-NLS-1$
-		}
-		if (chkGit.getSelection()) {
-			list.add("-g"); //$NON-NLS-1$
+			command.rev(txtBase.getText());
 		}
 		if (chkFunction.getSelection()) {
-			list.add("-p"); //$NON-NLS-1$
+			command.showFunction();
 		}
 		if (chkNoDate.getSelection()) {
-			list.add("--nodates"); //$NON-NLS-1$
+			command.nodates();
 		}
 		if (chkIgnoreAllSpace.getSelection()) {
-			list.add("-w"); //$NON-NLS-1$
+			command.ignoreAllSpace();
 		}
 		if (chkIgnoreSpaceChange.getSelection()) {
-			list.add("-b"); //$NON-NLS-1$
+			command.ignoreSpaceChange();
 		}
 		if (chkIgnoreBlankLines.getSelection()) {
-			list.add("-B"); //$NON-NLS-1$
+			command.ignoreBlankLines();
 		}
 		if (chkUnified.getSelection()) {
-			list.add("-U " + txtUnified.getText()); //$NON-NLS-1$
+			command.unified(Integer.parseInt(txtUnified.getText()));
 		}
-		return list;
+
+		return command;
 	}
 
 	public static Button createLabelCheckBox(Composite group, String label) {

@@ -23,6 +23,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 
+import com.aragost.javahg.commands.DiffCommand;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -99,7 +100,7 @@ public class ExportPatchWizard extends HgWizard {
 					: new ExportChangeSetOperation(getContainer());
 
 			operation.selectedItems = sourcePage.getSelectedItems();
-			operation.options = (optionsPage == null) ? null : optionsPage.getOptions();
+			operation.options = (optionsPage == null) ? null : optionsPage.getOptions(root);
 
 			getContainer().run(true, false, operation);
 
@@ -124,7 +125,7 @@ public class ExportPatchWizard extends HgWizard {
 	private class ExportUncomittedOperation extends TeamOperation {
 
 		public Object[] selectedItems;
-		public List<String> options;
+		public DiffCommand options;
 		public String result;
 
 		public ExportUncomittedOperation(IRunnableContext context) {
@@ -179,13 +180,13 @@ public class ExportPatchWizard extends HgWizard {
 			ChangeSet cs = (ChangeSet) selectedItems[0];
 
 			if (location.getLocationType() == LocationType.Clipboard) {
-				String sPatch = HgPatchClient.exportPatch(root, cs, null);
+				String sPatch = HgPatchClient.exportPatch(root, cs);
 
 				if (sPatch != null && sPatch.length() > 0) {
 					ClipboardUtils.copyToClipboard(sPatch);
 				}
 			} else {
-				HgPatchClient.exportPatch(root, cs, location.getFile(), null);
+				HgPatchClient.exportPatch(root, cs, location.getFile());
 			}
 		}
 	}
