@@ -20,7 +20,6 @@ import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.*;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -460,37 +459,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			}
 		}
 		return ""; //$NON-NLS-1$
-	}
-
-	/**
-	 * Executes a command and writes its output to a file.
-	 *
-	 * @param file
-	 *            The file to which the output is written.
-	 * @param expectZeroReturnValue
-	 *            If set to {@code true}, an {@code HgException} will be thrown if the command's
-	 *            exit code is not zero.
-	 * @return Returns {@code true} iff the command was executed successfully.
-	 * @throws HgException
-	 *             Thrown when the command could not be executed successfully.
-	 */
-	public boolean executeToFile(File file, boolean expectZeroReturnValue) throws HgException {
-		int timeout = HgClients.getTimeOut(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
-		FileOutputStream fos = null;
-		try {
-			fos = new FileOutputStream(file, false);
-			return executeToStream(fos, timeout, expectZeroReturnValue);
-		} catch (FileNotFoundException e) {
-			throw new HgException(e.getMessage(), e);
-		} finally {
-			if (fos != null) {
-				try {
-					fos.close();
-				} catch (IOException e) {
-					throw new HgException(e.getMessage(), e);
-				}
-			}
-		}
 	}
 
 	private List<String> getCommands() {
