@@ -53,7 +53,10 @@ public final class HgClients {
 		cfg.setHgBin(HgClients.getExecutable());
 		cfg.setConcurrency(3);
 		cfg.setCommandWaitTimeout(Integer.MAX_VALUE);
-		cfg.setServerIdleTime(120);
+		cfg.setServerIdleTime(30);
+
+		// Use user's hgrc file
+		cfg.setHgrcPath(null);
 
 		// Extensions
 		ArrayList<Class<? extends MercurialExtension>> extList = Lists.newArrayList();
