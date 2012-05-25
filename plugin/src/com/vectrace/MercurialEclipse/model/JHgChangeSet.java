@@ -29,6 +29,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -90,6 +91,21 @@ public class JHgChangeSet extends ChangeSet {
 		this(hgRoot, changeset, null, Direction.LOCAL, null);
 	}
 
+	/**
+	 * Constructor for null changeset
+	 */
+	private JHgChangeSet(HgRoot hgRoot) {
+		this.changeset = null;
+		this.hgRoot = hgRoot;
+		this.remote = null;
+		this.direction = Direction.LOCAL;
+		this.bundle = null;
+
+		setName(getIndex() + ":" + getNodeShort());
+
+		Assert.isLegal(hgRoot != null);
+	}
+
 	// operations
 
 	/**
@@ -137,7 +153,7 @@ public class JHgChangeSet extends ChangeSet {
 	 */
 	@Override
 	public String getNodeShort() {
-		return changeset.getNode().substring(0, 12);
+		return getNode().substring(0, 12);
 	}
 
 	/**
@@ -203,7 +219,7 @@ public class JHgChangeSet extends ChangeSet {
 	@Override
 	public String getTagsStr() {
 		StringBuilder b = new StringBuilder();
-		for (String s : changeset.tags()) {
+		for (String s : fetchTags()) {
 			b.append(s);
 			b.append(',');
 		}
@@ -213,7 +229,7 @@ public class JHgChangeSet extends ChangeSet {
 	@Override
 	public final Tag[] getTags() {
 		if (tags == null) {
-			List<String> tagNames = changeset.tags();
+			List<String> tagNames = fetchTags();
 
 			tags = new Tag[tagNames.size()];
 
@@ -222,6 +238,10 @@ public class JHgChangeSet extends ChangeSet {
 			}
 		}
 		return tags;
+	}
+
+	protected List<String> fetchTags() {
+		return changeset.tags();
 	}
 
 	/**
@@ -391,5 +411,99 @@ public class JHgChangeSet extends ChangeSet {
 			return false;
 		}
 		return true;
+	}
+
+	public static JHgChangeSet makeNull(HgRoot root) {
+		return new NullJHgChangeset(root);
+	}
+
+	// inner types
+
+	private static class NullJHgChangeset extends JHgChangeSet {
+
+		public NullJHgChangeset(HgRoot hgRoot) {
+			super(hgRoot);
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getAuthor()
+		 */
+		@Override
+		public String getAuthor() {
+			return "";
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getBranch()
+		 */
+		@Override
+		public String getBranch() {
+			return BranchUtils.DEFAULT;
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getComment()
+		 */
+		@Override
+		public String getComment() {
+			return "";
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getData()
+		 */
+		@Override
+		public Changeset getData() {
+			assert false;
+			throw new IllegalStateException("Null revision has no changeset");
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getDate()
+		 */
+		@Override
+		public Date getDate() {
+			return new Date(0);
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getIndex()
+		 */
+		@Override
+		public int getIndex() {
+			return -1;
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getNode()
+		 */
+		@Override
+		public String getNode() {
+			return NULL_ID;
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getParentNode(int)
+		 */
+		@Override
+		public String getParentNode(int i) {
+			return null;
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#getParents()
+		 */
+		@Override
+		public String[] getParents() {
+			return new String[0];
+		}
+
+		/**
+		 * @see com.vectrace.MercurialEclipse.model.JHgChangeSet#fetchTags()
+		 */
+		@Override
+		protected List<String> fetchTags() {
+			return Collections.EMPTY_LIST;
+		}
 	}
 }

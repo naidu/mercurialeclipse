@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -47,6 +48,7 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	private List<IStructureComparator> children;
 
 	public RevisionNode(IHgResource resource) {
+		Assert.isNotNull(resource);
 		this.resource = resource;
 	}
 

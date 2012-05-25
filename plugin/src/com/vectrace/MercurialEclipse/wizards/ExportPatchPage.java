@@ -37,8 +37,9 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.LocationChooser;
-import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -213,7 +214,7 @@ public abstract class ExportPatchPage extends HgWizardPage implements Listener {
 						sb.append(" [").append(cset.getAuthor()).append(']');
 						sb.append(" (").append(cset.getAgeDate()).append(')');
 						if (!StringUtils.isEmpty(cset.getBranch())
-								&& !"default".equals(cset.getBranch())) {
+								&& !BranchUtils.DEFAULT.equals(cset.getBranch())) {
 							sb.append(' ').append(cset.getBranch()).append(':');
 						}
 						sb.append(' ').append(cset.getSummary());
