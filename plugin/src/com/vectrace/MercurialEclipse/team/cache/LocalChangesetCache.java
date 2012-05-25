@@ -294,7 +294,8 @@ public final class LocalChangesetCache extends AbstractCache {
 	/**
 	 * Get the working directory parent of the hg root.
 	 *
-	 * @return may return null if on the null revision
+	 * @param root Not null
+	 * @return Not null
 	 */
 	public JHgChangeSet getCurrentChangeSet(HgRoot root) throws HgException {
 		synchronized (workingDirectoryParentMap) {
@@ -318,12 +319,15 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * @param nodeId
 	 *            latest working dir (full) changeset id
 	 */
-	protected void checkWorkingDirectoryParent(HgRoot root, String nodeId) {
-		if (nodeId == null || root == null) {
+	public void checkWorkingDirectoryParent(HgRoot root, String nodeId) {
+		if (root == null) {
 			return;
 		}
-		if (!JHgChangeSet.NULL_ID.equals(nodeId)) {
-			synchronized (workingDirectoryParentMap) {
+
+		synchronized (workingDirectoryParentMap) {
+			if (nodeId == null) {
+				workingDirectoryParentMap.remove(root);
+			} else {
 				ChangeSet lastSet = workingDirectoryParentMap.get(root);
 				if (lastSet != null && !nodeId.equals(lastSet.getNode())) {
 					workingDirectoryParentMap.remove(root);
