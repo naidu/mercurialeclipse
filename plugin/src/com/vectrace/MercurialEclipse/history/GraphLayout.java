@@ -24,7 +24,16 @@ import com.vectrace.MercurialEclipse.HgFeatures;
  */
 public class GraphLayout {
 
-	private static final Changeset[] NO_CHANGESETS = new Changeset[0];
+	private static final Changeset NULL_CHANGESET = new Changeset(null, Changeset.NULL_ID) {
+		@Override
+		public int getRevision() {
+			return RowAccessor.NULL_REV_INDEX;
+		}
+	};
+
+	private static final Changeset[] NO_CHANGESETS = new Changeset[] { };
+
+	private static final Changeset[] NULL_CHANGESETS = new Changeset[] { NULL_CHANGESET };
 
 	public static ParentProvider ROOT_PARENT_PROVIDER = new ParentProvider() {
 		public Changeset[] getParents(Changeset cs) {
@@ -118,9 +127,10 @@ public class GraphLayout {
 		Changeset[] ar = parentProvider.getParents(cs);
 
 		if (ar == null) {
-			return NO_CHANGESETS;
+			return NULL_CHANGESETS;
 		}
 
+		// Retain order but de-duplicate
 		List<Changeset> s = new ArrayList<Changeset>(Arrays.asList(ar));
 
 		for (int i = 0; i < s.size(); i++) {
@@ -134,6 +144,10 @@ public class GraphLayout {
 		}
 
 		assert s.size() <= 2;
+
+		if (s.size() == 0) {
+			return NULL_CHANGESETS;
+		}
 
 		return s.toArray(new Changeset[s.size()]);
 	}
@@ -548,6 +562,7 @@ public class GraphLayout {
 	 */
 	protected static class RowAccessor {
 
+		protected static final int NULL_REV_INDEX = ~0 >>> (32 - 26);
 		protected static final int NO_PARENT = 0xfff;
 		protected static final int NO_COLOR = 0x3FF;
 

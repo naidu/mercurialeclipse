@@ -336,4 +336,17 @@ public class GraphLayoutTests extends AbstractJavaHgTestCase {
 		assertEquals("[0(1)>0, *1(2)>0]", graph.getRow(4).toString());
 		assertEquals("[*0(1)]", graph.getRow(5).toString());
 	}
+
+	public void testForkAtNull() throws IOException {
+		GraphLayout graph = makeGraphLayout();
+
+		makeTrivialRepo(); // 0
+
+		UpdateCommandFlags.on(getTestRepository()).clean().rev("null").execute();
+
+		editAndCommit("444"); // 3
+
+		graph.add(getLog(), null);
+		assertEquals(2, graph.numRows());
+	}
 }
