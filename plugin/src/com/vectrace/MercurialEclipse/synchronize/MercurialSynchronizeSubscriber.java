@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -47,7 +46,6 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -81,9 +79,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	private static final Semaphore CACHE_SEMA = new Semaphore(1, true);
 
 	private final RepositorySynchronizationScope scope;
-
-	/** key is hg root, value is the *current* changeset of this root */
-	private static final Map<HgRoot, String> CURRENT_CS_MAP = new ConcurrentHashMap<HgRoot, String>();
 
 	private ISubscriberChangeEvent[] lastEvents;
 
@@ -159,11 +154,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					|| !exists) {
 
 				try {
-					// Find current working directory changeset (not head)
-					String nodeId = getCurrentChangesetId(root);
-
 					// try to get from cache (without loading)
-					csOutgoing = LOCAL_CACHE.get(root, nodeId);
+					csOutgoing = LOCAL_CACHE.getCurrentChangeSet(root);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return null;
@@ -366,15 +358,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return false;
 	}
 
-	static String getCurrentChangesetId(HgRoot root) throws HgException {
-		String nodeId = CURRENT_CS_MAP.get(root);
-		if(nodeId == null){
-			nodeId = HgLogClient.getCurrentChangesetId(root);
-			CURRENT_CS_MAP.put(root, nodeId);
-		}
-		return nodeId;
-	}
-
 	private boolean isInteresting(IResource resource) {
 		return resource instanceof IFile
 				&& MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())
@@ -440,7 +423,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		try {
 			CACHE_SEMA.acquire();
 			for (HgRoot hgRoot : roots) {
-				CURRENT_CS_MAP.remove(hgRoot);
+				LOCAL_CACHE.checkWorkingDirectoryParent(hgRoot, null);
 				if (flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
 					if (DEBUG) {
 						System.out.println("clear incoming: " + hgRoot + ", depth: " + flag);
@@ -621,7 +604,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Job job = new Job("Updating branch info for " + hgRoot.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				CURRENT_CS_MAP.remove(hgRoot);
+				LOCAL_CACHE.checkWorkingDirectoryParent(hgRoot, null);
 				if(lastEvents != null) {
 					fireTeamResourceChange(lastEvents);
 				}
