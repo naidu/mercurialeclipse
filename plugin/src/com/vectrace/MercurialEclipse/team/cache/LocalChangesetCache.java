@@ -42,11 +42,11 @@ import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * The cache does NOT keeps the state automatically. Clients have explicitely request and manage
+ * The cache does NOT keeps the state automatically. Clients have explicitly request and manage
  * cache updates.
  * <p>
  * There is no guarantee that the data in the cache is up-to-date with the server. To get the latest
- * data, clients have explicitely refresh the cache before using it.
+ * data, clients have explicitly refresh the cache before using it.
  * <p>
  * The cache does not maintain any states. If client "clear" this cache, it must make sure that they
  * request an explicit cache update. After "clear" and "refresh", a notification is sent to the
@@ -63,7 +63,7 @@ public final class LocalChangesetCache extends AbstractCache {
 
 	private static LocalChangesetCache instance;
 
-	private final ConcurrentMap<Changeset, JHgChangeSet> changesetCache = new MapMaker()
+	private final ConcurrentMap<JHgChangeSet, JHgChangeSet> changesetCache = new MapMaker()
 			.weakValues().weakKeys().makeMap();
 
 	/**
@@ -88,13 +88,29 @@ public final class LocalChangesetCache extends AbstractCache {
 		return instance;
 	}
 
-	public JHgChangeSet get(HgRoot root, Changeset set) {
-		if (set == null) {
-			return null;
+	/**
+	 * Get the {@link JHgChangeSet} for the given JavaHg changeset. If one doesn't exist one is created.
+	 *
+	 * @param root The root
+	 * @param changeset The changeset. Not null
+	 * @return The changeset, not null
+	 */
+	public JHgChangeSet get(HgRoot root, Changeset changeset) {
+		return get(root, changeset, false);
+	}
+
+	private JHgChangeSet get(HgRoot root, Changeset changeset, boolean allowNull) {
+		JHgChangeSet newCS;
+		if (changeset == null) {
+			if (!allowNull) {
+				return null;
+			}
+			newCS = JHgChangeSet.makeNull(root);
+		} else {
+			newCS = new JHgChangeSet(root, changeset);
 		}
 
-		JHgChangeSet newCS = new JHgChangeSet(root, set);
-		JHgChangeSet oldCS = changesetCache.putIfAbsent(set, newCS);
+		JHgChangeSet oldCS = changesetCache.putIfAbsent(newCS, newCS);
 
 		return oldCS != null ? oldCS : newCS;
 	}
@@ -278,25 +294,19 @@ public final class LocalChangesetCache extends AbstractCache {
 	/**
 	 * Get the working directory parent of the hg root.
 	 *
-	 * @return may return null
+	 * @return may return null if on the null revision
 	 */
 	public JHgChangeSet getCurrentChangeSet(HgRoot root) throws HgException {
-		// for projects in the same root try to use root cache
 		synchronized (workingDirectoryParentMap) {
 			JHgChangeSet changeSet = workingDirectoryParentMap.get(root);
-			if(changeSet != null) {
-				return changeSet;
+
+			if (changeSet == null) {
+				changeSet = get(root, HgLogClient.getCurrentChangeset(root), true);
+				workingDirectoryParentMap.put(root, changeSet);
 			}
-			String nodeId = HgLogClient.getCurrentChangesetId(root);
-			if (!JHgChangeSet.NULL_ID.equals(nodeId)) {
-				JHgChangeSet lastSet = HgLogClient.getChangeSet(root, nodeId);
-				if (lastSet != null) {
-					workingDirectoryParentMap.put(root, lastSet);
-				}
-				return lastSet;
-			}
+
+			return changeSet;
 		}
-		return null;
 	}
 
 	/**

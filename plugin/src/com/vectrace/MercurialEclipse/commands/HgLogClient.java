@@ -50,19 +50,31 @@ public class HgLogClient extends AbstractClient {
 	/**
 	 * Returns the current node-id as a String
 	 *
-	 * @param repository
+	 * @param hgRoot
 	 *            the root of the repository to identify
 	 * @return Returns the node-id for the current changeset
 	 * @throws HgException
 	 */
-	public static String getCurrentChangesetId(HgRoot repository) throws HgException {
-		Changeset cs = LogCommandFlags.on(repository.getRepository()).rev(".").limit(1).single();
+	public static String getCurrentChangesetId(HgRoot hgRoot) throws HgException {
+		Changeset cs = getCurrentChangeset(hgRoot);
 
 		if (cs != null) {
 			return cs.getNode();
 		}
 
 		return Changeset.NULL_ID;
+	}
+
+	/**
+	 * Returns the current changeset of the repository.
+	 *
+	 * @param hgRoot
+	 *            the root of the repository to identify
+	 * @return Returns the current changeset, null if repository is new.
+	 * @throws HgException
+	 */
+	public static Changeset getCurrentChangeset(HgRoot hgRoot) throws HgException {
+		return hgRoot.getRepository().workingCopy().getParent1();
 	}
 
 	private static Changeset[] toArray(List<Changeset> list) {
