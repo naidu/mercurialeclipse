@@ -63,8 +63,12 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgResource;
+import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -426,11 +430,17 @@ public class CommitFilesChooser extends Composite {
 		}
 	}
 
-	private void showDiffForSelection() {
+	protected void showDiffForSelection() {
 		if (selectedFile != null) {
 			try {
-				HgFile cleanFile = HgFile.makeAtCurrentRev(selectedFile);
-				CompareUtils.openEditor(selectedFile, cleanFile, true, null);
+				HgRoot root = MercurialRootCache.getInstance().getHgRoot(selectedFile);
+				JHgChangeSet cs = LocalChangesetCache.getInstance().getCurrentChangeSet(root);
+				IHgResource res = new HgFile(cs.getHgRoot(), cs, root.getRelativePath(selectedFile));
+				// res is unresolved - it may not actually exist in the given revision. This is ok
+				// because it is resolved later in CompareUtils.getNode()
+				// Future: clean this up
+
+				CompareUtils.openEditor(selectedFile, res, true, null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}

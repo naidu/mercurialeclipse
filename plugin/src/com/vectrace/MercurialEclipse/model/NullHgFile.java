@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
@@ -40,6 +41,10 @@ public class NullHgFile extends HgFile {
 	@Override
 	public String getName() {
 		return super.getName() + ": nonexistent!";
+	}
+
+	public static NullHgFile make(JHgChangeSet cs, IResource file) {
+		return new NullHgFile(cs.getHgRoot(), cs, cs.getHgRoot().getRelativePath(file));
 	}
 
 	public static NullHgFile make(HgRoot root, IFile file) {
