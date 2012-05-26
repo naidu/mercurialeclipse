@@ -289,7 +289,7 @@ public class ChangedPathsPage {
 				diffTextViewer.getControl().setRedraw(false);
 				for (int i = 0; i < 100 && lineNo < nrOfLines; i++, lineNo++) {
 					try {
-						IRegion lineInformation = document.getLineInformation(i);
+						IRegion lineInformation = document.getLineInformation(lineNo);
 						int offset = lineInformation.getOffset();
 						int length = lineInformation.getLength();
 						Color lineColor = getDiffLineColor(document.get(offset, length));
