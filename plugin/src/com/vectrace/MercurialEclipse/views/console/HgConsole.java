@@ -13,6 +13,9 @@ package com.vectrace.MercurialEclipse.views.console;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -212,6 +215,19 @@ public class HgConsole extends MessageConsole {
 		appendLine(ConsoleDocument.ERROR, line);
 	}
 
+	public void log(LogRecord record) {
+		int type = (Level.INFO.intValue() < record.getLevel().intValue()) ? ConsoleDocument.ERROR
+				: ConsoleDocument.MESSAGE;
+		String loggerName = record.getLoggerName();
+		int index;
+
+		if (loggerName != null && (index =  loggerName.lastIndexOf('.')) >= 0) {
+			loggerName = loggerName.substring(index + 1);
+		}
+
+		appendLine(type, loggerName + ": " + record.getMessage());
+	}
+
 	private boolean isDebugTimeEnabled() {
 		return debugTimeEnabled;
 	}
@@ -246,7 +262,7 @@ public class HgConsole extends MessageConsole {
 	private void printStatus(IStatus status, String time, boolean includeRoot) {
 		String statusText = status.getMessage();
 		if(time.length() > 0){
-			statusText += "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+			statusText += "(" + time.trim() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
 		}
 		int kind = status.getSeverity() == IStatus.ERROR? ConsoleDocument.ERROR : ConsoleDocument.MESSAGE;
 		appendLine(kind, statusText);

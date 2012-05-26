@@ -13,6 +13,11 @@ package com.vectrace.MercurialEclipse.views.console;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE;
 
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -40,6 +45,11 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 
 	private boolean showOnMessage;
 	private boolean registered;
+
+	/**
+	 * Retained so the logger is not garbage collected before JavaHg itself loads.
+	 */
+	private Logger javaHgLogger;
 
 	private HgConsoleHolder() {
 	}
@@ -69,6 +79,8 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 				return;
 			}
 
+			handleJavaHgLogging();
+
 			// install font
 			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
 			// we must run this stupid code in the UI thread
@@ -82,6 +94,34 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 				});
 			}
 		}
+	}
+
+	/**
+	 * Install a handler so JavaHg's logging through the java.util.logging API will be shown in the
+	 * console view.
+	 */
+	private void handleJavaHgLogging() {
+		javaHgLogger = Logger.getLogger("com.aragost.javahg");
+
+		javaHgLogger.setLevel(Level.INFO);
+
+		Handler h = new Handler() {
+
+			@Override
+			public void publish(LogRecord record) {
+				getConsole().log(record);
+			}
+
+			@Override
+			public void flush() {
+			}
+
+			@Override
+			public void close() throws SecurityException {
+			}
+		};
+
+		javaHgLogger.addHandler(h);
 	}
 
 	private void initUIResources() {
