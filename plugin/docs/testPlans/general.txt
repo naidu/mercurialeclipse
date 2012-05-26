@@ -4,9 +4,14 @@ Testing MercurialEclipse
 
 
 Clone 
- - Multiproject
+ - Multi-project
  - Single project
- 
+
+Delete a project
+ - With 'delete content on disk'
+ - Without 'delete content on disk'
+ - In multi-project repo with 'delete content on disk'   
+
 Commit
 Commit - amend
 Strip the commit
@@ -17,9 +22,15 @@ Add new file
  - Strip with history view open
  
 Create new repo
-- Compare, commit, compare, strip
+ - Compare, commit, compare, strip
 
 Update to null
-- Compare, commit, compare, strip
+ - Compare, commit, compare, strip
 
  
+ Synchronize
+ 
+  - Invoke synchronize on a slow server and press cancel
+    Current: fail
+    
+  - Invoke synchronize on a slow server, switch to progress and press cancel on specific incoming and outgoing jobs
