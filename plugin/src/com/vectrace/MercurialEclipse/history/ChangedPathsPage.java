@@ -30,6 +30,7 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
+import org.eclipse.jface.text.ITextInputListener;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -282,8 +283,7 @@ public class ChangedPathsPage {
 		int nrOfLines = document.getNumberOfLines();
 		Display display = diffTextViewer.getControl().getDisplay();
 
-		for (int lineNo = 0; lineNo < nrOfLines && !monitor.isCanceled();)
-		{
+		for (int lineNo = 0; lineNo < nrOfLines && !monitor.isCanceled();) {
 			// color lines 100 at a time to allow user cancellation in between
 			try {
 				diffTextViewer.getControl().setRedraw(false);
@@ -292,19 +292,18 @@ public class ChangedPathsPage {
 						IRegion lineInformation = document.getLineInformation(i);
 						int offset = lineInformation.getOffset();
 						int length = lineInformation.getLength();
-						Color lineColor = getDiffLineColor(document.get( offset, length));
+						Color lineColor = getDiffLineColor(document.get(offset, length));
 						diffTextViewer.setTextColor(lineColor, offset, length, true);
 					} catch (BadLocationException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
 				}
-			}
-			finally {
+			} finally {
 				diffTextViewer.getControl().setRedraw(true);
 			}
 
 			// don't dispatch event with redraw disabled & re-check control status afterwards !
-			while(display.readAndDispatch()){
+			while (display.readAndDispatch()) {
 				// give user the chance to break the job
 			}
 			if (diffTextViewer.getControl() == null || diffTextViewer.getControl().isDisposed()) {
@@ -613,9 +612,10 @@ public class ChangedPathsPage {
 		}
 	}
 
-	class UpdateDiffViewerJob extends UIJob {
+	class UpdateDiffViewerJob extends UIJob implements ITextInputListener {
 
 		private final String diff;
+		private IProgressMonitor monitor;
 
 		public UpdateDiffViewerJob(String diff) {
 			super(diffTextViewer.getControl().getDisplay(), "Updating diff pane");
@@ -623,18 +623,39 @@ public class ChangedPathsPage {
 		}
 
 		@Override
-		public IStatus runInUIThread(IProgressMonitor monitor) {
+		public IStatus runInUIThread(IProgressMonitor progressMonitor) {
 			if (diffTextViewer.getControl() == null || diffTextViewer.getControl().isDisposed()) {
 				return Status.CANCEL_STATUS;
 			}
 			diffTextViewer.setDocument(new Document(diff));
-			applyLineColoringToDiffViewer(monitor);
-			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
+
+			this.monitor = progressMonitor;
+			try {
+				diffTextViewer.addTextInputListener(this);
+				applyLineColoringToDiffViewer(monitor);
+			} finally {
+				diffTextViewer.removeTextInputListener(this);
+				this.monitor = null;
+			}
+			return progressMonitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
 		}
 
 		@Override
 		public boolean belongsTo(Object family) {
 			return FetchDiffJob.class == family;
+		}
+
+		/**
+		 * @see org.eclipse.jface.text.ITextInputListener#inputDocumentAboutToBeChanged(org.eclipse.jface.text.IDocument, org.eclipse.jface.text.IDocument)
+		 */
+		public void inputDocumentAboutToBeChanged(IDocument oldInput, IDocument newInput) {
+			monitor.setCanceled(true);
+		}
+
+		/**
+		 * @see org.eclipse.jface.text.ITextInputListener#inputDocumentChanged(org.eclipse.jface.text.IDocument, org.eclipse.jface.text.IDocument)
+		 */
+		public void inputDocumentChanged(IDocument oldInput, IDocument newInput) {
 		}
 	}
 
