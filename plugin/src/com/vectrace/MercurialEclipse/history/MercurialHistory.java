@@ -46,7 +46,6 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
-import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
@@ -75,7 +74,6 @@ public class MercurialHistory extends FileHistory {
 	private final IResource resource;
 	private final HgRoot hgRoot;
 	private final List<MercurialRevision> revisions = new ArrayList<MercurialRevision>();
-	private final Map<MercurialRevision, Integer> revisionsByIndex = new HashMap<MercurialRevision, Integer>();
 	private Tag[] tags;
 	private int lastReqRevision;
 	private boolean showTags;
@@ -124,40 +122,6 @@ public class MercurialHistory extends FileHistory {
 
 	public boolean isBisectStarted() {
 		return bisectStarted;
-	}
-
-	/**
-	 * @param prev
-	 * @return a next revision int the history: revision wich is the successor of the given one (has
-	 *         higher rev number)
-	 */
-	public MercurialRevision getNext(MercurialRevision prev){
-		// revisions are sorted descending: first has the highest rev number
-		for (int i = 0; i < revisions.size(); i++) {
-			if (revisions.get(i) == prev) {
-				if(i > 0){
-					return revisions.get(i - 1);
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * @param next
-	 * @return a previous revision int the history: revision wich is the ancestor of the given one
-	 *         (has lower rev number)
-	 */
-	public MercurialRevision getPrev(MercurialRevision next){
-		// revisions are sorted descending: first has the highest rev number
-		for (int i = 0; i < revisions.size(); i++) {
-			if (revisions.get(i) == next) {
-				if (i + 1 < revisions.size()) {
-					return revisions.get(i + 1);
-				}
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -307,8 +271,11 @@ public class MercurialHistory extends FileHistory {
 			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getNode()) : null;
 			MercurialRevision rev = new MercurialRevision(cs, revisionResource, sig, bisectStatus);
 
+			if (layout != null) {
+				rev.setGraphRow(layout.getRow(i));
+			}
+
 			revisions.add(rev);
-			revisionsByIndex.put(rev, new Integer(i));
 			i += 1;
 		}
 		lastReqRevision = from;
@@ -328,7 +295,6 @@ public class MercurialHistory extends FileHistory {
 	 */
 	private void clear() {
 		revisions.clear();
-		revisionsByIndex.clear();
 		layout = null;
 		// TODO: tags?
 	}
@@ -380,6 +346,8 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	/**
+	 * TODO: rewrite so this is correct with non-linear graphs
+	 *
 	 * @param tag
 	 *            tag to search for
 	 * @param start
@@ -458,14 +426,6 @@ public class MercurialHistory extends FileHistory {
 	 */
 	public void setEnableExtraTags(boolean showTags) {
 		this.showTags = showTags;
-	}
-
-	private int getIndex(MercurialRevision rev) {
-		return revisionsByIndex.get(rev).intValue();
-	}
-
-	public GraphRow getGraphRow(MercurialRevision rev) {
-		return layout == null ? null : layout.getRow(getIndex(rev));
 	}
 
 	// inner types

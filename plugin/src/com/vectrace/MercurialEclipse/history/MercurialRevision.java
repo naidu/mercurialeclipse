@@ -33,6 +33,7 @@ import org.eclipse.team.core.history.ITag;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
+import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
@@ -51,11 +52,12 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 
 	private final IResource resource;
 	private final JHgChangeSet changeSet;
-
-	/** Cached data */
-	private IHgFile storage;
 	private final int revision;
 	private final Signature signature;
+
+	// .. cached data
+
+	private IHgFile storage;
 
 	/**
 	 * Tags sorted by revision
@@ -70,6 +72,8 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	private List<Tag> pendingTags;
 
 	private Status bisectStatus;
+
+	private GraphRow graphRow;
 
 	/**
 	 * @param changeSet must be non null
@@ -365,4 +369,14 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 		return true;
 	}
 
+	/**
+	 * @return The graph row for the changeset table. Only non-null if this is in the history view.
+	 */
+	public GraphRow getGraphRow() {
+		return graphRow;
+	}
+
+	public void setGraphRow(GraphRow graphRow) {
+		this.graphRow = graphRow;
+	}
 }
