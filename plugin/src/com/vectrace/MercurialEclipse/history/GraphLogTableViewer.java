@@ -93,12 +93,12 @@ public class GraphLogTableViewer extends TableViewer {
 		MercurialRevision rev = (MercurialRevision) tableItem.getData();
 		MercurialHistory data = mhp.getMercurialHistory();
 
-		paintRow(event, data.getGraphRow(rev));
+		paintRow(event, rev.getGraphRow());
 
 		final Table table = tableItem.getParent();
 		int from = rev.getRevision() - 1;
-		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
-		if (from != lastReqVersion && from >= 0 && mhp.getMercurialHistory().getLastVersion() > 0) {
+		int lastReqVersion = data.getLastRequestedVersion();
+		if (from != lastReqVersion && from >= 0 && data.getLastVersion() > 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
 				MercurialHistoryPage.RefreshMercurialHistoryJob refreshJob = mhp.new RefreshMercurialHistoryJob(
 						from);

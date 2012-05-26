@@ -92,7 +92,7 @@ public class GraphLayout {
 
 	// operations
 
-	public void add(Changeset[] changesets, Changeset lastCs) {
+	protected void add(Changeset[] changesets, Changeset lastCs) {
 
 		int oldGraphLen = (graph == null) ? 0 : graph.length;
 		long[][] newGraph = new long[oldGraphLen + changesets.length][];
@@ -115,7 +115,7 @@ public class GraphLayout {
 		graph = newGraph;
 	}
 
-	public ParentProvider getParentProvider() {
+	protected ParentProvider getParentProvider() {
 		return parentProvider;
 	}
 
