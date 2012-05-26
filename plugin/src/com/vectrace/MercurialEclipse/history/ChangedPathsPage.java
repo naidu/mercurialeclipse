@@ -92,7 +92,6 @@ public class ChangedPathsPage {
 	private final MercurialHistoryPage page;
 	private final Color colorBlue;
 	private final Color colorGreen;
-	private final Color colorBlack;
 	private final Color colorRed;
 
 	public ChangedPathsPage(MercurialHistoryPage page, Composite parent) {
@@ -100,7 +99,6 @@ public class ChangedPathsPage {
 		Display display = parent.getDisplay();
 		colorBlue = display.getSystemColor(SWT.COLOR_BLUE);
 		colorGreen = display.getSystemColor(SWT.COLOR_DARK_GREEN);
-		colorBlack = display.getSystemColor(SWT.COLOR_BLACK);
 		colorRed = display.getSystemColor(SWT.COLOR_DARK_RED);
 		init(parent);
 	}
@@ -287,13 +285,16 @@ public class ChangedPathsPage {
 			// color lines 100 at a time to allow user cancellation in between
 			try {
 				diffTextViewer.getControl().setRedraw(false);
-				for (int i = 0; i < 100 && lineNo < nrOfLines; i++, lineNo++) {
+				for (int i = 0; i < 200 && lineNo < nrOfLines; i++, lineNo++) {
 					try {
 						IRegion lineInformation = document.getLineInformation(lineNo);
 						int offset = lineInformation.getOffset();
 						int length = lineInformation.getLength();
 						Color lineColor = getDiffLineColor(document.get(offset, length));
-						diffTextViewer.setTextColor(lineColor, offset, length, true);
+
+						if (lineColor != null) {
+							diffTextViewer.setTextColor(lineColor, offset, length, true);
+						}
 					} catch (BadLocationException e) {
 						MercurialEclipsePlugin.logError(e);
 					}
@@ -314,7 +315,7 @@ public class ChangedPathsPage {
 
 	private Color getDiffLineColor(String line) {
 		if(StringUtils.isEmpty(line)){
-			return colorBlack;
+			return null;
 		}
 		if(line.startsWith("diff ")) {
 			return colorBlue;
@@ -333,7 +334,7 @@ public class ChangedPathsPage {
 		} else if(line.startsWith("-")) {
 			return colorRed;
 		} else {
-			return colorBlack;
+			return null;
 		}
 	}
 
