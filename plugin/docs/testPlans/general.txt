@@ -1,0 +1,25 @@
+
+Testing MercurialEclipse
+========================
+
+
+Clone 
+ - Multiproject
+ - Single project
+ 
+Commit
+Commit - amend
+Strip the commit
+
+Add new file
+ - Compare: with parent, sync view, commit dialog
+ - Commit
+ - Strip with history view open
+ 
+Create new repo
+- Compare, commit, compare, strip
+
+Update to null
+- Compare, commit, compare, strip
+
+ 
