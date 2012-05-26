@@ -46,7 +46,7 @@ public abstract class CommandJob extends Job {
 
 	protected final boolean debugExecTime;
 
-	protected Throwable error;
+	protected volatile Throwable error;
 
 	private final boolean isDebugging;
 
@@ -202,6 +202,11 @@ public abstract class CommandJob extends Job {
 							+ getDebugName(), null);
 				}
 				throw new HgException("Command start failed: " + getDebugName(), error);
+			} else if (state == State.END) {
+				if (error == null && result == Status.CANCEL_STATUS) {
+					throw new HgException(HgException.OPERATION_CANCELLED, "Command cancelled: "
+							+ getDebugName(), null);
+				}
 			}
 
 			checkError();

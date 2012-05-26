@@ -21,15 +21,15 @@ import com.aragost.javahg.commands.flags.IncomingCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
 
 public class HgIncomingClient extends AbstractClient {
 
 	/**
-	 * Gets all File Revisions that are incoming and saves them in a bundle
-	 * file. There can be more than one revision per file as this method obtains
-	 * all new changesets.
+	 * Gets all File Revisions that are incoming and saves them in a bundle file. There can be more
+	 * than one revision per file as this method obtains all new changesets.
 	 *
 	 * @return Never return null. Map containing all revisions of the IResources contained in the
 	 *         Changesets. The sorting is ascending by date.
@@ -37,7 +37,7 @@ public class HgIncomingClient extends AbstractClient {
 	 */
 	public static RemoteData getHgIncoming(RemoteKey key) throws HgException {
 		HgRoot hgRoot = key.getRoot();
-		IncomingCommand command = IncomingCommandFlags.on(hgRoot.getRepository());
+		final IncomingCommand command = IncomingCommandFlags.on(hgRoot.getRepository());
 
 		if (key.getBranch() != null) {
 			command.branch(key.getBranch());
@@ -51,9 +51,14 @@ public class HgIncomingClient extends AbstractClient {
 			command.force();
 		}
 
-		String location = setupForRemote(key.getRepo(), command);
+		final String location = setupForRemote(key.getRepo(), command);
 
-		Bundle bundle = command.execute(location);
+		Bundle bundle = new JavaHgCommandJob<Bundle>(command, "Calculating incoming changesets") {
+			@Override
+			protected Bundle run() throws Exception {
+				return command.execute(location);
+			}
+		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.PULL_TIMEOUT)).getValue();
 
 		if (bundle != null) {
 			File file = bundle.getFile();

@@ -85,4 +85,13 @@ public abstract class JavaHgCommandJob<T> extends CommandJob {
 	public T getValue() {
 		return value;
 	}
+
+	/**
+	 * @see org.eclipse.core.runtime.jobs.Job#canceling()
+	 */
+	@Override
+	protected void canceling() {
+		command.cancel();
+		super.canceling();
+	}
 }
