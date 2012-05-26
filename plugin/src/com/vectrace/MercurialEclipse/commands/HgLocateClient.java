@@ -112,7 +112,6 @@ public class HgLocateClient extends AbstractClient {
 			paths = toPaths(hgRoot, command.execute(pattern));
 		} catch (ExecutionException e) {
 			// it is normal that the resource does not exist.
-			MercurialEclipsePlugin.logWarning(e.getMessage(), e);
 			paths = Collections.emptyList();
 		}
 

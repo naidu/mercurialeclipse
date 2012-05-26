@@ -42,28 +42,30 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  *
- * A QuickDiff provider that provides a reference to the pristine copy of a file
- * managed in the Hg repository. The provider notifies when the file's sync
- * state changes and the diff should be recalculated (e.g. commit, update...) or
- * when the file is changed (e.g. replace with).
+ * A QuickDiff provider that provides a reference to the pristine copy of a file managed in the Hg
+ * repository. The provider notifies when the file's sync state changes and the diff should be
+ * recalculated (e.g. commit, update...) or when the file is changed (e.g. replace with).
  *
  * Here are the file states and what this provider does for each:
  *
- * 1. File is unmanaged : reference == empty document 2. Unmanaged file
- * transitions to managed : empty reference updated with new remote revision 3.
- * A managed file has new remote (commit, refresh remote) : reference updated
- * with new remote revision 4. A managed file cleaned, remote is the same
- * (replace with, update) : refresh diff bar with existing reference
+ * <ol>
+ * <li>File is unmanaged : reference == empty document
+ * <li>Unmanaged file transitions to managed : empty reference updated with new remote revision
+ * <li>A managed file has new remote (commit, refresh remote) : reference updated with new remote
+ * revision
+ * <li>A managed file cleaned, remote is the same (replace with, update) : refresh diff bar with
+ * existing reference
+ * </ol>
  *
- * [Note: Currently an empty document must be returned for an unmanaged file.
- * This results in the entire document appearing as outgoing changes in the
- * quickdiff bar. This is required because the quickdiff support relies on
- * IDocument change events to update the quickdiff, and returning null for the
- * reference document doesn't allow the transition to later return a IDocument.]
+ * [Note: Currently an empty document must be returned for an unmanaged file. This results in the
+ * entire document appearing as outgoing changes in the quickdiff bar. This is required because the
+ * quickdiff support relies on IDocument change events to update the quickdiff, and returning null
+ * for the reference document doesn't allow the transition to later return a IDocument.]
  *
  * @since 3.0
  */
@@ -214,7 +216,7 @@ public class HgPristineCopyQuickDiffProvider implements	IQuickDiffReferenceProvi
 					stream = remoteFile.getContents();
 				} else {
 					// fetch the file version matching to the current hg root changeset
-					HgFile revision = HgFile.makeAtCurrentRev(remoteFile);
+					HgFile revision = CompareUtils.toHgFileAtCurrentRev(remoteFile);
 					stream = revision.getContents();
 				}
 				if (stream == null || monitor.isCanceled() || !isReferenceInitialized) {

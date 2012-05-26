@@ -56,6 +56,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgResource;
+import com.vectrace.MercurialEclipse.model.HgRevisionResource;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
 import com.vectrace.MercurialEclipse.model.HgWorkspaceFolder;
@@ -67,6 +68,7 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialResourceVariantComparator;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -308,26 +310,56 @@ public final class CompareUtils {
 			// local resource
 			if (resource instanceof IFile) {
 				hgresource = new HgWorkspaceFile(rev.getHgRoot(), (IFile)resource);
-			}
-			if (resource instanceof IContainer) {
+			} else if (resource instanceof IContainer) {
 				hgresource = new HgWorkspaceFolder(rev.getHgRoot(), (IContainer)resource, null);
+			} else {
+				throw new UnsupportedOperationException("Unknown resource type for comparison");
 			}
 		} else {
-			try {
-				hgresource = HgLocateClient.getHgResources(rev, changeSet.getNode(), null);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			hgresource = resolveRevisionResource(rev, resource, changeSet);
+		}
+
+		return new RevisionNode(hgresource);
+	}
+
+	/**
+	 * Create a {@link HgRevisionResource} for the given abstract resource by checking if it exists
+	 * at the revision and then instantiating the appropriate type based on the result.
+	 */
+	private static HgRevisionResource resolveRevisionResource(IHgResource rev, IResource resource,
+			JHgChangeSet changeSet) {
+		HgRevisionResource hgresource = null;
+		try {
+			hgresource = HgLocateClient.getHgResources(rev, changeSet.getNode(), null);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 
 		// non-existing file
 		if (hgresource == null) {
-			HgRoot hgRoot = MercurialRootCache.getInstance().getHgRoot(resource);
-
-			hgresource = new NullHgFile(hgRoot, changeSet, hgRoot.getRelativePath(resource));
+			assert false; // ?
+			return NullHgFile.make(changeSet, resource);
 		}
 
-		return new RevisionNode(hgresource);
+		return hgresource;
+	}
+
+	/**
+	 * Make an instance that is the clean version of the given file.
+	 */
+	public static HgFile toHgFileAtCurrentRev(IFile resource) throws HgException {
+		HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+		JHgChangeSet cs = LocalChangesetCache.getInstance().getCurrentChangeSet(root);
+		IHgResource res = new HgFile(cs.getHgRoot(), cs, root.getRelativePath(resource));
+
+		res = resolveRevisionResource(res, resource, cs);
+
+		if (res instanceof HgFile) {
+			return (HgFile) res;
+		}
+
+		// A file replaces a directory with the same name
+		return NullHgFile.make(cs, (IResource)resource);
 	}
 
 	private static RevisionNode findCommonAncestorIfExists(RevisionNode lNode, RevisionNode rNode) throws HgException {
