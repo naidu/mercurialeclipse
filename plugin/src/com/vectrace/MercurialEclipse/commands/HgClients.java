@@ -11,6 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
 
 import com.aragost.javahg.MercurialExtension;
@@ -54,6 +55,7 @@ public final class HgClients {
 		cfg.setConcurrency(3);
 		cfg.setCommandWaitTimeout(Integer.MAX_VALUE);
 		cfg.setServerIdleTime(30);
+		cfg.setCodingErrorAction(CodingErrorAction.REPLACE);
 
 		// Use user's hgrc file
 		cfg.setHgrcPath(null);
