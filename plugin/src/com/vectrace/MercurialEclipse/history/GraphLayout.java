@@ -50,9 +50,6 @@ public class GraphLayout {
 
 			return new Changeset[] { p1, p2 };
 		}
-
-		public void prime(Changeset[] changesets) {
-		}
 	};
 
 	/**
@@ -182,11 +179,6 @@ public class GraphLayout {
 		 * @return The parents
 		 */
 		public Changeset[] getParents(Changeset cs);
-
-		/**
-		 * Future: should not be necessary
-		 */
-		public void prime(Changeset[] changesets);
 	}
 
 	/**

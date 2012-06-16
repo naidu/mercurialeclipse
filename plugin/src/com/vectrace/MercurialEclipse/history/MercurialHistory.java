@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,8 +202,7 @@ public class MercurialHistory extends FileHistory {
 
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		final int logBatchSize = store.getInt(LOG_BATCH_SIZE);
-		final boolean isFileHistory = resource != null && resource.getType() == IResource.FILE;
-		final TreeSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
+		final SortedSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
 		final IPath location;
 
 		if(!isRootHistory()) {
@@ -220,12 +220,63 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		if (revisions.size() < changeSets.size()
+				// ^ ????
 				|| !(location.equals(ResourceUtils.getPath(revisions.get(0).getResource())))) {
 			clear();
 		}
 
-		// Update graph data
-		if (isRootHistory() || isFileHistory) {
+		List<MercurialRevision> batch = createMercurialRevisions(changeSets);
+
+		loadGraphData(batch, revisions.isEmpty() ? null : revisions.get(revisions.size() - 1));
+
+		if(!revisions.isEmpty()){
+			// in case of a particular data fetch before, we may still have some
+			// temporary tags assigned to the last visible revision => cleanup it now
+			MercurialRevision lastOne = revisions.get(revisions.size() - 1);
+			lastOne.cleanupExtraTags();
+		}
+
+		int i = revisions.size();
+
+		for (MercurialRevision rev : batch) {
+
+			if (layout != null) {
+				rev.setGraphRow(layout.getRow(i));
+			}
+
+			revisions.add(rev);
+			i += 1;
+		}
+
+		lastReqRevision = from;
+
+		if(showTags){
+			if(!isRootHistory()) {
+				if(tags == null){
+					fetchTags();
+				}
+				assignTagsToRevisions();
+			}
+		}
+	}
+
+	private List<MercurialRevision> createMercurialRevisions(SortedSet<JHgChangeSet> changeSets) throws CoreException {
+		IResource revisionResource = isRootHistory() ? hgRoot.getResource() : resource;
+		Map<String, Signature> sigMap = getSignatures();
+		Map<String, Status> bisectMap = HgBisectClient.getBisectStatus(hgRoot);
+		setBisectStarted(!bisectMap.isEmpty());
+		List<MercurialRevision> batch = new ArrayList<MercurialRevision>();
+
+		for (JHgChangeSet cs : changeSets) {
+			batch.add(new MercurialRevision(cs, revisionResource, sigMap.get(cs.getNode()),
+					bisectMap.get(cs.getNode())));
+		}
+
+		return batch;
+	}
+
+	private void loadGraphData(List<MercurialRevision> newRevs, MercurialRevision lastRev) {
+		if (isRootHistory() || resource.getType() == IResource.FILE) {
 			ParentProvider parentProvider;
 
 			if (layout == null) {
@@ -237,59 +288,24 @@ public class MercurialHistory extends FileHistory {
 
 				layout = new GraphLayout(parentProvider, GraphLogTableViewer.NUM_COLORS);
 			}
+			else
+			{
+				parentProvider = layout.getParentProvider();
+			}
 
-			Changeset[] changesets = new Changeset[changeSets.size()];
-
+			Changeset[] changesets = new Changeset[newRevs.size()];
 			int i = 0;
-			for (Iterator<JHgChangeSet> it = changeSets.iterator(); it.hasNext(); i++) {
-				changesets[i] = it.next().getData();
+			for (MercurialRevision rev : newRevs) {
+				changesets[i] = rev.getChangeSet().getData();
+				i++;
 			}
 
-			layout.getParentProvider().prime(changesets);
-
-			layout.add(changesets, revisions.isEmpty() ? null : revisions.get(revisions.size() - 1)
-					.getChangeSet().getData());
-		}
-
-		if(!revisions.isEmpty()){
-			// in case of a particular data fetch before, we may still have some
-			// temporary tags assigned to the last visible revision => cleanup it now
-			MercurialRevision lastOne = revisions.get(revisions.size() - 1);
-			lastOne.cleanupExtraTags();
-		}
-		IResource revisionResource;
-		if(isRootHistory()){
-			revisionResource = hgRoot.getResource();
-		} else {
-			revisionResource = resource;
-		}
-		Map<String, Signature> sigMap = getSignatures();
-		Map<String, Status> bisectMap = HgBisectClient.getBisectStatus(hgRoot);
-		setBisectStarted(!bisectMap.isEmpty());
-
-		int i = revisions.size();
-
-		for (JHgChangeSet cs : changeSets) {
-			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getNode()) : null;
-			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getNode()) : null;
-			MercurialRevision rev = new MercurialRevision(cs, revisionResource, sig, bisectStatus);
-
-			if (layout != null) {
-				rev.setGraphRow(layout.getRow(i));
+			if (parentProvider instanceof FileParentProvider)
+			{
+				((FileParentProvider) parentProvider).prime(newRevs);
 			}
 
-			revisions.add(rev);
-			i += 1;
-		}
-		lastReqRevision = from;
-
-		if(showTags){
-			if(!isRootHistory()) {
-				if(tags == null){
-					fetchTags();
-				}
-				assignTagsToRevisions();
-			}
+			layout.add(changesets, lastRev == null ? null : lastRev.getChangeSet().getData());
 		}
 	}
 
@@ -442,6 +458,8 @@ public class MercurialHistory extends FileHistory {
 
 		protected Set<IPath> knownPaths = new HashSet<IPath>();
 
+		private List<MercurialRevision> unknownPathRevs;
+
 		// operations
 
 		/**
@@ -453,11 +471,12 @@ public class MercurialHistory extends FileHistory {
 		 * between: a06450a60e5f and 2e26551ca397
 		 * </pre>
 		 */
-		public void prime(Changeset[] changesets) {
+		public void prime(List<MercurialRevision> changesets) {
 			knownPaths.add(hgRoot.getRelativePath(resource));
+			unknownPathRevs = new LinkedList<MercurialRevision>(changesets);
 
-			for(Changeset cs: changesets) {
-				getParents(cs);
+			for(MercurialRevision cs: changesets) {
+				getParents(cs.getChangeSet().getData());
 			}
 		}
 
@@ -472,24 +491,26 @@ public class MercurialHistory extends FileHistory {
 			for (IPath path : knownPaths) {
 				key.b = path;
 
-				List<Changeset> changesets = map.get(key);
+				List<Changeset> parentsForKey = map.get(key);
 
-				if (changesets == null) {
+				if (parentsForKey == null) {
 					List<IPath> newPaths = getPaths(cs, path);
-					changesets = new ArrayList<Changeset>(4);
+					parentsForKey = new ArrayList<Changeset>(4);
 
 					for (IPath newPath : newPaths) {
 						try {
 							for (Changeset newChangeset : HgParentClient.getParents(hgRoot, cs,
 									newPath)) {
-								if (!changesets.contains(newChangeset)) {
-									changesets.add(newChangeset);
+								if (!parentsForKey.contains(newChangeset)) {
+									parentsForKey.add(newChangeset);
 								}
+
+								setPath(newChangeset, newPath);
 							}
 						} catch (ExecutionException e) {
 						}
 					}
-					map.put(key.clone(), changesets);
+					map.put(key.clone(), parentsForKey);
 
 					if (!newPaths.isEmpty())
 					{
@@ -499,7 +520,7 @@ public class MercurialHistory extends FileHistory {
 						pathsToAdd.addAll(newPaths);
 					}
 				}
-				parents.addAll(changesets);
+				parents.addAll(parentsForKey);
 			}
 
 			if (pathsToAdd != null) {
@@ -509,6 +530,21 @@ public class MercurialHistory extends FileHistory {
 			// What about a head after a rename, will hg show these?
 
 			return parents.toArray(new Changeset[parents.size()]);
+		}
+
+		private void setPath(Changeset newChangeset, IPath newPath) {
+			for (Iterator<MercurialRevision> it = unknownPathRevs.iterator(); it.hasNext();) {
+				MercurialRevision rev = it.next();
+
+				if (newChangeset.getRevision() == rev.getRevision()) {
+					rev.setIPath(newPath);
+					it.remove();
+					return;
+				}
+			}
+
+			// Might happen if a file has two children
+			// Eg exists under two names in the same revision
 		}
 
 		private List<IPath> getPaths(Changeset cs, IPath path) {

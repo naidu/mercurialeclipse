@@ -46,14 +46,25 @@ import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.properties.DoNotDisplayMe;
 
 /**
+ * Revision in the History View.
+ *
  * @author zingo
  */
 public class MercurialRevision extends FileRevision implements IHgResource, IChangeSetHolder, IResourceHolder {
 
+	/**
+	 * The resource (as of revision of working directory)
+	 */
 	private final IResource resource;
+
 	private final JHgChangeSet changeSet;
 	private final int revision;
 	private final Signature signature;
+
+	/**
+	 * The path to resource as of {@link #changeSet} revision.
+	 */
+	private IPath path;
 
 	// .. cached data
 
@@ -266,8 +277,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
 		if (storage == null) {
 			if(resource instanceof IFile) {
-				storage = new HgFile(changeSet.getHgRoot(), changeSet, changeSet
-						.getHgRoot().getRelativePath(resource));
+				storage = new HgFile(changeSet.getHgRoot(), changeSet, getIPath());
 			}
 		}
 		return storage;
@@ -361,8 +371,18 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 		return changeSet.getHgRoot();
 	}
 
+	/**
+	 * @see com.vectrace.MercurialEclipse.model.IHgResource#getIPath()
+	 */
 	public IPath getIPath() {
+		if (path != null) {
+			return path;
+		}
 		return getHgRoot().toRelative(resource.getLocation());
+	}
+
+	public void setIPath(IPath path) {
+		this.path = path;
 	}
 
 	public boolean isReadOnly() {
