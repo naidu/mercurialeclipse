@@ -34,3 +34,14 @@ Update to null
     Current: fail
     
   - Invoke synchronize on a slow server, switch to progress and press cancel on specific incoming and outgoing jobs
+  
+  
+Log 
+
+  - Synchronize with a server requiring authentication, show log view, check credentials and not printed in plain view
+  
+  
+  
+History
+
+  - Show file history, make some commits, switch to older revision, verify commits just made are present in file history.
