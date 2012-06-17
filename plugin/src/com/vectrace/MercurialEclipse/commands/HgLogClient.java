@@ -14,7 +14,9 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -37,6 +39,12 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class HgLogClient extends AbstractClient {
 
 	public static final String NOLIMIT = "999999999999";
+
+	private static final Comparator<Changeset> CS_COMPARATOR = new Comparator<Changeset>() {
+		public int compare(Changeset o1, Changeset o2) {
+			return o2.getRevision() - o1.getRevision();
+		}
+	};
 
 	/**
 	 * Get the heads of the given repository
@@ -106,14 +114,33 @@ public class HgLogClient extends AbstractClient {
 
 	public static List<JHgChangeSet> getResourceLog(HgRoot root, IResource res, int limitNumber, int startRev) {
 		boolean isFile = res.getType() == IResource.FILE;
-
+		String path = ResourceUtils.getPath(res).toOSString();
 		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+		List<Changeset> c;
 
 		if (isFile) {
+			// Return the union of --follow and --removed. Need to show transplanted revisions on other branches
 			command.follow();
+			TreeSet<Changeset> set = new TreeSet<Changeset>(CS_COMPARATOR);
+
+			set.addAll(command.execute(path));
+			command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+			command.removed();
+			set.addAll(command.execute(path));
+
+			while(set.size() > limitNumber) {
+				// Could use descendingIterator but that requires 1.6
+				set.remove(set.last());
+			}
+
+			c = new ArrayList<Changeset>(set);
+		}
+		else
+		{
+			c = command.execute(path);
 		}
 
-		return getChangeSets(root, command.execute(ResourceUtils.getPath(res).toOSString()));
+		return getChangeSets(root, c);
 	}
 
 	public static List<JHgChangeSet> getRootLog(HgRoot root, int limitNumber, int startRev) {
