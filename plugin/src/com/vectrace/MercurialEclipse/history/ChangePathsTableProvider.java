@@ -31,7 +31,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ChangePathsTableProvider extends TableViewer {
 
@@ -98,8 +97,8 @@ public class ChangePathsTableProvider extends TableViewer {
 			if(revision == null || !revision.isFile()){
 				return null;
 			}
-			IPath basePath = ResourceUtils.getPath(revision.getResource());
-			IPath currentPath = ((FileStatus) element).getAbsolutePath();
+			IPath basePath = revision.getIPath();
+			IPath currentPath = ((FileStatus) element).getRootRelativePath();
 			if(basePath.equals(currentPath) && tableProvider.getElementsCount() > 1) {
 				// highlight current file in the changeset, if there are more files
 				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);

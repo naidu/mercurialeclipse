@@ -63,7 +63,7 @@ public class HgRevertClient extends AbstractClient {
 			// String parentRevision = cs.getParentNode(0);
 
 			if (cs.isMoved(firstFile)) {
-				FileStatus status = cs.getStatus(firstFile);
+				FileStatus status = cs.getStatus(cs.getHgRoot().toRelative(ResourceUtils.getPath(firstFile)));
 				if (status != null) {
 					IPath path = status.getAbsoluteCopySourcePath();
 					File base = path.toFile();

@@ -30,7 +30,6 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author Bastian
@@ -54,7 +53,7 @@ public class ExportAsBundleAction extends Action {
 										+ Messages.getString("ExportAsBundleAction.toBundle"), 3); //$NON-NLS-1$
 				monitor.subTask(Messages
 						.getString("ExportAsBundleAction.determiningRepositoryRoot")); //$NON-NLS-1$
-				HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
+				HgRoot root = rev.getHgRoot();
 				if(root == null) {
 					MercurialEclipsePlugin.logError(new IllegalStateException("Hg root not found for: " + rev));
 					return Status.CANCEL_STATUS;

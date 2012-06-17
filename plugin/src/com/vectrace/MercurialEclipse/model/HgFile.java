@@ -47,6 +47,10 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 		super(hgRoot, changeset, path);
 	}
 
+	public HgFile(JHgChangeSet changeset, IPath path) {
+		super(changeset.getHgRoot(), changeset, path);
+	}
+
 	// operations
 
 	/**
@@ -115,5 +119,18 @@ public class HgFile extends HgRevisionResource implements IHgFile {
 	 */
 	public static HgFile locate(JHgChangeSet cs, IFile file) throws HgException {
 		return HgLocateClient.getHgFile(cs.getHgRoot(), cs.getHgRoot().toRelative(file), cs);
+	}
+
+	/**
+	 * Use when the existence of the file is not known at the given changeset
+	 *
+	 * @param cs The changeset
+	 * @param path Root relative path
+	 * @return A NullHgFile or a HgFile
+	 * @throws HgException
+	 * @see {@link HgLocateClient#getHgFile(HgRoot, IPath, ChangeSet)}
+	 */
+	public static HgFile locate(JHgChangeSet cs, IPath path) throws HgException {
+		return HgLocateClient.getHgFile(cs.getHgRoot(), path, cs);
 	}
 }

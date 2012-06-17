@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
@@ -395,17 +396,31 @@ public final class MercurialUtilities {
 	 * @throws HgException
 	 */
 	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
+		return getParentRevision(cs, ResourceUtils.getPath(file));
+	}
+
+	/**
+	 * Get the parent revision. Is aware of file renames.
+	 *
+	 * Note: May query and update the file status of cs.
+	 *
+	 * @param cs The changeset in which the file was modified
+	 * @param path The path as of cs's revision
+	 * @return Storage for the parent revision
+	 * @throws HgException
+	 */
+	public static HgFile getParentRevision(ChangeSet cs, IPath path) throws HgException {
 		String[] parents = cs.getParents();
 		if(cs.getIndex() == 0){
-			return NullHgFile.make(cs.getHgRoot(), file);
+			return new NullHgFile(cs.getHgRoot(), cs.getNode(), path);
 		} else if (parents.length == 0) {
 			throw new IllegalStateException();
 		}
 
-		FileStatus stat = cs.getStatus(file);
+		FileStatus stat = cs.getStatus(path);
 
 		if (stat != null && stat.isCopied()) {
-			file = ResourceUtils.getFileHandle(stat.getAbsoluteCopySourcePath());
+			path = stat.getAbsoluteCopySourcePath();
 		}
 
 		JHgChangeSet parentCs;
@@ -418,7 +433,7 @@ public final class MercurialUtilities {
 					cs.getDirection(), cs.getBundleFile());
 		}
 
-		return HgFile.locate(parentCs, file);
+		return HgFile.locate(parentCs, path);
 	}
 
 	public static void setOfferAutoCommitMerge(boolean offer) {

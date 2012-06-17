@@ -27,7 +27,6 @@ import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author Bastian
@@ -58,7 +57,7 @@ public class MergeWithCurrentChangesetAction extends Action {
 					monitor.beginTask(Messages.getString("MergeWithCurrentChangesetAction.2") + rev.getContentIdentifier() //$NON-NLS-1$
 							+ Messages.getString("MergeWithCurrentChangesetAction.3"), 3); //$NON-NLS-1$
 					monitor.subTask(Messages.getString("MergeWithCurrentChangesetAction.4")); //$NON-NLS-1$
-					final HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
+					final HgRoot root = rev.getHgRoot();
 					if(root == null) {
 						MercurialEclipsePlugin.logError(new IllegalStateException("Hg root not found for: " + rev));
 						return Status.CANCEL_STATUS;
