@@ -24,6 +24,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.aragost.javahg.commands.CommitCommand;
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.flags.CommitCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -102,7 +103,12 @@ public class HgCommitClient extends AbstractClient {
 
 		command.message(message);
 
-		command.execute(files.toArray(new File[files.size()]));
+		try {
+			command.execute(files.toArray(new File[files.size()]));
+		} catch (ExecutionException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+
 		HgCommitMessageManager.updateDefaultCommitName(hgRoot, user);
 	}
 
