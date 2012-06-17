@@ -37,7 +37,6 @@ import com.vectrace.MercurialEclipse.history.GraphLayout.GraphRow;
 import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IChangeSetHolder;
-import com.vectrace.MercurialEclipse.model.IHgFile;
 import com.vectrace.MercurialEclipse.model.IHgResource;
 import com.vectrace.MercurialEclipse.model.IResourceHolder;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
@@ -68,7 +67,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 
 	// .. cached data
 
-	private IHgFile storage;
+	private HgFile storage;
 
 	/**
 	 * Tags sorted by revision
@@ -275,6 +274,10 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
+		return getHgFile();
+	}
+
+	public HgFile getHgFile() {
 		if (storage == null) {
 			if(resource instanceof IFile) {
 				storage = new HgFile(changeSet.getHgRoot(), changeSet, getIPath());

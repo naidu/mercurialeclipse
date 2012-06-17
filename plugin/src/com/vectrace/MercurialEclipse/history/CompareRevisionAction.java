@@ -29,7 +29,6 @@ import com.vectrace.MercurialEclipse.model.HgWorkspaceFile;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 class CompareRevisionAction extends BaseSelectionListenerAction {
 
@@ -47,8 +46,8 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 
 	@Override
 	public void run() {
-		final HgResource [] right = new HgResource [1];
-		final HgResource [] left = new HgResource [1];
+		final HgResource[] right = new HgResource[1];
+		final HgResource[] left = new HgResource[1];
 		final Job job = new Job(Messages.CompareRevisionAction_retrievingDiffData) {
 
 			@Override
@@ -56,28 +55,27 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 				try {
 					if(selection.length > 0 && !monitor.isCanceled()){
 						MercurialRevision mercRev = (MercurialRevision) selection[0];
-						IFile file = (IFile) mercRev.getResource();
 						JHgChangeSet cs = mercRev.getChangeSet();
 
 						if(selection.length > 1 && !monitor.isCanceled()) {
 							if(enableCompareWithPrev && selection[1] instanceof FileStatus) {
 								FileStatus clickedFileStatus = (FileStatus) selection[1];
 
-								file = ResourceUtils.getFileHandle(cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath()));
+								left[0] = new HgFile(cs,
+										clickedFileStatus.getRootRelativePath());
+								right[0] = MercurialUtilities.getParentRevision(cs,
+										clickedFileStatus.getRootRelativePath());
 
-								if(file != null) {
-									left[0] = HgFile.make(cs, file);
-									right[0] = MercurialUtilities.getParentRevision(cs, file);
-								}
 							} else if(selection[1] instanceof MercurialRevision) {
-								left[0] = HgFile.make(cs, file);
-								// TODO: file may be renamed between the two revisions
-								right[0] = HgFile.make(((MercurialRevision) selection[1]).getChangeSet(), file);
+								left[0] = mercRev.getHgFile();
+								right[0] = ((MercurialRevision)selection[1]).getHgFile();
 							}
 						} else if(enableCompareWithPrev) {
-							left[0] = HgFile.make(cs, file);
-							right[0] = MercurialUtilities.getParentRevision(cs, file);
+							left[0] = mercRev.getHgFile();
+							right[0] = MercurialUtilities.getParentRevision(cs, mercRev.getIPath());
 						} else {
+							IFile file = (IFile)mercRev.getResource();
+
 							left[0] = HgWorkspaceFile.make(file);
 							// TODO: file may be renamed between the two revisions
 							right[0] = HgFile.make(cs, file);

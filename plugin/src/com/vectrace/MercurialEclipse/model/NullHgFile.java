@@ -29,6 +29,10 @@ public class NullHgFile extends HgFile {
 		super(hgRoot, changeset, path);
 	}
 
+	public NullHgFile(JHgChangeSet changeset, IPath path) {
+		super(changeset.getHgRoot(), changeset, path);
+	}
+
 	public NullHgFile(HgRoot hgRoot, String revision, IPath path) throws HgException {
  		super(hgRoot, revision, path);
  	}

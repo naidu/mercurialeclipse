@@ -153,20 +153,16 @@ public abstract class ChangeSet extends CheckedInChangeSet implements Comparable
 	/**
 	 * TODO: move to JHgChangeset
 	 *
-	 * @param resource
-	 *            non null
+	 * @param path
+	 *            non null. Root relative path
 	 * @return file status object if this changeset contains given resource, null otherwise
 	 */
-	public final FileStatus getStatus(IResource resource) {
-		if (getChangedFiles().isEmpty()) {
-			return null;
-		}
-		IPath path = ResourceUtils.getPath(resource);
-		if (path.isEmpty()) {
+	public final FileStatus getStatus(IPath path) {
+		if (getChangedFiles().isEmpty() || path.isEmpty()) {
 			return null;
 		}
 		for (FileStatus fileStatus : getChangedFiles()) {
-			if (path.equals(fileStatus.getAbsolutePath())) {
+			if (path.equals(fileStatus.getRootRelativePath())) {
 				return fileStatus;
 			}
 		}
