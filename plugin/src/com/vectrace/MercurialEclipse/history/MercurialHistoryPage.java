@@ -230,7 +230,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			boolean gotEverything = historyFetched(from);
 			while(!gotEverything && !monitor.isCanceled()) {
 				try {
-					mercurialHistory.refresh(monitor, from);
+					mercurialHistory.load(monitor, from);
 				} catch (CoreException ex) {
 					MercurialEclipsePlugin.logError(ex);
 				}
@@ -274,10 +274,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	class RefreshMercurialHistoryJob extends Job {
+	class LoadMercurialHistoryJob extends Job {
 		private final int from;
 
-		public RefreshMercurialHistoryJob(int from) {
+		public LoadMercurialHistoryJob(int from) {
 			super("Retrieving Mercurial revisions..."); //$NON-NLS-1$
 			this.from = from;
 			setRule(new ExclusiveHistoryRule());
@@ -290,7 +290,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			}
 			mercurialHistory.setEnableExtraTags(showTags);
 			try {
-				mercurialHistory.refresh(monitor, from);
+				mercurialHistory.load(monitor, from);
 				if(resource != null) {
 					currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentChangeSet(resource);
 				} else {
@@ -1170,7 +1170,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	 */
 	public void refresh() {
 		if (refreshFileHistoryJob == null) {
-			refreshFileHistoryJob = new RefreshMercurialHistoryJob(Integer.MAX_VALUE);
+			refreshFileHistoryJob = new LoadMercurialHistoryJob(Integer.MAX_VALUE);
 		}
 
 		if (refreshFileHistoryJob.getState() != Job.NONE) {

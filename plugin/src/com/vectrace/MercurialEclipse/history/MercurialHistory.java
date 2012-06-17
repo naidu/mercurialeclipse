@@ -174,7 +174,14 @@ public class MercurialHistory extends FileHistory {
 		return new IFileRevision[0];
 	}
 
-	public void refresh(IProgressMonitor monitor, int from) throws CoreException {
+	/**
+	 * Load more revisions.
+	 *
+	 * @param monitor
+	 * @param from Revision number. The batch of revisions before this revision are loaded.
+	 * @throws CoreException
+	 */
+	public void load(IProgressMonitor monitor, int from) throws CoreException {
 		if (from < 0) {
 			return;
 		}
@@ -194,27 +201,23 @@ public class MercurialHistory extends FileHistory {
 
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		final int logBatchSize = store.getInt(LOG_BATCH_SIZE);
-
-		IPath location;
-		List<JHgChangeSet> list;
+		final boolean isFileHistory = resource != null && resource.getType() == IResource.FILE;
+		final TreeSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
+		final IPath location;
 
 		if(!isRootHistory()) {
-			list = HgLogClient.getResourceLog(hgRoot, resource, logBatchSize, from);
+			changeSets.addAll(HgLogClient.getResourceLog(hgRoot, resource, logBatchSize, from));
 			location = ResourceUtils.getPath(resource);
 		} else {
-			list = HgLogClient.getRootLog(hgRoot, logBatchSize, from);
+			changeSets.addAll(HgLogClient.getRootLog(hgRoot, logBatchSize, from));
 			location = hgRoot.getIPath();
 		}
 
 		// no result -> bottom reached
-		if (list.isEmpty()) {
+		if (changeSets.isEmpty()) {
 			lastReqRevision = from;
 			return;
 		}
-
-		// We need these to be in order for the GChangeSets to display properly
-		TreeSet<JHgChangeSet> changeSets = new TreeSet<JHgChangeSet>(CS_COMPARATOR);
-		changeSets.addAll(list);
 
 		if (revisions.size() < changeSets.size()
 				|| !(location.equals(ResourceUtils.getPath(revisions.get(0).getResource())))) {
@@ -222,7 +225,7 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// Update graph data
-		if (isRootHistory() || resource.getType() == IResource.FILE) {
+		if (isRootHistory() || isFileHistory) {
 			ParentProvider parentProvider;
 
 			if (layout == null) {

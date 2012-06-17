@@ -41,7 +41,7 @@ public class MercurialHistoryProvider extends FileHistoryProvider {
 		if (provider instanceof MercurialTeamProvider) {
 			MercurialHistory history = new MercurialHistory(resource);
 			try {
-				history.refresh(monitor, Integer.MAX_VALUE);
+				history.load(monitor, Integer.MAX_VALUE);
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
