@@ -20,6 +20,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IPath;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.LogCommand;
@@ -114,19 +115,23 @@ public class HgLogClient extends AbstractClient {
 
 	public static List<JHgChangeSet> getResourceLog(HgRoot root, IResource res, int limitNumber, int startRev) {
 		boolean isFile = res.getType() == IResource.FILE;
-		String path = ResourceUtils.getPath(res).toOSString();
+		IPath path = ResourceUtils.getPath(res);
+		String sPath = path.toOSString();
 		LogCommand command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
 		List<Changeset> c;
 
 		if (isFile) {
 			// Return the union of --follow and --removed. Need to show transplanted revisions on other branches
-			command.follow();
 			TreeSet<Changeset> set = new TreeSet<Changeset>(CS_COMPARATOR);
 
-			set.addAll(command.execute(path));
-			command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+			if (path.toFile().exists()) {
+				command.follow();
+				set.addAll(command.execute(sPath));
+				command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+			}
+
 			command.removed();
-			set.addAll(command.execute(path));
+			set.addAll(command.execute(sPath));
 
 			while(set.size() > limitNumber) {
 				// Could use descendingIterator but that requires 1.6
@@ -137,7 +142,7 @@ public class HgLogClient extends AbstractClient {
 		}
 		else
 		{
-			c = command.execute(path);
+			c = command.execute(sPath);
 		}
 
 		return getChangeSets(root, c);
