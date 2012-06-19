@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,7 +48,6 @@ import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
@@ -58,7 +56,6 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
-import com.vectrace.MercurialEclipse.utils.Pair;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -451,83 +448,48 @@ public class MercurialHistory extends FileHistory {
 
 	/**
 	 * Parent provider for a file following renames
+	 *
+	 * Strategy: Invoke parents for each of the known paths at each revision
+	 *
+	 * Using file status isn't sufficient: Copy source isn't present for some merges:
+	 * http://bz.selenic.com/show_bug.cgi?id=3495
+	 *
+	 * <pre>
+	 * hg log -Gf plugin/src/com/vectrace/MercurialEclipse/model/GChangeSet.java
+	 * between: a06450a60e5f and 2e26551ca397
+	 * </pre>
 	 */
 	private class FileParentProvider implements ParentProvider {
 
-		protected Map<Pair<Changeset, IPath>, List<Changeset>> map = new HashMap<Pair<Changeset, IPath>, List<Changeset>>();
-
-		protected Set<IPath> knownPaths = new HashSet<IPath>();
+		protected final Set<IPath> knownPaths = LocalChangesetCache.getInstance().getKnownPaths(
+				hgRoot, hgRoot.getRelativePath(resource));
 
 		private List<MercurialRevision> unknownPathRevs;
 
 		// operations
 
-		/**
-		 * TODO: this is a hack to populate knownPaths - why can't we get the copy source for some
-		 * changesets. Status appears to not show copy source for some merges.
-		 *
-		 * <pre>
-		 * hg log -Gf plugin/src/com/vectrace/MercurialEclipse/model/GChangeSet.java
-		 * between: a06450a60e5f and 2e26551ca397
-		 * </pre>
-		 */
 		public void prime(List<MercurialRevision> changesets) {
-			knownPaths.add(hgRoot.getRelativePath(resource));
 			unknownPathRevs = new LinkedList<MercurialRevision>(changesets);
-
-			for(MercurialRevision cs: changesets) {
-				getParents(cs.getChangeSet().getData());
-			}
 		}
 
 		/**
 		 * @see com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider#getParents(com.aragost.javahg.Changeset)
 		 */
 		public Changeset[] getParents(Changeset cs) {
-			Pair<Changeset, IPath> key = new Pair<Changeset, IPath>(cs, null);
 			List<Changeset> parents = new ArrayList<Changeset>(4);
-			List<IPath> pathsToAdd = null;
 
-			for (IPath path : knownPaths) {
-				key.b = path;
-
-				List<Changeset> parentsForKey = map.get(key);
-
-				if (parentsForKey == null) {
-					List<IPath> newPaths = getPaths(cs, path);
-					parentsForKey = new ArrayList<Changeset>(4);
-
-					for (IPath newPath : newPaths) {
-						try {
-							for (Changeset newChangeset : HgParentClient.getParents(hgRoot, cs,
-									newPath)) {
-								if (!parentsForKey.contains(newChangeset)) {
-									parentsForKey.add(newChangeset);
-								}
-
-								setPath(newChangeset, newPath);
-							}
-						} catch (ExecutionException e) {
+			for (IPath newPath : knownPaths) {
+				try {
+					for (Changeset newChangeset : HgParentClient.getParents(hgRoot, cs, newPath)) {
+						if (!parents.contains(newChangeset)) {
+							parents.add(newChangeset);
 						}
-					}
-					map.put(key.clone(), parentsForKey);
 
-					if (!newPaths.isEmpty())
-					{
-						if (pathsToAdd == null) {
-							pathsToAdd = new ArrayList<IPath>();
-						}
-						pathsToAdd.addAll(newPaths);
+						setPath(newChangeset, newPath);
 					}
+				} catch (ExecutionException e) {
 				}
-				parents.addAll(parentsForKey);
 			}
-
-			if (pathsToAdd != null) {
-				knownPaths.addAll(pathsToAdd);
-			}
-
-			// What about a head after a rename, will hg show these?
 
 			return parents.toArray(new Changeset[parents.size()]);
 		}
@@ -545,36 +507,6 @@ public class MercurialHistory extends FileHistory {
 
 			// Might happen if a file has two children
 			// Eg exists under two names in the same revision
-		}
-
-		private List<IPath> getPaths(Changeset cs, IPath path) {
-			JHgChangeSet jcs = LocalChangesetCache.getInstance().get(hgRoot, cs);
-
-			if (cs.getParent1() == null) {
-				return Collections.EMPTY_LIST;
-			} else if (cs.getParent2() == null) {
-				return Collections.singletonList(getPath(jcs, path, 0));
-			}
-
-			List<IPath> l = new ArrayList<IPath>(2);
-
-			l.add(getPath(jcs, path, 0));
-			l.add(getPath(jcs, path, 1));
-
-			return l;
-		}
-
-		private IPath getPath(JHgChangeSet jcs, IPath path, int parent) {
-			for (FileStatus status : jcs.getChangedFiles(parent)) {
-				if (path.equals(status.getRootRelativePath())) {
-					if (status.getRootRelativeCopySourcePath() != null) {
-						return status.getRootRelativeCopySourcePath();
-					}
-					break;
-				}
-			}
-
-			return path;
 		}
 	}
 }

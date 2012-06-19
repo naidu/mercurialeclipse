@@ -12,8 +12,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -52,6 +56,7 @@ import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.ide.ResourceUtil;
 
+import com.google.common.io.ByteStreams;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLocateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -809,5 +814,51 @@ public final class ResourceUtils {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Return a File reference to a copy of the resource in the jar.
+	 * <p>
+	 * These style files are included in the plugin jar file and need to be copied out of there into
+	 * the plugin state area so a path can be given to the hg command. Copied files are set to
+	 * deleteOnExit so the don't become stale.
+	 *
+	 * @param sResource
+	 *            The name of the the file, eg "/styles/log_renames.tmpl"
+	 * @return a File reference to an existing file
+	 */
+	public static File resourceAsFile(String sResource) throws HgException {
+		IPath stateLocation = MercurialEclipsePlugin.getDefault().getStateLocation();
+		File file = stateLocation.append(sResource).toFile();
+
+		if (file.canRead()) {
+			// Already have copies, return the file reference to the style file
+			file.deleteOnExit();
+			return file;
+		}
+
+		InputStream istream = ResourceUtils.class.getClassLoader().getResourceAsStream(sResource);
+
+		file.getParentFile().mkdirs();
+
+		try {
+			OutputStream ostream = new BufferedOutputStream(new FileOutputStream(file));
+
+            ByteStreams.copy(istream, ostream);
+            ostream.close();
+            file.deleteOnExit();
+
+			return file;
+		} catch (IOException e) {
+			throw new HgException("Failed to copy resource to file: " + sResource, e);
+		} finally {
+			try {
+				if(istream != null) {
+					istream.close();
+				}
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 }
