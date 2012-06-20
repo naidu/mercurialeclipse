@@ -15,10 +15,12 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +40,7 @@ import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.internals.GenericCommand;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
@@ -45,16 +48,18 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
+import com.vectrace.MercurialEclipse.commands.JavaHgCommandJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.GraphLayout.ParentProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -461,15 +466,43 @@ public class MercurialHistory extends FileHistory {
 	 */
 	private class FileParentProvider implements ParentProvider {
 
-		protected final Set<IPath> knownPaths = LocalChangesetCache.getInstance().getKnownPaths(
-				hgRoot, hgRoot.getRelativePath(resource));
+		protected final Set<IPath> knownPaths = new HashSet<IPath>();
 
 		private List<MercurialRevision> unknownPathRevs;
 
 		// operations
 
-		public void prime(List<MercurialRevision> changesets) {
+		public void prime(final List<MercurialRevision> changesets) {
 			unknownPathRevs = new LinkedList<MercurialRevision>(changesets);
+
+			final IPath relativePath = hgRoot.getRelativePath(resource);
+			String sRelativePath = relativePath.toString();
+
+			knownPaths.add(relativePath);
+
+			try {
+				final GenericCommand command = new GenericCommand(hgRoot.getRepository(), "log");
+				final File f = ResourceUtils.resourceAsFile("/styles/log_renames.tmpl");
+
+				String[] s = new JavaHgCommandJob<String[]>(command,
+						"Searching for file copies") {
+					@Override
+					protected String[] run() throws Exception {
+						return command.execute("--limit", Integer.toString(changesets.size()),
+								"--style", f.getPath(), relativePath.toString(), "--rev", changesets.iterator().next().getRevision() + ":0").split("\0");
+					}
+				}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.LOG_TIMEOUT))
+						.getValue();
+
+				// -1 since there's a null at the end
+				for (int i = 0, n = s.length - 1; i < n; i += 2) {
+					if (sRelativePath.equals(s[i])) {
+						knownPaths.add(hgRoot.toRelative(hgRoot.toAbsolute(s[i + 1])));
+					}
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 
 		/**

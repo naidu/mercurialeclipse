@@ -330,6 +330,9 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	/**
 	 * Helper method to get root relative path for a resource under this root
 	 *
+	 * TODO: this is not complete if res is under a symlink - must use canonical path because hgroot
+	 * is cononical.
+	 *
 	 * @param res
 	 *            The resource to query
 	 * @return The root relative path

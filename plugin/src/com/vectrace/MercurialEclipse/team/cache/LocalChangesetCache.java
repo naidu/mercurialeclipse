@@ -11,12 +11,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Observer;
@@ -32,14 +29,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.aragost.javahg.Changeset;
-import com.aragost.javahg.internals.GenericCommand;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.MapMaker;
-import com.google.common.collect.Multimap;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.JavaHgCommandJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -83,11 +75,6 @@ public final class LocalChangesetCache extends AbstractCache {
 	 * Stores the latest changeset for each root
 	 */
 	private final Map<HgRoot, JHgChangeSet> workingDirectoryParentMap = new HashMap<HgRoot, JHgChangeSet>();
-
-	/**
-	 * Stores known copy source for entire history
-	 */
-	private final Map<HgRoot, Multimap<String, String>> copySourceMap = new HashMap<HgRoot, Multimap<String, String>>();
 
 	private int logBatchSize;
 
@@ -134,9 +121,6 @@ public final class LocalChangesetCache extends AbstractCache {
 		}
 		synchronized (logByPath) {
 			logByPath.remove(root.getIPath());
-		}
-		synchronized (copySourceMap) {
-			copySourceMap.remove(root);
 		}
 		Set<IProject> projects = ResourceUtils.getProjects(root);
 		for (IProject project : projects) {
@@ -525,80 +509,5 @@ public final class LocalChangesetCache extends AbstractCache {
 			}
 		}
 		return branchChangeSets;
-	}
-
-	/**
-	 * Get the set of paths that the given resource may have been renamed from.
-	 *
-	 * @param hgRoot The root to query
-	 * @param relativePath Root relative path to query
-	 * @return Set of root relative paths
-	 */
-	public Set<IPath> getKnownPaths(HgRoot hgRoot, IPath relativePath) {
-		Multimap<String, String> map;
-
-		synchronized (copySourceMap) {
-			map = copySourceMap.get(hgRoot);
-
-			if (map == null) {
-				map = HashMultimap.create();
-
-				try {
-					final GenericCommand command = new GenericCommand(hgRoot.getRepository(), "log");
-					final File f = ResourceUtils.resourceAsFile("/styles/log_renames.tmpl");
-
-					String[] s = new JavaHgCommandJob<String[]>(command,
-							"Loading copy source cache") {
-						@Override
-						protected String[] run() throws Exception {
-							return command.execute("--limit", "50000", "--style", f.getPath()).split("\0");
-						}
-					}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.LOG_TIMEOUT))
-							.getValue();
-
-					// -1 since there's a null at the end
-					for (int i = 0, n = s.length - 1; i < n; i += 2) {
-						map.put(s[i], s[i + 1]);
-					}
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-
-				copySourceMap.put(hgRoot, map);
-			}
-		}
-
-		// Flatten the map
-		String sRelativePath = relativePath.toString();
-		Collection<String> result = map.get(sRelativePath);
-
-		if (result.isEmpty()) {
-			return Collections.singleton(relativePath);
-		}
-
-		Collection<String> unprocessed = new HashSet<String>(result);
-		result = new HashSet<String>((result.size() + 2) * 2);
-		result.add(sRelativePath);
-
-		while (!unprocessed.isEmpty()) {
-			Iterator<String> it = unprocessed.iterator();
-			String sCur = it.next();
-
-			it.remove();
-
-			if (!result.contains(sCur)) {
-				result.add(sCur);
-				unprocessed.addAll(map.get(sCur));
-			}
-		}
-
-		Set<IPath> paths = new HashSet<IPath>(result.size());
-
-		for (String s : result) {
-			// Can't construct a non-absolute path directly?
-			paths.add(hgRoot.toRelative(hgRoot.toAbsolute(s)));
-		}
-
-		return paths;
 	}
 }
