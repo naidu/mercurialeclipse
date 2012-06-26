@@ -58,7 +58,6 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.IniFile;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
@@ -396,7 +395,7 @@ public final class MercurialUtilities {
 	 * @throws HgException
 	 */
 	public static HgFile getParentRevision(ChangeSet cs, IFile file) throws HgException {
-		return getParentRevision(cs, ResourceUtils.getPath(file));
+		return getParentRevision(cs, cs.getHgRoot().getRelativePath(file));
 	}
 
 	/**
