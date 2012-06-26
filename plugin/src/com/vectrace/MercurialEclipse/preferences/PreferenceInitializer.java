@@ -67,6 +67,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// currently this reduces performance 2x => so disable per default
 		store.setDefault(PREF_ENABLE_SUBREPO_SUPPORT, false);
 
+		store.setDefault(HISTORY_LOG_USE_REMOVED, false);
+
 		// "Highest" importance should be default, like "merge conflict"
 		// when having 2 different statuses in a folder it should have the more important one
 		store.setDefault(LABELDECORATOR_LOGIC, LABELDECORATOR_LOGIC_HB);
