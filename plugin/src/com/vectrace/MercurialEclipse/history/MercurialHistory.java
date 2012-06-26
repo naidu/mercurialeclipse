@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -47,6 +48,7 @@ import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.commands.JavaHgCommandJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
@@ -95,6 +97,16 @@ public class MercurialHistory extends FileHistory {
 		if(root != null && root.getIPath().equals(ResourceUtils.getPath(resource))){
 			this.resource = null;
 		} else {
+			if (resource instanceof IFile && root != null) {
+				IPath path = root.toRelative((IFile) resource);
+				IPath copySource = HgStatusClient.getCopySource(root, path);
+
+				// TODO: this approach doesn't work for "compare with current" action
+				if (!path.equals(copySource)) {
+					resource = ResourceUtils.getFileHandle(root.toAbsolute(copySource));
+				}
+			}
+
 			this.resource = resource;
 		}
 		hgRoot = root;

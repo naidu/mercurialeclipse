@@ -127,7 +127,7 @@ public class HgLogClient extends AbstractClient {
 				// Return the union of --follow and --removed. Need to show transplanted revisions on other branches
 				TreeSet<Changeset> set = new TreeSet<Changeset>(CS_COMPARATOR);
 
-				if (path.toFile().exists()) {
+				if (canFollow(root, path)) {
 					command.follow();
 					set.addAll(command.execute(sPath));
 					command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
@@ -143,7 +143,7 @@ public class HgLogClient extends AbstractClient {
 
 				c = new ArrayList<Changeset>(set);
 			} else {
-				if (path.toFile().exists()) {
+				if (canFollow(root, path)) {
 					command.follow();
 				}
 				c = command.execute(sPath);
@@ -155,6 +155,13 @@ public class HgLogClient extends AbstractClient {
 		}
 
 		return getChangeSets(root, c);
+	}
+
+	/**
+	 * TODO: This is not correct: should be whether path exists in working directory parent
+	 */
+	private static boolean canFollow(HgRoot root, IPath path) {
+		return path.toFile().exists();
 	}
 
 	public static List<JHgChangeSet> getRootLog(HgRoot root, int limitNumber, int startRev) {

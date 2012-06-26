@@ -61,7 +61,7 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 	private final Signature signature;
 
 	/**
-	 * The path to resource as of {@link #changeSet} revision.
+	 * The path to resource as of {@link #changeSet} revision. May be null.
 	 */
 	private IPath path;
 
@@ -384,6 +384,9 @@ public class MercurialRevision extends FileRevision implements IHgResource, ICha
 		return getHgRoot().toRelative(resource.getLocation());
 	}
 
+	/**
+	 * @param path Root relative path
+	 */
 	public void setIPath(IPath path) {
 		this.path = path;
 	}
