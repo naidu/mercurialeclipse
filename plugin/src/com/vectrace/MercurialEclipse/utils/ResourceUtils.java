@@ -59,6 +59,7 @@ import org.eclipse.ui.ide.ResourceUtil;
 import com.google.common.io.ByteStreams;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLocateClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -799,7 +800,11 @@ public final class ResourceUtils {
 		if (hgRoot == null) {
 			return null;
 		}
+		IPath path = hgRoot.getRelativePath(resource);
 		JHgChangeSet cs = null;
+
+		path = HgStatusClient.getCopySource(hgRoot, path);
+
 		try {
 			cs = LocalChangesetCache.getInstance().getCurrentChangeSet(hgRoot);
 		} catch (HgException e) {
@@ -807,7 +812,7 @@ public final class ResourceUtils {
 		}
 		if(cs != null){
 			try {
-				return HgLocateClient.getHgResources(hgRoot, hgRoot.getRelativePath(resource),
+				return HgLocateClient.getHgResources(hgRoot, path,
 						resource instanceof IStorage, cs, null);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);

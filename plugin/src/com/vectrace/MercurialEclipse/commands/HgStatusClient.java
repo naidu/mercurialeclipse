@@ -187,4 +187,25 @@ public class HgStatusClient extends AbstractClient {
 
 		return l;
 	}
+
+	/**
+	 * Get the copy source for an uncommitted resource.
+	 *
+	 * @param hgRoot The root to query
+	 * @param path The root relative path to query
+	 * @return The root relative copy source path, or path if clean or not copied.
+	 */
+	public static IPath getCopySource(HgRoot hgRoot, IPath path) {
+		StatusCommand command = StatusCommandFlags.on(hgRoot.getRepository());
+		String sPath = path.toOSString();
+
+		sPath = command.copies().execute(sPath).getCopied().get(sPath);
+
+		if (sPath != null && sPath.length() > 0) {
+			// Javadoc says sPath must be absolute?
+			return new Path(sPath);
+		}
+
+		return path;
+	}
 }
