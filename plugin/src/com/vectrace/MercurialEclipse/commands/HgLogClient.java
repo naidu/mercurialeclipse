@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
@@ -121,24 +122,32 @@ public class HgLogClient extends AbstractClient {
 		List<Changeset> c;
 
 		if (isFile) {
-			// Return the union of --follow and --removed. Need to show transplanted revisions on other branches
-			TreeSet<Changeset> set = new TreeSet<Changeset>(CS_COMPARATOR);
+			if (Boolean.parseBoolean(HgClients.getPreference(
+					MercurialPreferenceConstants.HISTORY_LOG_USE_REMOVED, "false"))) {
+				// Return the union of --follow and --removed. Need to show transplanted revisions on other branches
+				TreeSet<Changeset> set = new TreeSet<Changeset>(CS_COMPARATOR);
 
-			if (path.toFile().exists()) {
-				command.follow();
+				if (path.toFile().exists()) {
+					command.follow();
+					set.addAll(command.execute(sPath));
+					command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+				}
+
+				command.removed();
 				set.addAll(command.execute(sPath));
-				command = addRange(LogCommandFlags.on(root.getRepository()), startRev, limitNumber, isFile);
+
+				while(set.size() > limitNumber) {
+					// Could use descendingIterator but that requires 1.6
+					set.remove(set.last());
+				}
+
+				c = new ArrayList<Changeset>(set);
+			} else {
+				if (path.toFile().exists()) {
+					command.follow();
+				}
+				c = command.execute(sPath);
 			}
-
-			command.removed();
-			set.addAll(command.execute(sPath));
-
-			while(set.size() > limitNumber) {
-				// Could use descendingIterator but that requires 1.6
-				set.remove(set.last());
-			}
-
-			c = new ArrayList<Changeset>(set);
 		}
 		else
 		{

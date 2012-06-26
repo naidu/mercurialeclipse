@@ -47,6 +47,7 @@ public final class MercurialPreferenceConstants {
 	public static final String PREF_SYNC_PRESENTATION_MODE = "hg.syncPresentationMode";  //$NON-NLS-1$
 	public static final String PREF_SYNC_ENABLE_LOCAL_CHANGESETS = "hg.syncEnableLocalChangesets";  //$NON-NLS-1$
 
+	public static final String HISTORY_LOG_USE_REMOVED = "historyLogUseRemoved"; //$NON-NLS-1$
 	public static final String PREF_ENABLE_SUBREPO_SUPPORT = "enableSubrepoSupport"; //$NON-NLS-1$
 
 	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$

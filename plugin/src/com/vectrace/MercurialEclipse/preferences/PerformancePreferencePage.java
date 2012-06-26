@@ -94,6 +94,11 @@ implements IWorkbenchPreferencePage {
 				Messages.getString("PerformancePreferencePage.field.showIncomingChangesetOnFiles"), //$NON-NLS-1$
 				getFieldEditorParent());
 		addField(showIncomingInfo);
+
+		addField(new BooleanFieldEditor(
+				HISTORY_LOG_USE_REMOVED,
+				Messages.getString("PerformancePreferencePage.field.historyLogUseRemoved"), //$NON-NLS-1$
+				getFieldEditorParent()));
 	}
 
 	public void init(IWorkbench workbench) {
