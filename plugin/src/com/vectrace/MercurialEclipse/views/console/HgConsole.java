@@ -13,23 +13,21 @@ package com.vectrace.MercurialEclipse.views.console;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.resource.FontRegistry;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
+import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder.IHgConsole;
 
 /**
  * Console that shows the output of Hg commands. It is shown as a page in the
@@ -37,12 +35,14 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * lines in addition the font can be configured.
  *
  */
-public class HgConsole extends MessageConsole {
+public class HgConsole extends MessageConsole implements IHgConsole {
 
 	/**
 	 * Used in plugin.xml
 	 */
 	private static final String HG_CONSOLE_TYPE = "hgConsole";
+
+	private static final String CONSOLE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"; //$NON-NLS-1$
 
 	/** created colors for each line type - must be disposed at shutdown*/
 	private Color commandColor;
@@ -61,26 +61,15 @@ public class HgConsole extends MessageConsole {
 	private boolean visible;
 	/** Indicates whether the console's streams have been initialized */
 	private boolean initialized;
-	private boolean debugTimeEnabled;
-	private boolean debugEnabled;
-
-	/**
-	 * Constant used for indenting error status printing
-	 */
-	private static final String NESTING = "   "; //$NON-NLS-1$
 
 	/**
 	 * Constructor initializes preferences and colors but doesn't create the
 	 * console page yet.
 	 */
-	public HgConsole() {
+	public HgConsole(ConsoleDocument doc) {
 		super("Mercurial Console", HG_CONSOLE_TYPE, MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"), true); //$NON-NLS-1$ //$NON-NLS-2$
-		document = new ConsoleDocument();
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
-		debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
+		document = doc;
 	}
-
 
 	@Override
 	protected void init() {
@@ -149,7 +138,10 @@ public class HgConsole extends MessageConsole {
 		}
 	}
 
-	private void appendLine(int type, String line) {
+	/**
+	 * @see com.vectrace.MercurialEclipse.views.console.HgConsoleHolder.IHgConsole#appendLine(int, java.lang.String)
+	 */
+	public void appendLine(int type, String line) {
 		HgConsoleHolder.getInstance().showConsole(false);
 		String myLine = line == null? "" : line;
 		synchronized (document) {
@@ -166,7 +158,7 @@ public class HgConsole extends MessageConsole {
 					break;
 				}
 			} else {
-				document.appendConsoleLine(type, myLine);
+				document.appendLine(type, myLine);
 			}
 		}
 	}
@@ -203,121 +195,6 @@ public class HgConsole extends MessageConsole {
 		}
 	}
 
-	public void commandInvoked(String line) {
-		appendLine(ConsoleDocument.COMMAND, line);
-	}
-
-	public void messageLineReceived(String line) {
-		appendLine(ConsoleDocument.MESSAGE, line);
-	}
-
-	public void errorLineReceived(String line) {
-		appendLine(ConsoleDocument.ERROR, line);
-	}
-
-	public void log(LogRecord record) {
-		int type = (Level.INFO.intValue() < record.getLevel().intValue()) ? ConsoleDocument.ERROR
-				: ConsoleDocument.MESSAGE;
-		String loggerName = record.getLoggerName();
-		int index;
-
-		if (loggerName != null && (index =  loggerName.lastIndexOf('.')) >= 0) {
-			loggerName = loggerName.substring(index + 1);
-		}
-
-		appendLine(type, loggerName + ": " + record.getMessage());
-	}
-
-	private boolean isDebugTimeEnabled() {
-		return debugTimeEnabled;
-	}
-
-	public void commandCompleted(long timeInMillis, IStatus status, Throwable exception) {
-		String time = getTimeString(timeInMillis);
-		if (status != null) {
-			if(status.getSeverity() == IStatus.ERROR) {
-				printStatus(status, time, false);
-			} else if(debugEnabled){
-				printStatus(status, time, true);
-			} else if(isDebugTimeEnabled()){
-				appendLine(ConsoleDocument.MESSAGE, time);
-			}
-		} else if (exception != null) {
-			String statusText;
-			if (exception instanceof OperationCanceledException) {
-				statusText = Messages.getString("HgConsole.aborted1") + time + Messages.getString("HgConsole.aborted2"); //$NON-NLS-1$ //$NON-NLS-2$
-			} else {
-				statusText = time;
-			}
-			appendLine(ConsoleDocument.COMMAND, statusText);
-			if (exception instanceof CoreException) {
-				outputStatus(((CoreException) exception).getStatus(), true, 1);
-			}
-		} else if(isDebugTimeEnabled()){
-			appendLine(ConsoleDocument.MESSAGE, time);
-		}
-	}
-
-
-	private void printStatus(IStatus status, String time, boolean includeRoot) {
-		String statusText = status.getMessage();
-		if(time.length() > 0){
-			statusText += "(" + time.trim() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		int kind = status.getSeverity() == IStatus.ERROR? ConsoleDocument.ERROR : ConsoleDocument.MESSAGE;
-		appendLine(kind, statusText);
-		outputStatus(status, includeRoot, includeRoot ? 0 : 1);
-	}
-
-	/**
-	 *
-	 * @param timeInMillis
-	 * @return empty string if time measurement was not enabled or we are failed to measure it
-	 */
-	private String getTimeString(long timeInMillis) {
-		if(!isDebugTimeEnabled()){
-			return "";
-		}
-		String time;
-		try {
-			time = String.format("  Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
-		} catch (RuntimeException e) {
-			MercurialEclipsePlugin.logError(e);
-			time = "";
-		}
-		return time;
-	}
-
-	private void outputStatus(IStatus status, boolean includeParent,
-			int nestingLevel) {
-		int myNestingLevel = nestingLevel;
-		if (includeParent && !status.isOK()) {
-			outputStatusMessage(status, nestingLevel);
-			myNestingLevel++;
-		}
-
-		// Include a CoreException in the status
-		Throwable t = status.getException();
-		if (t instanceof CoreException) {
-			outputStatus(((CoreException) t).getStatus(), true, myNestingLevel);
-		}
-
-		// Include child status
-		IStatus[] children = status.getChildren();
-		for (int i = 0; i < children.length; i++) {
-			outputStatus(children[i], true, myNestingLevel);
-		}
-	}
-
-	private void outputStatusMessage(IStatus status, int nesting) {
-		StringBuffer buffer = new StringBuffer();
-		for (int i = 0; i < nesting; i++) {
-			buffer.append(NESTING);
-		}
-		buffer.append(messageLineForStatus(status));
-		appendLine(ConsoleDocument.COMMAND, buffer.toString());
-	}
-
 	public void propertyChange(PropertyChangeEvent event) {
 		String property = event.getProperty();
 		if(property == null || !property.startsWith("hg.console.")){
@@ -350,30 +227,9 @@ public class HgConsole extends MessageConsole {
 			initLimitOutput(store);
 		} else if (property.equals(PREF_CONSOLE_WRAP)) {
 			initWrapSetting(store);
-		} else if (property.equals(PREF_CONSOLE_DEBUG_TIME)) {
-			debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
-		} else if (property.equals(PREF_CONSOLE_DEBUG)) {
-			debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
+		} else if (CONSOLE_FONT.equals(property)) {
+			setConsoleFont();
 		}
-	}
-
-	/**
-	 * Returns the NLSd message based on the status returned from the Hg
-	 * command.
-	 *
-	 * @param status
-	 *            an NLSd message based on the status returned from the Hg
-	 *            command.
-	 */
-	private static String messageLineForStatus(IStatus status) {
-		if (status.getSeverity() == IStatus.ERROR) {
-			return Messages.getString("HgConsole.error") + status.getMessage(); //$NON-NLS-1$
-		} else if (status.getSeverity() == IStatus.WARNING) {
-			return Messages.getString("HgConsole.warning") + status.getMessage(); //$NON-NLS-1$
-		} else if (status.getSeverity() == IStatus.INFO) {
-			return Messages.getString("HgConsole.info") + status.getMessage(); //$NON-NLS-1$
-		}
-		return status.getMessage();
 	}
 
 	/**
@@ -383,5 +239,22 @@ public class HgConsole extends MessageConsole {
 		Display display = MercurialEclipsePlugin.getStandardDisplay();
 		RGB rgb = PreferenceConverter.getColor(store, preference);
 		return new Color(display, rgb);
+	}
+
+	protected void setConsoleFont() {
+		if (Display.getCurrent() == null) {
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+					Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+					setFont(font);
+				}
+			});
+		} else {
+			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+			Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+			setFont(font);
+
+		}
 	}
 }

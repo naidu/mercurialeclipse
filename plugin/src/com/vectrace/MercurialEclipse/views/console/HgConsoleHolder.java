@@ -11,18 +11,20 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
@@ -37,63 +39,99 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * This class should only be called from the UI thread as it is not thread-safe.
  */
 public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
-	private static final String CONSOLE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"; //$NON-NLS-1$
-
 	private static final HgConsoleHolder INSTANCE = new HgConsoleHolder();
 
+	/**
+	 * Constant used for indenting error status printing
+	 */
+	private static final String NESTING = "   "; //$NON-NLS-1$
+
+	/**
+	 * Initially null
+	 */
 	private volatile HgConsole console;
+
+	/**
+	 * The document to use for {@link #console} when it is instantiated.
+	 */
+	private final ConsoleDocument consoleDocument = new ConsoleDocument();
 
 	private boolean showOnMessage;
 	private boolean registered;
+
+	private boolean debugTimeEnabled;
+	private boolean debugEnabled;
 
 	/**
 	 * Retained so the logger is not garbage collected before JavaHg itself loads.
 	 */
 	private Logger javaHgLogger;
 
+	private boolean bInitialized;
+
 	private HgConsoleHolder() {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
+		debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
 	}
 
 	public static HgConsoleHolder getInstance() {
 		return INSTANCE;
 	}
 
-	private void init() {
-		if (isInitialized()) {
+	/**
+	 * If force then instantiates {@link #console} if it is not already instantiated. Note: may be asynchronous.
+	 *
+	 * @param force Whether to instantiate {@link #console} if it is not already
+	 */
+	private void init(boolean force) {
+		if (console != null || (bInitialized && !force)) {
 			return;
 		}
+
 		synchronized(this){
-			if (isInitialized()) {
-				return;
-			}
-			console = new HgConsole();
-			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-
-			store.addPropertyChangeListener(this);
-			getConsoleManager().addConsoleListener(this);
-
-			showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
-
-			if (!PlatformUI.isWorkbenchRunning()) {
-				showOnMessage = false;
+			if (console != null || (bInitialized && !force)) {
 				return;
 			}
 
-			handleJavaHgLogging();
+			if (!bInitialized) {
+				IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 
-			// install font
-			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
-			// we must run this stupid code in the UI thread
-			if (Display.getCurrent() != null) {
-				initUIResources();
-			} else {
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-					public void run() {
-						initUIResources();
-					}
-				});
+				store.addPropertyChangeListener(this);
+
+				showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
+				handleJavaHgLogging();
+
+				if (!PlatformUI.isWorkbenchRunning()) {
+					showOnMessage = false;
+				}
+				bInitialized = true;
+			}
+			if (force && console == null) {
+				// install font
+				// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
+				// we must run this stupid code in the UI thread
+				if (Display.getCurrent() != null) {
+					initConsole();
+				} else {
+					PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+						public void run() {
+							initConsole();
+						}
+					});
+				}
 			}
 		}
+	}
+
+	protected void initConsole() {
+		console = new HgConsole(consoleDocument);
+		getConsoleManager().addConsoleListener(this);
+
+		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+		theme.addPropertyChangeListener(this);
+		JFaceResources.getFontRegistry().addListener(this);
+		console.setConsoleFont();
 	}
 
 	/**
@@ -102,14 +140,13 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 	 */
 	private void handleJavaHgLogging() {
 		javaHgLogger = Logger.getLogger("com.aragost.javahg");
-
 		javaHgLogger.setLevel(Level.INFO);
 
 		Handler h = new Handler() {
 
 			@Override
 			public void publish(LogRecord record) {
-				getConsole().log(record);
+				log(record);
 			}
 
 			@Override
@@ -124,21 +161,12 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		javaHgLogger.addHandler(h);
 	}
 
-	private void initUIResources() {
-		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-		theme.addPropertyChangeListener(this);
-		JFaceResources.getFontRegistry().addListener(this);
-		setConsoleFont();
-	}
-
-	private boolean isInitialized() {
-		return console != null;
-	}
-
 	public HgConsole showConsole(boolean force) {
-		init();
+		force |= showOnMessage;
 
-		if (force || showOnMessage) {
+		init(force);
+
+		if (force) {
 			// register console
 			if(Display.getCurrent() == null){
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
@@ -176,9 +204,10 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		return registered;
 	}
 
-	public HgConsole getConsole() {
-		init();
-		return console;
+	private IHgConsole getConsole() {
+		init(false);
+
+		return (console == null) ? consoleDocument : console;
 	}
 
 	public void consolesAdded(IConsole[] consoles) {
@@ -204,12 +233,16 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 	}
 
 	public void propertyChange(PropertyChangeEvent event) {
+		String property = event.getProperty();
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+
 		if(PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
-			IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 			showOnMessage = store.getBoolean(PREF_CONSOLE_SHOW_ON_MESSAGE);
-		} else if (CONSOLE_FONT.equals(event.getProperty())) {
-			setConsoleFont();
-		} else {
+		} else if (property.equals(PREF_CONSOLE_DEBUG_TIME)) {
+			debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
+		} else if (property.equals(PREF_CONSOLE_DEBUG)) {
+			debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
+		} else if (console != null) {
 			console.propertyChange(event);
 		}
 	}
@@ -218,20 +251,141 @@ public final class HgConsoleHolder implements IConsoleListener, IPropertyChangeL
 		return ConsolePlugin.getDefault().getConsoleManager();
 	}
 
-	private void setConsoleFont() {
-		if (Display.getCurrent() == null) {
-			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-				public void run() {
-					ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-					Font font = theme.getFontRegistry().get(CONSOLE_FONT);
-					console.setFont(font);
-				}
-			});
-		} else {
-			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-			Font font = theme.getFontRegistry().get(CONSOLE_FONT);
-			console.setFont(font);
+	public void commandInvoked(String line) {
+		getConsole().appendLine(ConsoleDocument.COMMAND, line);
+	}
 
+	public void messageLineReceived(String line) {
+		getConsole().appendLine(ConsoleDocument.MESSAGE, line);
+	}
+
+	public void errorLineReceived(String line) {
+		getConsole().appendLine(ConsoleDocument.ERROR, line);
+	}
+
+	protected void log(LogRecord record) {
+		int type = (Level.INFO.intValue() < record.getLevel().intValue()) ? ConsoleDocument.ERROR
+				: ConsoleDocument.MESSAGE;
+		String loggerName = record.getLoggerName();
+		int index;
+
+		if (loggerName != null && (index =  loggerName.lastIndexOf('.')) >= 0) {
+			loggerName = loggerName.substring(index + 1);
 		}
+
+		getConsole().appendLine(type, loggerName + ": " + record.getMessage());
+	}
+
+	public void commandCompleted(long timeInMillis, IStatus status, Throwable exception) {
+
+		String time = getTimeString(timeInMillis);
+		if (status != null) {
+			if(status.getSeverity() == IStatus.ERROR) {
+				printStatus(status, time, false);
+			} else if(debugEnabled){
+				printStatus(status, time, true);
+			} else if(debugTimeEnabled){
+				getConsole().appendLine(ConsoleDocument.MESSAGE, time);
+			}
+		} else if (exception != null) {
+			String statusText;
+			if (exception instanceof OperationCanceledException) {
+				statusText = Messages.getString("HgConsole.aborted1") + time + Messages.getString("HgConsole.aborted2"); //$NON-NLS-1$ //$NON-NLS-2$
+			} else {
+				statusText = time;
+			}
+			getConsole().appendLine(ConsoleDocument.COMMAND, statusText);
+			if (exception instanceof CoreException) {
+				outputStatus(((CoreException) exception).getStatus(), true, 1);
+			}
+		} else if(debugTimeEnabled){
+			getConsole().appendLine(ConsoleDocument.MESSAGE, time);
+		}
+	}
+
+	private void printStatus(IStatus status, String time, boolean includeRoot) {
+		String statusText = status.getMessage();
+		if(time.length() > 0){
+			statusText += "(" + time.trim() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+		}
+		int kind = status.getSeverity() == IStatus.ERROR? ConsoleDocument.ERROR : ConsoleDocument.MESSAGE;
+		getConsole().appendLine(kind, statusText);
+		outputStatus(status, includeRoot, includeRoot ? 0 : 1);
+	}
+
+	/**
+	 *
+	 * @param timeInMillis
+	 * @return empty string if time measurement was not enabled or we are failed to measure it
+	 */
+	private String getTimeString(long timeInMillis) {
+		if(!debugTimeEnabled){
+			return "";
+		}
+		String time;
+		try {
+			time = String.format("  Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
+		} catch (RuntimeException e) {
+			MercurialEclipsePlugin.logError(e);
+			time = "";
+		}
+		return time;
+	}
+
+	private void outputStatus(IStatus status, boolean includeParent,
+			int nestingLevel) {
+		int myNestingLevel = nestingLevel;
+		if (includeParent && !status.isOK()) {
+			outputStatusMessage(status, nestingLevel);
+			myNestingLevel++;
+		}
+
+		// Include a CoreException in the status
+		Throwable t = status.getException();
+		if (t instanceof CoreException) {
+			outputStatus(((CoreException) t).getStatus(), true, myNestingLevel);
+		}
+
+		// Include child status
+		IStatus[] children = status.getChildren();
+		for (int i = 0; i < children.length; i++) {
+			outputStatus(children[i], true, myNestingLevel);
+		}
+	}
+
+	private void outputStatusMessage(IStatus status, int nesting) {
+		StringBuffer buffer = new StringBuffer();
+		for (int i = 0; i < nesting; i++) {
+			buffer.append(NESTING);
+		}
+		buffer.append(messageLineForStatus(status));
+		getConsole().appendLine(ConsoleDocument.COMMAND, buffer.toString());
+	}
+
+	/**
+	 * Returns the NLSd message based on the status returned from the Hg
+	 * command.
+	 *
+	 * @param status
+	 *            an NLSd message based on the status returned from the Hg
+	 *            command.
+	 */
+	private static String messageLineForStatus(IStatus status) {
+		if (status.getSeverity() == IStatus.ERROR) {
+			return Messages.getString("HgConsole.error") + status.getMessage(); //$NON-NLS-1$
+		} else if (status.getSeverity() == IStatus.WARNING) {
+			return Messages.getString("HgConsole.warning") + status.getMessage(); //$NON-NLS-1$
+		} else if (status.getSeverity() == IStatus.INFO) {
+			return Messages.getString("HgConsole.info") + status.getMessage(); //$NON-NLS-1$
+		}
+		return status.getMessage();
+	}
+
+	public static interface IHgConsole {
+
+		/**
+		 * Appends a line of the specified type to the end of the console.
+		 */
+		void appendLine(int type, String string);
 	}
 }

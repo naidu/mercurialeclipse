@@ -92,21 +92,20 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 		}
 		HgConsoleHolder
 				.getInstance()
-				.getConsole()
 				.commandCompleted(timeInMillis,
 						new Status(severity, MercurialEclipsePlugin.ID, message), error);
 	}
 
 	public void commandInvoked(final String command) {
-		HgConsoleHolder.getInstance().getConsole().commandInvoked(command);
+		HgConsoleHolder.getInstance().commandInvoked(command);
 	}
 
 	public void printError(final String message, final Throwable root) {
-		HgConsoleHolder.getInstance().getConsole().errorLineReceived(root.getMessage());
+		HgConsoleHolder.getInstance().errorLineReceived(root.getMessage());
 	}
 
 	public void printMessage(final String message, final Throwable root) {
-		HgConsoleHolder.getInstance().getConsole().messageLineReceived(message);
+		HgConsoleHolder.getInstance().messageLineReceived(message);
 	}
 
 }
