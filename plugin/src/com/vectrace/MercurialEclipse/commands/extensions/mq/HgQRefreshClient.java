@@ -19,9 +19,11 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QRefreshCommand;
+import com.aragost.javahg.ext.mq.flags.QRefreshCommandFlags;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -32,77 +34,56 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  *
  */
 public class HgQRefreshClient extends AbstractClient {
-	public static String refresh(HgRoot root, boolean shortFlag, List<IResource> files,
+	public static void refresh(HgRoot root, boolean shortFlag, List<IResource> files,
 			String message, boolean currentDate) throws HgException {
-		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				"Invoking qrefresh", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		QRefreshCommand command = QRefreshCommandFlags.on(root.getRepository());
+
 		if (shortFlag) {
-			command.addOptions("-s"); //$NON-NLS-1$
+			command.shortOpt();
 		}
 
-		File messageFile = null;
-
 		if (message != null && message.length() > 0) {
-			messageFile = addMessage(command, message);
+			command.message(message);
 		}
 
 		if (currentDate) {
-			command.addOptions("--currentdate");
+			command.currentdate();
 		}
-		command.addFiles(files);
 
-		try
-		{
-			return command.executeToString();
-		}
-		finally
-		{
-			deleteMessage(messageFile);
-		}
+		execute(command, files);
 	}
 
-	public static String refresh(HgRoot root, String commitMessage,
-			List<IResource> resources, String user, String date)
-			throws HgException {
-		HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
-				"Invoking qrefresh", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		File messageFile = null;
-
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+	public static void refresh(HgRoot root, String commitMessage, List<IResource> resources,
+			String user, String date) throws HgException {
+		QRefreshCommand command = QRefreshCommandFlags.on(root.getRepository());
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			messageFile = addMessage(command, commitMessage);
+			command.message(commitMessage);
 		}
 
-		command.addOptions("--git"); //$NON-NLS-1$
-
 		if (user != null && user.length() > 0) {
-			command.addOptions("--user", user); //$NON-NLS-1$
+			command.user(user);
 		} else {
-			command.addOptions("--currentuser"); //$NON-NLS-1$
+			command.currentuser();
 		}
 
 		if (date != null && date.length() > 0) {
-			command.addOptions("--date", date); //$NON-NLS-1$
+			command.date(date);
 		} else {
-			command.addOptions("--currentdate"); //$NON-NLS-1$
+			command.currentdate();
 		}
 
 		// TODO: this will refresh dirty files in the patch regardless of whether they're selected
-		command.addOptions("-s");
+		command.shortOpt();
 
-		command.addFiles(resources);
+		execute(command, resources);
+	}
 
-		try
-		{
-			return command.executeToString();
-		}
-		finally
-		{
-			deleteMessage(messageFile);
+	private static void execute(QRefreshCommand command, List<IResource> files) throws HgException {
+		try {
+			command.execute(toFileArray(files));
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
 		}
 	}
 
@@ -112,7 +93,9 @@ public class HgQRefreshClient extends AbstractClient {
 	 *
 	 * @return The file that must be deleted
 	 * @see #deleteMessage(File)
+	 * @deprecated Using JavaHg no need to save to disk
 	 */
+	@Deprecated
 	protected static File addMessage(HgCommand command, String message) {
 		File messageFile = saveMessage(message, command);
 
@@ -134,6 +117,10 @@ public class HgQRefreshClient extends AbstractClient {
 		return messageFile;
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static String quote(String str) {
 		if (str != null) {
 			str = str.trim();
@@ -145,6 +132,10 @@ public class HgQRefreshClient extends AbstractClient {
 		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	private static File saveMessage(String message, HgCommand command) {
 		Writer writer = null;
 		try {
@@ -167,6 +158,10 @@ public class HgQRefreshClient extends AbstractClient {
 		}
 	}
 
+	/**
+	 * @deprecated
+	 */
+	@Deprecated
 	protected static void deleteMessage(File messageFile) {
 		// Try to delete normally, and if not successful
 		// leave it for the JVM exit - I use it in case
