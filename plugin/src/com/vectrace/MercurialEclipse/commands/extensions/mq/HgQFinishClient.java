@@ -14,9 +14,9 @@ import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.flags.QFinishCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
@@ -26,35 +26,33 @@ import com.vectrace.MercurialEclipse.model.Patch;
  *
  */
 public class HgQFinishClient extends AbstractClient {
-	private static AbstractShellCommand makeCommand(HgRoot root) {
-		Assert.isNotNull(root);
-		AbstractShellCommand command = new HgCommand("qfinish", //$NON-NLS-1$
-				"Invoking qfinish", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
-		return command;
-	}
 
-	@SuppressWarnings("null")
-	public static String finish(HgRoot root, List<Patch> revs) throws HgException {
-		Assert.isTrue(revs != null && revs.size() > 0);
-		AbstractShellCommand command = makeCommand(root);
+	public static void finish(HgRoot root, List<Patch> revs) throws HgException {
+		Assert.isTrue(revs.size() > 0);
+
+		String[] patches = new String[revs.size()];
+		int i = 0;
 
 		for (Patch p : revs) {
-			command.addOptions(p.getName());
+			patches[i++] = p.getName();
 		}
 
-		return command.executeToString();
+		try {
+			QFinishCommandFlags.on(root.getRepository()).execute(patches);
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
+		}
 	}
 
 	/**
 	 * Calls qfinish -a
 	 */
-	public static String finishAllApplied(HgRoot root) throws HgException {
-		AbstractShellCommand command = makeCommand(root);
-		command.addOptions("--applied");
-
-		return command.executeToString();
+	public static void finishAllApplied(HgRoot root) throws HgException {
+		try {
+			QFinishCommandFlags.on(root.getRepository()).applied().execute();
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
+		}
 	}
 }
