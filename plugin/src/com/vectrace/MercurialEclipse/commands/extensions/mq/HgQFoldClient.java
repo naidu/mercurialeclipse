@@ -10,15 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QFoldCommand;
+import com.aragost.javahg.ext.mq.flags.QFoldCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
@@ -29,17 +29,17 @@ import com.vectrace.MercurialEclipse.model.Patch;
  */
 public class HgQFoldClient extends AbstractClient {
 
-	public static String fold(HgRoot root, boolean keep, String message,
-			String patchName) throws HgException {
+	public static void fold(HgRoot root, boolean keep, String message, String patchName)
+			throws HgException {
 		List<String> patchNames = new ArrayList<String>(1);
 
 		patchNames.add(patchName);
 
-		return doFold(root, keep, message, patchNames);
+		doFold(root, keep, message, patchNames);
 	}
 
-	public static String fold(HgRoot root, boolean keep, String message,
-			List<Patch> patches) throws HgException {
+	public static void fold(HgRoot root, boolean keep, String message, List<Patch> patches)
+			throws HgException {
 		Assert.isNotNull(patches);
 
 		List<String> patchNames = new ArrayList<String>(patches.size());
@@ -48,35 +48,27 @@ public class HgQFoldClient extends AbstractClient {
 			patchNames.add(patch.getName());
 		}
 
-		return doFold(root, keep, message, patchNames);
+		doFold(root, keep, message, patchNames);
 	}
 
-	private static String doFold(HgRoot root, boolean keep, String message,
-			List<String> patches) throws HgException {
+	private static void doFold(HgRoot root, boolean keep, String message, List<String> patches)
+			throws HgException {
+
 		Assert.isNotNull(patches);
 		Assert.isNotNull(root);
-		HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
-				"Invoking qfold", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		File messageFile = null;
-
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		QFoldCommand command = QFoldCommandFlags.on(root.getRepository());
 
 		if (keep) {
-			command.addOptions("--keep"); //$NON-NLS-1$
+			command.keep();
 		}
 		if (message != null && message.length() > 0) {
-			messageFile = HgQRefreshClient.addMessage(command, message);
-		}
-
-		for (String patch : patches) {
-			command.addOptions(patch);
+			command.message(message);
 		}
 
 		try {
-			return command.executeToString();
-		} finally {
-			HgQRefreshClient.deleteMessage(messageFile);
+			command.execute(patches.toArray(new String[patches.size()]));
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
 		}
 	}
 
