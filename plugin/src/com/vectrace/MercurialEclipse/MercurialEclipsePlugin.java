@@ -186,6 +186,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 							}
 						}.schedule();
 					}
+
+					new SafeUiJob("Initializing UI resources") { //$NON-NLS-1$
+						@Override
+						protected IStatus runSafe(IProgressMonitor monitor2) {
+							PlatformUI
+									.getWorkbench()
+									.getProgressService()
+									.registerIconForFamily(
+											getImageDescriptor("mercurialeclipse.png"),
+											AbstractShellCommand.class);
+							return super.runSafe(monitor2);
+						}
+					}.schedule();
 				}
 			}
 		};
