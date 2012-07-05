@@ -39,8 +39,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -59,18 +57,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * File encoding to use. If not specified falls back to {@link HgRoot}'s encoding.
 	 */
 	private String encoding;
-
-	static {
-		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
-		// we must run this stupid code in the UI thread
-		Display.getDefault().asyncExec(new Runnable() {
-			public void run() {
-				PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
-						getImageDescriptor("mercurialeclipse.png"),
-						AbstractShellCommand.class);
-			}
-		});
-	}
 
 	/**
 	 * This rule disallows hg commands run in parallel if the hg root is specified.
