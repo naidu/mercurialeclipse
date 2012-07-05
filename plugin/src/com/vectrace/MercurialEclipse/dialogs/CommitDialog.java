@@ -657,16 +657,15 @@ public class CommitDialog extends TitleAreaDialog {
 	 *
 	 * TODO: allow amending commit user as well.
 	 */
-	protected String performAmendMQ(String message, ChangeSet cs) throws HgException {
+	protected void performAmendMQ(String message, ChangeSet cs) throws HgException {
 		final IProgressMonitor pm = monitor;
 		final String origPatchName = makePatchName("amend-orig");
-		String result = "";
 		boolean exceptionExpected = true;
 		boolean refreshWorspace = false;
 
 		try {
 			pm.subTask("Importing changeset into MQ.");
-			result += HgQImportClient.qimport(root, true, currentChangeset, origPatchName);
+			HgQImportClient.qimport(root, true, currentChangeset, origPatchName);
 			pm.worked(1);
 
 			if (!resourcesToCommit.isEmpty() || HgStatusClient.isDirty(root)) {
@@ -677,7 +676,7 @@ public class CommitDialog extends TitleAreaDialog {
 				pm.subTask("Creating new MQ patch containing changes to amend");
 
 				// May throw exceptions eg: inconsistent newline style or patch file exists
-				result += HgQNewClient.createNewPatch(root, "Changes to amend with previous", resourcesToCommit,
+				HgQNewClient.createNewPatch(root, "Changes to amend with previous", resourcesToCommit,
 						user, null, amendPatchName);
 				pm.worked(1);
 
@@ -686,7 +685,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 					// Note: If an exception occurs here 2 patches will be qfinished
 					// This error is semi-expected
-					result += HgQNewClient.createNewPatch(root, "Changes to amend with previous",
+					HgQNewClient.createNewPatch(root, "Changes to amend with previous",
 							user, null, notIncludedPatchName);
 
 					exceptionExpected = false;
@@ -712,7 +711,7 @@ public class CommitDialog extends TitleAreaDialog {
 			} else {
 				// refresh patch to update commit message
 				pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
-				result = HgQRefreshClient.refresh(root, true, resourcesToCommit, message, true);
+				HgQRefreshClient.refresh(root, true, resourcesToCommit, message, true);
 				pm.worked(4);
 			}
 		} catch (HgException e) {
@@ -750,7 +749,6 @@ public class CommitDialog extends TitleAreaDialog {
 			}
 			job.schedule();
 		}
-		return result;
 	}
 
 	protected void performCommit(String message, boolean closeBranch, boolean amend)
