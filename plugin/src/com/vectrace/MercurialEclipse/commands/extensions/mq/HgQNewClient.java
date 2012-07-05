@@ -10,14 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QNewCommand;
+import com.aragost.javahg.ext.mq.flags.QNewCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -26,58 +27,49 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  *
  */
 public class HgQNewClient extends AbstractClient {
-	public static String createNewPatch(HgRoot root, String commitMessage, String user, String date, String patchName) throws HgException {
-		return createNewPatch(root, commitMessage, null, user, date, patchName, true);
+	public static void createNewPatch(HgRoot root, String commitMessage, String user, String date,
+			String patchName) throws HgException {
+		createNewPatch(root, commitMessage, null, user, date, patchName, true);
 	}
 
-	public static String createNewPatch(HgRoot root, String commitMessage,
-			List<IResource> resources, String user, String date, String patchName)
-			throws HgException {
-		return createNewPatch(root, commitMessage, resources, user, date, patchName, false);
+	public static void createNewPatch(HgRoot root, String commitMessage, List<IResource> resources,
+			String user, String date, String patchName) throws HgException {
+		createNewPatch(root, commitMessage, resources, user, date, patchName, false);
 	}
 
-	private static String createNewPatch(HgRoot root, String commitMessage,
+	private static void createNewPatch(HgRoot root, String commitMessage,
 			List<IResource> resources, String user, String date, String patchName, boolean all)
 			throws HgException {
-		HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
-				"Invoking qnew", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		File messageFile = null;
-
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		QNewCommand command = QNewCommandFlags.on(root.getRepository());
 
 		if (commitMessage != null && commitMessage.length() > 0) {
-			messageFile = HgQRefreshClient.addMessage(command, commitMessage);
+			command.message(commitMessage);
 		}
 
-		command.addOptions("--git"); //$NON-NLS-1$
-
 		if (user != null && user.length() > 0) {
-			command.addOptions("--user", user); //$NON-NLS-1$
+			command.user(user);
 		} else {
-			command.addOptions("--currentuser"); //$NON-NLS-1$
+			command.currentuser();
 		}
 
 		if (date != null && date.length() > 0) {
-			command.addOptions("--date", date); //$NON-NLS-1$
+			command.date(date);
 		} else {
-			command.addOptions("--currentdate"); //$NON-NLS-1$
+			command.currentdate();
 		}
 
 		if (!all) {
 			if (resources.isEmpty()) {
-				command.addOptions("--exclude", "*");
-			} else {
-				command.addFiles(resources);
+				command.exclude("*");
 			}
+		} else {
+			resources = Collections.EMPTY_LIST;
 		}
 
-		command.addOptions(patchName);
-
 		try {
-			return command.executeToString();
-		} finally {
-			HgQRefreshClient.deleteMessage(messageFile);
+			command.execute(patchName, toFileArray(resources));
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
 		}
 	}
 }
