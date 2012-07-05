@@ -10,10 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
+import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder.IHgConsole;
+
 /**
  * Simple circular buffer that stores a fix number of lines.
  */
-public class ConsoleDocument {
+public class ConsoleDocument implements IHgConsole {
 	public static final int COMMAND = 0; // command text
 	public static final int MESSAGE = 1; // message received
 	public static final int ERROR = 2;   // error received
@@ -55,8 +57,9 @@ public class ConsoleDocument {
 
 	/**
 	 * Appends a line of the specified type to the end of the console.
+	 * @see com.vectrace.MercurialEclipse.views.console.HgConsoleHolder.IHgConsole#appendLine(int, java.lang.String)
 	 */
-	public void appendConsoleLine(int type, String line) {
+	public void appendLine(int type, String line) {
 		if(lines == null) {
 			lines = new String[BUFFER_SIZE];
 			lineTypes = new int[BUFFER_SIZE];
