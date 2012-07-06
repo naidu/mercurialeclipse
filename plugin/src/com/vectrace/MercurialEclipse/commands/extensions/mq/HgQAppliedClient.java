@@ -12,12 +12,11 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.util.List;
 
-import org.eclipse.core.runtime.Assert;
-
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.ext.mq.Patch;
+import com.aragost.javahg.ext.mq.flags.QAppliedCommandFlags;
+import com.aragost.javahg.ext.mq.flags.QUnappliedCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -27,23 +26,19 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class HgQAppliedClient extends AbstractClient {
 	public static List<Patch> getAppliedPatches(HgRoot root) throws HgException {
-		Assert.isNotNull(root);
-		AbstractShellCommand command = new HgCommand("qapplied", "Invoking qapplied", root, true); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-		command.addOptions("-v"); //$NON-NLS-1$
-		command.addOptions("-s"); //$NON-NLS-1$
-		return HgQSeriesClient.parse(command.executeToString());
+		try {
+			return QAppliedCommandFlags.on(root.getRepository()).execute();
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
+		}
 	}
 
 	public static List<Patch> getUnappliedPatches(HgRoot root) throws HgException{
-		Assert.isNotNull(root);
-		AbstractShellCommand command = new HgCommand("qunapplied", "Invoking qunapplied", root, true); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-		command.addOptions("-v"); //$NON-NLS-1$
-		command.addOptions("-s"); //$NON-NLS-1$
-		return HgQSeriesClient.parse(command.executeToString());
+		try {
+			return QUnappliedCommandFlags.on(root.getRepository()).execute();
+		} catch (ExecutionException ex) {
+			throw new HgException(ex.getLocalizedMessage(), ex);
+		}
 	}
 
 }
