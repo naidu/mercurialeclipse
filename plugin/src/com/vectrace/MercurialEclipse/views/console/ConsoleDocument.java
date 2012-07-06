@@ -48,7 +48,7 @@ public class ConsoleDocument implements IHgConsole {
 	/**
 	 * Clears the console document.
 	 */
-	public void clear() {
+	public synchronized void clear() {
 		lineTypes = null;
 		lines = null;
 		writeIndex = 0;
@@ -59,7 +59,7 @@ public class ConsoleDocument implements IHgConsole {
 	 * Appends a line of the specified type to the end of the console.
 	 * @see com.vectrace.MercurialEclipse.views.console.HgConsoleHolder.IHgConsole#appendLine(int, java.lang.String)
 	 */
-	public void appendLine(int type, String line) {
+	public synchronized void appendLine(int type, String line) {
 		if(lines == null) {
 			lines = new String[BUFFER_SIZE];
 			lineTypes = new int[BUFFER_SIZE];
@@ -77,7 +77,7 @@ public class ConsoleDocument implements IHgConsole {
 		}
 	}
 
-	public ConsoleLine[] getLines() {
+	public synchronized ConsoleLine[] getLines() {
 		if(isEmpty()) {
 			return new ConsoleLine[0];
 		}
@@ -92,7 +92,7 @@ public class ConsoleDocument implements IHgConsole {
 		return docLines;
 	}
 
-	public boolean isEmpty() {
+	public synchronized boolean isEmpty() {
 		return writeIndex == readIndex;
 	}
 }
