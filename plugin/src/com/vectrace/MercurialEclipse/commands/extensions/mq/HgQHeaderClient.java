@@ -10,9 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.flags.QHeaderCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -33,9 +33,11 @@ public class HgQHeaderClient extends AbstractClient {
 	 *             Thrown when the Hg command cannot be executed.
 	 */
 	public static String getHeader(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("qheader", "Invoking qheader", root, false); //$NON-NLS-1$
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-		return command.executeToString().trim();
+		try {
+			return QHeaderCommandFlags.on(root.getRepository()).execute().trim();
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
+		}
 	}
 
 }
