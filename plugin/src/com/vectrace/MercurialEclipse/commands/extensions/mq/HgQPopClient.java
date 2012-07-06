@@ -11,11 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import org.eclipse.core.runtime.Assert;
-
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QPopCommand;
+import com.aragost.javahg.ext.mq.flags.QPopCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
@@ -23,37 +22,38 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  * @author bastian
  */
 public class HgQPopClient extends AbstractClient {
-	public static String popAll(HgRoot root, boolean force)
-			throws HgException {
-		Assert.isNotNull(root);
-		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				"Invoking qpop", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
+	public static void popAll(HgRoot root, boolean force) throws HgException {
 
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		QPopCommand command = QPopCommandFlags.on(root.getRepository());
 
-		command.addOptions("-a"); //$NON-NLS-1$
+		command.all();
+
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
-		return command.executeToString();
+
+		try {
+			command.execute();
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
+		}
 	}
 
-	public static String pop(HgRoot root, boolean force, String patchName)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("qpop", //$NON-NLS-1$
-				"Invoking qpop", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+	public static void pop(HgRoot root, boolean force, String patchName) throws HgException {
+		QPopCommand command = QPopCommandFlags.on(root.getRepository());
 
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
 
-		if (!"".equals(patchName)) { //$NON-NLS-1$
-			command.addOptions(patchName);
+		try {
+			if (!"".equals(patchName)) { //$NON-NLS-1$
+				command.execute(patchName);
+			} else {
+				command.execute();
+			}
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
 		}
-		return command.executeToString();
 	}
 }
