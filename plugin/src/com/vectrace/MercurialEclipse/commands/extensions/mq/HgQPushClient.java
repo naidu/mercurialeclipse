@@ -10,9 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QPushCommand;
+import com.aragost.javahg.ext.mq.flags.QPushCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -22,36 +23,38 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  *
  */
 public class HgQPushClient extends AbstractClient {
-	public static String pushAll(HgRoot root, boolean force)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
-				"Invoking qpush", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
+	public static void pushAll(HgRoot root, boolean force) throws HgException {
+		QPushCommand command = QPushCommandFlags.on(root.getRepository());
 
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		command.all();
 
-		command.addOptions("-a"); //$NON-NLS-1$
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
-		return command.executeToString();
+
+		try {
+			command.execute();
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
+		}
 	}
 
-	public static String push(HgRoot root, boolean force, String patchName)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
-				"Invoking qpush", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+	public static void push(HgRoot root, boolean force, String patchName) throws HgException {
+		QPushCommand command = QPushCommandFlags.on(root.getRepository());
 
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
-		if (!"".equals(patchName)) { //$NON-NLS-1$
-			command.addOptions(patchName);
+
+		try {
+			if (!"".equals(patchName)) { //$NON-NLS-1$
+				command.execute(patchName);
+			} else {
+				command.execute();
+			}
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
 		}
-		return command.executeToString();
 	}
 
 	public static boolean isPatchApplyConflict(HgException e) {
