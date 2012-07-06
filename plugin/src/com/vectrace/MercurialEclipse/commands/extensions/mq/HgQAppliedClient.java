@@ -14,12 +14,12 @@ import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
 
+import com.aragost.javahg.ext.mq.Patch;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian

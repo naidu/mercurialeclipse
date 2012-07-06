@@ -46,6 +46,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 
+import com.aragost.javahg.ext.mq.Patch;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFinishClient;
@@ -60,7 +61,6 @@ import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.menu.StripHandler;
-import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
