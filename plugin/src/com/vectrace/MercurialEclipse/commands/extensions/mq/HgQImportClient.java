@@ -14,13 +14,13 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
+import com.aragost.javahg.commands.ExecutionException;
+import com.aragost.javahg.ext.mq.QImportCommand;
+import com.aragost.javahg.ext.mq.flags.QImportCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
@@ -31,47 +31,44 @@ public class HgQImportClient extends AbstractClient {
 	/**
 	 * Import a changeset with a specific name
 	 */
-	public static String qimport(HgRoot root, boolean force, ChangeSet changeset, String name)
+	public static void qimport(HgRoot root, boolean force, ChangeSet changeset, String name)
 			throws HgException {
-		return qimport(root, force, false, new ChangeSet[] { changeset }, null, name);
+		qimport(root, force, false, new ChangeSet[] { changeset }, null, name);
 	}
 
-	public static String qimport(HgRoot root, boolean force, boolean existing,
+	public static void qimport(HgRoot root, boolean force, boolean existing,
 			ChangeSet[] changesets, IPath patchFile) throws HgException {
-		return qimport(root, force, existing, changesets, patchFile, null);
+		qimport(root, force, existing, changesets, patchFile, null);
 	}
 
-	private static String qimport(HgRoot root, boolean force, boolean existing, ChangeSet[] changesets,
-			IPath patchFile, String name) throws HgException {
+	private static void qimport(HgRoot root, boolean force, boolean existing,
+			ChangeSet[] changesets, IPath patchFile, String name) throws HgException {
 		Assert.isNotNull(root);
-		AbstractShellCommand command = new HgCommand("qimport", //$NON-NLS-1$
-				"Invoking qimport", root, true);
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
 
-		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+		QImportCommand command = QImportCommandFlags.on(root.getRepository());
 
 		if (force) {
-			command.addOptions("--force"); //$NON-NLS-1$
+			command.force();
 		}
 
 		if (name != null) {
-			command.addOptions("--name", name); //$NON-NLS-1$
+			command.name(name);
 		}
 
-		command.addOptions("--git"); //$NON-NLS-1$
+		try {
+			if (changesets != null && changesets.length > 0) {
+				command.rev(changesets[changesets.length - 1].getNode() + ":"
+						+ changesets[0].getNode());
+				command.execute();
+			} else {
+				if (existing) {
+					command.existing();
+				}
 
-		if (changesets != null && changesets.length>0) {
-			command.addOptions("--rev", changesets[changesets.length-1].getNode()+ ":" +changesets[0].getNode()); //$NON-NLS-1$ //$NON-NLS-2$
-		} else {
-			Assert.isNotNull(patchFile);
-			if (existing) {
-				command.addOptions("--existing"); //$NON-NLS-1$
+				command.execute(patchFile.toOSString());
 			}
-
-			command.addOptions(patchFile.toOSString());
+		} catch (ExecutionException ee) {
+			throw new HgException(ee.getLocalizedMessage(), ee);
 		}
-
-		return command.executeToString();
 	}
 }
