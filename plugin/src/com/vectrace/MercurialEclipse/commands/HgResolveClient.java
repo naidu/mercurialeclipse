@@ -210,7 +210,7 @@ public class HgResolveClient extends AbstractClient {
 	public static boolean autoResolve(HgRoot hgRoot) {
 
 		if (isUseExternalMergeTool()) {
-			ResolveCommandFlags.on(hgRoot.getRepository()).execute();
+			ResolveCommandFlags.on(hgRoot.getRepository()).all().execute();
 		} else {
 			// Do resolve one by one because we're using an invalid merge tool so only pre-merge is done.
 			for(ResolveStatusLine line : ResolveCommandFlags.on(hgRoot.getRepository()).list()) {
