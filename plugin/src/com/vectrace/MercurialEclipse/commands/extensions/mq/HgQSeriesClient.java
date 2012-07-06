@@ -15,20 +15,21 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
+import com.aragost.javahg.ext.mq.Patch;
+import com.aragost.javahg.ext.mq.QSeriesCommand;
+import com.aragost.javahg.ext.mq.flags.QSeriesCommandFlags;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
  *
  */
 public class HgQSeriesClient extends AbstractClient {
-	public static List<Patch> getPatchesInSeries(HgRoot root)
-			throws HgException {
+	public static List<Patch> getPatchesInSeries(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
 				"Invoking qseries", root, true);
 
@@ -46,27 +47,17 @@ public class HgQSeriesClient extends AbstractClient {
 			int i = 1;
 
 			for (String string : patches) {
-                String[] components = string.split(":", 2); //$NON-NLS-1$
-                String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
+				String[] components = string.split(":", 2); //$NON-NLS-1$
+				String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
 
-				Patch p = new Patch();
-				p.setIndex(i++);
-				p.setApplied("A".equals(patchData[1])); //$NON-NLS-1$
-				p.setName(patchData[2].trim());
-
-				if (components.length>1) {
-					String summary = components[1].trim();
-					p.setSummary(summary);
-				}
-
-				list.add(p);
+				list.add(new Patch(patchData[2].trim(), "A".equals(patchData[1]), components[1]
+						.trim(), i++));
 			}
 		}
 		return list;
 	}
 
-	public static List<Patch> getPatchesNotInSeries(IResource resource)
-			throws HgException {
+	public static List<Patch> getPatchesNotInSeries(IResource resource) throws HgException {
 		AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
 				"Invoking qseries", resource, true);
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
