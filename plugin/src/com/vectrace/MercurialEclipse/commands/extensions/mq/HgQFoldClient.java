@@ -73,6 +73,7 @@ public class HgQFoldClient extends AbstractClient {
 	}
 
 	public static boolean isPatchConflict(HgException e) {
-		return e.getMessage().contains("patch failed, unable to continue");
+		return e.getMessage().contains("patch failed, unable to continue")
+				|| e.getMessage().contains("hunks FAILED -- saving rejects to file");
 	}
 }
