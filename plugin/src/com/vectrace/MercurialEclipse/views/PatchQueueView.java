@@ -151,7 +151,7 @@ public class PatchQueueView extends AbstractRootView {
 		qRefreshAction.setEnabled(false);
 
 		qGotoAction = new MQPatchAction(Messages.getString("PatchQueueView.switchTo"),
-		      RefreshRootJob.LOCAL_AND_OUTGOING, "QPushRejectsDialog.conflict", true) {
+		      RefreshRootJob.LOCAL_AND_OUTGOING, "QPushRejectsDialog.conflict", false) {
 			@Override
 			public boolean doInvoke() throws HgException {
 				// Switch to the first selected patch. There is only one patch selected because
