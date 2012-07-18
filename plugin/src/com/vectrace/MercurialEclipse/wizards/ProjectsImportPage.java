@@ -188,16 +188,16 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				fallbackProjectName = path.segment(path.segmentCount() - 2);
 				try {
 					tmpDescription = workspace.loadProjectDescription(path);
-					if (isDefaultLocation(path)){
-						// for some strange reasons (bug?) Eclipse disallows to create
-						// projects inside the workspace IF the project description has
-						// a location attribute set...
-						tmpDescription.setLocation(null);
-					}
 				} catch (CoreException e) {
 					// no good, couldn't load
 					tmpDescription = workspace.newProjectDescription(fallbackProjectName);
 					tmpDescription.setLocation(path.removeLastSegments(1));
+				}
+				if (isDefaultLocation(path)){
+					// for some strange reasons (bug?) Eclipse disallows to create
+					// projects inside the workspace IF the project description has
+					// a location attribute set...
+					tmpDescription.setLocation(null);
 				}
 			}
 			return tmpDescription;
@@ -624,9 +624,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 							/* Check if the first project is the root */
 							File file = filesIterator.next();
 							File dir = file.getParentFile();
-							if (dir.isDirectory() && dir.equals(destinationDir)){
+							if (dir.isDirectory() && dir.equals(destinationDir)) {
 								prj.add(new ProjectRecord(file, namer));
-							}else{
+							} else {
 								filesIterator = files.iterator(); /* reset iterator */
 							}
 						}
