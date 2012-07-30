@@ -94,14 +94,14 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 	@Override
 	public boolean equals(Object other) {
 		if (other instanceof RevisionNode) {
-			return this.resource.equals(((RevisionNode) other).getHgResource());
+			return this.resource.getIPath().equals(((RevisionNode) other).resource.getIPath());
 		}
 		return false;
 	}
 
 	@Override
 	public int hashCode() {
-		return resource.hashCode();
+		return resource.getIPath().hashCode();
 	}
 
 	public boolean isWorkingCopy() {
@@ -232,5 +232,13 @@ IEditableContent, IModificationDate, IEditableContentExtension {
 				}
 			}
 		}
+	}
+
+	/**
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "RevisionNode: " + resource.toString();
 	}
 }
