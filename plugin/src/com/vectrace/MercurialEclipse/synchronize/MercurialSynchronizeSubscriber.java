@@ -123,8 +123,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			return null;
 		}
 		String syncBranch = getSyncBranch(root);
+		IHgRepositoryLocation repo = scope.getRepositoryLocation(resource);
 
-		IHgRepositoryLocation repo = getRepo(resource);
+		if (repo == null) {
+			MercurialEclipsePlugin.logWarning("Could not find repo location for resource \""
+					+ resource + "\". Scope=" + scope.toString(), new NullPointerException());
+
+			return null;
+		}
+
 		if(computeFullState) {
 			return getSyncInfo(file, root, syncBranch, repo);
 		}
@@ -570,14 +577,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	public RepositorySynchronizationScope getScope() {
 		return scope;
-	}
-
-	protected IHgRepositoryLocation getRepo(IResource root){
-		IHgRepositoryLocation ret = scope.getRepositoryLocation(root);
-
-		Assert.isNotNull(ret);
-
-		return ret;
 	}
 
 	public IProject[] getProjects() {
