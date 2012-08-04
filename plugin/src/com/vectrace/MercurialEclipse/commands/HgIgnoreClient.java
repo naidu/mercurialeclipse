@@ -89,6 +89,10 @@ public class HgIgnoreClient extends AbstractClient {
 		return result.toString();
 	}
 
+	public static boolean hasHgIgnore(HgRoot root) {
+		return new File(root, ".hgignore").exists();
+	}
+
 	private static void addPattern(HgRoot hgRoot, String syntax, String pattern) throws HgException {
 		//TODO use existing sections
 		BufferedOutputStream buffer = null;
