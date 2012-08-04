@@ -22,7 +22,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class AdapterFactory implements IAdapterFactory {
 
-	@SuppressWarnings("unchecked")
 	public MercurialHistoryPageSource getAdapter(Object adaptableObject, Class adapterType) {
 		if((adaptableObject instanceof MercurialHistoryProvider) && adapterType == IHistoryPageSource.class) {
 			return new MercurialHistoryPageSource((MercurialHistoryProvider) adaptableObject);

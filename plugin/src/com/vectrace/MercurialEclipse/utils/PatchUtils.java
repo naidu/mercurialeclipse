@@ -65,7 +65,7 @@ public final class PatchUtils {
 		return new IFilePatch[0];
 	}
 
-	public static IFilePatch[] createPatches(final String patch)
+	private static IFilePatch[] createPatches(final String patch)
 			throws CoreException {
 		return ApplyPatchOperation.parsePatch(new IStorage() {
 			public InputStream getContents() throws CoreException {
@@ -84,8 +84,7 @@ public final class PatchUtils {
 				return true;
 			}
 
-			public Object getAdapter(
-					@SuppressWarnings("unchecked") Class adapter) {
+			public Object getAdapter(Class adapter) {
 				return null;
 			}
 		});

@@ -56,7 +56,6 @@ public abstract class AbstractHighlightableTable<E> extends Composite {
 		List<TableViewerColumn> cols = createColumns(viewer, tableColumnLayout);
 
 		CellLabelProvider clp = new CellLabelProvider() {
-			@SuppressWarnings("unchecked")
 			@Override
 			public void update(ViewerCell cell) {
 				E patch = (E) cell.getElement();
@@ -86,7 +85,6 @@ public abstract class AbstractHighlightableTable<E> extends Composite {
 	/**
 	 * @return The first selected patch, or {@code null} if the selection is empty.
 	 */
-	@SuppressWarnings("unchecked")
 	public E getSelection() {
 		return (E) ((IStructuredSelection) viewer.getSelection()).getFirstElement();
 	}
@@ -95,7 +93,6 @@ public abstract class AbstractHighlightableTable<E> extends Composite {
 	 * @return A list of the selected patches. If the selection is empty an empty list is returned,
 	 *         never {@code null}.
 	 */
-	@SuppressWarnings("unchecked")
 	public List<E> getSelections() {
 		return ((IStructuredSelection) viewer.getSelection()).toList();
 	}

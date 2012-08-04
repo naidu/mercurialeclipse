@@ -37,7 +37,6 @@ public class RemoveRootAction extends SelectionListenerAction {
 	/**
 	 * Returns the selected remote files
 	 */
-	@SuppressWarnings("unchecked")
 	protected IHgRepositoryLocation[] getSelectedRemoteRoots() {
 		ArrayList<IHgRepositoryLocation> resources = new ArrayList<IHgRepositoryLocation>();
 		if (selection != null && !selection.isEmpty()) {

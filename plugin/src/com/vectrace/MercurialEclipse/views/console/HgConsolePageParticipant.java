@@ -43,7 +43,7 @@ public class HgConsolePageParticipant implements IConsolePageParticipant {
 	public void deactivated() {
 	}
 
-	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+	public Object getAdapter(Class adapter) {
 		return null;
 	}
 }

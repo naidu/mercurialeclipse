@@ -120,7 +120,7 @@ public class ChangesetTable extends Composite {
 				"Tags",
 				Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
 		int[] widths = { 60, 80, 100, 80, 70, 70, 300 };
-		@SuppressWarnings("unchecked") Comparator[] comparators = { new Comparator<ChangeSet>() {
+		@SuppressWarnings("rawtypes") Comparator[] comparators = { new Comparator<ChangeSet>() {
 			public int compare(ChangeSet a, ChangeSet b) {
 				return TableSortListener.sort(a.getIndex(), b.getIndex());
 			}

@@ -199,7 +199,6 @@ public class SelectProjectsToSyncPage extends WizardPage {
 		return roots.toArray(new HgRoot[roots.size()]);
 	}
 
-	@SuppressWarnings("unchecked")
 	public IProject[] getSelectedProjects() {
 		Set<IProject> selected = new HashSet<IProject>();
 		Object[] checkedElements = viewer.getCheckedElements();

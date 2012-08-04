@@ -58,7 +58,6 @@ public class HgChangeSetModelProvider extends ModelProvider {
 			return subscriber.getParticipant();
 		}
 
-		@SuppressWarnings("unchecked")
 		public Object getAdapter(Object adaptableObject, Class adapterType) {
 			if (adaptableObject instanceof ModelProvider) {
 				ModelProvider provider1 = (ModelProvider) adaptableObject;
@@ -74,7 +73,6 @@ public class HgChangeSetModelProvider extends ModelProvider {
 			return null;
 		}
 
-		@SuppressWarnings("unchecked")
 		public Class[] getAdapterList() {
 			return new Class[] {
 //					IResourceMappingMerger.class,

@@ -42,7 +42,6 @@ public class QDeleteWizard extends HgOperationWizard {
 
 		private final ChangeSet changeset;
 
-		@SuppressWarnings("unchecked")
 		public DeleteOperation(IRunnableContext context, HgRoot root, QDeletePage page) {
 			super(context);
 
