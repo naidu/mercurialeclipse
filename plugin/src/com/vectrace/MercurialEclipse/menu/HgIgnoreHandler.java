@@ -17,7 +17,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.aragost.javahg.commands.ExecutionException;
@@ -28,6 +30,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgIgnoreHandler extends SingleResourceHandler {
 
@@ -46,6 +49,9 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 		}
 
 		if(dialog.open() == IDialogConstants.OK_ID) {
+			HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
+			boolean bRefreshHgIgnore = !HgIgnoreClient.hasHgIgnore(root);
+
 			switch(dialog.getResultType()) {
 				case FILE:
 					HgIgnoreClient.addFile(dialog.getFile());
@@ -63,18 +69,17 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					HgIgnoreClient.addRegexp(resource.getProject(), dialog.getPattern());
 					break;
 			}
-			refreshStatus(resource);
+			refreshStatus(root, bRefreshHgIgnore);
 		}
 	}
 
-	private static void refreshStatus(final IResource resource) {
-		Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
+	private static void refreshStatus(final HgRoot root, boolean bRefreshHgIgnore) {
+		// TODO: Evaluate using only RefreshStatusJob
+		final Job job = new Job("Refreshing status for ignored resources: " + root.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-
 					// update the HgRoot of the resource. This will update all projects that contain this HgRoot
-					HgRoot root = MercurialRootCache.getInstance().getHgRoot(resource);
 					MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 
 				} catch (ExecutionException e) {
@@ -91,7 +96,22 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 				return Status.OK_STATUS;
 			}
 		};
-		job.schedule();
+
+		if (bRefreshHgIgnore) {
+			Job job2 = new RefreshWorkspaceStatusJob(root);
+
+			job2.addJobChangeListener(new JobChangeAdapter() {
+
+				@Override
+				public void done(IJobChangeEvent event) {
+					job.schedule();
+				}
+			});
+
+			job2.schedule();
+		} else {
+			job.schedule();
+		}
 	}
 
 }
