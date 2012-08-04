@@ -37,7 +37,7 @@ public class AllRootsElement implements IWorkbenchAdapter, IAdaptable {
 		super();
 	}
 
-	public Object getAdapter(@SuppressWarnings("rawtypes") Class adapter) {
+	public Object getAdapter(Class adapter) {
 		if (adapter == IWorkbenchAdapter.class) {
 			return this;
 		}

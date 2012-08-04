@@ -307,7 +307,6 @@ public class PatchQueueView extends AbstractRootView {
 		});
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void updateEnablement(IStructuredSelection selection) {
 		assert hgRoot != null;
 
