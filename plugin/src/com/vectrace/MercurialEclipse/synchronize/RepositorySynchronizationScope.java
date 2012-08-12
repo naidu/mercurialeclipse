@@ -335,5 +335,9 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		public HgRoot getRoot(IHgRepositoryLocation repoLocation) {
 			return map.get(repoLocation).a;
 		}
+
+		public String toString() {
+			return "RLM: " + map.toString();
+		}
 	}
 }
