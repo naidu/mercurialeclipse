@@ -94,7 +94,8 @@ public abstract class AbstractJavaHgTestCase extends TestCase {
 
     protected static File createMercurialRepository() {
         File dir = Files.createTempDir();
-        Server server = new Server(RepositoryConfiguration.DEFAULT.getHgBin());
+        Server server = new Server(RepositoryConfiguration.DEFAULT.getHgBin(),
+                RepositoryConfiguration.DEFAULT.getEncoding());
         server.initMecurialRepository(dir);
         return dir;
     }
