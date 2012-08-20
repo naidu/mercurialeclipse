@@ -24,6 +24,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
 
+import com.aragost.javahg.commands.ResolveCommand;
 import com.aragost.javahg.commands.ResolveStatusLine;
 import com.aragost.javahg.commands.flags.ResolveCommandFlags;
 import com.aragost.javahg.merge.ConflictResolvingContext;
@@ -210,7 +211,10 @@ public class HgResolveClient extends AbstractClient {
 	public static boolean autoResolve(HgRoot hgRoot) {
 
 		if (isUseExternalMergeTool()) {
-			ResolveCommandFlags.on(hgRoot.getRepository()).all().execute();
+			ResolveCommand command = ResolveCommandFlags.on(hgRoot.getRepository()).all();
+
+			command.cmdAppend("--config", "ui.merge=");
+			command.execute();
 		} else {
 			// Do resolve one by one because we're using an invalid merge tool so only pre-merge is done.
 			for(ResolveStatusLine line : ResolveCommandFlags.on(hgRoot.getRepository()).list()) {
