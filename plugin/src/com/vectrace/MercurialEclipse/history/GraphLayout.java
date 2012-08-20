@@ -18,6 +18,7 @@ import com.aragost.javahg.Changeset;
 import com.aragost.javahg.Phase;
 import com.google.common.base.Function;
 import com.vectrace.MercurialEclipse.HgFeatures;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * Graph layout algorithm
@@ -405,7 +406,16 @@ public class GraphLayout {
 			}
 
 			if (current.getPhaseInt(currentsIndex) != RowAccessor.PHASE_PUBLIC) {
-				current.setPhase(currentsIndex, currentCs.phase());
+				Phase phase;
+
+				try {
+					phase = currentCs.phase();
+				} catch (Throwable t) {
+					MercurialEclipsePlugin.logWarning("Error getting changeset phase", t);
+					phase = Phase.PUBLIC;
+				}
+
+				current.setPhase(currentsIndex, phase);
 			}
 		}
 

@@ -342,7 +342,12 @@ public class JHgChangeSet extends ChangeSet {
 	 * @return The current phase
 	 */
 	public Phase getPhase() {
-		return getData().phase();
+		try {
+			return getData().phase();
+		} catch (Throwable t) {
+			MercurialEclipsePlugin.logWarning("Error getting changeset phase", t);
+			return Phase.PUBLIC;
+		}
 	}
 
 	public void setDraft() {
