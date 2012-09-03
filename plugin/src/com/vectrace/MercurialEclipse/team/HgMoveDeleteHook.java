@@ -116,6 +116,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		return false;
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.team.IMoveDeleteHook#deleteFile(org.eclipse.core.resources.team.IResourceTree, org.eclipse.core.resources.IFile, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public boolean deleteFile(IResourceTree tree, IFile file, int updateFlags,
 			IProgressMonitor monitor) {
 		/*
@@ -135,6 +138,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		return deleteHgFiles(tree, file, monitor);
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.team.IMoveDeleteHook#deleteFolder(org.eclipse.core.resources.team.IResourceTree, org.eclipse.core.resources.IFolder, int, org.eclipse.core.runtime.IProgressMonitor)
+	 */
 	public boolean deleteFolder(IResourceTree tree, IFolder folder,
 			int updateFlags, IProgressMonitor monitor) {
 		/*
@@ -143,7 +149,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		 * Check that there is at least 1 file and if so there is Mercurial work
 		 * to do, otherwise there is no Mercurial work to be done.
 		 */
-		if (!folderHasMercurialFiles(folder, monitor) || folder.isLinked()) {
+		if (!folderHasMercurialFiles(folder, monitor) || folder.isLinked() || folder.isDerived()) {
 			return false;
 		}
 
