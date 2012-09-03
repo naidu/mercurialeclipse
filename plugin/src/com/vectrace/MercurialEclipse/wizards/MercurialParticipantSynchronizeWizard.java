@@ -159,6 +159,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
 		for (HgRoot hgRoot : roots) {
 			Map<String, Object> pageProperties = propertiesToMap(initProperties(hgRoot));
+			pageProperties.put(PROP_HGROOT, hgRoot);
 			if(isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
@@ -178,9 +179,13 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	/**
-	 * @param hgRoot non null
-	 * @return non null properties with possible repository data initialised from given
-	 * root (may be empty)
+	 * Sets URL, USER, and PASSWORD for initial values by looking up saved values in the repo
+	 * location manager for the given root.
+	 *
+	 * @param hgRoot
+	 *            non null
+	 * @return non null properties with possible repository data initialised from given root (may be
+	 *         empty)
 	 */
 	static Properties initProperties(HgRoot hgRoot) {
 		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
@@ -197,7 +202,6 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 				}
 			}
 		}
-		properties.put(PROP_HGROOT, hgRoot);
 		return properties;
 	}
 
@@ -276,7 +280,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		return createParticipant(map);
 	}
 
-	public static MercurialSynchronizeParticipant createParticipant(RepositoryLocationMap repos) {
+	protected static MercurialSynchronizeParticipant createParticipant(RepositoryLocationMap repos) {
 
 		/*ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
 				MercurialSynchronizeParticipant.class.getName(), repo.getLocation());*/
@@ -342,6 +346,9 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 	}
 
+	/**
+	 * @see org.eclipse.team.ui.synchronize.ParticipantSynchronizeWizard#createParticipant()
+	 */
 	@Override
 	protected void createParticipant() {
 		Map<String, Object> map = propertiesToMap(repoPage.getProperties());
