@@ -234,7 +234,9 @@ public class SelectProjectsToSyncPage extends WizardPage {
 	@Override
 	public IWizardPage getNextPage() {
 		ConfigurationWizardMainPage nextPage = (ConfigurationWizardMainPage) super.getNextPage();
-		nextPage.setProperties(MercurialParticipantSynchronizeWizard.initProperties(getSelectedRoot()));
+		HgRoot root = getSelectedRoot();
+		nextPage.setProperties(MercurialParticipantSynchronizeWizard.initProperties(root));
+		nextPage.setHgRoot(root);
 		return nextPage;
 	}
 }
