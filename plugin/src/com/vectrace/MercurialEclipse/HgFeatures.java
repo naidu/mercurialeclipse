@@ -203,7 +203,7 @@ public enum HgFeatures {
 	 * @see Version#compareTo(Version)
 	 * @see Version#compareTo(Object)
 	 */
-	protected static int doCompare(Version v1, Version v2) {
+	public static int doCompare(Version v1, Version v2) {
 		Class<Version> versionClass = Version.class;
 		Method compareToMethod = null;
 
