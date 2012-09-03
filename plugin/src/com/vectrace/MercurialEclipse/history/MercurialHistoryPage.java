@@ -106,6 +106,7 @@ import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import org.osgi.framework.Version;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
@@ -131,8 +132,8 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
 
-	private static final boolean ECLISPE_BEFORE_38 = Platform.getBundle("org.eclipse.ui.ide")
-			.getVersion().compareTo(new Version(3, 8, 0)) < 0;
+	private static final boolean ECLISPE_BEFORE_38 = HgFeatures.doCompare(
+			Platform.getBundle("org.eclipse.ui.ide").getVersion(), new Version(3, 8, 0)) < 0;
 
 	// attributes
 
