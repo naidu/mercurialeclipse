@@ -14,8 +14,7 @@ public class Pair<A, B> implements Cloneable {
 	public A a;
 	public B b;
 
-	public Pair(A a, B b)
-	{
+	public Pair(A a, B b) {
 		this.a = a;
 		this.b = b;
 	}
@@ -75,5 +74,16 @@ public class Pair<A, B> implements Cloneable {
 		} catch (CloneNotSupportedException e) {
 			throw new IllegalStateException();
 		}
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("[a=");
+		builder.append(a);
+		builder.append(", b=");
+		builder.append(b);
+		builder.append("]");
+		return builder.toString();
 	}
 }
