@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.Pair;
 
 /**
@@ -228,11 +229,6 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		StringBuilder builder = new StringBuilder();
 		builder.append("RepositorySynchronizationScope [");
 		if (repositoryLocations != null) {
-			builder.append("repo=");
-			builder.append(repositoryLocations);
-			builder.append(", ");
-		}
-		if (repositoryLocations != null) {
 			builder.append("locations=");
 			builder.append(repositoryLocations.toString());
 		}
@@ -298,7 +294,29 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 					}
 				}
 			}
-			return null;
+			if(proj == null) {
+				return null;
+			}
+			HgRoot hgRoot = MercurialTeamProvider.hasHgRoot(proj);
+			if(hgRoot == null) {
+				return null;
+			}
+			IHgRepositoryLocation defRepo = MercurialEclipsePlugin.getRepoManager()
+					.getDefaultRepoLocation(hgRoot);
+			if (defRepo == null) {
+				return null;
+			}
+			IProject[] projects;
+			Pair<HgRoot, IProject[]> pair = map.get(defRepo);
+			if (pair == null) {
+				projects = new IProject[] { proj };
+			} else {
+				projects = new IProject[pair.b.length + 1];
+				projects[0] = proj;
+				System.arraycopy(pair.b, 0, projects, 1, pair.b.length);
+			}
+			add(defRepo, hgRoot, projects);
+			return defRepo;
 		}
 
 		public IHgRepositoryLocation getLocation(HgRoot root) {
@@ -324,7 +342,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			return map.get(repoLocation).b;
 		}
 
-		public void add(IHgRepositoryLocation repo, HgRoot hgRoot, IProject[] array) {
+		public synchronized void add(IHgRepositoryLocation repo, HgRoot hgRoot, IProject[] array) {
 			map.put(repo, new Pair<HgRoot, IProject[]>(hgRoot, array));
 		}
 
@@ -336,6 +354,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			return map.get(repoLocation).a;
 		}
 
+		@Override
 		public String toString() {
 			return "RLM: " + map.toString();
 		}
