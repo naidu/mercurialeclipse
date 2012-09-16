@@ -216,7 +216,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			MercurialUtilities.getHGExecutable(true);
 			String result = HgDebugInstallClient.debugInstall();
 			hgVersion = checkHgVersion();
-			if (!result.endsWith("No problems detected")) { //$NON-NLS-1$
+			if (!result.endsWith("o problems detected")) { //$NON-NLS-1$
 				logInfo(result, null);
 			}
 		} catch (Throwable e) {
