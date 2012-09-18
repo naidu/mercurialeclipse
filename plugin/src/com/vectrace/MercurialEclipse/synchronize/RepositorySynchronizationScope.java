@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -272,7 +273,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			}
 		}
 
-		public void serialize(IMemento m) {
+		public synchronized void serialize(IMemento m) {
 			for (IHgRepositoryLocation loc : map.keySet()) {
 				IMemento l = m.createChild("location");
 				Pair<HgRoot, IProject[]> p = map.get(loc);
@@ -287,10 +288,12 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		}
 
 		public IHgRepositoryLocation getRepositoryLocation(IProject proj) {
-			for (IHgRepositoryLocation loc : map.keySet()) {
-				for (IProject curProj : map.get(loc).b) {
-					if (proj.equals(curProj)) {
-						return loc;
+			synchronized (this) {
+				for (IHgRepositoryLocation loc : map.keySet()) {
+					for (IProject curProj : map.get(loc).b) {
+						if (proj.equals(curProj)) {
+							return loc;
+						}
 					}
 				}
 			}
@@ -307,19 +310,21 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 				return null;
 			}
 			IProject[] projects;
-			Pair<HgRoot, IProject[]> pair = map.get(defRepo);
-			if (pair == null) {
-				projects = new IProject[] { proj };
-			} else {
-				projects = new IProject[pair.b.length + 1];
-				projects[0] = proj;
-				System.arraycopy(pair.b, 0, projects, 1, pair.b.length);
+			synchronized(this) {
+				Pair<HgRoot, IProject[]> pair = map.get(defRepo);
+				if (pair == null) {
+					projects = new IProject[] { proj };
+				} else {
+					projects = new IProject[pair.b.length + 1];
+					projects[0] = proj;
+					System.arraycopy(pair.b, 0, projects, 1, pair.b.length);
+				}
+				add(defRepo, hgRoot, projects);
 			}
-			add(defRepo, hgRoot, projects);
 			return defRepo;
 		}
 
-		public IHgRepositoryLocation getLocation(HgRoot root) {
+		public synchronized IHgRepositoryLocation getLocation(HgRoot root) {
 			for (Entry<IHgRepositoryLocation, Pair<HgRoot, IProject[]>> loc : map.entrySet()) {
 				if (loc.getValue().a.equals(root)) {
 					return loc.getKey();
@@ -328,7 +333,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			return null;
 		}
 
-		public IProject[] getProjects() {
+		public synchronized IProject[] getProjects() {
 			Set<IProject> projects = new HashSet<IProject>();
 
 			for (Pair<HgRoot, IProject[]> projs : map.values()) {
@@ -338,7 +343,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			return projects.toArray(new IProject[projects.size()]);
 		}
 
-		public IProject[] getProjects(IHgRepositoryLocation repoLocation) {
+		public synchronized IProject[] getProjects(IHgRepositoryLocation repoLocation) {
 			return map.get(repoLocation).b;
 		}
 
@@ -346,11 +351,11 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 			map.put(repo, new Pair<HgRoot, IProject[]>(hgRoot, array));
 		}
 
-		public Set<IHgRepositoryLocation> getLocations() {
-			return map.keySet();
+		public synchronized Collection<IHgRepositoryLocation> getLocations() {
+			return new ArrayList<IHgRepositoryLocation>(map.keySet());
 		}
 
-		public HgRoot getRoot(IHgRepositoryLocation repoLocation) {
+		public synchronized HgRoot getRoot(IHgRepositoryLocation repoLocation) {
 			return map.get(repoLocation).a;
 		}
 
