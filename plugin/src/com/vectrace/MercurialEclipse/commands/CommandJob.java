@@ -219,7 +219,13 @@ public abstract class CommandJob extends Job {
 			exception = e;
 
 			if (!(e instanceof HgException)) {
-				e = new HgException(e.getLocalizedMessage(), e);
+				String message = e.getLocalizedMessage();
+
+				if (message == null || message.length() == 0) {
+					message = "Unexpected error in command \"" + getName() +"\". Please see error log.";
+				}
+
+				e = new HgException(message, e);
 			}
 
 			throw ((HgException)e);
