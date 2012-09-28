@@ -94,7 +94,7 @@
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg</artifactId>
-			<version>0.4</version>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -104,12 +104,12 @@
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg-ext-rebase</artifactId>
-			<version>0.4</version>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg-ext-mq</artifactId>
-			<version>0.4</version>
+			<version>0.5-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<repositories>
