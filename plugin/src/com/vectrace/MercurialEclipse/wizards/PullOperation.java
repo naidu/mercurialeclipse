@@ -121,7 +121,7 @@ class PullOperation extends HgOperation {
 			if (doUpdate) {
 				updateSeparately = true;
 			}
-			HgPushPullClient.pull(hgRoot, pullRevision, repo, false, rebase, force, timeout, merge);
+			HgPushPullClient.pull(hgRoot, pullRevision, repo, false, rebase, force, timeout, merge, monitor);
 			r += "Pulling"; // TODO
 		} else {
 			if (doUpdate) {
@@ -129,7 +129,7 @@ class PullOperation extends HgOperation {
 			}
 			File canonicalBundle = toCanonicalBundle();
 			BundleRepository bundleRepo = new BundleRepository(canonicalBundle);
-			HgPushPullClient.pull(hgRoot, pullRevision, bundleRepo, false, rebase, force, timeout, merge);
+			HgPushPullClient.pull(hgRoot, pullRevision, bundleRepo, false, rebase, force, timeout, merge, monitor);
 			r += "Pulling"; // TODO
 		}
 
