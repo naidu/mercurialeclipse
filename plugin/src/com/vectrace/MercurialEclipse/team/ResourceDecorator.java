@@ -440,14 +440,8 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
-			String merging = STATUS_CACHE.getMergeChangesetId(container);
+			boolean merging = !StringUtils.isEmpty(STATUS_CACHE.getMergeChangesetId(container));
 			boolean bisecting = false;
-			boolean rebasing = false;
-
-			// XXX should use map, as there can be 100 projects under the same root
-			if(HgRebaseClient.isRebasing(root)) {
-				rebasing = true;
-			}
 
 			// XXX should use map, as there can be 100 projects under the same root
 			if (HgBisectClient.isBisecting(root)) {
@@ -470,11 +464,13 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			// merge flag
-			if (!rebasing && !StringUtils.isEmpty(merging)) {
-				suffix.append(Messages.getString("ResourceDecorator.merging"));
-			}
-			if(rebasing) {
-				suffix.append(Messages.getString("ResourceDecorator.rebasing"));
+			if (merging ) {
+				// XXX should use map, as there can be 100 projects under the same root
+				if(HgRebaseClient.isRebasing(root)) {
+					suffix.append(Messages.getString("ResourceDecorator.rebasing"));
+				} else {
+					suffix.append(Messages.getString("ResourceDecorator.merging"));
+				}
 			}
 
 			// bisect information
