@@ -54,6 +54,8 @@ public abstract class CommandJob extends Job {
 
 	protected int exitCode = -1;
 
+	private IProgressMonitor progress;
+
 	// constructors
 
 	public CommandJob(String uiName, boolean isInitialCommand) {
@@ -177,6 +179,9 @@ public abstract class CommandJob extends Job {
 					if (elapsed >= timeout) {
 						cancel();
 						throw new HgException("Command timeout: " + getDebugName());
+					} else if (progress != null && progress.isCanceled()) {
+						cancel();
+						throw new HgException("Parent job cancelled: " + getDebugName());
 					}
 					synchronized (this) { // TODO: sync should be outside the loop
 						wait(100);
@@ -234,6 +239,11 @@ public abstract class CommandJob extends Job {
 
 			logConsoleCompleted(timeInMillis, exception);
 		}
+		return this;
+	}
+
+	public CommandJob setParentProgress(IProgressMonitor progress) {
+		this.progress = progress;
 		return this;
 	}
 }

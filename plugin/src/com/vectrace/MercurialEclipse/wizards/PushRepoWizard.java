@@ -128,7 +128,7 @@ public class PushRepoWizard extends HgWizard {
 					if (svnEnabled) {
 						output = HgSvnClient.push(hgRoot);
 					} else {
-						HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
+						HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout, monitor);
 						output = "success"; // TODO
 					}
 				} catch (HgException e){
@@ -150,7 +150,7 @@ public class PushRepoWizard extends HgWizard {
 
 		PushOperation pushOperation = new PushOperation();
 		try {
-			getContainer().run(true, false, pushOperation);
+			getContainer().run(true, true, pushOperation);
 			result += pushOperation.getOutput();
 		} catch (Exception e) {
 			Throwable error = e.getCause() == null? e : e.getCause();
