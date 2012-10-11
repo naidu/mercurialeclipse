@@ -80,6 +80,15 @@ public abstract class JavaHgCommandJob<T> extends CommandJob {
 	}
 
 	/**
+	 * @see com.vectrace.MercurialEclipse.commands.CommandJob#setParentProgress(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public JavaHgCommandJob<T> setParentProgress(IProgressMonitor progress) {
+		super.setParentProgress(progress);
+		return this;
+	}
+
+	/**
 	 * @return The value returned by {@link #run()}
 	 */
 	public T getValue() {

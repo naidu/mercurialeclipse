@@ -87,9 +87,9 @@ public class HgPushPullClient extends AbstractClient {
 	}
 
 	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,
-			boolean update, boolean rebase, boolean force, boolean timeout, boolean merge)
+			boolean update, boolean rebase, boolean force, boolean timeout, boolean merge, IProgressMonitor progress)
 			throws HgException {
-		pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null);
+		pull(hgRoot, changeset, repo, update, rebase, force, timeout, merge, null, progress);
 	}
 
 	/**
@@ -97,7 +97,7 @@ public class HgPushPullClient extends AbstractClient {
 	 */
 	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,
 			boolean update, boolean rebase, boolean force, boolean useTimeout, boolean merge,
-			String branch) throws HgException {
+			String branch, IProgressMonitor progress) throws HgException {
 		final PullCommand command = PullCommandFlags.on(hgRoot.getRepository());
 
 		if (isInsecure()) {
@@ -129,7 +129,7 @@ public class HgPushPullClient extends AbstractClient {
 				protected List<Changeset> run() throws Exception {
 					return command.execute(remote);
 				}
-			}.execute(timeout).getValue();
+			}.setParentProgress(progress).execute(timeout).getValue();
 
 			if (pulled.isEmpty()) {
 				// Nothing to do
@@ -186,15 +186,5 @@ public class HgPushPullClient extends AbstractClient {
 		}
 
 		return op + " changeset " + changeset.getNode();
-	}
-
-	protected static void applyChangeset(AbstractShellCommand command, ChangeSet changeset) {
-		if (changeset != null) {
-			String cs = changeset.getNode();
-
-			if (cs != null && (cs = cs.trim()).length() > 0) {
-				command.addOptions("-r", cs); //$NON-NLS-1$
-			}
-		}
 	}
 }
