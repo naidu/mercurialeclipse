@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.util.List;
 
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 
 import com.aragost.javahg.Changeset;
@@ -42,12 +43,12 @@ import com.vectrace.MercurialEclipse.views.MergeView;
 public class HgPushPullClient extends AbstractClient {
 
 	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo, boolean force,
-			ChangeSet changeset, int timeout) throws HgException {
-		push(hgRoot, repo, force, changeset, timeout, null);
+			ChangeSet changeset, int timeout, IProgressMonitor progress) throws HgException {
+		push(hgRoot, repo, force, changeset, timeout, null, progress);
 	}
 
 	public static void push(HgRoot hgRoot, IHgRepositoryLocation repo, boolean force,
-			ChangeSet changeset, int timeout, String branch) throws HgException {
+			ChangeSet changeset, int timeout, String branch, IProgressMonitor progress) throws HgException {
 
 		final PushCommand command = PushCommandFlags.on(hgRoot.getRepository());
 
@@ -82,7 +83,7 @@ public class HgPushPullClient extends AbstractClient {
 			protected List<Changeset> run() throws Exception {
 				return command.execute(remote);
 			}
-		}.execute(timeout);
+		}.setParentProgress(progress).execute(timeout);
 	}
 
 	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,

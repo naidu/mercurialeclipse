@@ -298,7 +298,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					HgPushPullClient.pull(hgRoot, changeSet, location, update, rebase, force, timeout, false, branch);
 					// pull client does the refresh automatically, no extra job required here
 				} else {
-					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch);
+					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch, moni);
 					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
 				}
 				return null;
