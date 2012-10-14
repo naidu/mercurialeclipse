@@ -415,7 +415,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		return suffix;
 	}
 
-	private static String getSuffixForContainer(IContainer container) throws CoreException {
+	private String getSuffixForContainer(IContainer container) throws CoreException {
 		ChangeSet changeSet = null;
 
 		HgRoot root;
@@ -448,23 +448,25 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				bisecting = true;
 			}
 
-			// rev info
-			suffix.append(changeSet.getIndex()).append(':').append(hex);
-
 			// branch
 			String branch = MercurialTeamProvider.getCurrentBranch(root);
 			if (branch.length() == 0) {
 				branch = BranchUtils.DEFAULT;
 			}
-			suffix.append('@').append(branch);
+			suffix.append(branch);
 
 			// tags
 			if (tags.length() > 0) {
 				suffix.append('(').append(tags).append(')');
 			}
 
+			// rev info
+			if (showChangeset) {
+				suffix.append(' ').append(changeSet.getIndex()).append(':').append(hex);
+			}
+
 			// merge flag
-			if (merging ) {
+			if (merging) {
 				// XXX should use map, as there can be 100 projects under the same root
 				if(HgRebaseClient.isRebasing(root)) {
 					suffix.append(Messages.getString("ResourceDecorator.rebasing"));
