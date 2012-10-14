@@ -36,6 +36,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
+import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgLogClient extends AbstractClient {
@@ -239,5 +240,27 @@ public class HgLogClient extends AbstractClient {
 	 */
 	public static JHgChangeSet getChangeSet(HgRoot root, int rev) {
 		return getChangeSet(root, rev + ":" + rev);
+	}
+
+	public static int countChangesets(HgRoot root, String rev) {
+		List<Changeset> cs = LogCommandFlags.on(root.getRepository()).rev(rev).execute();
+
+		return cs.size();
+	}
+
+	public static int numHeadsInBranch(HgRoot hgRoot, String branch) {
+		List<Changeset> cs = HeadsCommandFlags.on(hgRoot.getRepository()).execute();
+		int i = 0;
+	
+		// As of 2.3 it's faster to get all heads and then filter rather than do --rev
+		// "branch(name)". 60ms vs 900ms
+	
+		for(Changeset c : cs) {
+			if (BranchUtils.same(branch, c.getBranch())) {
+				i += 1;
+			}
+		}
+	
+		return i;
 	}
 }

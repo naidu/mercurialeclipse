@@ -96,6 +96,11 @@ implements IWorkbenchPreferencePage {
 		addField(showIncomingInfo);
 
 		addField(new BooleanFieldEditor(
+				RESOURCE_DECORATOR_SHOW_SUMMARY,
+				Messages.getString("PerformancePreferencePage.field.showSummary"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(
 				HISTORY_LOG_USE_REMOVED,
 				Messages.getString("PerformancePreferencePage.field.historyLogUseRemoved"), //$NON-NLS-1$
 				getFieldEditorParent()));
