@@ -11,6 +11,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.HashSet;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -28,6 +31,7 @@ import com.aragost.javahg.commands.ExecutionException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Refreshes working directory status, local changesets, incoming changesets and outgoing
@@ -43,11 +47,33 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class RefreshRootJob extends Job {
 
+	/**
+	 * Local changeset cache should be updated
+	 */
 	public static final int LOCAL = 1 << 0;
+
+	/**
+	 * Incoming changesets should be recalculated
+	 */
 	public static final int INCOMING = 1 << 1;
+
+	/**
+	 * Outgoing changeset should be recalculated
+	 */
 	public static final int OUTGOING = 1 << 2;
-	/** right now only used by {@link RefreshWorkspaceStatusJob} */
+
+	/**
+	 * right now only used by {@link RefreshWorkspaceStatusJob}
+	 *
+	 * Refresh workspace status
+	 */
 	public static final int WORKSPACE = 1 << 3;
+
+	/**
+	 * Caches are still valid, just refresh decorations. Redundant if LOCAL or WORKSPACE is
+	 * provided.
+	 */
+	public static final int PROJECT_DECORTATIONS = 1 << 4;
 
 	public static final int LOCAL_AND_INCOMING = LOCAL | INCOMING;
 	public static final int LOCAL_AND_OUTGOING = LOCAL | OUTGOING;
@@ -102,6 +128,9 @@ public class RefreshRootJob extends Job {
 				MercurialEclipsePlugin.logError(e);
 			}
 			updateHistoryView();
+		} else if ((type & PROJECT_DECORTATIONS) != 0) {
+			MercurialStatusCache.getInstance().notifyChanged(new HashSet<IResource>(
+					ResourceUtils.getProjects(hgRoot)), false);
 		}
 
 		if((type & INCOMING) != 0){

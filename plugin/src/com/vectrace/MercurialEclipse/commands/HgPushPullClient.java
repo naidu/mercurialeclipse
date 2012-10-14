@@ -85,7 +85,7 @@ public class HgPushPullClient extends AbstractClient {
 			}
 		}.setParentProgress(progress).execute(timeout);
 
-		new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
+		new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING | RefreshRootJob.PROJECT_DECORTATIONS).schedule();
 	}
 
 	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,

@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 
 /**
@@ -70,6 +71,9 @@ public class QImportOperation extends HgOperation {
 				}
 			}.schedule();
 			monitor.worked(1);
+
+			new RefreshRootJob(root, RefreshRootJob.PROJECT_DECORTATIONS).schedule();
+
 		} catch (HgException e) {
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} finally {
