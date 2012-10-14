@@ -39,9 +39,11 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
+import com.vectrace.MercurialEclipse.HgFeatures;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -95,6 +97,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		INTERESTING_PREFS.add(PREF_DECORATE_WITH_COLORS);
 		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		INTERESTING_PREFS.add(RESOURCE_DECORATOR_SHOW_SUMMARY);
 		INTERESTING_PREFS.add(PREF_ENABLE_SUBREPO_SUPPORT);
 	}
 
@@ -108,6 +111,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private boolean disposed;
 	private final IPropertyChangeListener themeListener;
 	private final IPropertyChangeListener prefsListener;
+	private boolean showSummary;
 
 	public ResourceDecorator() {
 		configureFromPreferences();
@@ -184,6 +188,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
 		showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
 		showIncomingChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
+		showSummary = store.getBoolean(RESOURCE_DECORATOR_SHOW_SUMMARY);
 		enableSubrepos = store.getBoolean(MercurialPreferenceConstants.PREF_ENABLE_SUBREPO_SUPPORT);
 	}
 
@@ -458,6 +463,23 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			// tags
 			if (tags.length() > 0) {
 				suffix.append('(').append(tags).append(')');
+			}
+
+			if (showSummary) {
+				int n;
+				if (HgFeatures.PHASES.isEnabled()) {
+					n = HgLogClient.countChangesets(root, "draft()");
+
+					if (n > 0) {
+						suffix.append(" \u2191").append(n);
+					}
+				}
+
+				n = HgLogClient.numHeadsInBranch(root, branch);
+
+				if (n > 1) {
+					suffix.append(" \u2442").append(n);
+				}
 			}
 
 			// rev info
