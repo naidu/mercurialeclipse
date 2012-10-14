@@ -237,7 +237,9 @@ public class PatchQueueView extends AbstractRootView {
 		};
 		qDeleteAction.setEnabled(false);
 
-		qFinishAction = new MQAction("qfinish", MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif"), RefreshRootJob.OUTGOING) { //$NON-NLS-1$
+		qFinishAction = new MQAction("qfinish",
+				MercurialEclipsePlugin.getImageDescriptor("actions/qrefresh.gif"),
+				RefreshRootJob.LOCAL) {
 			@Override
 			public boolean invoke() throws HgException {
 				List<Patch> patches = table.getSelections();
