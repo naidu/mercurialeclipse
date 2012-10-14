@@ -84,6 +84,8 @@ public class HgPushPullClient extends AbstractClient {
 				return command.execute(remote);
 			}
 		}.setParentProgress(progress).execute(timeout);
+
+		new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
 	}
 
 	public static void pull(HgRoot hgRoot, ChangeSet changeset, IHgRepositoryLocation repo,

@@ -42,7 +42,6 @@ import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.RepositoryChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
@@ -299,7 +298,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					// pull client does the refresh automatically, no extra job required here
 				} else {
 					HgPushPullClient.push(hgRoot, location, false, changeSet, Integer.MAX_VALUE, branch, moni);
-					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
+					// push client does the refresh automatically, no extra job required here
 				}
 				return null;
 			} catch (final HgException ex) {
