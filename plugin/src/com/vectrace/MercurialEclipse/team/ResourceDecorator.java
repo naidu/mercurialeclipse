@@ -471,14 +471,14 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 					n = HgLogClient.countChangesets(root, "draft()");
 
 					if (n > 0) {
-						suffix.append(" \u2191").append(n);
+						suffix.append(' ').append(n).append("\u2191");
 					}
 				}
 
 				n = HgLogClient.numHeadsInBranch(root, branch);
 
 				if (n > 1) {
-					suffix.append(" \u2442").append(n);
+					suffix.append(' ').append(n).append(" heads");
 				}
 			}
 
