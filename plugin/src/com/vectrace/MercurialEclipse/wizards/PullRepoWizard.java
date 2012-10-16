@@ -93,7 +93,7 @@ public class PullRepoWizard extends HgWizard {
 					doUpdate, doCleanUpdate, hgRoot, force, repo, cs, timeout, merge,
 					showCommitDialog, bundleFile, rebase, svn);
 
-			getContainer().run(true, false, pullOperation);
+			getContainer().run(true, true, pullOperation);
 
 			String output = pullOperation.getOutput();
 
