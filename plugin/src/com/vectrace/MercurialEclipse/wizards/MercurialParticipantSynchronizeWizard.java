@@ -29,6 +29,7 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
@@ -42,6 +43,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -145,10 +147,13 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	}
 
 	/**
+	 * Get settings using location manager for the given root.
+	 *
 	 * @return properties object if all information needed to synchronize is available,
-	 * 	null if some settings are missing
+	 * @throws HgException If there's a missing property
+	 * @see {@link #initProperties(HgRoot)}
 	 */
-	public List<Map<String, Object>> prepareSettings() {
+	private List<Map<String, Object>> prepareDefaultSettings() throws HgException {
 		IResource[] resources = getRootResources();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(resources));
 		Set<HgRoot> roots = byRoot.keySet();
@@ -160,10 +165,14 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
 					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
 						result.add(pageProperties);
+					} else {
+						throw new HgException("Missing password for " + hgRoot.getName());
 					}
 				} else {
 					result.add(pageProperties);
 				}
+			} else {
+				throw new HgException("Missing default synchronize URL for " + hgRoot.getName());
 			}
 		}
 		return result;
@@ -209,11 +218,23 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			performFinish = super.performFinish();
 		} else {
 			// UI was not created, so we just need to continue with synchronization
-			List<Map<String, Object>> properties = prepareSettings();
-			if(properties != null && properties.size() > 0) {
-				createdParticipant = createParticipant(properties, projects);
-			} else {
-				performFinish = false;
+			try {
+				List<Map<String, Object>> properties = prepareDefaultSettings();
+				if(properties != null && properties.size() > 0) {
+					createdParticipant = createParticipant(properties, projects);
+				} else {
+					performFinish = false;
+					throw new HgException("No properties found for synchronizing");
+				}
+			} catch (final HgException e) {
+				MercurialEclipsePlugin.logWarning(e.getLocalizedMessage(), e);
+				MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+					public void run() {
+						MessageDialog.openWarning(getShell(), "Could not synchronize",
+								e.getMessage());
+
+					}
+				});
 			}
 		}
 		if(performFinish && createdParticipant != null) {
@@ -230,7 +251,8 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		participant.run(null /* no site */);
 	}
 
-	protected MercurialSynchronizeParticipant createParticipant(List<Map<String, Object>> properties, IProject[] selectedProjects) {
+	protected static MercurialSynchronizeParticipant createParticipant(
+			List<Map<String, Object>> properties, IProject[] selectedProjects) throws HgException {
 		RepositoryLocationMap byLocation = new RepositoryLocationMap(1);
 		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(selectedProjects));
@@ -241,28 +263,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			String pass = (String) prop.get(ConfigurationWizardMainPage.PROP_PASSWORD);
 
 			IHgRepositoryLocation repo;
+			HgRoot hgRoot = (HgRoot) prop.get(PROP_HGROOT);
+			List<IResource> curProjects = byRoot.get(hgRoot);
+
+			repo = repoManager.getRepoLocation(url, user, pass);
+			if (pass != null && user != null && curProjects.size() > 0) {
+				if (!pass.equals(repo.getPassword())) {
+					// At least 1 project exists, update location for that project
+					repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
+				}
+			}
+
+			byLocation.add(repo, hgRoot, curProjects.toArray(new IProject[curProjects.size()]));
 			try {
-				HgRoot hgRoot = (HgRoot) prop.get(PROP_HGROOT);
-				List<IResource> curProjects = byRoot.get(hgRoot);
-
-				repo = repoManager.getRepoLocation(url, user, pass);
-				if (pass != null && user != null && curProjects.size() > 0) {
-					if (!pass.equals(repo.getPassword())) {
-						// At least 1 project exists, update location for that project
-						repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
-					}
-				}
-
-				byLocation.add(repo, hgRoot, curProjects.toArray(new IProject[curProjects.size()]));
-				try {
-					repoManager.addRepoLocation(hgRoot, repo);
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-			} catch (HgException e) {
+				repoManager.addRepoLocation(hgRoot, repo);
+			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
-				repoPage.setErrorMessage(e.getLocalizedMessage());
-				return null;
 			}
 		}
 
@@ -351,8 +367,13 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 		map.put(PROP_HGROOT, repoPage.getHgRoot());
 
-		createdParticipant = createParticipant(Collections.singletonList(map),
-				selectionPage.getSelectedProjects());
+		try {
+			createdParticipant = createParticipant(Collections.singletonList(map),
+					selectionPage.getSelectedProjects());
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			repoPage.setErrorMessage(e.getLocalizedMessage());
+		}
 	}
 
 	private static Map<String, Object> propertiesToMap(Properties properties) {
