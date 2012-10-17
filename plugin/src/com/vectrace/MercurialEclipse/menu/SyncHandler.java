@@ -64,11 +64,7 @@ public class SyncHandler extends MultipleResourcesHandler {
 	}
 
 	private boolean shouldShowWizard(MercurialParticipantSynchronizeWizard wizard){
-		if(wizard.prepareSettings() == null){
-			return true;
-		}
-		String id = getId();
-		return !"com.vectrace.MercurialEclipse.menu.SyncHandler".equals(id);
+		return !"com.vectrace.MercurialEclipse.menu.SyncHandler".equals(getId());
 	}
 
 	private String getId() {
