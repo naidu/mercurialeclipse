@@ -100,11 +100,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 */
 	@Override
 	protected IProject[] getRootResources() {
-		return selectionPage != null && selectionPage.isCreated()? selectionPage.getSelectedProjects() : getInitialSelection();
-	}
-
-	protected IProject[] getInitialSelection() {
-		return projects;
+		return selectionPage != null && selectionPage.isCreated()? selectionPage.getSelectedProjects() : projects;
 	}
 
 	@Override
@@ -114,7 +110,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		// expects that the first page is somehow created (and it is created by the super class
 		// but only if the getRootResources() returns something).
 		// so in order to support it, we init the selection to ALL projects...
-		if(getInitialSelection().length == 0){
+		if(projects.length == 0){
 			projects = MercurialTeamProvider.getKnownHgProjects().toArray(new IProject[0]);
 		}
 		repoPage = createrepositoryConfigPage();
@@ -215,7 +211,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			// UI was not created, so we just need to continue with synchronization
 			List<Map<String, Object>> properties = prepareSettings();
 			if(properties != null && properties.size() > 0) {
-				createdParticipant = createParticipant(properties, getInitialSelection());
+				createdParticipant = createParticipant(properties, projects);
 			} else {
 				performFinish = false;
 			}
