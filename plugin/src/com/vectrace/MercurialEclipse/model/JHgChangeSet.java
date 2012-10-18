@@ -355,6 +355,16 @@ public class JHgChangeSet extends ChangeSet {
 	}
 
 	/**
+	 * This method is present so that 3rd party plugins need not import javahg,
+	 * Future: Javahg should be deployed as a standalone eclipse plugin.
+	 *
+	 * @return Whether the phase is public
+	 */
+	public boolean isDraftPhase() {
+		return getPhase() == Phase.DRAFT;
+	}
+
+	/**
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
