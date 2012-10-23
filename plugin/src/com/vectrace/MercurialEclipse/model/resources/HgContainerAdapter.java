@@ -64,6 +64,20 @@ public abstract class HgContainerAdapter extends HgResourceAdapter implements IC
 		}
 	}
 
+	/**
+	 * @see org.eclipse.core.resources.IResource#accept(org.eclipse.core.resources.IResourceProxyVisitor, int, int)
+	 */
+	public void accept(IResourceProxyVisitor visitor, int depth, int memberFlags)
+			throws CoreException {
+		boolean ok = visitor.visit(createProxy());
+		if(ok) {
+			IResource[] members = members();
+			for (IResource resource : members) {
+				resource.accept(visitor, memberFlags);
+			}
+		}
+	}
+
 	public boolean exists(IPath path) {
 		return getLocation().append(path).toFile().exists();
 	}

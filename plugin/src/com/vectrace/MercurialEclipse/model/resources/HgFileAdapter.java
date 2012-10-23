@@ -202,4 +202,12 @@ public class HgFileAdapter extends HgResourceAdapter implements IFile {
 	public void accept(IResourceVisitor visitor, int depth, int memberFlags) throws CoreException {
 		visitor.visit(this);
 	}
+
+	/**
+	 * @see org.eclipse.core.resources.IResource#accept(org.eclipse.core.resources.IResourceProxyVisitor, int, int)
+	 */
+	public void accept(IResourceProxyVisitor visitor, int depth, int memberFlags)
+			throws CoreException {
+		visitor.visit(createProxy());
+	}
 }
