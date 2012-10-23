@@ -22,6 +22,7 @@
 -->
 
 <plugin>
+   <extension-point id="com.vectrace.MercurialEclipse.actionListener" name="MercurialEclipse Action Listener" schema="schema/com.vectrace.MercurialEclipse.actionListener.exsd"/>
 
 <!--            Team exstension points                     -->
    <extension point="org.eclipse.team.core.repository">

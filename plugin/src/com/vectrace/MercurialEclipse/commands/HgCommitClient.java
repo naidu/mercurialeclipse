@@ -23,10 +23,12 @@ import java.util.Map;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.aragost.javahg.Changeset;
 import com.aragost.javahg.commands.CommitCommand;
 import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.flags.CommitCommandFlags;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.extensionpoint.definition.handlers.ActionListenerContributionDispatcher;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -104,7 +106,13 @@ public class HgCommitClient extends AbstractClient {
 		command.message(message);
 
 		try {
-			command.execute(files.toArray(new File[files.size()]));
+			Changeset tipChangeSet = amend ? command.getRepository().tip() : null;
+			Changeset changeSet = command.execute(files.toArray(new File[files.size()]));
+
+			if (amend && changeSet != null) {
+				ActionListenerContributionDispatcher.onAmend(tipChangeSet == null ? Changeset.NULL_ID
+						: tipChangeSet.getNode(), changeSet.getNode());
+			}
 		} catch (ExecutionException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}

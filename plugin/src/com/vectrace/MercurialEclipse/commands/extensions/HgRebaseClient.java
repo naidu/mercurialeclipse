@@ -20,6 +20,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.JavaHgCommandJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.extensionpoint.definition.handlers.ActionListenerContributionDispatcher;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -62,8 +63,8 @@ public class HgRebaseClient extends AbstractClient {
 	 * @return the output of the command
 	 * @throws HgException
 	 */
-	public static RebaseConflictResolvingContext rebase(HgRoot hgRoot, String sourceNode,
-			String baseNode, String destNode, boolean collapse, final boolean cont,
+	public static RebaseConflictResolvingContext rebase(HgRoot hgRoot, final String sourceNode,
+			final String baseNode, String destNode, boolean collapse, final boolean cont,
 			boolean keepBranches, boolean keep, String user) throws HgException {
 
 		final RebaseCommand c = RebaseCommandFlags.on(hgRoot.getRepository());
@@ -79,20 +80,28 @@ public class HgRebaseClient extends AbstractClient {
 		}
 
 		if (!cont) {
+			String source = null;
+			String dest = null;
+
 			// Source or base or neither is set
 			if (sourceNode != null && baseNode == null) {
+				source = sourceNode;
 				c.source(sourceNode);
 			} else if (baseNode != null && sourceNode == null) {
+				source = baseNode;
 				c.base(baseNode);
 			}
 
 			if (destNode != null) {
+				dest = destNode;
 				c.dest(destNode);
 			}
 
 			if (collapse) {
 				c.collapse();
 			}
+
+			ActionListenerContributionDispatcher.onBeforeRebase(source, dest);
 		}
 
 		if (keepBranches) {
@@ -107,10 +116,20 @@ public class HgRebaseClient extends AbstractClient {
 		return new JavaHgCommandJob<RebaseConflictResolvingContext>(c, "Rebasing") {
 			@Override
 			protected RebaseConflictResolvingContext run() throws Exception {
+				RebaseConflictResolvingContext result;
 				if (cont) {
-					return c.executeContinue();
+					result = c.executeContinue();
+				} else {
+					result = c.execute();
 				}
-				return c.execute();
+
+				if (result.getFlagConflicts().size() == 0
+						&& result.getKeepDeleteConflicts().size() == 0
+						&& result.getMergeConflicts().size() == 0) {
+					ActionListenerContributionDispatcher.onRebase(result.getLocal().getNode());
+				}
+
+				return result;
 			}
 		}.execute(HgClients.getTimeOut(MercurialPreferenceConstants.PULL_TIMEOUT)).getValue();
 	}

@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 
 import com.aragost.javahg.ext.mq.StripCommand;
 import com.aragost.javahg.ext.mq.flags.StripCommandFlags;
+import com.vectrace.MercurialEclipse.extensionpoint.definition.handlers.ActionListenerContributionDispatcher;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -60,11 +61,12 @@ public final class HgStripClient {
 
 		try {
 			result = command.execute();
+
+			ActionListenerContributionDispatcher.onStrip(changeset);
 		} finally {
 			LocalChangesetCache.getInstance().clear(hgRoot);
 			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		}
 		return result;
-
 	}
 }
