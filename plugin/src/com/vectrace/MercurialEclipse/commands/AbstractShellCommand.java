@@ -258,6 +258,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 */
 	private final String uiName;
 
+	private IProgressMonitor parentProgress = null;
+
 	/**
 	 * @param uiName
 	 *            Human readable name for this command
@@ -341,7 +343,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// I see sometimes that hg has errors if it runs in parallel
 			// using a job with exclusive rule here serializes all hg access from plugin.
 			processWrapper = createProcessWrapper(output, uiName, jobName, builder, expectZeroReturnValue);
-
+			processWrapper.setParentProgress(parentProgress);
 			processWrapper.execute(timeout);
 
 			return true;
@@ -694,5 +696,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	public void setInitialCommand(boolean initialCommand) {
 		this.isInitialCommand = initialCommand;
+	}
+
+	public void setParentProgress(IProgressMonitor progress) {
+		this.parentProgress = progress;
 	}
 }
