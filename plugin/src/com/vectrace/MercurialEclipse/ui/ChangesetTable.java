@@ -25,7 +25,9 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -41,6 +43,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
@@ -54,10 +57,12 @@ public class ChangesetTable extends Composite {
 			| SWT.H_SCROLL | SWT.VIRTUAL;
 
 	private static final Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+	private static final Color HIGHLIGHT = MercurialUtilities.getColor(new RGB(222, 255, 247));
 
 	private final Table table;
 	protected Strategy strategy;
 	private int[] parents;
+	private int[] highlights;
 	private int logBatchSize;
 
 	// constructors
@@ -191,6 +196,10 @@ public class ChangesetTable extends Composite {
 				if (ChangesetTable.this.strategy != null) {
 					ChangeSet rev = ChangesetTable.this.strategy.getChangeSet(table.indexOf(row));
 
+					if (highlights != null && isHilight(rev.getIndex())) {
+						row.setBackground(HIGHLIGHT);
+					}
+
 					if (parents != null && isParent(rev.getIndex())) {
 						row.setFont(PARENT_FONT);
 					}
@@ -214,6 +223,10 @@ public class ChangesetTable extends Composite {
 
 	public void highlightParents(int[] newParents) {
 		this.parents = newParents;
+	}
+
+	public void highlight(int[] hilights) {
+		this.highlights = hilights;
 	}
 
 	public void setStrategy(Strategy strategy) {
@@ -308,6 +321,18 @@ public class ChangesetTable extends Composite {
 		default:
 			return false;
 		}
+	}
+
+	protected boolean isHilight(int revision) {
+		if (highlights.length > 0) {
+			for (int hilight: highlights) {
+				if (hilight == revision) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	// inner types
