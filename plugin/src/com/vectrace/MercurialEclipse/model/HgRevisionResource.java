@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.model;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
+import com.aragost.javahg.Changeset;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
@@ -22,7 +23,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 public abstract class HgRevisionResource extends HgResource implements IChangeSetHolder {
 
 	/**
-	 * If a local resource then then null
+	 * Not null. TODO: verify not null
 	 */
 	protected final JHgChangeSet changeset;
 
@@ -38,7 +39,11 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 
 		LocalChangesetCache cache = LocalChangesetCache.getInstance();
 
-		this.changeset = cache.get(root, changeset);
+		if (Changeset.NULL_ID.equals(changeset)) {
+			this.changeset = JHgChangeSet.makeNull(root);
+		} else {
+			this.changeset = cache.get(root, changeset);
+		}
 
 		Assert.isNotNull(this.changeset);
 	}
@@ -52,6 +57,9 @@ public abstract class HgRevisionResource extends HgResource implements IChangeSe
 		super(root, path.removeTrailingSeparator());
 
 		this.changeset = changeset;
+
+		// TODO: Assert.isNotNull(this.changeset);
+		assert changeset != null;
 	}
 
 	// operations
