@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
 import com.aragost.javahg.Changeset;
+import com.aragost.javahg.commands.ExecutionException;
 import com.aragost.javahg.commands.LogCommand;
 import com.aragost.javahg.commands.flags.HeadsCommandFlags;
 import com.aragost.javahg.commands.flags.LogCommandFlags;
@@ -249,18 +250,25 @@ public class HgLogClient extends AbstractClient {
 	}
 
 	public static int numHeadsInBranch(HgRoot hgRoot, String branch) {
-		List<Changeset> cs = HeadsCommandFlags.on(hgRoot.getRepository()).execute();
+		List<Changeset> cs;
+		try {
+			cs = HeadsCommandFlags.on(hgRoot.getRepository()).execute();
+		} catch (ExecutionException e) {
+			// No head, new repo?
+			return 0;
+		}
+
 		int i = 0;
-	
+
 		// As of 2.3 it's faster to get all heads and then filter rather than do --rev
 		// "branch(name)". 60ms vs 900ms
-	
+
 		for(Changeset c : cs) {
 			if (BranchUtils.same(branch, c.getBranch())) {
 				i += 1;
 			}
 		}
-	
+
 		return i;
 	}
 }
