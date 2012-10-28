@@ -466,18 +466,23 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 			if (showSummary) {
+				boolean bDraftShown = false;
 				int n;
 				if (HgFeatures.PHASES.isEnabled()) {
 					n = HgLogClient.countChangesets(root, "draft()");
 
 					if (n > 0) {
-						suffix.append(' ').append(n).append("\u2191");
+						bDraftShown = true;
+						suffix.append(" \u2191").append(n);
 					}
 				}
 
 				n = HgLogClient.numHeadsInBranch(root, branch);
 
 				if (n > 1) {
+					if (bDraftShown) {
+						suffix.append(',');
+					}
 					suffix.append(' ').append(n).append(" heads");
 				}
 			}
