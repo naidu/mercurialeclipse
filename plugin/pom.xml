@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.vectrace.MercurialEclipse</groupId>
 	<artifactId>com.vectrace.MercurialEclipse</artifactId>
-	<version>2.0.1.qualifier</version>
+	<version>2.0.2.qualifier</version>
 	<name>MercurialEclipse</name>
 	<url>http://eclipselabs.org/p/mercurialeclipse/</url>
 	<build>
@@ -94,7 +94,7 @@
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg</artifactId>
-			<version>0.5</version>
+			<version>0.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -104,12 +104,12 @@
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg-ext-rebase</artifactId>
-			<version>0.5</version>
+			<version>0.6-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.aragost.javahg</groupId>
 			<artifactId>javahg-ext-mq</artifactId>
-			<version>0.5</version>
+			<version>0.6-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<repositories>

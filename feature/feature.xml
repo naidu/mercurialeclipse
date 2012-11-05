@@ -2,7 +2,7 @@
 <feature
       id="mercurialeclipse"
       label="MercurialEclipse"
-      version="2.0.1.qualifier"
+      version="2.0.2.qualifier"
       provider-name="MercurialEclipse project"
       image="mercurial.png">
 
