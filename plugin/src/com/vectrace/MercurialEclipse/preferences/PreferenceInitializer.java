@@ -59,7 +59,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// This preference is currently not compatible with sym-linked projects
 		store.setDefault(PREF_SYNC_ALL_PROJECTS_IN_REPO, false);
 
-		store.setDefault(PREF_SYNC_ONLY_CURRENT_BRANCH, true);
+		store.setDefault(PREF_SYNC_ONLY_CURRENT_BRANCH, false);
 		store.setDefault(PREF_SYNC_SHOW_EMPTY_GROUPS, true);
 		store.setDefault(PREF_SYNC_PRESENTATION_MODE, PresentationMode.COMPRESSED_TREE.name());
 		store.setDefault(PREF_SYNC_ENABLE_LOCAL_CHANGESETS, false);
@@ -99,7 +99,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// See issue #13662: do not show diffs per default: they may cause OOM on huge changesets
 		store.setDefault(PREF_SHOW_DIFFS, false);
 		store.setDefault(PREF_SHOW_ALL_TAGS, false);
-		store.setDefault(PREF_SHOW_GOTO_TEXT, true);
+		store.setDefault(PREF_SHOW_GOTO_TEXT, false);
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
@@ -144,7 +144,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_USE_MERCURIAL_USERNAME, false);
 		store.setDefault(PREF_DEFAULT_REBASE_KEEP_BRANCHES, false);
 		store.setDefault(PREF_USE_EXTERNAL_MERGE, false);
-		store.setDefault(PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES, false);
+		store.setDefault(PREF_DEFAULT_TRANSPLANT_FROM_LOCAL_BRANCHES, true);
 		store.setDefault(PREF_CLONE_UNCOMPRESSED, false);
 
 		store.setDefault(PREF_PRESELECT_UNTRACKED_IN_COMMIT_DIALOG, false);
