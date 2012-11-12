@@ -13,6 +13,7 @@ MercurialEclipse uses Maven. MercurialEclipse depends on JavaHg and extensions f
         * https://bitbucket.org/aragost/javahg 
         * https://bitbucket.org/aragost/javahg-ext-mq
         * https://bitbucket.org/aragost/javahg-ext-rebase
+        * https://bitbucket.org/aragost/javahg-parent
 
 3. Set up the projects for build (Using m2eclipse)
     * In your run configuration dropdown there will be a 'MercurialEclipse-MavenInit' launch - select the 

@@ -74,4 +74,8 @@ public abstract class PathFromChangeSet implements IAdaptable {
 	 */
 	public abstract Set<FileFromChangeSet> getFiles();
 
+	public Object getParent() {
+		return parent;
+	}
+
 }

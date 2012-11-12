@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.wizards.ExportPatchWizard;
 public class ExportPatchHandler extends MultipleResourcesHandler {
 
 	@Override
-	protected void run(List<IResource> resources) throws Exception {
+	public void run(List<IResource> resources) throws Exception {
 		openWizard(resources, getShell());
 	}
 

@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWiza
 public class SyncHandler extends MultipleResourcesHandler {
 
 	@Override
-	protected void run(List<IResource> resources) throws Exception {
+	public void run(List<IResource> resources) throws Exception {
 		if(resources.isEmpty()) {
 			return;
 		}
@@ -67,7 +67,7 @@ public class SyncHandler extends MultipleResourcesHandler {
 		return !"com.vectrace.MercurialEclipse.menu.SyncHandler".equals(getId());
 	}
 
-	private String getId() {
+	protected String getId() {
 		ExecutionEvent executionEvent = getEvent();
 		return executionEvent.getCommand().getId();
 	}

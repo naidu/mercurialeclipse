@@ -15,9 +15,9 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.menu.CommitHandler;
+import com.vectrace.MercurialEclipse.menu.SyncHandler;
 
-public class ActionCommit extends ActionDelegate {
+public class ActionSynchronize extends ActionDelegate {
 
 	/**
 	 * The action has been activated. The argument of the method represents the
@@ -29,8 +29,13 @@ public class ActionCommit extends ActionDelegate {
 	@Override
 	public void run(IAction action) {
 		try {
-			new CommitHandler().run(getSelectedHgProjects());
-		} catch (HgException e) {
+			(new SyncHandler() {
+				@Override
+				protected String getId() {
+					return "com.vectrace.MercurialEclipse.menu.SyncHandler";
+				}
+			}).run(getSelectedHgProjects());
+		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 		}
