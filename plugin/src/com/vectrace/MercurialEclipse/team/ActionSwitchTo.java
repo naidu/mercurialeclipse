@@ -10,14 +10,17 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.List;
+
 import org.eclipse.jface.action.IAction;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.menu.CommitHandler;
+import com.vectrace.MercurialEclipse.menu.SwitchHandler;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
-public class ActionCommit extends ActionDelegate {
+public class ActionSwitchTo extends ActionDelegate {
 
 	/**
 	 * The action has been activated. The argument of the method represents the
@@ -29,8 +32,12 @@ public class ActionCommit extends ActionDelegate {
 	@Override
 	public void run(IAction action) {
 		try {
-			new CommitHandler().run(getSelectedHgProjects());
-		} catch (HgException e) {
+			final List<HgRoot> hgRoots = getSelectedHgRoots();
+
+			if (hgRoots.size() > 0) {
+				new SwitchHandler().run(hgRoots.get(0));
+			}
+		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 		}
