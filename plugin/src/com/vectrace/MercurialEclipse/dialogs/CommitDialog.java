@@ -239,7 +239,7 @@ public class CommitDialog extends TitleAreaDialog {
 		createRevertCheckBox(container);
 		commitFilesList = createFilesList(container);
 
-		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
+		getShell().setText(Messages.getString("CommitDialog.window.title") + ": " + root.getName()); //$NON-NLS-1$
 		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
 		monitor = new ProgressMonitorPart(container, null);
 		monitor.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

@@ -63,7 +63,7 @@ public class ExportPatchWizard extends HgWizard {
 	}
 
 	private ExportPatchWizard(ExportPatchPage sourcePage, ExportOptionsPage optionsPage, HgRoot root) {
-		super(Messages.getString("ExportPatchWizard.WindowTitle")); //$NON-NLS-1$
+		super(Messages.getString("ExportPatchWizard.WindowTitle") + (root != null ? ": " + root.getName() : "")); //$NON-NLS-1$
 
 		setNeedsProgressMonitor(true);
 		this.sourcePage = sourcePage;
