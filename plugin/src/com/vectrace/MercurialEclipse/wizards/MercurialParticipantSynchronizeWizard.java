@@ -161,15 +161,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 			Map<String, Object> pageProperties = propertiesToMap(initProperties(hgRoot));
 			pageProperties.put(PROP_HGROOT, hgRoot);
 			if(isValid(pageProperties, ConfigurationWizardMainPage.PROP_URL)) {
-				if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_USER)) {
-					if (isValid(pageProperties, ConfigurationWizardMainPage.PROP_PASSWORD)) {
-						result.add(pageProperties);
-					} else {
-						throw new HgException("Missing password for " + hgRoot.getName());
-					}
-				} else {
-					result.add(pageProperties);
-				}
+				result.add(pageProperties);
 			} else {
 				throw new HgException("Missing default synchronize URL for " + hgRoot.getName());
 			}
