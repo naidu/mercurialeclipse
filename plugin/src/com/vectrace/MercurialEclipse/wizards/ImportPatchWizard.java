@@ -30,7 +30,7 @@ public class ImportPatchWizard extends HgOperationWizard {
 	final HgRoot hgRoot;
 
 	public ImportPatchWizard(HgRoot hgRoot) {
-		super(Messages.getString("ImportPatchWizard.WizardTitle"));
+		super(Messages.getString("ImportPatchWizard.WizardTitle") + (hgRoot != null ? ": " + hgRoot.getName() : ""));
 		setNeedsProgressMonitor(true);
 		this.hgRoot = hgRoot;
 

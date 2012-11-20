@@ -1981,21 +1981,19 @@
     <extension
          point="org.eclipse.ui.actionSets">
 	    <actionSet
-            label="Mercurial Actions"
+            label="%mercurialActionSet"
             visible="false"
             id="com.vectrace.MercurialEclipse.actionSet">
          <action
-            id="com.vectrace.MercurialEclipse.team.ActionExportPatch"
-            class="com.vectrace.MercurialEclipse.team.ActionExportPatch"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionExportPatch"
+            id="com.vectrace.MercurialEclipse.team.ActionRebase"
+            class="com.vectrace.MercurialEclipse.team.ActionRebase"
             toolbarPath="Normal/additions"
-            icon="icons/export.gif"
-            label="%exportPatch">
+            icon="icons/actions/merge.gif"
+            label="%rebase">
          </action>
          <action
             id="com.vectrace.MercurialEclipse.team.ActionSwitchTo"
             class="com.vectrace.MercurialEclipse.team.ActionSwitchTo"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionSwitchTo"
             toolbarPath="Normal/additions"
             icon="icons/actions/switch.gif"
             label="%updateTo">
@@ -2003,7 +2001,6 @@
          <action
             id="com.vectrace.MercurialEclipse.team.ActionCommit"
             class="com.vectrace.MercurialEclipse.team.ActionCommit"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionCommit"
             toolbarPath="Normal/additions"
             icon="icons/actions/commit.gif"
             label="%commit">
@@ -2011,7 +2008,6 @@
          <action
             id="com.vectrace.MercurialEclipse.team.ActionCompareWithParent"
             class="com.vectrace.MercurialEclipse.team.ActionCompareWithParent"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionCompareWithParent"
             toolbarPath="Normal/additions"
             icon="icons/compare_view.gif"
             label="%compareWithParentName">
@@ -2019,7 +2015,6 @@
          <action
             id="com.vectrace.MercurialEclipse.team.ActionShowHistory"
             class="com.vectrace.MercurialEclipse.team.ActionShowHistory"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionShowHistory"
             toolbarPath="Normal/additions"
             icon="icons/history.gif"
             label="%history">
@@ -2027,10 +2022,32 @@
          <action
             id="com.vectrace.MercurialEclipse.team.ActionSynchronize"
             class="com.vectrace.MercurialEclipse.team.ActionSynchronize"
-            definitionId="com.vectrace.MercurialEclipse.team.ActionSynchronize"
             toolbarPath="Normal/additions"
             icon="icons/actions/synch.gif"
             label="%synchronize">
+         </action>
+     </actionSet>
+   </extension>   
+
+    <extension
+         point="org.eclipse.ui.actionSets">
+	    <actionSet
+            label="%mercurialPatchActionSet"
+            visible="false"
+            id="com.vectrace.MercurialEclipse.patchActionSet">
+         <action
+            id="com.vectrace.MercurialEclipse.team.ActionExportPatch"
+            class="com.vectrace.MercurialEclipse.team.ActionExportPatch"
+            toolbarPath="Normal/additions"
+            icon="icons/export.gif"
+            label="%exportPatch">
+         </action>
+         <action
+            id="com.vectrace.MercurialEclipse.team.ActionImportPatch"
+            class="com.vectrace.MercurialEclipse.team.ActionImportPatch"
+            toolbarPath="Normal/additions"
+            icon="icons/import.gif"
+            label="%importPatch">
          </action>
      </actionSet>
    </extension>   
