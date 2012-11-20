@@ -27,7 +27,7 @@ public class RebaseWizard extends HgOperationWizard {
 	private RebasePage rebasePage;
 
 	public RebaseWizard(HgRoot hgRoot) {
-		super(Messages.getString("RebaseWizard.title")); //$NON-NLS-1$
+		super(Messages.getString("RebaseWizard.title") + (hgRoot != null ? ": " + hgRoot.getName() : "")); //$NON-NLS-1$
 		this.hgRoot = hgRoot;
 		setNeedsProgressMonitor(true);
 	}

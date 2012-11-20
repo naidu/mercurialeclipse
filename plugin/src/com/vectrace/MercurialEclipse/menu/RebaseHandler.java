@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.wizards.RebaseWizard;
 public class RebaseHandler extends RootHandler {
 
 	@Override
-	protected void run(HgRoot hgRoot) throws CoreException {
+	public void run(HgRoot hgRoot) throws CoreException {
 
 		if (HgRebaseClient.isRebasing(hgRoot)) {
 			MessageDialog dialog = new MessageDialog(null, Messages
