@@ -35,7 +35,7 @@ public class SwitchHandler extends RootHandler {
 			lossConfirmed = true;
 		}
 		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
+				Messages.getString("SwitchHandler.switchTo") + (hgRoot != null ? ": " + hgRoot.getName() : ""), hgRoot); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
 			UpdateJob job = new UpdateJob(dialog.getRevision(), true, hgRoot, false);
