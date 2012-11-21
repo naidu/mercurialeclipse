@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -23,7 +24,10 @@ public class RebaseHandler extends RootHandler {
 
 	@Override
 	protected void run(HgRoot hgRoot) throws CoreException {
+		openWizard(hgRoot, getShell());
+	}
 
+	public static void openWizard(HgRoot hgRoot, Shell shell) throws CoreException {
 		if (HgRebaseClient.isRebasing(hgRoot)) {
 			MessageDialog dialog = new MessageDialog(null, Messages
 					.getString("RebaseHandler.inProgress"), null, Messages
@@ -39,13 +43,13 @@ public class RebaseHandler extends RootHandler {
 				break;
 			case 2:
 				ContinueRebaseHandler handler = new ContinueRebaseHandler();
-				handler.setShell(getShell());
+				handler.setShell(shell);
 				handler.run(hgRoot);
 				break;
 			}
 		} else {
 			RebaseWizard wizard = new RebaseWizard(hgRoot);
-			WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+			WizardDialog wizardDialog = new WizardDialog(shell, wizard);
 			wizardDialog.open();
 		}
 	}
