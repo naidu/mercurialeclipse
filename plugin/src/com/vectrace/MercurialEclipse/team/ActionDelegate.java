@@ -27,6 +27,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.JHgChangeSet;
@@ -86,6 +87,8 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 			hgRoot = getSynchronizeViewHgRoot(o);
 		} else if (o instanceof IFile) {
 			hgRoot = MercurialTeamProvider.getHgRoot((IResource) o);
+		} else if (o instanceof MercurialRevision) {
+			hgRoot = MercurialTeamProvider.getHgRoot(((MercurialRevision) o).getResource());
 		} else if (o instanceof IJavaElement) {
 			try {
 				hgRoot = MercurialTeamProvider.getHgRoot(((IJavaElement)o).getCorrespondingResource());
