@@ -589,7 +589,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 		repositoryRoot = new File(path);
 		long modified = repositoryRoot.lastModified();
-		if (false && path.equals(lastPath) && lastModified == modified) {
+		if (path.equals(lastPath) && lastModified == modified) {
 			// since the file/folder was not modified and the path did not
 			// change, no refreshing is required
 			return;
@@ -611,7 +611,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 					if (repositoryRoot.isDirectory()) {
 
 						if (!collectProjectFilesFromDirectory(files, repositoryRoot,
-								null, monitor, false)) {
+								null, monitor)) {
 							return;
 						}
 						Iterator<File> filesIterator = files.iterator();
@@ -671,8 +671,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 * @return boolean <code>true</code> if the operation was completed.
 	 */
 	private boolean collectProjectFilesFromDirectory(Collection<File> files,
-			File directory, Set<String> directoriesVisited, IProgressMonitor monitor,
-			boolean foundPotentialProject) {
+			File directory, Set<String> directoriesVisited, IProgressMonitor monitor) {
 
 		if (monitor.isCanceled() || ".hg".equals(directory.getName())) {
 			return false;
@@ -706,18 +705,16 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				return true;
 			}
 		}
-		if(foundPotentialProject) {
-			return true;
-		}
-		File mavenProjectFile = null;
 		for (int i = 0; i < contents.length; i++) {
 			File file = contents[i];
 			if (file.isFile() && file.getName().equals("pom.xml")) {
-				mavenProjectFile = file;
+				files.add(file);
+				// don't search sub-directories since we can't have nested
+				// projects
+				return true;
 			}
 		}
 		// no project description found, so recurse into sub-directories
-		int numberOfProjects = files.size();
 		for (int i = 0; i < contents.length; i++) {
 			if (contents[i].isDirectory()) {
 				if (!contents[i].getName().equals(METADATA_FOLDER)) {
@@ -734,12 +731,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 					}
 					collectProjectFilesFromDirectory(files, contents[i],
-							directoriesVisited, monitor, mavenProjectFile != null);
+							directoriesVisited, monitor);
 				}
 			}
-		}
-		if(files.size() == numberOfProjects && mavenProjectFile != null) {
-			files.add(mavenProjectFile);
 		}
 		return true;
 	}
