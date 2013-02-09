@@ -41,6 +41,7 @@ public class RevisionChooserDialog extends Dialog {
 	private boolean showForceButton;
 	private boolean isForceChecked;
 	private String forceButtonText;
+	private boolean requireChangeset;
 	private RevisionChooserPanel panel;
 
 	public RevisionChooserDialog(Shell parentShell, String title, IResource resource) {
@@ -74,6 +75,7 @@ public class RevisionChooserDialog extends Dialog {
 		opt.forceButtonText = forceButtonText;
 		opt.isForceChecked = isForceChecked;
 		opt.showForceButton = showForceButton;
+		opt.requireChangeset = requireChangeset;
 
 		panel = new RevisionChooserPanel(composite, dataLoader, opt);
 		panel.addSelectionListener(this);
@@ -137,5 +139,7 @@ public class RevisionChooserDialog extends Dialog {
 		this.disallowSelectingParents = b;
 	}
 
-
+	public void setRequireChangeset(boolean b) {
+		this.requireChangeset = b;
+	}
 }

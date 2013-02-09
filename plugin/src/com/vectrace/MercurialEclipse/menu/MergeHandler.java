@@ -99,6 +99,7 @@ public class MergeHandler extends RootHandler {
 			dialog.showForceButton(hasDirtyFiles);
 			dialog.setForceChecked(forced);
 			dialog.setForceButtonText(forceMessage);
+			dialog.setRequireChangeset(true);
 			if (dialog.open() != IDialogConstants.OK_ID) {
 				return;
 			}

@@ -1095,6 +1095,7 @@ public class MercurialHistoryPage extends HistoryPage {
 							+ selectedRev.getRevision() + "] with ...";
 					RevisionChooserDialog dialog = new RevisionChooserDialog(getControl().getShell(),
 							title, file);
+					dialog.setRequireChangeset(true);
 					int result = dialog.open();
 					if (result == IDialogConstants.OK_ID) {
 						JHgChangeSet cs = dialog.getChangeSet();

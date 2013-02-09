@@ -82,13 +82,6 @@ public class SelectRevisionPage extends WizardPage {
 		return hgRoot;
 	}
 
-	public String getRevision(){
-		if(panel.calculateRevision()){
-			return panel.getRevision();
-		}
-		return null;
-	}
-
 	/**
 	 * Set the focus on path fields when page becomes visible.
 	 */
