@@ -78,6 +78,16 @@ public class PushRepoWizard extends HgWizard {
 		}
 	}
 
+	/**
+	 * @see org.eclipse.jface.wizard.Wizard#canFinish()
+	 */
+	@Override
+	public boolean canFinish() {
+		return super.canFinish()
+				&& (!((PushPullPage) page).isForceSelected() || (outgoingPage.getRevision() != null && outgoingPage
+						.isRevisionSelected()));
+	}
+
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
@@ -109,6 +119,7 @@ public class PushRepoWizard extends HgWizard {
 		}
 		String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
 		final boolean svnEnabled = isSvnEnabled(pushRepoPage);
+		final boolean isForce = pushRepoPage.isForceSelected();
 
 		class PushOperation extends HgOperation {
 			private String output;
@@ -126,7 +137,7 @@ public class PushRepoWizard extends HgWizard {
 					if (svnEnabled) {
 						output = HgSvnClient.push(hgRoot);
 					} else {
-						HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout, monitor);
+						HgPushPullClient.push(hgRoot, repo, isForce, changeset, timeout, monitor);
 						output = "success"; // TODO
 					}
 				} catch (HgException e){

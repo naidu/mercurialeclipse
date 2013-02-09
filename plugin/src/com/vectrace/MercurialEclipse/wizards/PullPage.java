@@ -201,7 +201,7 @@ public class PullPage extends PushPullPage {
 			prefs.put("update", isUpdateSelected());
 			prefs.put("cleanupdate", isCleanUpdateSelected());
 			prefs.put("rebase", isRebaseSelected());
-			prefs.put("force", isForce());
+			prefs.put("force", isForceSelected());
 			prefs.put("merge", isMergeSelected());
 		}
 
