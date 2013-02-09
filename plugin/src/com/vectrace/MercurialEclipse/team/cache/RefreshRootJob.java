@@ -131,6 +131,7 @@ public class RefreshRootJob extends Job {
 		} else if ((type & PROJECT_DECORTATIONS) != 0) {
 			MercurialStatusCache.getInstance().notifyChanged(new HashSet<IResource>(
 					ResourceUtils.getProjects(hgRoot)), false);
+			updateHistoryView();
 		}
 
 		if((type & INCOMING) != 0){
