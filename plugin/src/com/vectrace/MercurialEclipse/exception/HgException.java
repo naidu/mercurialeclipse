@@ -31,7 +31,8 @@ public class HgException extends TeamException {
 	/**
 	 * @see #getConciseMessage()
 	 */
-	private static final Pattern CONCISE_MESSAGE_PATTERN = Pattern.compile("^(?:remote:\\s*)?(?:error|abort):\\s*(.+)", Pattern.MULTILINE);
+	private static final Pattern CONCISE_MESSAGE_PATTERN = Pattern.compile(
+			"^(?:remote:\\s*)?(?:error|abort|mercurial-server):\\s*(.+)", Pattern.MULTILINE);
 
 	private static final Pattern LINE_PATTERN = Pattern.compile(".+");
 
