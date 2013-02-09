@@ -678,7 +678,7 @@ public class GraphLayout {
 				row[col] |= mask12(parentIndex) << 12;
 				break;
 			default:
-				throw new IllegalStateException();
+				throw new IllegalStateException("Unexpected parent ordinal: " + parentNum + " col=" + col +" parentIndex=" + parentIndex);
 			}
 		}
 
