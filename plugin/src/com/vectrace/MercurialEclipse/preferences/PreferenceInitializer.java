@@ -155,6 +155,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_SHOW_MERGE_CONFICT_NOTIFICATION_DIALOG, MessageDialogWithToggle.PROMPT);
 		store.setDefault(PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG, MessageDialogWithToggle.PROMPT);
 		store.setDefault(PREF_SHOW_QFINISH_WARNING_DIALOG, MessageDialogWithToggle.PROMPT);
+		store.setDefault(PREF_SHOW_PUSH_FORCE_GUIDANCE_DIALOG, MessageDialogWithToggle.PROMPT);
 	}
 
 	private static File checkForPossibleHgExecutables() {
