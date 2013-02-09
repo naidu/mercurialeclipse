@@ -200,20 +200,28 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		File hgExecutable = getIntegratedHgExecutable();
 		String defaultExecPath;
 		String existingValue = store.getString(MERCURIAL_EXECUTABLE);
+
+		// Use built in if possible
+		if (store.getBoolean(USE_BUILT_IN_HG_EXECUTABLE) && hgExecutable != null) {
+			defaultExecPath = hgExecutable.getPath();
+			store.setValue(MERCURIAL_EXECUTABLE, defaultExecPath);
+			store.setDefault(MERCURIAL_EXECUTABLE, defaultExecPath);
+			return;
+		}
+
+		// Future: Should we ignore the integrated executable if the pref is disabled?
 		if (hgExecutable == null) {
 			hgExecutable = checkForPossibleHgExecutables();
 		}
 		if (hgExecutable == null) {
 			defaultExecPath = "hg";
-			if(existingValue != null && !new File(existingValue).isFile()){
-				store.setValue(MERCURIAL_EXECUTABLE, defaultExecPath);
-			}
 		} else {
 			defaultExecPath = hgExecutable.getPath();
-			if (store.getBoolean(USE_BUILT_IN_HG_EXECUTABLE)
-					|| (existingValue == null || !new File(existingValue).isFile())) {
-				store.setValue(MERCURIAL_EXECUTABLE, defaultExecPath);
-			}
+		}
+
+		if(existingValue != null && !new File(existingValue).isFile()){
+			// If already set override if it's invalid
+			store.setValue(MERCURIAL_EXECUTABLE, defaultExecPath);
 		}
 		store.setDefault(MERCURIAL_EXECUTABLE, defaultExecPath);
 	}
