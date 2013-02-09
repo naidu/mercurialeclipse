@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
 import com.aragost.javahg.Changeset;
@@ -36,7 +35,6 @@ import com.vectrace.MercurialEclipse.model.JHgChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.CommandServerCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialRootCache;
 import com.vectrace.MercurialEclipse.utils.BranchUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -191,13 +189,6 @@ public class HgLogClient extends AbstractClient {
 		return command;
 	}
 
-	public static ChangeSet getChangeset(IResource res, String nodeId) {
-		Assert.isNotNull(nodeId);
-		HgRoot root = MercurialRootCache.getInstance().getHgRoot(res);
-
-		return getChangeSet(root, nodeId);
-	}
-
 	/**
 	 * Helper method to transform JavaHg changesets into normal changesets
 	 */
@@ -212,17 +203,26 @@ public class HgLogClient extends AbstractClient {
 	 *            non null
 	 * @param nodeId
 	 *            non null
-	 * @return might return null if the changeset is not known/existing in the repo
+	 * @return Not null
+	 * @throws HgException If changeset not found
 	 */
-	public static JHgChangeSet getChangeSet(HgRoot root, String nodeId) {
+	public static JHgChangeSet getChangeSet(HgRoot root, String nodeId) throws HgException {
 		return getChangeSet(root, nodeId, null, null, null);
 	}
 
+	/**
+	 * @return Not null
+	 * @throws HgException
+	 */
 	public static JHgChangeSet getChangeSet(HgRoot root, String nodeId, IHgRepositoryLocation remote,
-			Direction direction, File bundle) {
+			Direction direction, File bundle) throws HgException {
 		LogCommand command = LogCommandFlags.on(CommandServerCache.getInstance().get(root, bundle)).rev(nodeId);
-
-		Changeset cs = command.single();
+		Changeset cs;
+		try {
+			cs = command.single();
+		} catch (ExecutionException e) {
+			throw new HgException("Could not locate changeset \"" + nodeId + "\"", e);
+		}
 
 		if (bundle != null) {
 			// TODO: cache?
@@ -238,8 +238,9 @@ public class HgLogClient extends AbstractClient {
 	 * @param root The root
 	 * @param rev The index
 	 * @return The change set
+	 * @throws HgException If the revision is not found
 	 */
-	public static JHgChangeSet getChangeSet(HgRoot root, int rev) {
+	public static JHgChangeSet getChangeSet(HgRoot root, int rev) throws HgException {
 		return getChangeSet(root, rev + ":" + rev);
 	}
 

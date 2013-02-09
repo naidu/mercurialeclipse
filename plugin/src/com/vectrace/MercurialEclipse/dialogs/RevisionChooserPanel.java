@@ -217,7 +217,8 @@ public class RevisionChooserPanel extends Composite {
 
 	@SuppressWarnings("boxing")
 	public boolean calculateRevision() {
-		String[] split = text.getText().split(":"); //$NON-NLS-1$
+		String sText = text.getText();
+		String[] split = sText.split(":"); //$NON-NLS-1$
 		data.revision = split[0].trim();
 		if (data.changeSet == null) {
 			HgRoot hgRoot = dataLoader.getHgRoot();
@@ -233,6 +234,14 @@ public class RevisionChooserPanel extends Composite {
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
 							bookmark.getChangeset().getRevision(), bookmark.getChangeset().getNode()), ex);
+				}
+			} else {
+				try {
+					data.changeSet = localCache.get(hgRoot, sText);
+				} catch (HgException ex) {
+					logError(
+							Messages.getString("RevisionChooserDialog.error.loadChangeset1", sText),
+							ex);
 				}
 			}
 		}
