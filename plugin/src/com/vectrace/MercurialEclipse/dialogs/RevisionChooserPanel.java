@@ -76,6 +76,12 @@ public class RevisionChooserPanel extends Composite {
 		public String forceButtonText;
 		public String revision;
 		public JHgChangeSet changeSet;
+
+		/**
+		 * If true then revision text that can't be resolved to a changeset will be considered
+		 * invalid.
+		 */
+		public boolean requireChangeset;
 	}
 
 	private DataLoader dataLoader;
@@ -269,10 +275,18 @@ public class RevisionChooserPanel extends Composite {
 				}
 			}
 		}
+
+		if (data.changeSet == null && data.requireChangeset) {
+			MessageBox mb = new MessageBox(getShell(), SWT.ICON_WARNING);
+			mb.setText("Choose Revision"); //$NON-NLS-1$
+			mb.setMessage("Unkown revision: " + sText); //$NON-NLS-1$
+			mb.open();
+			return false;
+		}
 		return true;
 	}
 
-	public void applyRevision() {
+	protected void applyRevision() {
 		if(calculateRevision()){
 			if(dialog != null){
 				dialog.revisionSelected();

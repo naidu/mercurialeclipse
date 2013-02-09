@@ -30,6 +30,7 @@ public class CompareWithAction extends CompareAction {
 	public void run(IResource resource) throws TeamException {
 		RevisionChooserDialog dialog = new RevisionChooserDialog(MercurialEclipsePlugin.getActiveShell(),
 				Messages.getString("CompareWithAction.compareWith"), MercurialRootCache.getInstance().getHgRoot(resource)); //$NON-NLS-1$
+		dialog.setRequireChangeset(true);
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
 			CompareUtils.openEditor(resource, dialog.getChangeSet());
