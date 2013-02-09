@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Set;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -21,6 +22,7 @@ import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
@@ -72,5 +74,18 @@ public class PushRepoPage extends PushPullPage {
 			}
 		}
 		return defaultLocation;
+	}
+
+	/**
+	 * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#onForceEnabled()
+	 */
+	@Override
+	protected void onForceEnabled() {
+		MercurialEclipsePlugin.showDontShowAgainConfirmDialog("Push Changesets",
+				"On the next page of the wizard "
+						+ "please select the revision to push and select the "
+						+ "checkbox to enable pushing only that revision (and ancestors)",
+				MessageDialog.INFORMATION,
+				MercurialPreferenceConstants.PREF_SHOW_PUSH_FORCE_GUIDANCE_DIALOG, getShell());
 	}
 }

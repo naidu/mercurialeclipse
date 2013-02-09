@@ -75,6 +75,9 @@ public abstract class PushPullPage extends ConfigurationWizardMainPage {
 				}
 				public void widgetSelected(SelectionEvent e) {
 					optionChanged();
+					if (forceCheckBox.getSelection()) {
+						onForceEnabled();
+					}
 				}
 			});
 		}
@@ -82,6 +85,12 @@ public abstract class PushPullPage extends ConfigurationWizardMainPage {
 		createExtensionControls();
 
 		initDefaultLocation();
+	}
+
+	/**
+	 * Called when force is enabled by the user. By default does nothing.
+	 */
+	protected  void onForceEnabled() {
 	}
 
 	protected void createExtensionControls() {

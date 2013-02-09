@@ -124,6 +124,7 @@ public final class MercurialPreferenceConstants {
 	public static final String PREF_SHOW_MERGE_CONFICT_NOTIFICATION_DIALOG = "hg.showMergeConflictNotificationDialog";
 	public static final String PREF_SHOW_REBASE_CONFICT_NOTIFICATION_DIALOG = "hg.showRebaseConflictNotificationDialog";
 	public static final String PREF_SHOW_QFINISH_WARNING_DIALOG = "hg.showQFinishWarning";
+	public static final String PREF_SHOW_PUSH_FORCE_GUIDANCE_DIALOG = "hg.showPushForceGuidanceDialog";
 
 	// security
 	public static final String PREF_VERIFY_SERVER_CERTIFICATE = "hg.verifyServerCertificate"; //$NON-NLS-1$
