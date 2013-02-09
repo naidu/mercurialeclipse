@@ -124,16 +124,6 @@ public class OutgoingPage extends IncomingPage {
 	}
 
 	@Override
-	public void setChangesets(SortedSet<JHgChangeSet> outgoingInternal) {
-		super.setChangesets(outgoingInternal);
-	}
-
-	@Override
-	public SortedSet<JHgChangeSet> getChangesets() {
-		return super.getChangesets();
-	}
-
-	@Override
 	protected void getInputForPage() throws InvocationTargetException,
 			InterruptedException {
 		getContainer().run(true, false, new GetOutgoingOperation(getContainer()));

@@ -35,7 +35,6 @@ public abstract class PushPullPage extends ConfigurationWizardMainPage {
 
 	protected Button forceCheckBox;
 	protected Group optionGroup;
-	private boolean force;
 	private boolean timeout;
 
 	private Button timeoutCheckBox;
@@ -102,10 +101,6 @@ public abstract class PushPullPage extends ConfigurationWizardMainPage {
 		return Messages.getString("PushRepoPage.timeoutCheckBox.text"); //$NON-NLS-1$
 	}
 
-	public boolean isForce() {
-		return force;
-	}
-
 	public boolean isTimeout() {
 		return timeout;
 	}
@@ -138,7 +133,6 @@ public abstract class PushPullPage extends ConfigurationWizardMainPage {
 
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
-		this.force = isForceSelected();
 		this.timeout = isTimeoutSelected();
 		return super.finish(monitor);
 	}

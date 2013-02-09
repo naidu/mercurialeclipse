@@ -31,6 +31,8 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
@@ -144,10 +146,6 @@ public class IncomingPage extends HgWizardPage {
 		return location;
 	}
 
-	public void setRevision(ChangeSet revision) {
-		this.revision = revision;
-	}
-
 	public void setChangesets(SortedSet<JHgChangeSet> changesets) {
 		this.changesets = changesets;
 	}
@@ -249,10 +247,20 @@ public class IncomingPage extends HgWizardPage {
 						} else {
 							fileStatusViewer.setInput(new Object[0]);
 						}
+						getContainer().updateButtons();
 					}
 				});
 
 		fileStatusViewer.addDoubleClickListener(getDoubleClickListener());
+		revisionCheckBox.addSelectionListener(new SelectionListener() {
+
+			public void widgetSelected(SelectionEvent e) {
+				getContainer().updateButtons();
+			}
+
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
 	}
 
 	private static final class FileStatusLabelProvider extends DecoratingLabelProvider implements
