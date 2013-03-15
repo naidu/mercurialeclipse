@@ -2051,4 +2051,13 @@
          </action>
      </actionSet>
    </extension>   
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            name="Mercurial Repository Exploring"
+            icon="icons/mercurialeclipse.png"
+            class="com.vectrace.MercurialEclipse.Perspective"
+            id="com.vectrace.MercurialEclipse.Perspective">
+      </perspective>
+   </extension>
 </plugin>
