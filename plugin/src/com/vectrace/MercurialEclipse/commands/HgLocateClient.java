@@ -102,7 +102,15 @@ public class HgLocateClient extends AbstractClient {
 		String pattern;
 
 		if (hgResource instanceof IHgFile) {
-			pattern = "glob:" + hgResource.getIPath().toOSString();
+			String val = hgResource.getIPath().toOSString();
+
+			if (val.contains("[")) {
+				// The "[" character begins a character class. This matches any single character within the class.
+				// The class ends with a "]" character
+				pattern = "glob:" + val.replaceAll("\\[", "[\\\\[]");
+			} else {
+				pattern = "glob:" + val;
+			}
 		} else {
 			pattern = "glob:" + hgResource.getIPath().toOSString()
 					+ System.getProperty("file.separator") + "**";

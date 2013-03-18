@@ -164,7 +164,15 @@ public abstract class AbstractClient {
 		String pattern = null;
 
 		if (file) {
-			pattern = "glob:" + relPath.toOSString();
+			String val = relPath.toOSString();
+
+			if (val.contains("[")) {
+				// The "[" character begins a character class. This matches any single character within the class.
+				// The class ends with a "]" character
+				pattern = "glob:" + val.replaceAll("\\[", "[\\\\[]");
+			} else {
+				pattern = "glob:" + val;
+			}
 		} else {
 			String pathString = relPath.toOSString();
 			if (pathString.length() > 0) {
