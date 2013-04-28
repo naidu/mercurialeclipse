@@ -51,11 +51,13 @@ public final class HgClients {
 
 	public static RepositoryConfiguration getRepoConfig() {
 		RepositoryConfiguration cfg = new RepositoryConfiguration();
-		cfg.setHgBin(HgClients.getExecutable());
+		String executable = HgClients.getExecutable();
+		cfg.setHgBin(executable);
 		cfg.setConcurrency(3);
 		cfg.setCommandWaitTimeout(Integer.MAX_VALUE);
 		cfg.setServerIdleTime(30);
 		cfg.setCodingErrorAction(CodingErrorAction.REPLACE);
+		cfg.getEnvironment().put("HGE_RUNDIR", AbstractShellCommand.getRunDir(executable));
 
 		// Use user's hgrc file
 		cfg.setHgrcPath(null);

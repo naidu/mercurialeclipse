@@ -529,9 +529,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected abstract String getExecutable();
 
-	private String getRunDir()
-	{
-		String sDir = getExecutable();
+	private String getRunDir() {
+		return getRunDir(getExecutable());
+	}
+
+	protected static String getRunDir(String sDir) {
 		int i;
 
 		if (sDir != null)
