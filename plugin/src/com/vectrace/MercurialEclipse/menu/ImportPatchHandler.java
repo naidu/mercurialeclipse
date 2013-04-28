@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.wizards.ImportPatchWizard;
 public class ImportPatchHandler extends RootHandler {
 
 	@Override
-	protected void run(HgRoot hgRoot) {
+	public void run(HgRoot hgRoot) {
 		openWizard(hgRoot, getShell());
 	}
 
