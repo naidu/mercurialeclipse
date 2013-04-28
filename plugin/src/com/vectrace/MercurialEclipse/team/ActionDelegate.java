@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,8 +18,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -26,6 +25,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
@@ -44,6 +44,23 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 	protected IFile projectSelection;
 	protected IStructuredSelection selection;
 
+	private static final Class JEL;
+
+	static
+	{
+		Class c;
+
+		try {
+			c = Class.forName("org.eclipse.jdt.core.IJavaElement");
+		} catch (Exception e){
+			c = null;
+		}
+
+		JEL = c;
+	}
+
+
+
 	protected static IResource getFile(Object o) {
 		IResource resource = null;
 
@@ -51,8 +68,8 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 			resource = (IResource) o;
 		} else if (o instanceof FileFromChangeSet) {
 			resource = ((FileFromChangeSet) o).getFile();
-		} else if (o instanceof IJavaElement) {
-			resource = ((IJavaElement) o).getResource();
+		} else if (JEL != null && JEL.isInstance(o)) {
+			resource = invokeJEL(o, "getResource");
 		}
 
 		return resource;
@@ -89,14 +106,14 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 			hgRoot = MercurialTeamProvider.getHgRoot((IResource) o);
 		} else if (o instanceof MercurialRevision) {
 			hgRoot = MercurialTeamProvider.getHgRoot(((MercurialRevision) o).getResource());
-		} else if (o instanceof IJavaElement) {
+		} else if (JEL != null && JEL.isInstance(o)) {
 			try {
-				hgRoot = MercurialTeamProvider.getHgRoot(((IJavaElement)o).getCorrespondingResource());
+				hgRoot = MercurialTeamProvider.getHgRoot(invokeJEL(o, "getCorrespondingResource"));
 
 				if (hgRoot == null) {
-					hgRoot = getHgRoot(((IJavaElement) o).getJavaProject());
+					hgRoot = getHgRoot(invokeJEL(o, "getJavaProject"));
 				}
-			} catch (JavaModelException e) {
+			} catch (Exception e) {
 			}
 		} else if (o instanceof IAdaptable) {
 			IWorkbenchAdapter resource = ((IWorkbenchAdapter)((IAdaptable) o).getAdapter(IWorkbenchAdapter.class));
@@ -114,8 +131,8 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 			return (IResource) o;
 		} else if (o instanceof PathFromChangeSet) {
 			return (IResource) ((PathFromChangeSet) o).getAdapter(IResource.class);
-		} else if (o instanceof IJavaElement) {
-			return ((IJavaElement)o).getResource();
+		} else if (JEL != null && JEL.isInstance(o)) {
+			return invokeJEL(o, "getResource");
 		}
 		// in theory, we can define IResources even from IFiles and IJavaElement if it's ever necessary
 
@@ -226,5 +243,25 @@ public abstract class ActionDelegate implements IWorkbenchWindowActionDelegate {
 				projectSelection = ResourceUtils.getActiveResourceFromEditor();
 			}
 		}
+	}
+
+	private static IResource invokeJEL(Object o, String method) {
+		try {
+			return (IResource) JEL.getMethod(method).invoke(o);
+		} catch (SecurityException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (NoSuchMethodException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (IllegalArgumentException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (IllegalAccessException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (InvocationTargetException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (ClassCastException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		return null;
 	}
 }
