@@ -89,11 +89,16 @@ public final class MercurialUtilities {
 	 */
 	public static boolean isHgExecutableCallable() {
 		try {
-			Runtime.getRuntime().exec(getHGExecutable());
+			exec(getHGExecutable());
 			return true;
 		} catch (IOException e) {
 			return false;
 		}
+	}
+
+	private static void exec(String exec) throws IOException {
+		//Runtime.getRuntime().exec(getHGExecutable());
+		new ProcessBuilder(exec).start();
 	}
 
 	/**
@@ -184,7 +189,7 @@ public final class MercurialUtilities {
 
 	private static boolean isGpgExecutableCallable() {
 		try {
-			Runtime.getRuntime().exec(getGpgExecutable());
+			exec(getGpgExecutable());
 			return true;
 		} catch (Exception e) {
 			return false;
