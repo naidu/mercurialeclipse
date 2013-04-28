@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.vectrace.MercurialEclipse</groupId>
 	<artifactId>com.vectrace.MercurialEclipse</artifactId>
-	<version>2.0.2.qualifier</version>
+	<version>2.1.0.qualifier</version>
 	<name>MercurialEclipse</name>
 	<url>http://eclipselabs.org/p/mercurialeclipse/</url>
 	<build>
