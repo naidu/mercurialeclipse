@@ -1,0 +1,9 @@
+syntax: regexp
+^update_site/.*/artifacts\.jar$
+syntax: regexp
+^update_site/.*/content\.jar$
+syntax: regexp
+.orig$
+syntax: regexp
+^update_site/.*/\.artifactlock$
+
